@@ -20,6 +20,7 @@ function PrintMenu($activepage) {
   PrintMenuItem("Downloads", "down.php", $activepage);
   PrintMenuItem("Information", "help.php", $activepage);
   PrintMenuItem("Project Page", "http://sf.net/projects/holtz/", $activepage, 1);
+  PrintMenuItem("Links", "links.php", $activepage);
   print "</tr></table></div>";
 }
 
