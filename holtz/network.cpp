@@ -34,31 +34,12 @@ namespace holtz
   {
   }
 
-  Network_Manager::Network_Manager( Game &game )
-    : game(game), game_window(0), gui_connected(false), 
-      server(0), client(0), connection_handler(0),
-      player_handler(0), mode(mode_undefined),
-      state(begin), current_id(101), 
-      ruleset(new Standard_Ruleset()), ruleset_type(Ruleset::standard),
-      max_clients(15), clients_ready(0), clients_player_setup_ack(0),
-      max_string_size(60),
-      timeout_sequencial_read(700) // 700 milliseconds
-  {
-    // connect event functions
-    Connect( NETWORK_EVENT, wxEVT_SOCKET, 
-	     (wxObjectEventFunction) (wxEventFunction) (wxSocketEventFunction) 
-	     &Network_Manager::on_network );
-    Connect( ANIMATION_DONE, wxEVT_TIMER, 
-	     (wxObjectEventFunction) (wxEventFunction) (wxTimerEventFunction) 
-	     &Network_Manager::on_done );
-  }
-
-  Network_Manager::Network_Manager( Game &game, Game_Window &game_window )
-    : game(game), game_window(&game_window), gui_connected(true), 
+  Network_Manager::Network_Manager( Game_Manager &game_manager, Game_UI_Manager &ui_manager )
+    : game_manager(game_manager), ui_manager(ui_manager), 
       server(0), client(0), connection_handler(0), 
-      player_handler(0), mode(mode_undefined),
+      display_handler(0), mode(mode_undefined),
       state(begin), current_id(101), 
-      ruleset(new Standard_Ruleset()), ruleset_type(Ruleset::standard),
+      game( game_manager.get_game() ),
       max_clients(15), clients_ready(0), clients_player_setup_ack(0),
       max_string_size(60),
       timeout_sequencial_read(700) // 700 milliseconds
@@ -74,11 +55,10 @@ namespace holtz
 
   Network_Manager::~Network_Manager()
   {
-    if( player_handler )
-      player_handler->aborted();
+    if( display_handler )
+      display_handler->aborted();
 
     close_connection();
-    delete ruleset;
   }
   
   bool Network_Manager::setup_server( wxIPV4address port ) throw(Network_Exception)
@@ -269,27 +249,281 @@ namespace holtz
     }
   }
 
-  void Network_Manager::set_player_handler( Player_Handler *handler )
+  Game_Setup_Manager::Type Network_Manager::get_type()
   {
-    player_handler = handler;
-    if( player_handler )
+    if( mode == mode_server ) 
+      return Game_Setup_Manager::server;
+    else
+      return Game_Setup_Manager::client;
+  }
+
+  void Network_Manager::set_display_handler( Game_Setup_Display_Handler *handler )
+  {
+    display_handler = handler;
+    /* handler will request this information anyway
+    if( display_handler )
     {
       // tell handler all players
       std::list<Player>::iterator player;
       for( player = players.begin(); player != players.end(); ++player )
       {
-	player_handler->player_added(*player);
+	display_handler->player_added(*player);
       }
 
-      // tell handler which ruleset is currently active
-      if( ruleset_type == Ruleset::custom )
-	player_handler->ruleset_changed( ruleset_type, *ruleset );
-      else
-	player_handler->ruleset_changed( ruleset_type );
+      // tell handler which board is currently active
+      display_handler->set_board( game );
+    }
+    */
+  }
+
+  // board commands
+  Game_Setup_Manager::Answer_Type Network_Manager::ask_change_board( const Game &new_game )
+  {
+    if( mode == mode_server )
+    {
+      game = new_game;
+      report_ruleset_change();
+      return accept;
+    }
+    if( mode == mode_client )
+    {
+      write_message_type( *client, msg_board );
+      write_board( *client, new_game );
+      return wait_for_answer;
+    }
+    return deny;
+  }
+
+  const Game &Network_Manager::get_board()
+  {
+    return game;
+  }
+
+  const std::list<Player> &Network_Manager::get_players()
+  {
+    return players;
+  }
+
+  // player commands
+  bool Network_Manager::add_player( const Player &player )
+  {
+    if( mode == mode_server )
+    {
+      if( state == begin )
+      {
+	if( players.size() < game.get_max_players() )
+	{
+	  std::list<Player_Output*> outlist;
+	  outlist.push_back(this);
+	  
+	  int id = current_id; ++current_id;
+	  
+	  std::list<Player>::iterator p = players.insert(players.end(), player);
+	  p->id = id;
+	  p->outputs.clear();
+	  p->outputs.push_back( this );
+	  id_player[id] = p;
+	  
+	  report_player_added( &*p );
+	  return true;
+	}
+	else
+	  ui_manager.report_error( _("Too many players!"), _("Add failed") );
+      }
+    }
+    else
+    {
+      if( mode == mode_client )
+      {
+	if( state == handshake )
+	{
+	  requested_player_name = player.name;
+	  requested_player_type = player.type;
+	  state = request_player;
+	  
+	  write_message_type( *client, msg_player_request );
+	  write_string( *client, player.name );
+	  write_int( *client, player.type );
+	  
+	  return true;
+	}
+      }
+    }
+    return false;
+  }
+  bool Network_Manager::remove_player( const Player &player )
+  {
+    if( mode == mode_server )
+    {
+      if( (state == begin) || (state == is_ready) )
+      {
+	if( id_player.find(player.id) != id_player.end() )
+	{
+	  std::list<Player>::iterator player_it = id_player[player.id];
+	  report_player_removed( &*player_it );
+	  
+	  players.erase(player_it);
+	  id_player.erase( player.id ); 
+	  Client *client = id_client[player.id];
+	  id_client.erase( player.id );
+	  // erase player from list of players hosted by this player
+	  if( client )
+	  {
+	    std::list<std::list<Player>::iterator>::iterator client_player;
+	    for( client_player = client->players.begin();
+		 client_player != client->players.end(); ++client_player )
+	    {
+	      if( *client_player == player_it )
+	      {
+		client->players.erase(client_player);
+		break;
+	      }
+	    }
+	  }
+	  return true;
+	}
+      }
+    }
+    if( mode == mode_client )
+    {
+      if( (state == begin) || (state == handshake) || (state == request_player) )
+      {
+	write_message_type( *client, msg_player_removed );
+	write_int( *client, player.id );
+	return true;
+      }
+    }
+    return false;
+  }
+  bool Network_Manager::player_up( const Player &player )
+  {
+    if( mode == mode_server )
+    {
+      if( (state == begin) || (state == is_ready) )
+      {
+	if( id_player.find(player.id) != id_player.end() )
+	{
+	  if( id_player[ player.id ] != players.begin() ) 
+	  {
+	    std::list<Player>::iterator player1 = id_player[player.id];
+	    std::list<Player>::iterator player2 = player1; --player2;
+	    
+	    report_player_up( &*player1 );
+
+	    Player p1 = *player1;
+	    players.erase(player1);
+	    player1 = players.insert(player2,p1);	// insert player before player 2
+    
+	    id_player[p1.id] = player1;
+	    return true;
+	  }
+	}
+      }
+    }
+    if( mode == mode_client )
+    {
+      if( (state == begin) || (state == handshake) || (state == request_player) )
+      {
+	write_message_type( *client, msg_player_up );
+	write_int( *client, player.id );
+	return true;
+      }
+    }
+    return false;
+  }
+  bool Network_Manager::player_down( const Player &player )
+  {
+    if( mode == mode_server )
+    {
+      if( (state == begin) || (state == is_ready) )
+      {
+	if( id_player.find(player.id) != id_player.end() )
+	{
+	  if( id_player[ player.id ] != --players.end() ) 
+	  {
+	    std::list<Player>::iterator player1 = id_player[player.id];
+	    std::list<Player>::iterator player2 = player1; ++player2;
+	    
+	    report_player_down( &*player1 );
+
+	    Player p2 = *player2;
+	    players.erase(player2);
+	    player2 = players.insert(player1,p2); // insert player 2 before player
+    
+	    id_player[p2.id] = player2;
+	    return true;
+	  }
+	}
+      }
+    }
+    if( mode == mode_client )
+    {
+      if( (state == begin) || (state == handshake) || (state == request_player) )
+      {
+	write_message_type( *client, msg_player_down );
+	write_int( *client, player.id );
+	return true;
+      }
+    }
+    return false;
+  }
+  void Network_Manager::ready()      // ready with adding players
+  {
+    if( mode == mode_server )
+    {
+      if( state == begin )
+      {
+	state = is_ready;
+	check_state();
+      }
+    }
+    else
+    {
+      if( mode == mode_client )
+      {
+	if( state == handshake )
+	{
+	  state = is_ready;
+	  write_message_type( *client, msg_ready );
+	}
+      }
     }
   }
 
-  void Network_Manager::new_game()
+  // is everyone ready and number of players ok?
+  Game_Setup_Manager::Game_State Network_Manager::can_start() 
+  {
+    // check if all clients are ready
+    if( mode == mode_server )
+    {
+      if( players.size() < game.get_min_players() )
+      {
+	return too_few_players;
+      }
+
+      check_state();
+
+      if( (state == players_ready) || (state == game_started) )
+      {
+	return everyone_ready;
+      }
+    }
+    else if( mode == mode_client )
+    {
+      if( state == game_started )
+	return everyone_ready;
+    }
+    return not_ready;
+  }
+
+  void Network_Manager::start_game() // call only when can_start() == true
+  {
+    game_manager.set_board( game );
+    game_manager.set_players( players );
+    game_manager.start_game();
+  }
+
+  Game_Setup_Manager::Answer_Type Network_Manager::ask_new_game() // request to play new game
   {
     if( mode == mode_server )
     {
@@ -310,237 +544,18 @@ namespace holtz
       state = handshake;
       write_message_type( *client, msg_new_game );
     }
-  }  
+    return wait_for_answer;
+  }
 
-  void Network_Manager::stop_game()
+  void Network_Manager::new_game()   // force new game (may close connections)
+  {
+    if( display_handler )
+      display_handler->new_game();
+  }
+
+  void Network_Manager::stop_game()  // stop game
   {
     state = game_stop;		// avoid processing of network commands
-  }
-  
-  bool Network_Manager::add_player( std::string name, Player::Player_Type type, 
-				    Player::Help_Mode help_mode )
-  {
-    if( mode == mode_server )
-    {
-      if( state == begin )
-      {
-	if( players.size() < game.get_max_players() )
-	{
-	  if( gui_connected )
-	  {
-	    std::list<Player_Output*> outlist;
-	    outlist.push_back(this);
-	    
-	    int id = current_id; ++current_id;
-	    
-	    Player_Input *input;
-	    if( type == Player::ai )
-	      input = &game_window->get_ai_handler();
-	    else
-	      input = &game_window->get_mouse_handler();
-	    
-	    Player player( name, id, input, outlist, ""
-			   /*wxstr_to_str(localhost.Hostname())*/, type, help_mode );
-
-	    std::list<Player>::iterator p = players.insert(players.end(), player);
-	    
-	    id_player[id] = p;
-	    
-	    report_player_added( &*p );
-	    return true;
-	  }
-	}
-	else
-	  wxMessageBox(_("Too many players!"), _("Add failed"), wxOK | wxICON_ERROR, game_window);
-      }
-    }
-    else
-    {
-      if( mode == mode_client )
-      {
-	if( state == handshake )
-	{
-	  requested_player_name = name;
-	  requested_player_type = type;
-	  state = request_player;
-	  
-	  write_message_type( *client, msg_player_request );
-	  write_string( *client, name );
-	  write_int( *client, type );
-	  
-	  return true;
-	}
-      }
-    }
-    return false;
-  }
-
-  bool Network_Manager::remove_player( int id )
-  {
-    if( mode == mode_server )
-    {
-      if( (state == begin) || (state == is_ready) )
-      {
-	if( id_player.find(id) != id_player.end() )
-	{
-	  std::list<Player>::iterator player = id_player[id];
-	  report_player_removed( &*player );
-	  
-	  players.erase(player);
-	  id_player.erase( id ); 
-	  Client *client = id_client[id];
-	  id_client.erase( id );
-	  // erase player from list of players hosted by this player
-	  if( client )
-	  {
-	    std::list<std::list<Player>::iterator>::iterator client_player;
-	    for( client_player = client->players.begin();
-		 client_player != client->players.end(); ++client_player )
-	    {
-	      if( *client_player == player )
-	      {
-		client->players.erase(client_player);
-		break;
-	      }
-	    }
-	  }
-	  return true;
-	}
-      }
-    }
-    if( mode == mode_client )
-    {
-      if( (state == begin) || (state == handshake) || (state == request_player) )
-      {
-	write_message_type( *client, msg_player_removed );
-	write_int( *client, id );
-	return true;
-      }
-    }
-    return false;
-  }
-
-  bool Network_Manager::player_up( int id )
-  {
-    if( mode == mode_server )
-    {
-      if( (state == begin) || (state == is_ready) )
-      {
-	if( id_player.find(id) != id_player.end() )
-	{
-	  if( id_player[ id ] != players.begin() ) 
-	  {
-	    std::list<Player>::iterator player = id_player[id];
-	    std::list<Player>::iterator player2 = player; --player2;
-	    
-	    report_player_up( &*player );
-
-	    Player p1 = *player;
-	    players.erase(player);
-	    player = players.insert(player2,p1);	// insert player before player 2
-    
-	    id_player[p1.id] = player;
-	    return true;
-	  }
-	}
-      }
-    }
-    if( mode == mode_client )
-    {
-      if( (state == begin) || (state == handshake) || (state == request_player) )
-      {
-	write_message_type( *client, msg_player_up );
-	write_int( *client, id );
-	return true;
-      }
-    }
-    return false;
-  }
-
-  bool Network_Manager::player_down( int id )
-  {
-    if( mode == mode_server )
-    {
-      if( (state == begin) || (state == is_ready) )
-      {
-	if( id_player.find(id) != id_player.end() )
-	{
-	  if( id_player[ id ] != --players.end() ) 
-	  {
-	    std::list<Player>::iterator player = id_player[id];
-	    std::list<Player>::iterator player2 = player; ++player2;
-	    
-	    report_player_down( &*player );
-
-	    Player p2 = *player2;
-	    players.erase(player2);
-	    player2 = players.insert(player,p2); // insert player 2 before player
-    
-	    id_player[p2.id] = player2;
-	    return true;
-	  }
-	}
-      }
-    }
-    if( mode == mode_client )
-    {
-      if( (state == begin) || (state == handshake) || (state == request_player) )
-      {
-	write_message_type( *client, msg_player_down );
-	write_int( *client, id );
-	return true;
-      }
-    }
-    return false;
-  }
-
-  bool Network_Manager::change_ruleset( Ruleset::Ruleset_Type type, Ruleset &new_ruleset )
-  {
-    if( mode == mode_server )
-    {
-      ruleset_type = type;
-      delete ruleset;
-      ruleset = new_ruleset.clone();
-      report_ruleset_change();
-      return true;
-    }
-    if( mode == mode_client )
-    {
-      write_message_type( *client, msg_ruleset );
-      write_int( *client, type );
-      if( type == Ruleset::custom )
-      {
-        write_ruleset( *client, new_ruleset );
-      }
-      return true;
-    }
-    return false;
-  }
-
-  bool Network_Manager::ready()
-  {
-    if( mode == mode_server )
-    {
-      if( state == begin )
-      {
-	state = is_ready;
-	check_state();
-	return true;
-      }
-    }
-    else
-    {
-      if( mode == mode_client )
-      {
-	if( state == handshake )
-	{
-	  state = is_ready;
-	  write_message_type( *client, msg_ready );
-	  return true;
-	}
-      }
-    }
-    return false;
   }
 
   // Player_Input functions
@@ -556,6 +571,7 @@ namespace holtz
 
     return wait_for_event;
   }
+
   Sequence Network_Manager::get_move()
   {
     assert( state == move_received );
@@ -565,6 +581,11 @@ namespace holtz
 
     state = game_started;
     return sequence;
+  }
+
+  long Network_Manager::get_used_time()
+  {
+    return 1;			// !!! measure time
   }
 
   // Player_Output functions
@@ -833,11 +854,9 @@ namespace holtz
 
 	    std::list<Player>::iterator p = own_players.insert(own_players.end(), player);
 	    id_own_player[id] = p;
-	    // report that player was denied
-	    if( gui_connected )
-	    {
-	      game_window->get_frame().SetStatusText(_("Player added successfully"));
-	    }
+
+	    // report that player was accepted
+	    ui_manager.show_status_text( _("Player added successfully") );
 	  }
 	}
       }
@@ -851,11 +870,7 @@ namespace holtz
 	  {
 	    state = handshake;
 	    // report that player was denied
-	    if( gui_connected )
-	    {
-	      wxMessageBox(_("Adding of Player denied!"), _("Add failed"), wxOK | wxICON_ERROR, 
-			   game_window);
-	    }
+	    ui_manager.report_error( _("Adding of Player denied!"), _("Add failed") );
 	  }
 	}
       }
@@ -920,7 +935,7 @@ namespace holtz
 	    // if client is responsable for player
 	    if( id_client[id]->socket == &sock )
 	    {
-	      remove_player( id );
+	      remove_player( *id_player[id] );
 	    }
 	    else
 	    {
@@ -953,7 +968,7 @@ namespace holtz
 	    // if client is responsable for player
 	    if( id_client[id]->socket == &sock )
 	    {
-	      player_up( id );
+	      player_up( *id_player[id] );
 	    }
 	    else
 	    {
@@ -990,7 +1005,7 @@ namespace holtz
 	    // if client is responsable for player
 	    if( id_client[id]->socket == &sock )
 	    {
-	      player_down( id );
+	      player_down( *id_player[id] );
 	    }
 	    else
 	    {
@@ -1024,8 +1039,8 @@ namespace holtz
 	  if( (state == begin) || (state == handshake) || (state == request_player) || 
 	      (state == is_ready) )
 	  {
-	    if( player_handler )
-	      player_handler->player_change_denied();
+	    if( display_handler )
+	      display_handler->player_change_denied();
 	  }
 	}
       }
@@ -1049,35 +1064,27 @@ namespace holtz
 	      if( player.host == "" ) // is player hosted by server?
 	      {
 		wxIPV4address adr;
-		sock.GetPeer( adr );      
+		sock.GetPeer( adr );
 		player.host = wxstr_to_str(adr.Hostname());
 	      }
 
 	      if( id_own_player.find(player.id) != id_own_player.end() )
 	      {
-		if( gui_connected )
-		{
-		  Player_Input *input;
-		  if( player.type == Player::ai )
-		    input = &game_window->get_ai_handler();
-		  else
-		    input = &game_window->get_mouse_handler();
+		Player_Input *input;
+		if( player.type == Player::ai )
+		  input = game_manager.get_player_ai();
+		else
+		  input = ui_manager.get_user_input();
 		  
-		  player.input = input;
-		  player.host = "";
+		player.input = input;
+		player.host = "";
 		  
-		  std::list<Player_Output*> outlist;
-		  outlist.push_back(this);
-		  player.outputs = outlist;
-		}
+		std::list<Player_Output*> outlist;
+		outlist.push_back(this);
+		player.outputs = outlist;
 	      }
 	      players.push_back( player );
 	    }
-
-	    if( gui_connected )
-	      game_window->new_game( players, *ruleset );
-	    else
-	      game.players = players;
 
 	    write_message_type( sock, msg_player_setup_ack );
 	  }
@@ -1130,117 +1137,59 @@ namespace holtz
 	}
       }
       break;
-      case msg_ruleset:
+      case msg_board:
       {
-	Ruleset::Ruleset_Type new_ruleset_type = static_cast<Ruleset::Ruleset_Type>(read_int( sock ));
-	switch( new_ruleset_type )
+	Game new_game = read_board( sock );
+	if( mode == mode_server )
 	{
-	  case Ruleset::custom:
-	  case Ruleset::standard: 
-	  case Ruleset::tournament:
+	  if( (state == begin) || (state == is_ready) )
 	  {
-	    Ruleset *new_ruleset = 0;
-	    if( new_ruleset_type == Ruleset::custom )
+	    Client &c = clients[&sock];
+	    if( c.socket )	// is it a connected client?
 	    {
-	      // read custom ruleset in any case
-	      new_ruleset = read_ruleset( sock );
-	    }
+	      wxIPV4address host;
+	      sock.GetPeer(host);
 
-	    if( mode == mode_server )
-	    {
-	      if( (state == begin) || (state == is_ready) )
+	      if( display_handler )
 	      {
-		Client &c = clients[&sock];
-		if( c.socket )	// is it a connected client?
+		if( display_handler->ask_change_board( new_game, host.Hostname() ) )
 		{
-		  wxIPV4address host;
-		  sock.GetPeer(host);
-		  wxString ruleset_name;
-		  switch( new_ruleset_type )
-		  {
-		    case Ruleset::standard: 
-		      ruleset_name = _("Standard Rules"); 
-		      new_ruleset = new Standard_Ruleset();
-		      break;
-		    case Ruleset::tournament: 
-		      ruleset_name = _("Tournaments Rules"); 
-		      new_ruleset = new Tournament_Ruleset();
-		      break;
-		    case Ruleset::custom: 
-		      //new_ruleset = read_ruleset( sock ); already read
-		      ruleset_name = _("custom rules");
-		      switch( new_ruleset->board.board_type )
-		      {
-			case Board::s37_rings: ruleset_name = _("custom rules on a 37 ring board"); break;
-			case Board::s40_rings: ruleset_name = _("custom rules on a 40 ring board"); break;
-			case Board::s44_rings: ruleset_name = _("custom rules on a 44 ring board"); break;
-			case Board::s48_rings: ruleset_name = _("custom rules on a 48 ring board"); break;
-			case Board::s61_rings: ruleset_name = _("custom rules on a 61 ring board"); break;
-			case Board::custom:    ruleset_name = _("custom rules"); break;
-		      }
-		      break;
-		  }
-		  wxString msg;
-		  msg.Printf( _("Host %s requests to change ruleset to %s.\nAllow Change of Ruleset?"), 
-			      host.Hostname().c_str(), ruleset_name.c_str() );
-		  if( wxMessageBox( msg, _("Ruleset"), wxYES | wxNO | wxICON_QUESTION ) == wxYES )
-		  {
-		    change_ruleset( new_ruleset_type, *new_ruleset );
-		  }
-		  else
-		  {
-		    write_message_type( sock, msg_ruleset_deny );
-		    report_ruleset_change();
-		  }
+		  ask_change_board( new_game );
 		}
 		else
 		{
-		  // unknown client...
-		  clients.erase( &sock ); // erase entry if just added
+		  write_message_type( sock, msg_board_deny );
+		  report_ruleset_change();
 		}
 	      }
 	    }
-	    if( mode == mode_client )
+	    else
 	    {
-	      if( (state == begin) || (state == handshake) || (state == request_player) || 
-		  (state == is_ready) )
-	      {
-		ruleset_type = new_ruleset_type;
-		delete ruleset;
-		switch( new_ruleset_type )
-		{
-		  case Ruleset::standard: 
-		    ruleset = new Standard_Ruleset();
-		    break;
-		  case Ruleset::tournament:
-		    ruleset = new Tournament_Ruleset();
-		    break;
-		  case Ruleset::custom:
-		    ruleset = new_ruleset;
-		    new_ruleset = 0;
-		    break;
-		}
-		report_ruleset_change();
-	      }
+	      // unknown client...
+	      clients.erase( &sock ); // erase entry if just added
 	    }
-	    if( new_ruleset != 0 )
-	      delete new_ruleset;
 	  }
-	  break;
-	  default:			// unknown ruleset type
-	  break;
+	}
+	if( mode == mode_client )
+	{
+	  if( (state == begin) || (state == handshake) || (state == request_player) || 
+	      (state == is_ready) )
+	  {
+	    game = new_game;
+	    report_ruleset_change();
+	  }
 	}
       }
       break;
-      case msg_ruleset_deny:
+      case msg_board_deny:
       {
 	if( mode == mode_client )
 	{
 	  if( (state == begin) || (state == handshake) || (state == request_player) || 
 	      (state == is_ready) )
 	  {
-	    if( player_handler )
-	      player_handler->ruleset_change_denied();
+	    if( display_handler )
+	      display_handler->board_change_denied();
 	  }
 	}
       }
@@ -1275,7 +1224,8 @@ namespace holtz
 	    {
 	      if( c.state == game_started )
 	      {
-		if( id_client[game.current_player->id] == &c ) // is the client responsible for player ?
+		if( id_client[game_manager.get_game().current_player->id] == &c ) 
+				// is the client responsible for player ?
 		{
 		  // read move
 		  sequence = read_move( sock );
@@ -1296,13 +1246,8 @@ namespace holtz
 		      }
 		    }
 		  }
-		  if( gui_connected )
-		  {
-		    state = wait_for_move;
-		    game_window->do_move_slowly( sequence, this, ANIMATION_DONE );
-		  }
-		  else
-		    continue_game();
+		  state = wait_for_move;
+		  ui_manager.do_move_slowly( sequence, this, ANIMATION_DONE );
 		}
 	      }
 	    }
@@ -1324,13 +1269,7 @@ namespace holtz
 	      sequence = read_move( sock );
 	      state = move_received;
 	    
-	      if( gui_connected )
-	      {
-		state = wait_for_move;
-		game_window->do_move_slowly( sequence, this, ANIMATION_DONE );
-	      }
-	      else
-		continue_game();
+	      ui_manager.do_move_slowly( sequence, this, ANIMATION_DONE );
 	    }
 	  }
 	}
@@ -1359,11 +1298,12 @@ namespace holtz
 	}
 	if( mode == mode_client )
 	{
-	  wxMessageBox( _("Server disconnected"), _("Disconnection"), wxOK | wxICON_ERROR, game_window );
+	  ui_manager.report_error( _("Server disconnected"), _("Disconnection") );
+
 	  if( (state == begin) || (state == handshake) || (state == request_player) )
 	  {
-	    if( player_handler )
-	      player_handler->aborted();
+	    if( display_handler )
+	      display_handler->aborted();
 	  }
 	}
 	// in the future network players should be overtaken by AIs
@@ -1376,7 +1316,13 @@ namespace holtz
 	{
 	  wxIPV4address host;
 	  sock.GetPeer(host);
-	  game_window->ask_new_game( host.Hostname() );
+	  if( display_handler )
+	  {
+	    if( display_handler->ask_new_game( host.Hostname() ) )
+	    {
+	      display_handler->new_game(); // Attention: this opens a dialog which might destroy this object
+	    }
+	  }
 	}
       }
       break;
@@ -1526,7 +1472,7 @@ namespace holtz
 		}
 	      }
 	    }
-
+	    /*
 	    // insert players in game
 	    if( gui_connected )
 	      game_window->new_game( players, *ruleset );
@@ -1537,6 +1483,7 @@ namespace holtz
 	    {
 	      continue_game();	// don't wait for answers on player_setup request
 	    }
+	    */
 	  }
 	}
       }
@@ -1621,8 +1568,8 @@ namespace holtz
       case msg_player_change_deny: std::cerr << "player_change_deny "; break;
       case msg_player_setup: std::cerr << "player_setup "; break; 
       case msg_player_setup_ack: std::cerr << "player_setup_ack "; break;
-      case msg_ruleset: std::cerr << "ruleset "; break;
-      case msg_ruleset_deny: std::cerr << "ruleset_deny "; break;
+      case msg_board: std::cerr << "ruleset "; break;
+      case msg_board_deny: std::cerr << "ruleset_deny "; break;
       case msg_start_game: std::cerr << "start_game "; break;
       case msg_report_move: std::cerr << "report_move "; break;
       case msg_undo_request: std::cerr << "undo_request "; break;
@@ -1660,8 +1607,8 @@ namespace holtz
       case msg_player_change_deny: std::cerr << "player_change_deny "; break;
       case msg_player_setup: std::cerr << "player_setup "; break; 
       case msg_player_setup_ack: std::cerr << "player_setup_ack "; break;
-      case msg_ruleset: std::cerr << "ruleset "; break;
-      case msg_ruleset_deny: std::cerr << "ruleset_deny "; break;
+      case msg_board: std::cerr << "ruleset "; break;
+      case msg_board_deny: std::cerr << "ruleset_deny "; break;
       case msg_start_game: std::cerr << "start_game "; break;
       case msg_report_move: std::cerr << "report_move "; break;
       case msg_undo_request: std::cerr << "undo_request "; break;
@@ -1714,7 +1661,8 @@ namespace holtz
 	break;
     }
 
-    return Player( name, id, this, Player::no_output, host, type );
+    std::list<Player_Output*> outputs; outputs.push_back(this);
+    return Player( name, id, this, outputs, host, type );
   }
   
   void Network_Manager::write_move( wxSocketBase& sock, Sequence sequence )
@@ -1767,7 +1715,7 @@ namespace holtz
     return seq;
   }
 
-  void Network_Manager::write_board( wxSocketBase& sock, Board board )
+  void Network_Manager::write_board_base( wxSocketBase& sock, Board board )
   {
     write_int( sock, int(board.board_type) );
     if( board.board_type == Board::custom )
@@ -1776,7 +1724,7 @@ namespace holtz
     }
   }
 
-  Board Network_Manager::read_board( wxSocketBase& sock )
+  Board Network_Manager::read_board_base( wxSocketBase& sock )
   {
     int i = read_int( sock );
     
@@ -1809,8 +1757,11 @@ namespace holtz
 		      Board::s61_rings );
       case Board::custom:
 	//read board fields
-	break;
+	//break;
       default:
+#ifndef __WXMSW__
+	std::cerr << "!!! Wrong board type !!!" << std::endl;
+#endif
 	// shouldn't happen
 	break;
     }
@@ -1884,63 +1835,42 @@ namespace holtz
     return 0;
   }
 
-  void Network_Manager::write_ruleset( wxSocketBase& sock, Ruleset &ruleset )
+  void Network_Manager::write_ruleset( wxSocketBase& sock, const Ruleset &ruleset )
   {
-    write_board( sock, ruleset.board );
+    write_board_base( sock, ruleset.board );
     write_common_stones( sock, ruleset.common_stones );
     write_win_condition( sock, ruleset.win_condition );
   }
 
   Ruleset *Network_Manager::read_ruleset( wxSocketBase& sock )
   {
-    Board board			 = read_board( sock );
+    Board board			 = read_board_base( sock );
     Common_Stones common_stones  = read_common_stones( sock );
     Win_Condition *win_condition = read_win_condition( sock );
 
     return new Custom_Ruleset( board, common_stones, win_condition, 
 			       new Standard_Coordinate_Translator(board) );
   }
+
+  void Network_Manager::write_board( wxSocketBase& sock, const Game &game )
+  {
+    write_ruleset( sock, *game.ruleset );
+    // write_moves
+  }
+
+  Game Network_Manager::read_board( wxSocketBase& sock )
+  {
+    Ruleset *ruleset = read_ruleset( sock );
+    Game game( *ruleset );
+    delete ruleset;
+    // read_moves
+
+    return game;
+  }
   
   void Network_Manager::continue_game()
   {
-    if( gui_connected )
-      game_window->continue_game();
-    else
-    {
-      bool go_on = true;
-      while(go_on)
-      {
-	Game::Game_State state;
-
-	state = game.continue_game(); // might throw an exception
-
-	Player *winner;
-	switch( state )
-	{
-	  case Game::finished:
-	    winner = game.get_winner();
-	    assert( winner != 0 );
-
-	    /*
-	      wxMessageBox( ("And the Winner is: " + winner->name).c_str(), 
-	      "Winner", wxOK | wxICON_INFORMATION, this);
-	    */
-
-	    go_on = false;
-	    break;
-	  case Game::wait_for_event:
-	    go_on = false;
-	    break;
-	  case Game::next_players_turn:
-	    break;
-	  case Game::interruption_possible:
-	    break;
-	  case Game::wrong_number_of_players:
-	    go_on = false;
-	    break;
-	}
-      }
-    }
+    game_manager.continue_game();
   }
 
   void Network_Manager::report_player_added( Player *player )
@@ -1960,8 +1890,8 @@ namespace holtz
       }
     }
 
-    if( player_handler )
-      player_handler->player_added(*player);
+    if( display_handler )
+      display_handler->player_added(*player);
   }
   void Network_Manager::report_player_removed( Player *player )
   {
@@ -1980,8 +1910,8 @@ namespace holtz
       }
     }
 
-    if( player_handler )
-      player_handler->player_removed(*player);
+    if( display_handler )
+      display_handler->player_removed(*player);
   }
 
   void Network_Manager::report_player_up( Player *player )
@@ -2001,8 +1931,8 @@ namespace holtz
       }
     }
 
-    if( player_handler )
-      player_handler->player_up(*player);
+    if( display_handler )
+      display_handler->player_up(*player);
   }
   void Network_Manager::report_player_down( Player *player )
   {
@@ -2021,8 +1951,8 @@ namespace holtz
       }
     }
 
-    if( player_handler )
-      player_handler->player_down(*player);
+    if( display_handler )
+      display_handler->player_down(*player);
   }
 
   void Network_Manager::report_players( wxSocketBase &sock )
@@ -2049,22 +1979,15 @@ namespace holtz
 	Client &c = client_it->second;
 	if( c.socket )
 	{
-	  write_message_type( *c.socket, msg_ruleset );
-	  write_int( *c.socket, ruleset_type );
-	  if( ruleset_type == Ruleset::custom )
-	  {
-	    write_ruleset( *c.socket, *ruleset );
-	  }
+	  write_message_type( *c.socket, msg_board );
+	  write_board( *c.socket, game );
 	}
       }
     }
 
-    if( player_handler )
+    if( display_handler )
     {
-      if( ruleset_type == Ruleset::custom )
-	player_handler->ruleset_changed( ruleset_type, *ruleset );
-      else
-	player_handler->ruleset_changed( ruleset_type );
+      display_handler->set_board( game );
     }
   }
 

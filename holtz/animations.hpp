@@ -30,6 +30,9 @@ namespace holtz
 
 namespace holtz
 {
+  /*! class Bitmap_Move_Animation
+   *  moves a bitmap continuously over the screen
+   */
   class Bitmap_Move_Animation : public wxTimer
   {
   public:
@@ -63,10 +66,13 @@ namespace holtz
     unsigned current_step;
   };
 
+  /*! class Move_Sequence_Animation
+   *  shows a zertz move as animation
+   */
   class Move_Sequence_Animation : public wxEvtHandler
   {
   public:
-    Move_Sequence_Animation( Game_Window & );
+    Move_Sequence_Animation( WX_GUI_Manager &, Game_Window & );
     ~Move_Sequence_Animation();
     
     bool start( Sequence sequence, Game &game, wxEvtHandler *done_handler = 0, int event_id=-1 );
@@ -76,6 +82,7 @@ namespace holtz
     void on_done( wxTimerEvent &event ); // current sub-animation done
     void finish();
 
+    WX_GUI_Manager &gui_manager;
     Game_Window &game_window;
     Bitmap_Move_Animation bitmap_move_animation;
 

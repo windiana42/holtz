@@ -26,43 +26,6 @@
 
 namespace holtz
 {
-  class Game_Window;
-
-  // displays changes in the player setup
-  class Player_Handler
-  {
-  public:
-    virtual void player_added( const Player & ) = 0;
-    virtual void player_removed( const Player & ) = 0;
-    virtual void player_up( const Player & ) = 0;
-    virtual void player_down( const Player & ) = 0;
-    virtual void player_change_denied() = 0;
-    virtual void ruleset_changed( Ruleset::Ruleset_Type ) = 0;
-    virtual void ruleset_changed( Ruleset::Ruleset_Type, Ruleset& ) = 0;
-    virtual void ruleset_change_denied() = 0;
-    virtual void aborted() = 0;
-
-    virtual ~Player_Handler();
-  };
-
-  // manages the setup of players
-  class Player_Setup_Manager
-  {
-  public:
-    virtual void set_player_handler( Player_Handler * ) = 0;
-    virtual void new_game() = 0;
-    virtual void stop_game() = 0;
-    // player commands
-    virtual bool add_player( std::string name, Player::Player_Type, Player::Help_Mode ) = 0;
-    virtual bool remove_player( int id ) = 0;
-    virtual bool player_up( int id ) = 0;
-    virtual bool player_down( int id ) = 0;
-    virtual bool change_ruleset( Ruleset::Ruleset_Type, Ruleset& ) = 0;
-    virtual bool ready() = 0;		// ready with adding players; game may start
-
-    virtual ~Player_Setup_Manager();
-  };
-
   inline std::string wxstr_to_str( const wxString &str )
   {
 #if wxUSE_UNICODE
@@ -80,21 +43,23 @@ namespace holtz
     return str.c_str();
 #endif
   }
+
+  class Game_Window;
+  class WX_GUI_Manager;
 }
+
+#include "manager.hpp"
+#include "network.hpp"
+#include "animations.hpp"
+#include "ai.hpp"
 
 //#include "dialogs.hpp"
 namespace holtz
 {
-  // dialogs.hpp offers:
-  class Network_Clients_Dialog;
-  class Player_Setup_Dialog;
+  // classes defined in dialogs.hpp
+  class Game_Dialog;
   class Settings_Dialog;
-  class Network_Connection_Dialog;
 }
-
-#include "network.hpp"
-#include "animations.hpp"
-#include "ai.hpp"
 
 namespace holtz
 {
@@ -130,16 +95,15 @@ namespace holtz
 
   struct Dimensions
   {
-    int field_x, field_y, field_width, field_height, field_packed_height;
+    int field_x, field_y, field_width, field_height, field_packed_width, field_packed_height;
     int caption_height, stone_offset, board_x_offset, board_y_offset;
     int board_stones_spacing, player_player_spacing, stones_player_spacing;
+    bool rotate_symmetric;
 
     Dimensions();
     Dimensions( char **field_xpm );
     Dimensions( wxConfigBase &config, wxBitmap &bitmap ); // load from configuration
   };
-
-  class Game_Window;
 
   struct Bitmap_Set
   {
@@ -249,7 +213,7 @@ namespace holtz
 		wxFont coord_font = default_font );
     };
 
-    Board_Panel( Settings &settings, Game &, Game_Window &, Bitmap_Handler &, Sequence_Generator* & );
+    Board_Panel( Settings &settings, Game_Manager &, WX_GUI_Manager &, Sequence_Generator* & );
 
     void calc_dimensions();
     void draw( wxDC &dc ) const;
@@ -262,8 +226,8 @@ namespace holtz
   private:
     Settings &settings;
 
-    Game &game;
-    Game_Window &game_window;
+    Game_Manager &game_manager;
+    WX_GUI_Manager &gui_manager;
 
     Bitmap_Handler &bitmap_handler;
     int board_x, board_y;
@@ -284,7 +248,7 @@ namespace holtz
 		int max_stones=10, wxFont stone_font = wxFont(20,wxDECORATIVE,wxNORMAL,wxNORMAL) );
     };
 
-    Stone_Panel( Settings &, Stones &, Game_Window &, Bitmap_Handler &, Sequence_Generator* & );
+    Stone_Panel( Settings &, Stones &, Game_Manager &, WX_GUI_Manager &, Sequence_Generator* & );
 
     void calc_dimensions();
     void draw( wxDC &dc ) const;
@@ -298,7 +262,8 @@ namespace holtz
     Settings &settings;
 
     Stones &stones;
-    Game_Window &game_window;
+    Game_Manager &game_manager;
+    WX_GUI_Manager &gui_manager;
 
     Bitmap_Handler &bitmap_handler;
     Sequence_Generator* &sequence_generator;
@@ -318,7 +283,7 @@ namespace holtz
       static wxFont default_font;
     };
 
-    Player_Panel( Settings &, Player &, Game_Window &, Bitmap_Handler &, Sequence_Generator* & );
+    Player_Panel( Settings &, Player &, Game_Manager &, WX_GUI_Manager &, Sequence_Generator* & );
 
     virtual void on_click( int x, int y ) const;
 
@@ -328,7 +293,8 @@ namespace holtz
     Settings &settings;
 
     Player &player;
-    Game_Window &game_window;
+    Game_Manager &game_manager;
+    WX_GUI_Manager &gui_manager;
 
     Bitmap_Handler &bitmap_handler;
     Sequence_Generator* &sequence_generator;
@@ -357,16 +323,20 @@ namespace holtz
       Settings( const Board_Panel::Settings &board_settings, 
 		const Player_Panel::Settings &player_settings,
 		const Stone_Panel::Settings &common_stone_settings,
-		Arrangement_Type arrangement = arrange_stones_right );
+		Arrangement_Type arrangement = arrange_stones_right,
+		wxString skin_file = "", wxString beep_file = "", bool play_sound = false );
+      Settings();
 
       Board_Panel::Settings  board_settings;
       Player_Panel::Settings player_settings;
       Stone_Panel::Settings  common_stone_settings;
 
       Arrangement_Type arrangement;
+      wxString skin_file, beep_file;
+      bool play_sound;
     };
 
-    Game_Panel( Settings &, Game &, Game_Window &, Bitmap_Handler &, Sequence_Generator* & );
+    Game_Panel( Settings &, Game_Manager &, WX_GUI_Manager &, Sequence_Generator* & );
     ~Game_Panel();
     virtual void calc_dimensions();
 
@@ -382,8 +352,9 @@ namespace holtz
 
     Settings &settings;
 
-    Game &game;
-    Game_Window &game_window;
+    Game_Manager &game_manager;
+    WX_GUI_Manager &gui_manager;
+
     Bitmap_Handler &bitmap_handler;
     Sequence_Generator* &sequence_generator;
 
@@ -394,135 +365,152 @@ namespace holtz
   };
   
   // ============================================================================
-  // frame or window classes
+  // help classes
   // ============================================================================
 
   class Mouse_Handler : public Generic_Mouse_Input
   {
   public:
-    Mouse_Handler( Game &, Game_Window &, Sequence_Generator* & );
+    Mouse_Handler( Game_Manager &, WX_GUI_Manager &, Sequence_Generator* & );
     
     virtual void init_mouse_input();
     virtual void disable_mouse_input();
+    virtual long get_used_time();
   private:
-    Game_Window &game_window;
+    Game_Manager &game_manager;
+    WX_GUI_Manager &gui_manager;
     Sequence_Generator* &sequence_generator_hook; // storage position for access by Mouse event handler
+
+    wxStopWatch stop_watch;
+    long used_time;
 
     AI_Input *ai;		// for giving hints
   };
 
-  class Game_Window : public wxScrolledWindow, public Horizontal_Sizer
+  // ============================================================================
+  // game classes
+  // ============================================================================
+
+  /*! class WX_GUI_Manager
+   *  standard GUI implementation for wxWindows
+   */
+  
+  class WX_GUI_Manager : public Game_UI_Manager, public Horizontal_Sizer
   {
   public:
-    Game_Window( wxFrame *parent_frame, Game & );
-    ~Game_Window();
-    void on_close();
+    WX_GUI_Manager( Game_Manager&, Game_Window & );
+    ~WX_GUI_Manager();
+    virtual void calc_dimensions();
 
+    // interface for game_manager
+    virtual void setup_game_display(); // setup all windows to display game
+    virtual void set_board( const Game &game );
+    virtual void update_board( const Game &game );
+    virtual void report_winner( Player *player );
+    virtual void report_error( wxString msg, wxString caption );
+    virtual void report_information( wxString msg, wxString caption );
+    virtual void reset();
+
+    // interface for giving information to the user
+    virtual void show_user_information( bool visible = true, bool do_refresh = true );
+    virtual void give_hint( AI_Result ai_result );
+    virtual void remove_hint();
+    virtual void allow_user_activity();
+    virtual void stop_user_activity();
+    virtual void do_move_slowly( Sequence sequence, wxEvtHandler *done_handler = 0, 
+				 int event_id=-1 ); // show user how move is done
+    virtual void show_status_text( wxString text ); // shows text in status bar
+    virtual void beep();
+
+    // interface for information access
+    virtual Player_Input *get_user_input();
+
+    // special display manipulation
     void set_mark( int x, int y );
     void draw_mark( wxDC &dc );
-    void show_user_information( bool visible = true, bool do_refresh = true );
-    void give_hint( AI_Result ai_result );
-    void remove_hint();
+    wxColour get_background_colour();
 
-    void setup_new_game();
-    void setup_network_game();
-    void setup_standalone_game();
-    void ask_new_game( wxString host );
-    void reset( const Ruleset &ruleset );
-    void new_game( std::list<Player> players, const Ruleset &ruleset );
-    void continue_game();
-    void stop_game();
-    void allow_user_activity();
-    void stop_user_activity();
+    // change settings
+    void load_settings();
+    void save_settings();
+    bool load_skin( wxString filename ); 
+    bool load_beep( wxString filename );
 
-    void do_move_slowly( Sequence sequence, wxEvtHandler *done_handler = 0, 
-			 int event_id=-1 ); // show user how move is done
-
-    void OnDraw( wxDC &dc );
-    void on_erase_background( wxEraseEvent &event );
-    void on_mouse_event( wxMouseEvent &event );
+    // ui event commands
+    void mouse_click_left( int x, int y );
+    void mouse_click_right( int x, int y );
     void refresh();
 
-    bool load_skin( wxString filename );
-    void set_skin_file( wxString filename );
-    void set_beep_file( wxString filename );
-    void set_play_sound( bool );
-    inline bool is_play_sound() { return play_sound; }
-    void beep();
-
-    inline Game &get_game() { return game; }
-    inline wxFrame &get_frame() { return parent_frame; }
-    inline AI_Input &get_ai_handler() { return ai; }
-    inline Mouse_Handler &get_mouse_handler() { return mouse_handler; }
     inline Bitmap_Handler &get_bitmap_handler() { return bitmap_handler; }
     inline const Game_Panel &get_game_panel() const { return game_panel; }
-    /* only forwarded functions (for compatibility)*/
-    inline const Board_Panel &get_board_panel() const { return game_panel.get_board_panel(); }
-    inline const Stone_Panel &get_stone_panel() const { return game_panel.get_stone_panel(); }
-    inline const std::list<Player_Panel*> &get_player_panels() const 
-    { return game_panel.get_player_panels(); }
-    inline const Player_Panel *get_player_panel( int id ) const { return game_panel.get_player_panel(id); }
+    inline const Game_Panel::Settings &get_game_settings() const { return game_settings; }
+    inline Mouse_Handler &get_mouse_handler() { return mouse_handler; }
+    inline Game_Window &get_game_window() { return game_window; }
   private:
-    wxFrame &parent_frame;
+    friend Game_Manager;
+    Game_Manager &game_manager;
+    Game_Window  &game_window;
+
     Bitmap_Handler bitmap_handler;
     wxFont default_font;
-
     Game_Panel::Settings game_settings;
     Game_Panel game_panel;
-    friend class Display_Setup_Page;	// dialogs.hpp
-
-    Mouse_Handler mouse_handler;
-    AI_Input ai; // artificial inteligence handler for players
-
-    Game &game;
-    Sequence_Generator *sequence_generator; // handles mouse clicks
-    Move_Sequence_Animation *move_animation;
-    AI_Result current_hint;	// move sequence recommented by the AI
-
-    Player_Setup_Manager *player_setup_manager;
-    Network_Clients_Dialog *clients_dialog;      
-    Player_Setup_Dialog *player_dialog;
+    Sequence_Generator *sequence_generator;
+    friend class Settings_Dialog;
 
     int field_mark_x, field_mark_y; // always changing mark
     std::list< std::pair<int,int> > field_mark_positions;  // permanent marks
     std::list< std::pair<int,int> > field_mark2_positions; // also in different color
 
-    wxString skin_file, beep_file;
-    bool play_sound;
+    Move_Sequence_Animation *move_animation;
+    AI_Result current_hint;	// move sequence recommented by the AI
+
+    Mouse_Handler mouse_handler;
+
 #if wxUSE_WAVE
     wxWave sound_beep;
 #endif
+  };
+
+  // ============================================================================
+  // frame or window classes
+  // ============================================================================
+
+  /*! class Game_Window
+   *  window component on which the game is placed
+   */
+
+  class Game_Window : public wxScrolledWindow
+  {
+  public:
+    Game_Window( wxFrame *parent_frame );
+    ~Game_Window();
+    bool on_close();		// return true: really close
+
+    void load_settings();
+
+    void new_game();
+    void settings_dialog();
+
+    void show_status_text( wxString text ); // shows text in status bar
+    void init_scrollbars();
+
+    void OnDraw( wxDC &dc );
+    void on_erase_background( wxEraseEvent &event );
+    void on_mouse_event( wxMouseEvent &event );
+    void refresh();
+    wxDC *get_client_dc();	// must be destroyed
+
+    inline wxFrame &get_frame() { return parent_frame; }
+  private:
+    wxFrame &parent_frame;
+
+    Game_Manager   game_manager;
+    WX_GUI_Manager gui_manager;
+    Game_Dialog    *game_dialog;
 
     // any class wishing to process wxWindows events must use this macro
     DECLARE_EVENT_TABLE();
-  };
-
-  class Standalone_Player_Setup_Manager : public Player_Setup_Manager
-  {
-  public:
-    Standalone_Player_Setup_Manager( Game_Window & );
-    ~Standalone_Player_Setup_Manager();
-
-    virtual void set_player_handler( Player_Handler * );
-    virtual void new_game();
-    virtual void stop_game();
-    // player commands
-    virtual bool add_player( std::string name, Player::Player_Type, Player::Help_Mode );
-    virtual bool remove_player( int id );
-    virtual bool player_up( int id );
-    virtual bool player_down( int id );
-    virtual bool change_ruleset( Ruleset::Ruleset_Type, Ruleset & );
-    virtual bool ready();		// ready with adding players; game may start
-  private:
-    Game_Window &game_window;
-    Player_Handler *player_handler;
-
-    int current_id;
-    std::list<Player> players;
-    std::map<int,std::list<Player>::iterator> id_player; // Table id->player
-
-    Ruleset *ruleset;
-    Ruleset::Ruleset_Type ruleset_type;
   };
 
   // Define a new frame type: this is going to be our main frame
@@ -537,12 +525,11 @@ namespace holtz
     void save_size_and_position();
     wxSize restore_size();
     wxPoint restore_position();
-
+    void load_settings();
+    
     // event handlers (these functions should _not_ be virtual)
     void on_new_game(wxCommandEvent& event);
     void on_standalone_game(wxCommandEvent& event);
-    void on_server(wxCommandEvent& event);
-    void on_client(wxCommandEvent& event);
     void on_network_game(wxCommandEvent& event);
     void on_quit(wxCommandEvent& event);
     void on_settings(wxCommandEvent& event);
@@ -555,8 +542,6 @@ namespace holtz
     void on_close(wxCloseEvent& event);
 
   private:
-    Ruleset *ruleset;
-    Game game;
     Game_Window game_window;
 
     wxMenu *setting_menu;
@@ -577,6 +562,7 @@ namespace holtz
     HOLTZ_NEW_GAME = 100,
     HOLTZ_STANDALONE_GAME,
     HOLTZ_NETWORK_GAME,
+    HOLTZ_LOAD_GAME,
     HOLTZ_SETTINGS,
     HOLTZ_SKIN,
     HOLTZ_BEEP,
@@ -602,6 +588,14 @@ namespace holtz
     DIALOG_APPLY,
     DIALOG_RESTORE,
     DIALOG_SPIN,
+    DIALOG_CHOOSE_DIRECTORY,
+    DIALOG_CHANGE_DIRECTORY,
+    DIALOG_CHOOSE_FILE,
+    DIALOG_CHANGE_FILE,
+    DIALOG_CHOOSE_SKIN_FILE,
+    DIALOG_CHANGE_SKIN_FILE,
+    DIALOG_CHOOSE_BEEP_FILE,
+    DIALOG_CHANGE_BEEP_FILE,
 
     LISTBOX_DCLICK,
 

@@ -34,12 +34,14 @@ namespace holtz
   class Win_Condition;
   class Field_Iterator;
   class Board;
-  class Game;
-  class Sequence;
   class Move;
   class Knock_Out_Move;
   class Set_Move;
   class Remove;
+  class Sequence;
+  class Variant;
+  class Variant_Tree;
+  class Game;
   class Standard_Win_Condition;
   class Standard_Ruleset;
   class No_Output;
@@ -178,6 +180,8 @@ namespace holtz
 
     virtual Player_State determine_move() throw(Exception) = 0;
     virtual Sequence get_move() = 0;
+    virtual long get_used_time() = 0;
+
     virtual ~Player_Input();
   };
 
@@ -198,7 +202,7 @@ namespace holtz
     typedef enum Player_Type{ unknown, user, ai };
     typedef enum Help_Mode{ no_help, show_possible_moves, show_hint };
 
-    Player( std::string name, int id, Player_Input*, std::list<Player_Output*> = no_output,
+    Player( std::string name="", int id=-1, Player_Input *in=0, std::list<Player_Output*> out=no_output,
 	    std::string host="", Player_Type type=unknown, Help_Mode help_mode = no_help );
 
     std::string name; int id;
@@ -313,111 +317,8 @@ namespace holtz
 
     std::vector< std::vector<Field_State_Type> > field; // field[x][y]
     inline Field_State_Type get_field( Field_Pos pos ) { return field[pos.x][pos.y]; }
-    inline int get_x_size() { return field.size(); }
-    inline int get_y_size() { return field[0].size(); }
-  };
-
-  class Win_Condition
-  {
-  public:
-    typedef enum Win_Condition_Type{ standard, tournament, generic, full_custom };
-
-    Win_Condition( Win_Condition_Type type = full_custom );
-    virtual ~Win_Condition();
-
-    virtual bool did_player_win( Game &, Player & ) const = 0;
-    virtual Win_Condition *clone() = 0;
-
-    Win_Condition_Type type;	// is generic win condition with number of white/grey/black/all stones
-  };
-
-  class Coordinate_Translator
-  {
-  public:
-    virtual ~Coordinate_Translator() {}
-
-    virtual std::string get_field_name( Field_Pos pos ) = 0;
-    virtual Field_Pos   get_field_pos ( std::string name ) = 0;
-
-    virtual Coordinate_Translator *clone() = 0;
-  };
-
-  class Ruleset
-  {
-  public:
-    typedef enum Ruleset_Type { standard, tournament, custom };
-    Ruleset( const Ruleset & );
-    Ruleset &operator=( Ruleset & );
-    virtual ~Ruleset();
-    virtual Ruleset *clone() const { return new Ruleset(*this); }
-
-    inline unsigned get_min_players() const { return min_players; }
-    inline unsigned get_max_players() const { return max_players; }
-    inline Coordinate_Translator *get_coordinate_translator() const { return coordinate_translator; }
-    inline void set_win_condition( Win_Condition *wc ) { delete win_condition; win_condition = wc; }
-    inline void set_coordinate_translator( Coordinate_Translator *ct ) 
-    { delete coordinate_translator; coordinate_translator = ct; }
-  public:			// semi public 
-    // win_condition and coordinate translator will be deleted by Ruleset!
-    Ruleset( Ruleset_Type type, Board, Common_Stones, Win_Condition *, Coordinate_Translator *, 
-	     bool undo_possible, unsigned min_players, unsigned max_players ); 
-
-    Ruleset_Type type;
-
-    Board board;
-    Common_Stones common_stones;
-    Win_Condition *win_condition;
-    Coordinate_Translator *coordinate_translator;
-    bool undo_possible;
-    unsigned min_players, max_players;
-
-    friend class Game;
-  };
-
-  class Game
-  {
-  public:
-    typedef enum Game_State{ finished, wait_for_event, next_players_turn, interruption_possible, 
-			     wrong_number_of_players };
-
-    Game( const Ruleset & );
-    Game( Game & );
-    Game &operator=( Game & );
-    ~Game();
-
-    Game_State continue_game() throw(Exception); // start or continue game
-    Player *get_winner();	// returns 0 if no player won
-    void reset_game();
-    void reset_game( const Ruleset & );
-
-    // init functions
-    bool add_player( const Player & ); // true: enough players
-    void remove_players();
-    void next_player();		// next player is current player
-    void prev_player();		// prev player is current player
-
-    inline unsigned get_min_players() { return ruleset->min_players; }
-    inline unsigned get_max_players() { return ruleset->max_players; }
-
-    void copy_player_times( Game &from ); // number of players must be the same
-  public:
-    // public: for internal usage (friend might be used instead)
-    std::list<Player> players;
-
-    std::list<Player>::iterator current_player;
-
-    Ruleset *ruleset;
-    Board board;
-    Stones common_stones;
-    Win_Condition *win_condition;
-    Coordinate_Translator *coordinate_translator;
-    bool undo_possible;
-
-    Game *save_game;		// shadows the game to avoid corruption by input handlers
-
-    Ref_Counter *ref_counter;	// reference counting because of ruleset pointer
-  private:
-    void remove_filled_areas();
+    inline int get_x_size() const { return field.size(); }
+    inline int get_y_size() const { return field[0].size(); }
   };
 
   class Move
@@ -545,7 +446,8 @@ namespace holtz
     std::ostream &output( std::ostream & ) const;
     std::istream &input( std::istream & );
 
-    bool add_move( Game&, Move * );	// true: adding move ok
+    void add_move( Move * );		// add move unchecked
+    bool add_move( Game&, Move * );	// true: adding move ok (only relative check)
     Move *get_last_move();
     void undo_last_move( Game & );	// calls undo for last move and removes it
     void clear();
@@ -565,6 +467,166 @@ namespace holtz
   inline std::istream &operator>>( std::istream &is, Sequence &s )
   { return s.input(is); }
 
+  class Variant
+  {
+  public:
+    Variant( std::list<Player>::iterator current_player, const Sequence &, Variant *prev = 0 );
+    ~Variant();
+
+    Variant *add_variant( std::list<Player>::iterator current_player, const Sequence & );
+    bool is_prev( Variant * );	// checks all previous variants
+
+    std::list<Player>::iterator current_player;
+    Sequence move_sequence;
+
+    Variant *prev;
+    std::list<Variant*> variants;
+  private:
+    friend Variant_Tree;
+    Variant();			// for root variant
+  };
+
+  class Variant_Tree
+  {
+  public:
+    Variant_Tree();
+    ~Variant_Tree();
+
+    inline bool is_first() { return current_variant == root; }
+    bool remove_subtree( Variant * );
+
+    inline Variant *get_current_variant() { return current_variant; }
+    inline Variant *get_root_variant()    { return root; }
+  private:
+    friend Game;
+    void add_in_current_variant( std::list<Player>::iterator current_player, const Sequence & );
+    void move_a_variant_back();
+    
+    Variant *root;
+    Variant *current_variant;
+  };
+
+  class Win_Condition
+  {
+  public:
+    typedef enum Win_Condition_Type{ standard, tournament, generic, full_custom };
+
+    Win_Condition( Win_Condition_Type type = full_custom );
+    virtual ~Win_Condition();
+
+    virtual bool did_player_win( Game &, Player & ) const = 0;
+    virtual Win_Condition *clone() = 0;
+
+    Win_Condition_Type type;	// is generic win condition with number of white/grey/black/all stones
+  };
+
+  class Coordinate_Translator
+  {
+  public:
+    virtual ~Coordinate_Translator() {}
+
+    virtual std::string get_field_name( Field_Pos pos ) = 0;
+    virtual Field_Pos   get_field_pos ( std::string name ) = 0;
+
+    virtual Coordinate_Translator *clone() = 0;
+  };
+
+  class Ruleset
+  {
+  public:
+    typedef enum Ruleset_Type { standard, tournament, custom };
+    Ruleset( const Ruleset & );
+    Ruleset &operator=( Ruleset & );
+    virtual ~Ruleset();
+    virtual Ruleset *clone() const { return new Ruleset(*this); }
+
+    inline Ruleset_Type get_type() const { return type; }
+    inline unsigned get_min_players() const { return min_players; }
+    inline unsigned get_max_players() const { return max_players; }
+    inline Coordinate_Translator *get_coordinate_translator() const { return coordinate_translator; }
+    inline void set_win_condition( Win_Condition *wc ) { delete win_condition; win_condition = wc; }
+    inline void set_coordinate_translator( Coordinate_Translator *ct ) 
+    { delete coordinate_translator; coordinate_translator = ct; }
+  public:			// semi public 
+    // win_condition and coordinate translator will be deleted by Ruleset!
+    Ruleset( Ruleset_Type type, Board, Common_Stones, Win_Condition *, Coordinate_Translator *, 
+	     bool undo_possible, unsigned min_players, unsigned max_players ); 
+
+    Ruleset_Type type;
+
+    Board board;
+    Common_Stones common_stones;
+    Win_Condition *win_condition;
+    Coordinate_Translator *coordinate_translator;
+    bool undo_possible;
+    unsigned min_players, max_players;
+
+    friend class Game;
+  };
+
+  class Game
+  {
+  public:
+    typedef enum Game_State{ finished, wait_for_event, next_players_turn, interruption_possible, 
+			     wrong_number_of_players };
+
+    Game( const Ruleset & );
+    Game( const Game & );
+    Game &operator=( const Game & );
+    ~Game();
+
+    Game_State continue_game() throw(Exception); // start or continue game
+    void stop_game();		// stop game to allow changing the position with do_move and undo_move
+    Player *get_winner();	// returns 0 if no player won
+    void reset_game();
+    void reset_game( const Ruleset & );
+
+    // init functions
+    bool set_players( const std::list<Player> & ); // true: right number of players
+    bool add_player( const Player & ); // true: right number of players
+    void remove_players();
+
+    void do_move( const Sequence & );   // does move and changes current player
+    bool undo_move();		// undoes move and changes current player
+    //void go_to_variant( Variant * );
+
+    inline unsigned get_min_players() { return ruleset->min_players; }
+    inline unsigned get_max_players() { return ruleset->max_players; }
+
+    void copy_player_times( Game &from ); // number of players must be the same
+  public:
+    // public: for internal usage (friend might be used instead)
+    std::list<Player> players;
+
+    std::list<Player>::iterator current_player;
+    std::list<Player>::iterator last_player;
+
+    Ruleset *ruleset;
+    Board board;
+    Stones common_stones;
+    Win_Condition *win_condition;
+    Coordinate_Translator *coordinate_translator;
+    bool undo_possible;
+
+    Variant_Tree variant_tree;
+
+    Game *save_game;		// shadows the game to avoid corruption by input handlers
+
+    Ref_Counter *ref_counter;	// reference counting because of ruleset pointer
+
+  public:
+    // use this functions only of you use Move::do_move before
+    // use Game::do_move otherwise
+    bool next_player();		// next player is current player (players may be skiped)
+				// call next_player after Sequence::do_move
+    bool prev_player( std::list<Player>::iterator prev_last_player );		
+				// prev player is current player prev_last_player can't be determined
+				// automatically
+  private:
+    void remove_filled_areas();
+  };
+
+
   class Standard_Coordinate_Translator : public Coordinate_Translator
   {
   public:
@@ -582,7 +644,19 @@ namespace holtz
   {
   public:
     virtual std::string encode( Sequence ) = 0;
-    virtual Sequence    decode( std::string ) = 0;
+    virtual Sequence    decode( std::istream& ) = 0;
+  };
+
+  class Standard_Move_Translator : public Move_Translator
+  {
+  public:
+    Standard_Move_Translator( Coordinate_Translator *, Board * );
+
+    virtual std::string encode( Sequence );
+    virtual Sequence    decode( std::istream& );
+  private:
+    Coordinate_Translator *coordinate_translator;
+    Board *board;
   };
   
   class Generic_Win_Condition : public Win_Condition
@@ -729,7 +803,6 @@ namespace holtz
 
     Game &game;
   };
-
 }
 
 #endif
