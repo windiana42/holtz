@@ -1,0 +1,23 @@
+Die zwei Spieler machen abwechselnd einen Zug. Es gibt zwei Arten von Zügen:
+1) - eine Kugel vom Vorrat (unten) nehmen und auf das Brett setzten,
+   - danach soweit möglich ein leeres schwarzes Feld wegnehmen
+     Es können nur Felder weggenommen werden, die nach außen geschoben
+     werden können, ohne dass andere Felder verrückt werden müssen
+2) - Eine Kugel durch überspringen (XxO) -> (OOX) [O ist leeres Feld] schlagen
+   - Wenn möglich mit der hüpfenden Kugel weiterschlagen
+
+Wenn man schlagen kann, dann muss man schlagen und zwar so weit wie 
+möglich. Geschlagene Kugeln gehören einem.
+
+Ziel des Spiels:
+3 Weiße Kugeln, 4 Graue, 5 Schwarze oder je 2 Kugeln von allen Farben
+
+Sonderregeln:
+- Wenn man kein Feld wegnehmen kann, muss man es auch nicht.
+- Sind nach einem Zug isolierte Bereiche da, bei denen alle Felder 
+  besetzt sind, so bekommt der Spieler all die Kugeln
+- ich hoffe mal ich hab keine vergessen
+
+Turnier Regeln:
+- Es gibt 6 Weiße Kugeln, 8 Graue und 10 Schwarze Kugeln
+- Ziel: 4 Weiße Kugeln, 5 Graue, 6 Schwarze oder je 3 Kugeln von allen Farben

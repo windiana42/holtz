@@ -1,0 +1,2 @@
+icon ICON "holtz.ico"
+#include <wx/msw/wx.rc>
