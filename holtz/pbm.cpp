@@ -51,31 +51,83 @@ namespace holtz
 
     std::string str; 
 
+    bool ok = false, new_game = false;
     is >> str;
-    do				// search for "Summary of"
+    while( is )
     {
-      while( str != "Summary" )
+      // search for "Summary of Zertz Board <board_num>"
+      if( str == "Summary" )
       {
-	if( !is )		// eof?
+	is >> str;
+	if( str == "of" )
 	{
 #ifndef __WXMSW__
-	  std::cout << "last string read: \"" << str << "\""<< std::endl;
+	  std::cout << "  \"Summary of\" found" << std::endl;
 #endif
-	  return invalid;
+
+	  is >> str; 
+	  if( str == "Zertz" )
+	  {
+	    is >> str; 
+	    if( str == "Board" )
+	    {
+	      is >> ret.id;
+	      ok = true;
+	      break;
+	    }
+	  }
 	}
-
-	is >> str;
       }
-      is >> str;
-    }while( str != "of" );
-
+      // check for "A new Zertz board (<board_num>)"
+      else if( str == "A" )
+      {
 #ifndef __WXMSW__
-    std::cout << "  \"Summary of\" found" << std::endl;
+	std::cout << "  \"A\" found" << std::endl;
 #endif
+	is >> str;
+	if( str == "new" )
+	{
+	  is >> str;
+	  if( str == "Zertz" )
+	  {
+	    is >> str;
+	    if( str == "board" )
+	    {
+#ifndef __WXMSW__
+	      std::cout << "  \"A new Zertz board\" found" << std::endl;
+#endif
+	      char c;
+	      is >> c;
+	      if( c == '(' )
+	      {
+		is >> ret.id;
+		if( ret.id > 0 )
+		{
+		  is >> c;
+		  if( c == ')' )
+		  {
+		    new_game = true;
+		    ok = true;
+		    break;
+		  }
+		}
+	      }
+	    }
+	  }
+	}
+      }
+      else
+	is >> str;
+    }
 
-    is >> str; if( str != "Zertz" ) return invalid;
-    is >> str; if( str != "Board" ) return invalid;
-    is >> ret.id; if( ret.id < 0  ) return invalid;
+    if( !ok )
+    {
+#ifndef __WXMSW__
+      std::cout << "last string read: \"" << str << "\""<< std::endl;
+#endif
+      return invalid;
+    }
+
     is >> str;
     do				// search for "Player 2"
     {
@@ -94,10 +146,21 @@ namespace holtz
     // get player names
     is >> ret.player1;
     is >> ret.player2;
-    is >> ret.from;
 
-    int move_num = ret.from;
-    for( int current_move_num = ret.from; ; ++current_move_num )
+    if( new_game )		// new game
+    {
+      ret.from = 0;
+      ret.to = 0;
+      return ret;
+    }
+
+    is >> ret.from;
+    int current_move_num = ret.from;
+    if( ret.from == 1 )		// add the virtual move with number 0
+      ret.from = 0;
+
+    int move_num;
+    for( ; ; ++current_move_num )
     {
       char next;
       // dump move
@@ -146,45 +209,90 @@ namespace holtz
   {
     std::string str; int board_num;
 
+    bool ok = false;
     is >> str;
-    do				// search for "Summary of"
+    while( is )
     {
-      while( str != "Summary" )
+      // search for "Summary of Zertz Board <board_num>"
+      if( str == "Summary" )
       {
-	if( !is )		// eof?
+	is >> str;
+	if( str == "of" )
 	{
 #ifndef __WXMSW__
-	  std::cout << "last string read: \"" << str << "\""<< std::endl;
+	  std::cout << "  \"Summary of\" found" << std::endl;
 #endif
-	  return -1;
+
+	  is >> str; 
+	  if( str == "Zertz" )
+	  {
+	    is >> str; 
+	    if( str == "Board" )
+	    {
+	      is >> board_num;
+	      ok = true;
+	      break;
+	    }
+	  }
 	}
-
-	is >> str;
       }
-      is >> str;
-    }while( str != "of" );
-
-#ifndef __WXMSW__
-    std::cout << "  \"Summary of\" found" << std::endl;
-#endif
-
-    is >> str; 
-    if( str == "Zertz" )
-    {
-      if( from == 1 )		// if this is the first call of load_game setup a new game
+      // check for "A new Zertz board (<board_num>)"
+      else if( str == "A" )
       {
-	Ruleset *ruleset = new Tournament_Ruleset();
-	ruleset->min_players = 2;	// exact 2 players
-	ruleset->max_players = 2;	// exact 2 players
-	game.reset_game( *ruleset );
-	delete ruleset;
+#ifndef __WXMSW__
+	std::cout << "  \"A\" found" << std::endl;
+#endif
+	is >> str;
+	if( str == "new" )
+	{
+	  is >> str;
+	  if( str == "Zertz" )
+	  {
+	    is >> str;
+	    if( str == "board" )
+	    {
+#ifndef __WXMSW__
+	      std::cout << "  \"A new Zertz board\" found" << std::endl;
+#endif
+	      char c;
+	      is >> c;
+	      if( c == '(' )
+	      {
+		is >> board_num;
+		if( board_num > 0 )
+		{
+		  is >> c;
+		  if( c == ')' )
+		  {
+		    ok = true;
+		    break;
+		  }
+		}
+	      }
+	    }
+	  }
+	}
       }
+      else
+	is >> str;
     }
-    else
-      return -1;
 
-    is >> str; if( str != "Board" ) return -1;
-    is >> board_num;
+    if( !ok )
+    {
+#ifndef __WXMSW__
+      std::cout << "last string read: \"" << str << "\""<< std::endl;
+#endif
+      return -1;
+    }
+
+    if( from == 0 )		// if this is the first call of load_game setup a new game
+    {
+      Ruleset *ruleset = new Tournament_Ruleset();
+      ruleset->min_players = 2;	// exact 2 players
+      ruleset->max_players = 2;	// exact 2 players
+      game.reset_game( *ruleset );
+      delete ruleset;
+    }
 
     is >> str;
     do				// search for "Player 2"
@@ -213,7 +321,7 @@ namespace holtz
     Standard_Move_Translator move_translator( game.ruleset->coordinate_translator, &game.board );
 
     int num_moves_read = 0;
-    for( int current_move_num = from; (current_move_num < to) || (to < 0); ++current_move_num )
+    for( int current_move_num = ((from==0)?1:from); (current_move_num < to) || (to < 0); ++current_move_num )
     {
       int move_num;
       Sequence sequence;
