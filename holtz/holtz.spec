@@ -2,7 +2,7 @@
 %define  rel     %{?CUSTOM_RELEASE} %{!?CUSTOM_RELEASE:%RELEASE}
 
 Name: holtz
-Version: 1.1.9
+Version: 1.1.10
 Release: %rel
 
 Summary: Holtz is a think game similar sophisticated than chess
