@@ -1,5 +1,5 @@
-- AI multithreaded
-- AI permutierte Suche
-- AI Schwierigkeitsstufe konfigurierbar
-- Show Hint
-- Tabindex der Dialoge
+- rotate board
+- PBM support
+- customize board (X-Ring-Versions)
+- customize AI
+- zabindex of dialogs
