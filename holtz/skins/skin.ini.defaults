@@ -1,0 +1,18 @@
+# start of field within bitmap
+field_x=0
+field_y=0
+# bitmap dimensions
+field_width=<Bitmapbreite>
+field_height=<Bitmaphöhe>
+# in hexagonal structure the bitmaps may be placed closer
+field_packed_height=field_height*cos(30 deg)
+# this is only used for rotate symmetric bitmaps on a rotated board
+field_packed_width=field_width*cos(30 deg)
+# some spacings
+caption_height=30
+stone_offset=20
+board_stones_spacing=30
+player_player_spacing=10
+stones_player_spacing=10
+# rotate symmetric bitmaps may be arranged on a rotated hexagonal structure without rotating the bitmap
+rotate_symmetric=false
