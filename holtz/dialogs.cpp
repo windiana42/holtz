@@ -805,9 +805,13 @@ namespace holtz
       if( master_content.from == 1 )	// display only boards that are specified from the first move on
       {
 	wxString board_str;
-	board_str.Printf( _("Board %d %s:%s (%d moves)"), master_content.id, 
-			  master_content.player1.c_str(), master_content.player2.c_str(), 
+  	board_str << _("Board ") << master_content.id << wxT(" ") << str_to_wxstr(master_content.player1) << wxT(":")
+		  << str_to_wxstr(master_content.player2) << wxT(" (") << master_content.to << wxT(" ") << _("moves") << wxT(")");
+	/*
+	board_str.Printf( _("Board %d %s : %s (%d moves)"), master_content.id, 
+			  str_to_wxstr(master_content.player1).c_str(), str_to_wxstr(master_content.player2).c_str(), 
 			  master_content.to );
+	*/
 	pbm_game_list->Append( board_str, (void*) (master_content.id) );
       }
     }
