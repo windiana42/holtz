@@ -3,3 +3,4 @@ EXTRA_DIST=	\
 
 localedir = $(datadir)/locale/de/LC_MESSAGES
 locale_DATA = holtz.mo
+

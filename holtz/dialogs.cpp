@@ -672,6 +672,7 @@ namespace holtz
 
   void Display_Setup_Page::on_restore( wxCommandEvent& )
   {
+    restore_settings();
   }
 
   void Display_Setup_Page::on_cancel ( wxCommandEvent& )

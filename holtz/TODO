@@ -1,7 +1,7 @@
-- rotate board
+- save settings, last ruleset
 - PBM support
 - save game, load game
-- customize board (X-Ring-Versions)
+- fully customize board 
 - customize AI
 - zabindex of dialogs
 - connect dialog resizable
