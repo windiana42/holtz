@@ -417,7 +417,7 @@ namespace holtz
     inline Mouse_Handler &get_mouse_handler() { return mouse_handler; }
     inline Game_Window &get_game_window() { return game_window; }
   private:
-    friend Game_Manager;
+    friend class Game_Manager;
     Game_Manager &game_manager;
     Game_Window  &game_window;
 
