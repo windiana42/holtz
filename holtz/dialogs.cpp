@@ -36,7 +36,7 @@ namespace holtz
       current_ruleset(0), last_ruleset(0)
   {
     // create the child controls
-    player_name = new wxTextCtrl( this, -1, _("Player 1") );
+    player_name = new wxTextCtrl( this, DIALOG_PLAYER_NAME, _("Player 1"), wxDefaultPosition, wxDefaultSize, wxTE_PROCESS_ENTER );
     ai = new wxCheckBox( this, -1, _("AI") );
     player_list = new wxListBox( this, LISTBOX_DCLICK, wxDefaultPosition, 
 				  wxSize(200,150), 0, 0, wxLB_SINGLE );
@@ -83,6 +83,7 @@ namespace holtz
 
     wxBoxSizer *button_sizer  = new wxBoxSizer( wxHORIZONTAL );
     button_sizer->Add( new wxButton(this, DIALOG_READY,  _("Ready"), wxDefaultPosition) , 0, wxALL, 10 );
+	SetDefaultItem(FindWindow(DIALOG_READY));
     button_sizer->Add( new wxButton(this, DIALOG_CANCEL, _("Cancel"), wxDefaultPosition) , 0, wxALL, 10 );
     top_sizer->Add( button_sizer, 0, wxALIGN_CENTER );
     // set help texts
@@ -132,6 +133,17 @@ namespace holtz
   void Player_Setup_Page::on_cancel( wxCommandEvent& WXUNUSED(event) )
   {
     dialog->Show(false);
+  }
+
+  void Player_Setup_Page::on_close( wxCloseEvent& event )
+  {
+	wxCommandEvent dummy;
+	on_cancel(dummy);
+  }	
+
+  void Player_Setup_Page::on_player_name( wxCommandEvent& event )
+  {
+	on_add_player(event);
   }
 
   void Player_Setup_Page::on_add_player( wxCommandEvent& WXUNUSED(event) )
@@ -437,6 +449,8 @@ namespace holtz
   EVT_BUTTON(DIALOG_PLAYER_UP,	   Player_Setup_Page::on_player_up)	//**/
   EVT_BUTTON(DIALOG_PLAYER_DOWN,   Player_Setup_Page::on_player_down)	//**/
   EVT_RADIOBOX(DIALOG_RULESET,	   Player_Setup_Page::on_change_ruleset)//**/
+  EVT_TEXT_ENTER(DIALOG_PLAYER_NAME,	Player_Setup_Page::on_player_name)//**/
+  EVT_CLOSE(Player_Setup_Page::on_close) //**/
   END_EVENT_TABLE()							//**/
 
   // ============================================================================
@@ -614,22 +628,35 @@ namespace holtz
 
     // update choice names with correct translation
     wxString orientation_choices[2];
-    orientation_choices[0] = wxString(_("horizontal"));
-    orientation_choices[1] = wxString(_("vertical"));
-    //orientation_choices[4] = wxString(_("custom"));
-    orientation_choice = new wxRadioBox( this, -1, _("Choose Board Orientation"), wxDefaultPosition,
+    orientation_choices[0] = wxString(_("Horizontal"));
+    orientation_choices[1] = wxString(_("Vertical"));
+    //orientation_choices[4] = wxString(_("custom")); // FF: what is a custom orientation? 
+    orientation_choice = new wxRadioBox( this, -1, _("Board Orientation"), wxDefaultPosition,
 					 wxDefaultSize, 2, orientation_choices, 2, wxRA_SPECIFY_COLS );
-    top_sizer->Add( orientation_choice, 0, wxALIGN_CENTER | wxALL, 10  );
+    top_sizer->Add( orientation_choice, 0, wxEXPAND | wxALL, 10  );
 
-    show_coordinates = new wxCheckBox( this, -1, _("show field coordinates") );
+    show_coordinates = new wxCheckBox( this, -1, _("Show field coordinates") );
     top_sizer->Add( show_coordinates, 0, wxALL, 10 );
 
     wxBoxSizer *button_sizer = new wxBoxSizer( wxHORIZONTAL );
-    button_sizer->Add( new wxButton(this, DIALOG_OK,      _("Ok"),      wxDefaultPosition), 0, wxALL, 10 );
+    button_sizer->Add( new wxButton(this, DIALOG_OK,      _("OK"),      wxDefaultPosition), 0, wxALL, 10 );
+	SetDefaultItem(FindWindow(DIALOG_OK));
     button_sizer->Add( new wxButton(this, DIALOG_APPLY,   _("Apply"),   wxDefaultPosition), 0, wxALL, 10 );
     button_sizer->Add( new wxButton(this, DIALOG_RESTORE, _("Restore"), wxDefaultPosition), 0, wxALL, 10 );
     button_sizer->Add( new wxButton(this, DIALOG_CANCEL,  _("Cancel"),  wxDefaultPosition), 0, wxALL, 10 );
+#ifndef __WXMSW__
+    button_sizer->Add(new wxContextHelpButton(this), 0, wxALIGN_CENTER | wxALL, 10);
+#endif
     top_sizer->Add( button_sizer );
+
+    // set help texts
+	orientation_choice->SetHelpText(_("Select the orientation in which the board is displayed on-screen."));
+	show_coordinates->SetHelpText(_("If checked, the field coordinates (a1...g4) will be displayed next to the board. This can be useful for discussing the game."));
+	FindWindow(DIALOG_OK)->SetHelpText(_("Accepts the changes made in this dialog and returns to the game."));
+	FindWindow(DIALOG_APPLY)->SetHelpText(_("Accepts the changes made in this dialog and leaves the dialog opened."));
+	FindWindow(DIALOG_RESTORE)->SetHelpText(_("Reverts the changes made in this dialog (by the last 'Apply') and leaves it opened."));
+	FindWindow(DIALOG_CANCEL)->SetHelpText(_("Closes the dialog without accepting the changes."));
+
 
     SetAutoLayout( true );
     SetSizer( top_sizer );
@@ -837,8 +864,8 @@ namespace holtz
     port->SetRange(0,65535);
 
     wxBoxSizer *button_sizer  = new wxBoxSizer( wxHORIZONTAL );
-    wxButton *ok_button = new wxButton(this, DIALOG_OK, _("Ok"), wxDefaultPosition);
-    ok_button->SetDefault();
+    wxButton *ok_button = new wxButton(this, DIALOG_OK, _("OK"), wxDefaultPosition);
+	SetDefaultItem(FindWindow(DIALOG_OK));
     ok_button->SetFocus();
     button_sizer->Add( ok_button , 0, wxALL, 10 );
     button_sizer->Add( new wxButton(this, DIALOG_CANCEL, _("Cancel"), wxDefaultPosition) , 0, wxALL, 10 );

@@ -539,9 +539,8 @@ namespace holtz
     HOLTZ_HELP_LICENSE,
     HOLTZ_ABOUT,
 
-    DIALOG_OK,
     DIALOG_READY,
-    DIALOG_CANCEL,
+	DIALOG_PLAYER_NAME,
     DIALOG_ADD_PLAYER,
     DIALOG_REMOVE_PLAYER,
     DIALOG_PLAYER_UP,
@@ -552,8 +551,10 @@ namespace holtz
     DIALOG_APPLY,
     DIALOG_RESTORE,
 
-    LISTBOX_DCLICK
+    LISTBOX_DCLICK,
 
+    DIALOG_OK = wxID_OK,	// the names are just for consistence
+    DIALOG_CANCEL = wxID_CANCEL // wxID_OK and wxID_CANCEL have special functions in dialogs
   };
 }
 
