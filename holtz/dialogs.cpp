@@ -667,10 +667,10 @@ namespace holtz
 
     wxBoxSizer *pbm_sizer = new wxBoxSizer( wxHORIZONTAL );
     //pbm_choice = new wxRadioBox( this, -1 );
-    pbm_sizer->Add( new wxStaticText(this,-1,"Directory" ), 0, wxALL, 10 );
-    pbm_directory = new wxTextCtrl( this, DIALOG_CHANGE_DIRECTORY, "" );
+    pbm_sizer->Add( new wxStaticText(this,-1,_("Directory") ), 0, wxALL, 10 );
+    pbm_directory = new wxTextCtrl( this, DIALOG_CHANGE_DIRECTORY, wxT("") );
     pbm_sizer->Add( pbm_directory, 2, wxALL, 10 );
-    pbm_sizer->Add( new wxButton( this, DIALOG_CHOOSE_DIRECTORY, "Choose..." ), 0, wxALL, 10 );
+    pbm_sizer->Add( new wxButton( this, DIALOG_CHOOSE_DIRECTORY, _("Choose...") ), 0, wxALL, 10 );
     pbm_game_list = new wxListBox( this,-1,wxDefaultPosition, wxSize(100,100), 0, 0, wxLB_SINGLE );
     pbm_sizer->Add( pbm_game_list, 1, wxALL, 10 );
     top_sizer->Add( pbm_sizer, 0, wxCENTER | wxVERTICAL );
@@ -741,7 +741,7 @@ namespace holtz
   {
     changes = true;		// take first setting as change
 
-    if( valid_directory != "" )
+    if( valid_directory != wxT("") )
       scan_directory( valid_directory );
   }
 
@@ -757,7 +757,7 @@ namespace holtz
     bool ok = dir.GetFirst( &wx_filename, wxT("*"), wxDIR_FILES );
     while( ok )
     {
-      std::string filename = (directory + wxT('/') + wx_filename).c_str();
+      std::string filename = wxstr_to_str(directory + wxT('/') + wx_filename);
       std::ifstream is( filename.c_str() );
       if( is )
       {
@@ -815,7 +815,7 @@ namespace holtz
   void Load_Board_Page::on_choose_directory( wxCommandEvent& WXUNUSED(event) )
   {
     wxString directory = valid_directory;
-    if( directory == "" ) 
+    if( directory == wxT("") ) 
       directory = wxGetCwd();
 
     wxDirDialog *dialog = new wxDirDialog( this, _("Choose a directory"), directory );
@@ -1013,68 +1013,7 @@ namespace holtz
       }
     }
   }
-  /*
-  void Player_Setup_Panel::on_change_ruleset( wxCommandEvent& event )
-  {
-    if( game_setup_manager )
-    {
-      Ruleset *new_ruleset;
-      switch( ruleset_choice->GetSelection() )
-      {
-	case 0: 
-	  new_ruleset = new Standard_Ruleset();
-	  if( !game_setup_manager->change_ruleset( Ruleset::standard, *new_ruleset ) )
-	  {
-	    if( current_ruleset != ruleset_choice->GetSelection() )
-	      ruleset_choice->SetSelection(current_ruleset);
-	    wxMessageBox(_("Could not change Ruleset!"), _("Ruleset"), wxOK | wxICON_INFORMATION, this);
-	  }
-	  delete new_ruleset;
-	  break;
-	case 1: 
-	  new_ruleset = new Tournament_Ruleset();
-	  if( !game_setup_manager->change_ruleset( Ruleset::tournament, *new_ruleset ) )
-	  {
-	    if( current_ruleset != ruleset_choice->GetSelection() )
-	      ruleset_choice->SetSelection(current_ruleset);
-	    wxMessageBox(_("Could not change Ruleset!"), _("Ruleset"), wxOK | wxICON_INFORMATION, this);
-	  }
-	  delete new_ruleset;
-	  break;
-	case 2: 
-	  if( current_ruleset != ruleset_choice->GetSelection() )
-	    ruleset_choice->SetSelection(current_ruleset);
 
-	  dialog->notebook->SetSelection(1);
-	  break;
-	case -1:
-	  break;
-      }
-      if( ruleset_choice->GetSelection() != -1 )
-      {
-	last_ruleset = current_ruleset;
-	current_ruleset = ruleset_choice->GetSelection();
-      }
-    }
-  }
-
-  void Player_Setup_Panel::set_custom_ruleset( Ruleset &ruleset )
-  {
-    if( !game_setup_manager->change_ruleset( Ruleset::custom, ruleset ) )
-    {
-      wxMessageBox(_("Could not change Ruleset!"), _("Ruleset"), wxOK | wxICON_INFORMATION, this);
-    }
-    else
-      ruleset_choice->SetSelection(2);
-
-
-    if( ruleset_choice->GetSelection() != -1 )
-    {
-      last_ruleset = current_ruleset;
-      current_ruleset = ruleset_choice->GetSelection();
-    }
-  }
-  */
   void Player_Setup_Panel::player_added( const Player &player )
   {
     // setup lookup tables
@@ -1608,20 +1547,20 @@ namespace holtz
     wxBoxSizer *top_sizer = new wxBoxSizer( wxVERTICAL );
 
     wxBoxSizer *skin_sizer = new wxBoxSizer( wxHORIZONTAL );
-    skin_sizer->Add( new wxStaticText(this,-1,"Skin file" ), 0, wxALL, 10 );
-    skin_file = new wxTextCtrl( this, DIALOG_CHANGE_SKIN_FILE, "" );
+    skin_sizer->Add( new wxStaticText(this,-1,_("Skin file") ), 0, wxALL, 10 );
+    skin_file = new wxTextCtrl( this, DIALOG_CHANGE_SKIN_FILE, wxT("") );
     skin_sizer->Add( skin_file, 1, wxALL, 10 );
-    skin_sizer->Add( new wxButton( this, DIALOG_CHOOSE_SKIN_FILE, "Choose..." ), 0, wxALL, 10 );
+    skin_sizer->Add( new wxButton( this, DIALOG_CHOOSE_SKIN_FILE, _("Choose...") ), 0, wxALL, 10 );
     top_sizer->Add( skin_sizer, 0, wxALL | wxEXPAND, 10 );
 
     wxBoxSizer *beep_sizer = new wxBoxSizer( wxHORIZONTAL );
-    beep_sizer->Add( new wxStaticText(this,-1,"Beep file" ), 0, wxALL, 10 );
-    beep_file = new wxTextCtrl( this, DIALOG_CHANGE_BEEP_FILE, "" );
+    beep_sizer->Add( new wxStaticText(this,-1,_("Beep file") ), 0, wxALL, 10 );
+    beep_file = new wxTextCtrl( this, DIALOG_CHANGE_BEEP_FILE, wxT("") );
     beep_sizer->Add( beep_file, 1, wxALL, 10 );
-    beep_sizer->Add( new wxButton( this, DIALOG_CHOOSE_BEEP_FILE, "Choose..." ), 0, wxALL, 10 );
+    beep_sizer->Add( new wxButton( this, DIALOG_CHOOSE_BEEP_FILE, _("Choose...") ), 0, wxALL, 10 );
     top_sizer->Add( beep_sizer, 0, wxALL | wxEXPAND, 10 );
 
-    play_sound = new wxCheckBox( this, -1, "Play sounds" );
+    play_sound = new wxCheckBox( this, -1, _("Play sounds") );
     top_sizer->Add( play_sound, 0, wxALL, 10 );
 
     SetAutoLayout( true );

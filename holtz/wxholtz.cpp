@@ -1157,7 +1157,7 @@ namespace holtz
 	int count = stones.stone_count[ Stones::Stone_Type(stone_type) ];
 
 	wxString str;
-	str.Printf("%d", count);
+	str.Printf(wxT("%d"), count);
 
 	dc.SetTextForeground(*wxRED/*settings.stone_font_colour*/);
 	wxFont font(20,wxDECORATIVE,wxNORMAL,wxNORMAL);
