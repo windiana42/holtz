@@ -26,7 +26,17 @@
 #define DOUBLE_BUFFER
 #endif
 
-// picture set
+#ifndef DEFAULT_DATA_DIR
+#define DEFAULT_DATA_DIR "./"
+#endif
+#ifndef DEFAULT_SKIN_FILE
+#define DEFAULT_SKIN_FILE DEFAULT_DATA_DIR "skins/hex70.zip"
+#endif
+#ifndef DEFAULT_BEEP_FILE
+#define DEFAULT_BEEP_FILE DEFAULT_DATA_DIR "sounds/beep.wav"
+#endif
+
+// compiled in picture set
 //#define PURIST_50
 //#define HEX_50
 //#define HEX_70
@@ -214,7 +224,7 @@ namespace holtz
 
     SetAppName(wxT("Holtz"));
     SetVendorName(wxT("Martin Trautmann"));
-    global_config = new wxConfig(GetAppName(), wxT("Holtz"));
+    global_config = new wxConfig(GetAppName());
     wxConfig::Set(global_config);
 
     // this will link all image libraries, also the unused ones
@@ -252,15 +262,21 @@ namespace holtz
   bool wxHoltz::init_help(wxLocale& loc)
   {
 	// try to load the HTML help file, in decreasing order:
-	// - help_la_co.htb
-	// - help_la.htb
-	// - help_en.htb
+	// - help/help_la_co.htb
+	// - help/help_la.htb
+	// - data_dir/help/help_la_co.htb
+	// - data_dir/help/help_la.htb
+	// - help/help_en.htb
+	// - data_dir/help/help_en.htb
 	// where 'la' is the language, and 'co' the country of the currently used locale
 	// if all fails, return false
 	wxString language = loc.GetCanonicalName();
-	if(!get_help_controller().Initialize(wxT("help_") + language))
-	  if(language.Len() <= 2 || !get_help_controller().Initialize(wxT("help_") + language.Left(2)))
-		if(!get_help_controller().Initialize(wxT("help_en")))
+	if(!get_help_controller().Initialize(wxT("help/help_") + language))
+	  if(language.Len() <= 2 || !get_help_controller().Initialize(wxT("help/help_") + language.Left(2)))
+	    if(!get_help_controller().Initialize(wxString(DEFAULT_DATA_DIR) + wxT("help/help_") + language))
+	      if(language.Len() <= 2 || !get_help_controller().Initialize(wxString(DEFAULT_DATA_DIR) + wxT("help/help_") + language.Left(2)))
+		if(!get_help_controller().Initialize(wxT("help/help_en")))
+		  if(!get_help_controller().Initialize(wxString(DEFAULT_DATA_DIR) + wxT("help/help_en")))
 	  	  return false;
 	return true;
   }
@@ -277,6 +293,16 @@ namespace holtz
     }
     if( !ok )
     {
+      buf = wxT(DEFAULT_SKIN_FILE);
+      if( wxFileExists(buf) )
+      {
+	cfg->Write( wxT("skin_file"), buf);
+	cfg->Flush();
+	ok = true;
+      }
+    }
+    if( !ok )
+    {
       buf = wxFileSelector( _("Choose a skin File"), wxT(""), 
 			    wxT(""), wxT(""), _("Skin Files (*.zip)|*.zip"),
 			    wxOPEN );
@@ -285,8 +311,29 @@ namespace holtz
 	cfg->Write( wxT("skin_file"), buf);
 	cfg->Flush();
       }
+    }     
+
+    ok = false;
+    if( cfg->Read( wxT("beep_file"), &buf) )
+    {
+      if( wxFileExists(buf) )
+	ok = true;
     }
-      
+    if( !ok )
+    {
+      buf = wxT(DEFAULT_BEEP_FILE);
+      if( wxFileExists(buf) )
+      {
+	cfg->Write( wxT("beep_file"), buf);
+	cfg->Flush();
+	ok = true;
+      }
+    }
+    if( !ok )
+    {
+      cfg->Write( wxT("play_sound"), false );
+      cfg->Flush();
+    }
 
     return true;
   }
