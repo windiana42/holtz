@@ -19,8 +19,8 @@ function PrintMenu($activepage) {
   PrintMenuItem("News", "news.php", $activepage);
   PrintMenuItem("Downloads", "down.php", $activepage);
   PrintMenuItem("Information", "help.php", $activepage);
-  PrintMenuItem("Project Page", "http://sf.net/projects/holtz/", $activepage, 1);
-  PrintMenuItem("Links", "links.php", $activepage);
+  PrintMenuItem("Project Page", "http://sf.net/projects/holtz/", $activepage);
+  PrintMenuItem("Links", "links.php", $activepage, 1);
   print "</tr></table></div>";
 }
 
