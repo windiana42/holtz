@@ -583,8 +583,9 @@ namespace holtz
     wxNotebookSizer *sizer = new wxNotebookSizer( notebook );
 
     // Add panel as notebook page
-    player_page = new Player_Setup_Page( notebook, this, game_window,player_setup_manager );
-    ruleset_page  = new Ruleset_Setup_Page( notebook, this );
+    ruleset_page = new Ruleset_Setup_Page( notebook, this ); 
+    // player_page might use rulset_page during construction !!!
+    player_page  = new Player_Setup_Page( notebook, this, game_window,player_setup_manager );
     ruleset_page->set_ruleset( game_window.get_game().ruleset );
 
     notebook->AddPage( player_page, _("Players") );
