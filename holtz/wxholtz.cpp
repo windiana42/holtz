@@ -1182,7 +1182,7 @@ namespace holtz
     if( sequence_generator )
     {
       std::pair<Stones::Stone_Type,int> clicked_stone = get_stone( click_x, click_y );
-      Stones::Stone_Type &type( clicked_stone.first );
+      Stones::Stone_Type &type = clicked_stone.first;
       int &col = clicked_stone.second;
 
       if( type != Stones::invalid_stone )
