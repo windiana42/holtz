@@ -1,0 +1,8 @@
+body { font-family:tahoma,verdana,helvetica,sans-serif; font-size:12px; }
+
+.active { color:#661100; font-weight:bold; }
+a { font-weight:bold; }
+a:link { color:#aa6622; }
+a:visited { color: #770000; }
+a:hover { color:#ffcc55; }
+
