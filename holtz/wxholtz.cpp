@@ -27,13 +27,13 @@
 #endif
 
 #ifndef DEFAULT_DATA_DIR
-#define DEFAULT_DATA_DIR wxT("./")
+#define DEFAULT_DATA_DIR "./"
 #endif
 #ifndef DEFAULT_SKIN_FILE
-#define DEFAULT_SKIN_FILE DEFAULT_DATA_DIR wxT("skins/hex70.zip")
+#define DEFAULT_SKIN_FILE DEFAULT_DATA_DIR "skins/hex70.zip"
 #endif
 #ifndef DEFAULT_BEEP_FILE
-#define DEFAULT_BEEP_FILE DEFAULT_DATA_DIR wxT("sounds/beep.wav")
+#define DEFAULT_BEEP_FILE DEFAULT_DATA_DIR "sounds/beep.wav"
 #endif
 
 // compiled in picture set
