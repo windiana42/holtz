@@ -27,13 +27,13 @@
 #endif
 
 #ifndef DEFAULT_DATA_DIR
-#define DEFAULT_DATA_DIR "./"
+#define DEFAULT_DATA_DIR wxT("./")
 #endif
 #ifndef DEFAULT_SKIN_FILE
-#define DEFAULT_SKIN_FILE DEFAULT_DATA_DIR "skins/hex70.zip"
+#define DEFAULT_SKIN_FILE DEFAULT_DATA_DIR wxT("skins/hex70.zip")
 #endif
 #ifndef DEFAULT_BEEP_FILE
-#define DEFAULT_BEEP_FILE DEFAULT_DATA_DIR "sounds/beep.wav"
+#define DEFAULT_BEEP_FILE DEFAULT_DATA_DIR wxT("sounds/beep.wav")
 #endif
 
 // compiled in picture set
@@ -293,7 +293,7 @@ namespace holtz
     }
     if( !ok )
     {
-      buf = wxT(DEFAULT_SKIN_FILE);
+      buf = DEFAULT_SKIN_FILE;
       if( wxFileExists(buf) )
       {
 	cfg->Write( wxT("skin_file"), buf);
@@ -321,7 +321,7 @@ namespace holtz
     }
     if( !ok )
     {
-      buf = wxT(DEFAULT_BEEP_FILE);
+      buf = DEFAULT_BEEP_FILE;
       if( wxFileExists(buf) )
       {
 	cfg->Write( wxT("beep_file"), buf);
@@ -2024,8 +2024,9 @@ namespace holtz
   void Main_Frame::on_about(wxCommandEvent& WXUNUSED(event))
   {
     wxString msg;
-    msg =  _("Holtz is game about making sacrifices\n");
-    msg += _("GPLed by Martin Trautmann (2003)");
+    msg =  _("Holtz is game about making sacrifices.\n");
+    msg += _("GPLed by Martin Trautmann (2003)\n");
+	msg += _("Based on Zèrtz (r) and (c) by Don & Co NV, 2001.");
 
     wxMessageBox(msg, _("About Holtz"), wxOK | wxICON_INFORMATION, this);
   }
