@@ -64,11 +64,13 @@ namespace holtz
 
     void on_ready( wxCommandEvent& event );
     void on_cancel( wxCommandEvent& event );
+	void on_player_name( wxCommandEvent& event );
     void on_add_player( wxCommandEvent& event );
     void on_remove_player( wxCommandEvent& event );
     void on_player_up( wxCommandEvent& event );
     void on_player_down( wxCommandEvent& event );
     void on_change_ruleset( wxCommandEvent& event );
+	void on_close( wxCloseEvent& event );
     void set_custom_ruleset( Ruleset& );
 
     // as player handler this dialog has to show results of player manipulations

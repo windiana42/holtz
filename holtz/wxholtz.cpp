@@ -2333,18 +2333,18 @@ namespace holtz
   {
     // create a menu bar
     wxMenu *menu_file = new wxMenu;
-    menu_file->Append(HOLTZ_NEW_GAME,		_("&New Game\tCtrl-N"), _("Start a new game"));
-    menu_file->Append(HOLTZ_STANDALONE_GAME,	_("Stand&alone Game\tCtrl-A"), 
+    menu_file->Append(HOLTZ_NEW_GAME,		_("&New Game...\tCtrl-N"), _("Start a new game"));
+    menu_file->Append(HOLTZ_STANDALONE_GAME,	_("Stand&alone Game...\tCtrl-A"), 
 						_("Start a game without network access"));
-    menu_file->Append(HOLTZ_NETWORK_GAME,	_("Ne&twork Game\tCtrl-T"), _("Start a network game"));
+    menu_file->Append(HOLTZ_NETWORK_GAME,	_("Ne&twork Game...\tCtrl-T"), _("Start a network game"));
     menu_file->AppendSeparator();
     menu_file->Append(HOLTZ_QUIT,		_("E&xit\tAlt-X"), _("Quit Holtz"));
 
     // the "Setting" item should be in the help menu
     setting_menu = new wxMenu;
-    setting_menu->Append(HOLTZ_SETTINGS, _("S&ettings\tCtrl-E"),          _("Change settings"));
-    setting_menu->Append(HOLTZ_SKIN,     _("Choose &Skin\tCtrl-S"),       _("Choose skin package file"));
-    setting_menu->Append(HOLTZ_BEEP,     _("Choose &Beep Sound\tCtrl-B"), _("Choose beep wav file"));
+    setting_menu->Append(HOLTZ_SETTINGS, _("S&ettings...\tCtrl-E"),          _("Change settings"));
+    setting_menu->Append(HOLTZ_SKIN,     _("Choose &Skin...\tCtrl-S"),       _("Choose skin package file"));
+    setting_menu->Append(HOLTZ_BEEP,     _("Choose &Beep Sound...\tCtrl-B"), _("Choose beep wav file"));
     setting_menu->Append(HOLTZ_SOUND,    _("&Play Sound\tCtrl-P"),        _("Switch Sounds on/off"), true);
     setting_menu->Check( HOLTZ_SOUND, game_window.is_play_sound() );
 
