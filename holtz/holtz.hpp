@@ -482,7 +482,7 @@ namespace holtz
     Variant *prev;
     std::list<Variant*> variants;
   private:
-    friend Variant_Tree;
+    friend class Variant_Tree;
     Variant();			// for root variant
   };
 
@@ -498,7 +498,7 @@ namespace holtz
     inline Variant *get_current_variant() { return current_variant; }
     inline Variant *get_root_variant()    { return root; }
   private:
-    friend Game;
+    friend class Game;
     void add_in_current_variant( std::list<Player>::iterator current_player, const Sequence & );
     void move_a_variant_back();
     

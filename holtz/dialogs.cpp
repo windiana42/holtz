@@ -700,7 +700,7 @@ namespace holtz
       int board_num = int( pbm_game_list->GetClientData(index) );
 
       // load board
-      int current_move = 1, max_move, num_moves;
+      int current_move = 0, max_move, num_moves;
       std::list< std::pair<PBM_Content,std::string> > &board_files = pbm_files[board_num];
       do
       {
@@ -766,7 +766,7 @@ namespace holtz
       {
 	PBM_Content content = scan_pbm_file( is );
 	
-	if( content.id >= 0 )
+	if( content.id > 0 )
 	{
 	  pbm_files[content.id].push_back( std::pair<PBM_Content,std::string>( content, filename ) );
 	}
@@ -802,7 +802,7 @@ namespace holtz
 
       assert( master_content.id >= 0 );
       
-      if( master_content.from == 1 )	// display only boards that are specified from the first move on
+      if( master_content.from == 0 )	// display only boards that are specified from the first move on
       {
 	wxString board_str;
   	board_str << _("Board ") << master_content.id << wxT(" ") << str_to_wxstr(master_content.player1) << wxT(":")
