@@ -659,7 +659,7 @@ namespace holtz
 	show_coordinates->SetHelpText(_("If checked, the field coordinates (a1...g4) will be displayed next to the board. This can be useful for discussing the game."));
 	FindWindow(DIALOG_OK)->SetHelpText(_("Accepts the changes made in this dialog and returns to the game."));
 	FindWindow(DIALOG_APPLY)->SetHelpText(_("Accepts the changes made in this dialog and leaves the dialog opened."));
-	FindWindow(DIALOG_RESTORE)->SetHelpText(_("Reverts the changes made in this dialog (by the last 'Apply') and leaves it opened."));
+	FindWindow(DIALOG_RESTORE)->SetHelpText(_("Reverts the changes made in this dialog (since the last 'Apply') and leaves it opened."));
 	FindWindow(DIALOG_CANCEL)->SetHelpText(_("Closes the dialog without accepting the changes."));
 
 
