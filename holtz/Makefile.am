@@ -7,7 +7,7 @@ holtz_SOURCES= \
 	holtz.hpp wxholtz.hpp dialogs.hpp network.hpp ai.hpp animations.hpp util.hpp
 
 holtz_CXXFLAGS= \
-	`wx-config --cxxflags` -DDEFAULT_DATA_DIR=\"$(pkgdatadir)/\"
+	-DDEFAULT_DATA_DIR=\"$(pkgdatadir)/\"
 
 EXTRA_DIST=	\
 	Rules.german Rules.english holtz.rc holtz.ico holtz.dsp holtz.dsw icon.xpm holtz.spec 
