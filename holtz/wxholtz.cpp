@@ -483,7 +483,7 @@ namespace holtz
   {
   }
 
-  void Horizontal_Sizer::add( Basic_Panel *panel, bool destroy_on_remove = false )
+  void Horizontal_Sizer::add( Basic_Panel *panel, bool destroy_on_remove )
   {
     elements.push_back( std::pair<Basic_Panel*,bool>(panel, destroy_on_remove) );
   }
@@ -592,7 +592,7 @@ namespace holtz
   {
   }
 
-  void Vertical_Sizer::add( Basic_Panel *panel, bool destroy_on_remove = false )
+  void Vertical_Sizer::add( Basic_Panel *panel, bool destroy_on_remove )
   {
     elements.push_back( std::pair<Basic_Panel*,bool>(panel, destroy_on_remove) );
   }
