@@ -16,6 +16,9 @@
 
 #include "dialogs.hpp"
 
+#include "wxmain.hpp"
+#include "util.hpp"
+
 #include <wx/cshelp.h>
 #include <wx/dir.h>
 #include <fstream>
@@ -1422,15 +1425,14 @@ namespace holtz
     } 
     return false;
   }
-  void Game_Dialog::new_game_accepted() // other player accepted to start new game
+  bool Game_Dialog::ask_undo_move( wxString who ) 
   {
-  }
-  void Game_Dialog::new_game_denied()	// other player rejected to play new game
-  {
-  }
-  void Game_Dialog::new_game()	// force new game (network connections may be lost)
-  {
-    game_setup();
+    wxString msg = who + _(" asks undo one move. Accept?");
+    if( wxMessageBox( msg, _("Allow undo?"), wxYES | wxNO | wxCANCEL | wxICON_QUESTION ) == wxYES )
+    {
+      return true;
+    } 
+    return false;
   }
 
   void Game_Dialog::get_data_from_setup_manager()

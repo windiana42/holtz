@@ -610,8 +610,6 @@ namespace holtz
 
     Variant_Tree variant_tree;
 
-    Game *save_game;		// shadows the game to avoid corruption by input handlers
-
     Ref_Counter *ref_counter;	// reference counting because of ruleset pointer
 
   public:

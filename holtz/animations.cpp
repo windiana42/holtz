@@ -16,6 +16,7 @@
 
 #include "animations.hpp"
 
+#include "wxmain.hpp"
 #include <stdlib.h>
 
 namespace holtz
