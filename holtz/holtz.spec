@@ -48,7 +48,7 @@ rm -rf $RPM_BUILD_ROOT
 
 %files
 %defattr(-,root,root,755)
-%doc AUTHORS COPYING README IDEAS NEWS ChangeLog TODO Rules.German Rules.english
+%doc AUTHORS COPYING README NEWS ChangeLog TODO Rules.german Rules.english
 %prefix/bin/*
 %prefix/share/locale/*/LC_MESSAGES/
 %prefix/share/holtz/

@@ -16,6 +16,20 @@ AC_PROG_RANLIB
 #       * ) AC_CHECK_HEADER( unistd.h, export CXXFLAGS="$CXXFLAGS -D__UNIX__" );;
 #esac
 
+wxstatic_Enabled="no"
+
+AC_ARG_ENABLE(wxstatic,AC_HELP_STRING([--enable-wxstatic=VAL],
+	[VAL=yes: Link WX libraries static; 
+	 VAL=no: Link WX as shared library]),
+	[wxstatic_Enabled="$enableval"])
+
+if test "$wxstatic_Enabled" = "yes" ; then
+  export LIBS="$LIBS `wx-config --static --libs`";
+  export CXXFLAGS="$CXXFLAGS `wx-config --static --cxxflags`"
+else
+  export LIBS="$LIBS `wx-config --libs`";
+  export CXXFLAGS="$CXXFLAGS `wx-config --cxxflags`"
+fi
 
 AC_OUTPUT(
 	Makefile
