@@ -3,7 +3,7 @@ Microsoft Developer Studio Workspace File, Format Version 6.00
 
 ###############################################################################
 
-Project: "Holtz"=.\Holtz.dsp - Package Owner=<4>
+Project: "Holtz"=.\holtz.dsp - Package Owner=<4>
 
 Package=<5>
 {{{
