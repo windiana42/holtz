@@ -802,7 +802,7 @@ namespace holtz
   // ----------------------------------------------------------------------------
 
   Variant::Variant( std::list<Player>::iterator current_player, const Sequence &move_sequence, 
-		    Variant *prev = 0 )
+		    Variant *prev )
     : current_player(current_player), move_sequence(move_sequence), prev(prev)
   {
   }
