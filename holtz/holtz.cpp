@@ -789,6 +789,7 @@ namespace holtz
 	  assert( sequence.check_sequence(*save_game) );
 	  assert( sequence.get_moves().back()->get_type() == Move::finish_move );
 	  sequence.do_sequence(*save_game);
+	  save_game->copy_player_times( *this ); // rescue player times
 	  *this = *save_game;
 
 	  // report move
@@ -933,6 +934,20 @@ namespace holtz
     if( current_player == players.begin() )
       current_player = players.end();
     --current_player;
+  }
+
+  void Game::copy_player_times( Game &from ) // number of players must be the same
+  {
+    assert( from.players.size() == players.size() );
+    std::list<Player>::iterator i,j;
+    for( i = players.begin(), j = from.players.begin(); i != players.end(); ++i, ++j )
+    {
+      assert( j != from.players.end() );
+
+      i->total_time   = j->total_time;
+      i->average_time = j->average_time;
+      i->num_measures = j->num_measures;
+    }
   }
 
   Move::~Move()

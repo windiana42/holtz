@@ -60,15 +60,18 @@ namespace holtz
     new_context();
   }
 
-  Field_Pos Field_Permutation::get_first()
+  Field_Pos Field_Permutation::get_first( bool new_random )
   {
     /*
     current_context->start = 0;
     current_context->jump = 1;
     */
-    current_context->start = random( num_valid_fields );
-    current_context->jump  = random( 2, position_vector.size() - 2 );
-    current_context->cur_pos = contexts.top().start;
+    if( new_random )
+    {
+      current_context->start = random( num_valid_fields );
+      current_context->jump  = random( 2, position_vector.size() - 2 );
+    }
+    current_context->cur_pos = current_context->start;
 
     return position_vector[current_context->cur_pos];
   }
@@ -191,7 +194,7 @@ namespace holtz
   }
 
   bool Position::add_set_moves( Game &game, Field_Iterator to, Stones::Stone_Type type,
-				Field_Permutation &field_permutation )
+				Field_Permutation &field_permutation, bool expand_first )
   {
     bool ret = true;
     Sequence sequence;
@@ -202,9 +205,9 @@ namespace holtz
     assert( ok );
     move->do_move( game );
 
+    field_permutation.new_context();
     bool any_removable = false;
     Field_Pos pos;
-    field_permutation.new_context();
     for( pos = field_permutation.get_first(); !field_permutation.is_end(); 
 	 pos = field_permutation.get_next() )
     {
@@ -217,24 +220,27 @@ namespace holtz
 	ok = sequence.add_move( game, move );
 	assert( ok );
 	move->do_move( game );
-
+	
 	move = new Finish_Move();
 	assert( move->check_move( game ) );
 	ok = sequence.add_move( game, move );
 	assert( ok );
 	move->do_move( game );
-
+	
 	bool knock_out_possible = game.board.is_knock_out_possible();
 	ret = add_branch( game, new Branch( sequence.clone(), Position(knock_out_possible) ) );
 	sequence.undo_last_move( game );
 	sequence.undo_last_move( game );
+
+	if( expand_first )
+	  break;		// first is already expanded
       }
       if( !ret )
 	break;
     }
-    field_permutation.restore_context();
+    field_permutation.restore_context(); // only restore in second pass
     
-    if( !any_removable )
+    if( !any_removable && expand_first )
     {
       Move *move = new Finish_Move();
       assert( move->check_move( game ) );
@@ -342,44 +348,51 @@ namespace holtz
     {
       Field_Pos pos;
       Field_Iterator p1(&game.board);
-      
+     
       field_permutation.new_context();
-      for( pos = field_permutation.get_first(); !field_permutation.is_end(); 
-	   pos = field_permutation.get_next() )
+      bool expand_first = true; // expand only one of each set moves
+      do
       {
-	p1.set_pos( pos );
-	if( *p1 == field_empty )
+	for( pos = field_permutation.get_first(); !field_permutation.is_end(); 
+	     pos = field_permutation.get_next() )
 	{
-	  bool any = false;
-	  int start = random(3);
-	  for( int i = 0; i < 3; ++i )
+	  p1.set_pos( pos );
+	  if( *p1 == field_empty )
 	  {
-	    if( !go_on ) 
-	      break;
-
-	    int type = (start + i) % 3;
-	    if( game.common_stones.stone_count[ stone_types[type] ] > 0 )
-	    {
-	      go_on = add_set_moves( game, p1, stone_types[type], field_permutation );
-	      any = true;
-	    }
-	  }
-	  if( !any )
-	  {
+	    bool any = false;
+	    int start = random(3);
 	    for( int i = 0; i < 3; ++i )
 	    {
 	      if( !go_on ) 
 		break;
-	      
+
 	      int type = (start + i) % 3;
-	      if( game.current_player->stones.stone_count[ stone_types[type] ] > 0 )
-		go_on = add_set_moves( game, p1, stone_types[type], field_permutation );
+	      if( game.common_stones.stone_count[ stone_types[type] ] > 0 )
+	      {
+		go_on = add_set_moves( game, p1, stone_types[type], field_permutation,
+				       expand_first );
+		any = true;
+	      }
+	    }
+	    if( !any )
+	    {
+	      for( int i = 0; i < 3; ++i )
+	      {
+		if( !go_on ) 
+		  break;
+	      
+		int type = (start + i) % 3;
+		if( game.current_player->stones.stone_count[ stone_types[type] ] > 0 )
+		  go_on = add_set_moves( game, p1, stone_types[type], field_permutation,
+					 expand_first );
+	      }
 	    }
 	  }
+	  if( !go_on ) 
+	    break;
 	}
-	if( !go_on ) 
-	  break;
-      }
+	expand_first = !expand_first;
+      }while( !expand_first );
       field_permutation.restore_context();
     }
     if( go_on ) 
@@ -422,7 +435,7 @@ namespace holtz
   // ----------------------------------------------------------------------------
 
   AI::AI( Game &game )
-    : max_time(30000), average_time(3000), num_measures(0), max_positions_expanded(150000),
+    : max_time(30000), average_time(5000), num_measures(0), max_positions_expanded(150000),
       max_depth(12),
       rate_white(4.5), rate_gray(3.5), rate_black(2.5), rate_current_player_bonus(0.3),
       min_depth(2), deep_knocking_possible(true), while_deep_knocking(false),
@@ -529,18 +542,26 @@ namespace holtz
 	break;
     }
 
+#ifndef __WXMSW__
+    long last_average_time = real_average_time;
+#endif
+
     long time = stop_watch.Time();
     real_average_time = real_average_time * num_measures + time;
     ++num_measures;
     real_average_time /= num_measures;
 
+#ifndef __WXMSW__
+    std::cerr << "AI: average_time = " << real_average_time / 1000.0 << "s" 
+	      << "; num_measures = " << num_measures 
+	      << "; last_average_time = " << last_average_time
+	      << std::endl;
+#endif
+
+
     result.used_time    = time;
     result.average_time = real_average_time;
     result.num_measures = num_measures;
-
-#ifndef __WXMSW__
-    std::cerr << "AI: average_time = " << real_average_time / 1000.0 << "s" << std::endl;
-#endif
 
     return result;
   }

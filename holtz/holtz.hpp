@@ -278,6 +278,8 @@ namespace holtz
 
     inline unsigned get_min_players() { return ruleset->min_players; }
     inline unsigned get_max_players() { return ruleset->max_players; }
+
+    void copy_player_times( Game &from ); // number of players must be the same
   public:
     // public: for internal usage (friend might be used instead)
     std::list<Player> players;

@@ -40,7 +40,7 @@ namespace holtz
   public:
     Field_Permutation( Board &board );
 
-    Field_Pos get_first();
+    Field_Pos get_first( bool new_random = true );
     bool is_end();
     Field_Pos get_next();
 
@@ -84,7 +84,7 @@ namespace holtz
 			      Field_Iterator from, Field_Iterator over, Field_Iterator to );
 
     bool add_set_moves( Game &game, Field_Iterator to, Stones::Stone_Type type,
-			Field_Permutation &field_permutation );
+			Field_Permutation &field_permutation, bool expand_first );
     bool add_branch( Game &game, Branch *branch );
 
     Position_Expanded_Handler *handler;
