@@ -42,7 +42,7 @@ namespace holtz
 
   Game_Manager::Game_Manager( Game_UI_Manager *ui_manager )
     : game_setup_manager(0), ui_manager(ui_manager), game(Standard_Ruleset()), 
-      ai(*this, ui_manager), undo_requested(false), new_game_requested(false)
+      ai(*this, ui_manager), new_game_requested(false), undo_moves_requested(0)
   {
   }
 
@@ -83,7 +83,7 @@ namespace holtz
 	state = Game::finished;
       }
 
-      Player *winner;
+      int winner;
       switch( state )
       {
 	case Game::finished:
@@ -92,10 +92,11 @@ namespace holtz
 	  if( ui_manager )
 	    ui_manager->update_board( game ); // update board display
 
-	  winner = game.get_winner();
+	  winner = game.get_winner_index();
+	  assert( winner >= 0 );
 
 	  if( ui_manager )
-	    ui_manager->report_winner( winner );
+	    ui_manager->report_winner( &*game.get_player(winner) );
 
 	  go_on = false;
 	}
@@ -116,7 +117,7 @@ namespace holtz
     }
   }
 
-  void Game_Manager::new_game()
+  void Game_Manager::ask_new_game()
   {
     if( new_game_requested )
     {
@@ -136,13 +137,6 @@ namespace holtz
     }
   }
 
-  void Game_Manager::force_new_game()
-  {
-    stop_game();
-    assert( game_setup_manager );
-    game_setup_manager->force_new_game();
-  }
-
   void Game_Manager::new_game_accepted()
   {
     if( !new_game_requested )
@@ -153,8 +147,12 @@ namespace holtz
     else
     {
       new_game_requested = false;
+
+      if( ui_manager )
+	ui_manager->stop_user_activity(); // disable user input
+
       // setup new game
-      force_new_game();
+      new_game();
     }
   }
 
@@ -171,23 +169,24 @@ namespace holtz
       wxString msg = _("The idea of starting a new game was rejected. Do you want to start a new game on your own?");
       if( wxMessageBox( msg, _("New game?"), wxYES | wxNO | wxCANCEL | wxICON_QUESTION ) == wxYES )
       {
-	force_new_game();
+	new_game();
       }
     }
   }
 
-  void Game_Manager::undo_move()
+  void Game_Manager::ask_undo_moves( int n )
   {
-    if( undo_requested )
+    assert( n > 0 );
+    if( undo_moves_requested > 0 )
     {
       if( ui_manager )
 	ui_manager->report_error(_("Already undo requested"),_("Undo failed"));
     }
     else
     {
-      undo_requested = true;
+      undo_moves_requested = n;
       assert( game_setup_manager );
-      switch( game_setup_manager->ask_undo_move() )
+      switch( game_setup_manager->ask_undo_moves() )
       {
 	case Game_Setup_Manager::accept: undo_accepted(); break;
 	case Game_Setup_Manager::deny:   undo_denied(); break;
@@ -198,45 +197,105 @@ namespace holtz
 
   void Game_Manager::undo_accepted()
   {
-    if( !undo_requested )
+    if( undo_moves_requested <= 0 )
     {
       if( ui_manager )
 	ui_manager->report_error(_("Unrequested undo accepted?!?"),_("Why undo"));
     }
     else
     {
-      undo_requested = false;
-      // undo two half moves
-      if( !game.undo_move() )
-      {
-	if( ui_manager )
-	  ui_manager->report_error(_("Undo move failed"),_("Undo failed"));
-      }
-      else
-	if( !game.undo_move() )
-	{
-	  if( ui_manager )
-	    ui_manager->report_error(_("Undo move failed"),_("Undo failed"));
-	}
+      undo_moves( undo_moves_requested );
 
-      if( ui_manager )
-	ui_manager->update_board( game ); // update board display
+      undo_moves_requested = 0;
     }
   }
 
   void Game_Manager::undo_denied()
   {
-    if( !undo_requested )
+    if( undo_moves_requested <= 0 )
     {
       if( ui_manager )
 	ui_manager->report_error(_("Unrequested undo denied?!?"),_("Why undo"));
     }
     else
     {
-      undo_requested = false;
+      undo_moves_requested = 0;
       if( ui_manager )
 	ui_manager->report_information(_("Requested undo was denied"),_("Undo denied"));
     }
+  }
+
+  // performs undo animation, calls continues_game and deletes itself
+  class Undo_Animation : wxEvtHandler
+  {
+  public:
+    Undo_Animation( Game_Manager &game_manager, int n )
+      : game_manager(game_manager), n(n)
+    {
+      // connect event functions
+      Connect( -1, wxEVT_TIMER, 
+	       (wxObjectEventFunction) (wxEventFunction) (wxTimerEventFunction) 
+	       &Undo_Animation::on_done );
+    }
+
+    void step()
+    {
+      if( n <= 0 )
+      {
+	game_manager.get_ui_manager()->update_board( game_manager.get_game() );
+	game_manager.continue_game();
+	delete this;
+      }
+      else
+      {
+	--n;
+	game_manager.get_ui_manager()->undo_move_slowly(this);
+      }
+    }
+
+    void on_done( wxTimerEvent &event ) // current animation done
+    {
+      step();
+    }    
+  private:
+    Game_Manager &game_manager;
+    int n;
+  };
+
+  void Game_Manager::undo_moves( int n )
+  {
+    assert( n > 0 );
+    if( ui_manager )
+      ui_manager->stop_user_activity(); // disable user input 
+    // !!! also for non mouse players!!!
+    
+    bool error = false;
+    // undo <n> half moves
+    for( int i=0; i<n; ++i )
+    {
+      if( !game.undo_move() )
+      {
+	error = true;
+	n = i;			// reduce number of undos
+	break;
+      }
+    }
+    
+    if( ui_manager )
+    {
+      (new Undo_Animation(*this, n))->step();
+      if( error )
+	ui_manager->report_error(_("Undo move failed"),_("Undo failed"));
+    }
+    else
+      continue_game();
+  }
+
+  void Game_Manager::new_game()
+  {
+    stop_game();
+    assert( game_setup_manager );
+    game_setup_manager->new_game();
   }
 
   void Game_Manager::stop_game()
@@ -250,7 +309,7 @@ namespace holtz
     game = new_game;
   }
 
-  void Game_Manager::set_players( const std::list<Player>& players )
+  void Game_Manager::set_players( const std::vector<Player>& players )
   {
     stop_game();
     game.set_players( players );
@@ -282,15 +341,17 @@ namespace holtz
   // ----------------------------------------------------------------------------
 
   Standalone_Game_Setup_Manager::Standalone_Game_Setup_Manager( Game_Manager &game_manager )
-    : game_manager(game_manager), display_handler(0), game( game_manager.get_game() ), current_id(42),
-      players( game.players )
+    : game_manager(game_manager), display_handler(0), game( game_manager.get_game() ), current_id(42)
+    //,players( game.players )
   {
     // init id map
-    std::list<Player>::iterator i;
+    /*
+    std::vector<Player>::iterator i;
     for( i = players.begin(); i != players.end(); ++i )
     {
       id_player[i->id] = i;
     }
+    */
   }
 
   Standalone_Game_Setup_Manager::~Standalone_Game_Setup_Manager()
@@ -312,7 +373,7 @@ namespace holtz
     if( display_handler )
     {
       // tell handler all players
-      std::list<Player>::iterator player;
+      std::vector<Player>::iterator player;
       for( player = players.begin(); player != players.end(); ++player )
       {
 	display_handler->player_added(*player);
@@ -335,7 +396,7 @@ namespace holtz
     return game;
   }
 
-  const std::list<Player> &Standalone_Game_Setup_Manager::get_players()
+  const std::vector<Player> &Standalone_Game_Setup_Manager::get_players()
   {
     return players;
   }
@@ -344,7 +405,7 @@ namespace holtz
   {
     if( players.size() < game.get_max_players() )
     {
-      std::list<Player>::iterator p = players.insert(players.end(), player);
+      std::vector<Player>::iterator p = players.insert(players.end(), player);
       p->id = current_id; ++current_id;
       id_player[p->id] = p;
     
@@ -357,7 +418,7 @@ namespace holtz
   }
   bool Standalone_Game_Setup_Manager::remove_player( const Player &player )
   {
-    std::list<Player>::iterator player_iterator = id_player[player.id];
+    std::vector<Player>::iterator player_iterator = id_player[player.id];
     if( display_handler )
       display_handler->player_removed(*player_iterator);
 
@@ -367,11 +428,11 @@ namespace holtz
   }
   bool Standalone_Game_Setup_Manager::player_up( const Player &player )
   {
-    std::list<Player>::iterator player_iterator = id_player[player.id];
+    std::vector<Player>::iterator player_iterator = id_player[player.id];
     if( player_iterator == players.begin() ) // is first player
       return false;
 
-    std::list<Player>::iterator player_iterator2 = player_iterator; --player_iterator2;
+    std::vector<Player>::iterator player_iterator2 = player_iterator; --player_iterator2;
 
     Player p1 = *player_iterator;
     *player_iterator  = *player_iterator2;
@@ -387,8 +448,8 @@ namespace holtz
   }
   bool Standalone_Game_Setup_Manager::player_down( const Player &player )
   {
-    std::list<Player>::iterator player_iterator  = id_player[player.id];
-    std::list<Player>::iterator player_iterator2 = player_iterator; ++player_iterator2;
+    std::vector<Player>::iterator player_iterator  = id_player[player.id];
+    std::vector<Player>::iterator player_iterator2 = player_iterator; ++player_iterator2;
 
     if( player_iterator2 == players.end() ) // is last player
       return false;
@@ -429,11 +490,11 @@ namespace holtz
   {
     return accept;
   }
-  Standalone_Game_Setup_Manager::Answer_Type Standalone_Game_Setup_Manager::ask_undo_move()
+  Standalone_Game_Setup_Manager::Answer_Type Standalone_Game_Setup_Manager::ask_undo_moves( int n )
   {
     return accept;
   }
-  void Standalone_Game_Setup_Manager::force_new_game() // force new game (may close connections)
+  void Standalone_Game_Setup_Manager::new_game() // force new game (may close connections)
   {
     if( display_handler )	// there should be a display handler that may display a game setup dialog
       display_handler->game_setup();

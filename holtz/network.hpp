@@ -71,7 +71,7 @@ namespace holtz
     // board commands
     virtual Answer_Type ask_change_board( const Game &game );
     virtual const Game &get_board();
-    virtual const std::list<Player> &get_players();
+    virtual const std::vector<Player> &get_players();
     // player commands
     virtual bool add_player( const Player & );
     virtual bool remove_player( const Player & );
@@ -82,16 +82,16 @@ namespace holtz
     virtual Game_State can_start();	// is everyone ready and number of players ok?
     virtual void start_game(); // call only when can_start() == true
     virtual Answer_Type ask_new_game(); // request to play new game
-    virtual Answer_Type ask_undo_move(); // request to undo a move
-    virtual void force_new_game(); // force new game (may close connections)
+    virtual Answer_Type ask_undo_moves( int n = 2 ); // request to undo a move
+    virtual void new_game(); // force new game (may close connections)
     virtual void stop_game();  // stop game
 
     // Player_Input functions
     virtual Player_State determine_move() throw(Exception);
-    virtual Sequence get_move();
+    virtual Move_Sequence get_move();
     virtual long get_used_time();
     // Player_Output functions
-    virtual void report_move( const Sequence & );
+    virtual void report_move( const Move_Sequence & );
 
     void on_network( wxSocketEvent &event );
     void on_done( wxTimerEvent &event );
@@ -126,8 +126,8 @@ namespace holtz
     Message_Type read_message_type( wxSocketBase& sock );
     void write_player( wxSocketBase& sock, Player );
     Player read_player( wxSocketBase& sock );
-    void write_move( wxSocketBase& sock, Sequence );
-    Sequence read_move( wxSocketBase& sock );
+    void write_move( wxSocketBase& sock, Move_Sequence );
+    Move_Sequence read_move( wxSocketBase& sock );
 
     void write_board_base( wxSocketBase& sock, Board );
     Board read_board_base( wxSocketBase& sock );
@@ -151,7 +151,7 @@ namespace holtz
 
     Game_Manager &game_manager;
     Game_UI_Manager &ui_manager;
-    Sequence sequence;		// determined move sequence
+    Move_Sequence sequence;		// determined move sequence
 
     wxSocketServer *server;
     wxSocketClient *client;
@@ -166,11 +166,11 @@ namespace holtz
 				 accept_move, wait_for_move, move_received, game_stop };
     Protocol_State state;
 
-    std::list<Player> players;
-    std::map<int,std::list<Player>::iterator> id_player; // Table id->player
+    std::vector<Player> players;
+    std::map<int,std::vector<Player>::iterator> id_player; // Table id->player
     int current_id;
-    std::list<Player> own_players; // only players added by this host
-    std::map<int,std::list<Player>::iterator> id_own_player; // Table id->own_player
+    std::vector<Player> own_players; // only players added by this host
+    std::map<int,std::vector<Player>::iterator> id_own_player; // Table id->own_player
     std::string requested_player_name;	
     Player::Player_Type requested_player_type;	
 
@@ -182,7 +182,7 @@ namespace holtz
       Client();
 
       wxSocketBase *socket;
-      std::list<std::list<Player>::iterator> players;
+      std::list<std::vector<Player>::iterator> players;
 
       Protocol_State state;
     };

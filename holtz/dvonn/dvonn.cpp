@@ -1,5 +1,5 @@
 /*
- * holtz.cpp
+ * dvonn.cpp
  * 
  * Game implementation
  * 
@@ -14,7 +14,7 @@
  * 
  */
 
-#include "holtz.hpp"
+#include "dvonn.hpp"
 #include <assert.h>
 
 #include "util.hpp"
@@ -22,7 +22,7 @@
 #include <ctype.h>
 #include <sys/types.h>
 
-namespace holtz
+namespace dvonn
 {
   // ----------------------------------------------------------------------------
   // Stones
@@ -30,8 +30,8 @@ namespace holtz
 
   Stones::Stones()
   {
-    stone_count[white_stone] = 0;
-    stone_count[grey_stone ] = 0;
+    stone_count[red_stone] = 0;
+    stone_count[white_stone ] = 0;
     stone_count[black_stone] = 0;
   }
 
@@ -39,7 +39,7 @@ namespace holtz
   void Stones::print()
   {
     std::cout << std::endl;
-    std::cout << stone_count[white_stone] << " " << stone_count[grey_stone] << " " 
+    std::cout << stone_count[red_stone] << " " << stone_count[white_stone] << " " 
 	      << stone_count[black_stone] << std::endl;
   }
 #endif
@@ -47,8 +47,8 @@ namespace holtz
   void Stones::remove_stones()
   {
     stone_count.clear();
-    stone_count[white_stone] = 0;
-    stone_count[grey_stone ] = 0;
+    stone_count[red_stone] = 0;
+    stone_count[white_stone ] = 0;
     stone_count[black_stone] = 0;
   }
 
@@ -68,32 +68,20 @@ namespace holtz
   Standard_Common_Stones::Standard_Common_Stones()
     : Common_Stones( standard )
   {
-    stone_count[ Stones::white_stone ] = 5;
-    stone_count[ Stones::grey_stone ]  = 7;
-    stone_count[ Stones::black_stone ] = 9;
-  }
-
-  // ----------------------------------------------------------------------------
-  // Tournament_Common_Stones
-  // ----------------------------------------------------------------------------
-
-  Tournament_Common_Stones::Tournament_Common_Stones()
-    : Common_Stones( tournament )
-  {
-    stone_count[ Stones::white_stone ] =  6;
-    stone_count[ Stones::grey_stone ]  =  8;
-    stone_count[ Stones::black_stone ] = 10;
+    stone_count[ Stones::red_stone ]   = 3;
+    stone_count[ Stones::white_stone ] = 23;
+    stone_count[ Stones::black_stone ] = 23;
   }
 
   // ----------------------------------------------------------------------------
   // Custom_Common_Stones
   // ----------------------------------------------------------------------------
 
-  Custom_Common_Stones::Custom_Common_Stones( int white_num, int grey_num, int black_num )
+  Custom_Common_Stones::Custom_Common_Stones( int red_num, int white_num, int black_num )
     : Common_Stones( custom )
   {
+    stone_count[ Stones::red_stone ] = red_num;
     stone_count[ Stones::white_stone ] = white_num;
-    stone_count[ Stones::grey_stone ]  = grey_num;
     stone_count[ Stones::black_stone ] = black_num;
   }
 
@@ -124,8 +112,8 @@ namespace holtz
 		  std::string host, Player_Type type, Help_Mode help_mode,
 		  Origin origin )
     : name(name), id(id), host(host), type(type), help_mode(help_mode), 
-      origin(origin), total_time(0), average_time(-1), num_measures(0), 
-      input(input), outputs(outputs), is_active(false)
+      origin(origin), total_time(0), average_time(-1), 
+      num_measures(0), input(input), outputs(outputs), is_active(false)
   {
   }
 
@@ -486,7 +474,7 @@ namespace holtz
     return true;
   }
 
-  Field_State_Type &Field_Iterator::operator*()
+  std::deque<Field_State_Type> &Field_Iterator::operator*()
   {
     assert( is_valid_field() );
 
@@ -498,7 +486,7 @@ namespace holtz
   // ----------------------------------------------------------------------------
 
   Board::Board( const int *field_array, int width, int height, Board_Type board_type )
-    : board_type( board_type )
+    : board_type( board_type ), game_state(set_moves), num_empty_fields(0)
   {
     field.resize( width );
     for( int x = 0; x < width; ++x )
@@ -506,124 +494,229 @@ namespace holtz
       field[x].resize( height );
       for( int y = 0; y < height; ++y )
       {
-	field[x][y] = Field_State_Type( field_array[x + y*width] );
+	field[x][y].clear();
+	field[x][y].push_back( Field_State_Type( field_array[x + y*width] ) );
+	if( Field_State_Type( field_array[x + y*width] ) == field_empty )
+	  num_empty_fields++;
       }
     }
   }
 
-  Board::Board( const std::vector< std::vector<Field_State_Type> > field, Board_Type board_type )
-    : board_type(board_type), field(field)
+  Board::Board( Game_State game_state, int num_empty_fields,
+		const std::vector< std::vector< std::deque<Field_State_Type> > > field, 
+		Board_Type board_type )
+    : board_type(board_type), game_state(game_state), 
+      num_empty_fields(num_empty_fields), field(field)
   {
+    // !!! checks for rectangularity
+    // !!! checks whether empty_fields and game_state are consistent
   }
 
   Board::Board()
   {
   }
 
-  bool Board::is_knock_out_possible( Field_Iterator p1,
-				     Field_Iterator p2,
-				     Field_Iterator p3 )
+  bool Board::includes_red_stone( const std::deque<Field_State_Type> &stack )
   {
-    if( Board::is_stone(*p2) )	// middle must be stone
+    std::deque<Field_State_Type>::const_iterator i;
+    for( i = stack.begin(); i != stack.end(); ++i )
     {
-      if(( Board::is_empty(*p1) && Board::is_stone(*p3) ) ||
-	 ( Board::is_empty(*p3) && Board::is_stone(*p1) ))
-      {
-	// check if p1,p2,p3 are three fields in a row
-	Field_Iterator::Direction dir = 
-	  Field_Iterator::get_far_direction( p1.get_pos(), p2.get_pos() );
-	if( p1.Next(dir) != p2 )
-	  return false;
-	if( p2.Next(dir) != p3 )
-	  return false;
-
-	return true;	// move possible
-      }
+      if( *i == field_red )
+	return true;
     }
     return false;
   }
 
-  bool Board::is_knock_out_possible()
+  // checks whether field is surrounded by stones
+  bool Board::is_blocked( Field_Pos pos )
   {
-    Field_Pos pos;
-    Field_Iterator p1(this), p2(this), p3(this);
-	
-    for( pos.x = 0; pos.x < get_x_size(); ++pos.x )
-    {
-      for( pos.y = 0; pos.y < get_y_size(); ++pos.y )
-      {
-	p1.set_pos( pos );
-	// ******************************************
-	// search each pair of three fields in a row:
-
-	// search: horizontal
-	p2 = p1.Next_Right();
-	p3 = p2.Next_Right();
-	if( p3.is_valid_field() )
-	{
-	  assert( p2.is_valid_field() );
-	  if( is_knock_out_possible(p1,p2,p3) )
-	    return true;
-	}
-
-	// search: bottom left
-	p2 = p1.Next_Bottom_Left();
-	p3 = p2.Next_Bottom_Left();
-	if( p3.is_valid_field() )
-	{
-	  assert( p2.is_valid_field() );
-	  if( is_knock_out_possible(p1,p2,p3) )
-	    return true;
-	}
-
-	// search: bottom right
-	p2 = p1.Next_Bottom_Right();
-	p3 = p2.Next_Bottom_Right();
-	if( p3.is_valid_field() )
-	{
-	  assert( p2.is_valid_field() );
-	  if( is_knock_out_possible(p1,p2,p3) )
-	    return true;
-	}
-      }
-    }
-    return false;
-  }
-  bool Board::is_knock_out_possible( Field_Pos pos )
-  {
-    Field_Iterator p1( pos, this ), p2(this), p3(this);
+    Field_Iterator p1( pos, this );
 
     // search in any direction
     int dir;
     for( dir =  Field_Iterator::right;
 	 dir <= Field_Iterator::bottom_right; ++dir )
     {
-      p2 = p1.Next( Field_Iterator::Direction(dir) );
-      p3 = p2.Next( Field_Iterator::Direction(dir) );
-      if( p3.is_valid_field() )
+      Field_Iterator p2 = p1.Next(Field_Iterator::Direction(dir));
+      if( !p2.is_valid_field() )
+	return false;
+      if( !is_stone(*p2) )
+	return false;
+    }
+    return true;
+  }
+
+  bool Board::is_any_move_possible()
+  {
+    if( game_state == set_moves )
+      return true;
+    else
+    {
+      Field_Pos pos;
+      Field_Iterator p1(this);
+	
+      for( pos.x = 0; pos.x < get_x_size(); ++pos.x )
       {
-	assert( p2.is_valid_field() );
-	if( is_stone(*p2) )	// middle must be stone
+	for( pos.y = 0; pos.y < get_y_size(); ++pos.y )
 	{
-	  if( is_empty(*p3) && is_stone(*p1) )
-	    return true;	// move possible
+	  p1.set_pos(pos);
+	  if( !Board::is_stone(*p1) )
+	    continue;
+	  if( p1->back() == field_red )
+	    continue;
+	  if( is_move_possible(pos) )
+	    return true;
 	}
       }
     }
     return false;
   }
 
-  std::pair<bool,Field_Pos> Board::is_knock_out_possible( Field_Pos from, Field_Pos to )
+  bool Board::is_any_move_possible( const Player &player )
   {
-    Field_Iterator p1(from,this), p2(this), p3(to,this);
-    Field_Iterator::Direction dir = Field_Iterator::get_far_direction(from,to);
-
-    p2 = p1.Next(dir);
-
-    return std::pair<bool,Field_Pos>( is_knock_out_possible(p1,p2,p3), p2.get_pos() );
+    if( game_state == set_moves )
+      return true;
+    else
+    {
+      Field_Pos pos;
+      Field_Iterator p1(this);
+	
+      for( pos.x = 0; pos.x < get_x_size(); ++pos.x )
+      {
+	for( pos.y = 0; pos.y < get_y_size(); ++pos.y )
+	{
+	  p1.set_pos(pos);
+	  if( !Board::is_stone(*p1) )
+	    continue;
+	  if( p1->back() != Field_State_Type(player.stone_type) )
+	    continue;
+	  if( is_move_possible(pos) )
+	    return true;
+	}
+      }
+    }
+    return false;
   }
 
-  std::list<Knock_Out_Move> Board::get_knock_out_moves()
+  bool Board::is_move_possible( Field_Pos from )
+  {
+    if( is_blocked(from) )
+      return false;
+
+    Field_Iterator p1( from, this );
+    int num = p1->size();	// size of stack determines jump length
+
+    // search in any direction
+    int dir;
+    for( dir =  Field_Iterator::right;
+	 dir <= Field_Iterator::bottom_right; ++dir )
+    {
+      Field_Iterator p2 = p1;
+      for( int i=0; i<num; ++i )
+	p2.Go(Field_Iterator::Direction(dir));
+
+      if( p2.is_valid_field() )
+      {
+	if( is_stone(*p2) )	// middle must be stone
+	  return true;		// move possible
+      }
+    }
+    return false;
+  }
+
+  bool Board::is_move_possible( Field_Pos from, Field_Pos to )
+  {
+    if( is_blocked(from) )
+      return false;
+
+    Field_Iterator p1(from,this), p2(to,this);
+    int num = p1->size();	// size of stack determines jump length
+    Field_Iterator::Direction dir = Field_Iterator::get_far_direction(from,to);
+    for( int i=0; i<num; ++i )
+      p1.Go(dir);
+
+    return p1 == p2;		// possible when "to" reachable with regular jump
+  }
+
+  std::list<Jump_Move> Board::get_jump_moves( Field_Pos from )
+  {
+    std::list<Jump_Move> ret;
+    
+    if( is_blocked(from) )
+      return ret;
+    
+    Field_Iterator p1( from, this );
+    int num = p1->size();	// size of stack determines jump length
+    
+    // search in any direction
+    int dir;
+    for( dir =  Field_Iterator::right;
+	 dir <= Field_Iterator::bottom_right; ++dir )
+    {
+      Field_Iterator p2 = p1;
+      for( int i=0; i<num; ++i )
+	p2.Go(Field_Iterator::Direction(dir));
+      
+      if( p2.is_valid_field() )
+      {
+	if( is_stone(*p2) )	// middle must be stone
+	{
+	  ret.push_back(Jump_Move(from,p2.get_pos()));
+	}
+      }
+    }
+    return ret;
+  }
+  
+  std::list<Field_Pos> Board::get_empty_fields()
+  {
+    std::list<Field_Pos> ret;
+
+    Field_Pos pos;
+    Field_Iterator p1(this);
+	
+    for( pos.x = 0; pos.x < get_x_size(); ++pos.x )
+    {
+      for( pos.y = 0; pos.y < get_y_size(); ++pos.y )
+      {
+	p1.set_pos(pos);
+	if( Board::is_empty(*p1) )
+	{
+	  ret.push_back(pos);
+	}
+      }
+    }
+    return ret;
+  }
+
+  std::list<Field_Pos> Board::get_movable_fields( const Player &player )
+  {
+    std::list<Field_Pos> ret;
+
+    if( game_state == set_moves )
+      return ret;
+
+    Field_Pos pos;
+    Field_Iterator p1(this);
+	
+    for( pos.x = 0; pos.x < get_x_size(); ++pos.x )
+    {
+      for( pos.y = 0; pos.y < get_y_size(); ++pos.y )
+      {
+	p1.set_pos(pos);
+	if( !Board::is_stone(*p1) )
+	  continue;
+	if( p1->back() != Field_State_Type(player.stone_type) )
+	  continue;
+	if( is_move_possible(pos) )
+	  ret.push_back(pos);
+      }
+    }
+    return ret;
+  }
+
+  /*
+  std::list<Jump_Move> Board::get_knock_out_moves()
   {
     std::list<Knock_Out_Move> ret;
 
@@ -687,7 +780,7 @@ namespace holtz
     return ret;
   }
 
-  std::list<Knock_Out_Move> Board::get_knock_out_moves( Field_Pos p1 )
+  std::list<Jump_Move> Board::get_jump_moves( Field_Pos p1 )
   {
     std::list<Knock_Out_Move> ret;
     Field_Iterator from(p1, this), over(this), to(this);
@@ -712,56 +805,9 @@ namespace holtz
     }
     return ret;
   }
+  */
 
-  bool Board::is_removable( Field_Pos pos )
-  {
-    Field_Iterator p1( pos, this ), next(this);
-    bool is_last_removed;
-
-    assert( p1.is_valid_field() );
-    if( !is_empty(*p1) ) return false;
-
-    // check whether predecessor of direction right is removed
-    next = p1.Next_Bottom_Right();
-    if( !next.is_valid_field() || is_removed(*next) )
-      is_last_removed = true;
-    else
-      is_last_removed = false;
-
-    // check whether any two adjacent fields are removed
-    // search in any direction
-    for( int dir = Field_Iterator::right;
-	 dir <= Field_Iterator::bottom_right; ++dir )
-    {
-      next = p1.Next( Field_Iterator::Direction(dir) );
-      if( !next.is_valid_field() || is_removed(*next) )
-      {
-	if( is_last_removed )
-	  return true;
-	else
-	  is_last_removed = true;
-      }
-      else
-	is_last_removed = false;
-    }
-    return false;
-  }
-
-  bool Board::is_any_field_removable()
-  {
-    Field_Pos pos;
-	
-    for( pos.x = 0; pos.x < get_x_size(); ++pos.x )
-    {
-      for( pos.y = 0; pos.y < get_y_size(); ++pos.y )
-      {
-	if( is_removable( pos ) )
-	  return true;
-      }
-    }
-    return false;
-  }
-
+  /*
   std::list<Field_Pos> Board::get_empty_fields()
   {
     std::list<Field_Pos> ret;
@@ -777,7 +823,7 @@ namespace holtz
     }
     return ret;
   }
-  std::list<Field_Pos> Board::get_removable_fields()
+  std::list<Field_Pos> Board::get_movable_fields()
   {
     std::list<Field_Pos> ret;
     Field_Pos pos;
@@ -790,6 +836,31 @@ namespace holtz
 	  ret.push_back(pos);
       }
     }
+    return ret;
+  }
+  */
+
+  std::map<Stones::Stone_Type,int> Board::count_controled_stones()
+  {
+    std::map<Stones::Stone_Type,int> ret;
+    ret[Stones::white_stone] = 0;
+    ret[Stones::black_stone] = 0;
+
+    Field_Pos pos;
+    Field_Iterator p1(this);
+	
+    for( pos.x = 0; pos.x < get_x_size(); ++pos.x )
+    {
+      for( pos.y = 0; pos.y < get_y_size(); ++pos.y )
+      {
+	p1.set_pos( pos );
+	assert( !p1->empty() );
+	if( p1->back() == field_white )
+	  ++ret[Stones::white_stone];
+	else if( p1->back() == field_black )
+	  ++ret[Stones::black_stone];
+      }
+    }    
     return ret;
   }
 
@@ -1116,15 +1187,25 @@ namespace holtz
 	    (*output)->report_move( sequence );
 
 	  // check win condition
-	  if( win_condition->did_player_win(*this,*prev_player) )
+	  int index = 0;
+	  std::vector<Player>::iterator player;
+	  for( player = players.begin(); player != players.end(); ++player )
 	  {
-	    winner_player_index = prev_player_index;
-	    current_player->is_active = false;
-	    return finished;
+	    if( win_condition->did_player_win(*this,*player) )
+	    {
+	      winner_player_index = index;
+	      current_player->is_active = false;
+	      return finished;
+	    }
+	    index++;
 	  }
+	  
 
 	  if( !current_player->is_active ) // if no player is able to move
+	  {
+	    winner_player_index=-1;
 	    return finished;
+	  }
 
 	  return next_players_turn;
 	}
@@ -1152,13 +1233,6 @@ namespace holtz
     undo_possible = ruleset->undo_possible;
     variant_tree.clear();
     winner_player_index = -1;
-
-    // remove stones of all players
-    std::vector<Player>::iterator i;
-    for( i = players.begin(); i != players.end(); ++i )
-    {
-      i->stones.remove_stones(); 
-    }
 
     current_player = players.begin();
     current_player_index = 0;
@@ -1191,32 +1265,33 @@ namespace holtz
     {
       std::vector<Player>::const_iterator player_src;
 
+      int cnt=0;
       player_src = new_players.begin();
       for( player = players.begin(); player != players.end(); ++player, ++player_src )
       {
-	// rescue captured stones
-	Stones player_stones = player->stones;
 	// copy player
 	assert( player_src != new_players.end() );
 	*player = *player_src;
-
-	player->stones = player_stones;
+	if( cnt == 0 ) player->stone_type = Stones::white_stone;
+	else player->stone_type = Stones::black_stone;
+	cnt++;
       }
     }
     else
     {
       players = new_players;
 
-      // remove player stones
-      for( player = players.begin(); player != players.end(); ++player )
-      {
-	player->stones = Stones();
-      }
-
       current_player       = players.begin();
       current_player_index = 0;
       prev_player	   = players.end();
       prev_player_index    = -1;
+      int cnt=0;
+      for( player = players.begin(); player != players.end(); ++player )
+      {
+	if( cnt == 0 ) player->stone_type = Stones::white_stone;
+	else player->stone_type = Stones::black_stone;
+	cnt++;
+      }
     }
 
     // set player active
@@ -1238,6 +1313,8 @@ namespace holtz
       return false;
 
     players.push_back( player );
+    if( players.size() > 1 ) players.back().stone_type = Stones::black_stone;
+    else players.back().stone_type = Stones::white_stone;
     current_player = players.begin();
     current_player_index = 0;
     current_player->is_active = true;
@@ -1297,19 +1374,11 @@ namespace holtz
     return ret;
   }
 
+  //! game dependent function
   bool Game::choose_next_player()		// next player is current player
   {
     prev_player = current_player;
     prev_player_index = current_player_index;
-
-    // check if still stones are there
-    bool common_stones_avail;
-    if( common_stones.stone_count[ Stones::white_stone ] +
-	common_stones.stone_count[ Stones::grey_stone ] +
-	common_stones.stone_count[ Stones::black_stone ] == 0 )
-      common_stones_avail = false;
-    else
-      common_stones_avail = true;
 
     // change player
     current_player->is_active = false;
@@ -1324,21 +1393,13 @@ namespace holtz
 	current_player_index = 0;
       }
       next_player = false;
-      if( !common_stones_avail )
+
+      if( !board.is_any_move_possible(*current_player) )
       {
-	// assert that player has stones if no knock out move is possible
-	if( !board.is_knock_out_possible() )
-	{
-	  if( current_player->stones.stone_count[ Stones::white_stone ] +
-	      current_player->stones.stone_count[ Stones::grey_stone  ] +
-	      current_player->stones.stone_count[ Stones::black_stone ] == 0 )
-	  {
-	    next_player = true; // player can't move
-	    ++players_skipped;
-	    if( players_skipped >= players.size() )
-	      return false; // no player may move
-	  }
-	}
+	next_player = true; // player can't move
+	++players_skipped;
+	if( players_skipped >= players.size() )
+	  return false; // no player may move
       }
     }while( next_player );
     current_player->is_active = true;
@@ -1397,59 +1458,12 @@ namespace holtz
   {
     int num_possible_moves = 0;
 
-    Move *move = new Knock_Out_Move( from.get_pos(), over.get_pos(), to.get_pos() );
-    if( move->check_move( game ) )
-    {
-      bool ok = current_move_sequence.add_move( game, move );
-      if( ok )
-      {
-	move->do_move( game );
-	from = to;			// destination field is start field for further moves
+    //!!! implement that
+    num_possible_moves = 43;   
 
-	bool knock_out = false;
-	// search in any direction
-	int dir;
-	for( dir =  Field_Iterator::right;
-	     dir <= Field_Iterator::bottom_right; ++dir )
-	{
-	  over = from.Next( Field_Iterator::Direction(dir) );
-	  to   = over.Next( Field_Iterator::Direction(dir) );
-	  if( to.is_valid_field() )
-	  {
-	    assert( over.is_valid_field() );
-	    if( Board::is_stone(*over) )	// middle must be stone
-	    {
-	      if( Board::is_empty(*to) && Board::is_stone(*from) )
-	      {
-		knock_out = true;
-		get_num_knock_out_moves( game, current_move_sequence, from, over, to );
-				// recursive move adding
-	      }
-	    }
-	  }
-	}
-	if( !knock_out )		// if no further knock out possible
-	{
-	  // add finish move
-	  move = new Finish_Move();
-	  if( move->check_move( game ) )
-	  {
-	    ok = current_move_sequence.add_move(game,move);
-	    if( ok )
-	    {
-	      move->do_move(game);
-      
-	      num_possible_moves++;
-	      
-	      current_move_sequence.undo_last_move( game );
-	    }
-	  }
-	}
-	current_move_sequence.undo_last_move( game );
-      }
-    }
     return num_possible_moves;
   }
+  /*
 
   // get number of set-remove moves beginning with a special set move
   int get_num_set_moves( Game &game, Field_Iterator to, Stones::Stone_Type type )
@@ -1523,10 +1537,14 @@ namespace holtz
     }
     return num_possible_moves;
   }
-
+  */
   int Game::get_num_possible_moves() // number of possible moves in current situation
   {
     int num_possible_moves = 0;
+
+    //!!! implement that
+    num_possible_moves = 43;   
+    /*
     Move_Sequence current_sequence;
     std::list<Move_Sequence> possible_moves;
     Game save_game = *this;
@@ -1629,11 +1647,12 @@ namespace holtz
 	  }
 	}
     }
+  */
     return num_possible_moves;
   }
-
-  // ******************
-  // get_possible_moves
+/*
+  // *******************
+  // get_knock_out_moves
 
   // fills possible_moves list with knock out moves beginning with from->over->to
   void get_knock_out_moves( Game &game, std::list<Move_Sequence> &possible_moves,
@@ -1866,6 +1885,7 @@ namespace holtz
 
     return possible_moves;
   }
+  */
 
   std::vector<Player>::iterator Game::get_next_player( std::vector<Player>::iterator player )
   {
@@ -1905,99 +1925,102 @@ namespace holtz
   {
   }
 
-  Move::Move_Type Knock_Out_Move::get_type() const
+  // ----------------------------------------------------------------------------
+  // Jump_Move
+  // ----------------------------------------------------------------------------
+
+  Move::Move_Type Jump_Move::get_type() const
   {
-    return knock_out_move;
+    return jump_move;
   }
-
-  // ----------------------------------------------------------------------------
-  // Knock_Out_Move
-  // ----------------------------------------------------------------------------
-
-  void Knock_Out_Move::do_move( Game &game )
+  
+  void Jump_Move::do_move( Game &game )
   {
     assert( check_move(game) );
-    Field_State_Type stone = game.board.field[from.x][from.y];
-    knocked_stone	   = game.board.field[over.x][over.y];
-    assert( Board::is_stone( knocked_stone ) );
-    assert( game.current_player->stones.stone_count[ Stones::Stone_Type(knocked_stone) ] >= 0 );
-    ++game.current_player->stones.stone_count[ Stones::Stone_Type(knocked_stone) ];
+    std::deque<Field_State_Type> &from_stack = game.board.field[from.x][from.y];
+    std::deque<Field_State_Type> &to_stack = game.board.field[to.x][to.y];
+    assert( from_stack.size() > 0 );
+    assert( to_stack.size() > 0 );
+    assert( Board::is_stone( from_stack.back() ) );
+    assert( Board::is_stone( to_stack.back() ) );
+    num_moved_stones = from_stack.size();
+    to_stack.insert( to_stack.end(), from_stack.begin(), from_stack.end() );
+    from_stack.clear();
+    from_stack.push_back(field_empty);
+  }
 
-    game.board.field[from.x][from.y] = field_empty;
-    game.board.field[over.x][over.y] = field_empty;
-    game.board.field[  to.x][  to.y] = stone;    
-  }
-  void Knock_Out_Move::undo_move( Game &game )
+  void Jump_Move::undo_move( Game &game )
   {
-    Field_State_Type stone = game.board.field[to.x][to.y];
-    assert( game.current_player->stones.stone_count[ Stones::Stone_Type(knocked_stone) ] > 0 );
-    --game.current_player->stones.stone_count[ Stones::Stone_Type(knocked_stone) ];
-    game.board.field[from.x][from.y] = stone;
-    game.board.field[over.x][over.y] = knocked_stone;
-    game.board.field[  to.x][  to.y] = field_empty;    
+    std::deque<Field_State_Type> &from_stack = game.board.field[from.x][from.y];
+    std::deque<Field_State_Type> &to_stack = game.board.field[to.x][to.y];
+    assert( from_stack.size() == 1 );
+    assert( from_stack.back() == field_empty );
+    from_stack.clear();
+    for( int i=0; i<num_moved_stones; ++i )
+    {
+      from_stack.push_front( to_stack.back() );
+      to_stack.pop_back();
+    }
   }
+
   // true: move ok
-  bool Knock_Out_Move::check_move( Game &game ) const 
+  bool Jump_Move::check_move( Game &game ) const 
   {
-    if( !Board::is_stone( game.board.field[from.x][from.y] ) ) return false;
-    if( !Board::is_stone( game.board.field[over.x][over.y] ) ) return false;
-    if( !Board::is_empty( game.board.field[  to.x][  to.y] ) ) return false;
+    if( game.board.game_state == Board::set_moves )
+      return false;		// no jump allowed yet
 
-    if( !Field_Iterator::is_connected(from,over) ) return false;
-    if( !Field_Iterator::is_connected(over,to) ) return false;
-    if( Field_Iterator::get_direction(from,over) !=
-	Field_Iterator::get_direction(over,to) ) return false;
+    Field_Iterator p1(from,&game.board);
+    if( !Board::is_stone(*p1) )
+      return false;		// no stone there
+
+    Field_State_Type required_stone_field 
+      = Field_State_Type(game.current_player->stone_type);
+    
+    if( p1->back() != required_stone_field )
+      return false;		// wrong player
+
+    if( !game.board.is_move_possible(from, to) )
+      return false;		// no valid jump move
 
     return true;
   }
   // true: type ok
-  bool Knock_Out_Move::check_previous_move( Game &, Move *move ) const 
+  bool Jump_Move::check_previous_move( Game &, Move *move ) const 
   {
-    if( !move )
-      return true;
-
-    if( move->get_type() == knock_out_move )
-    {
-      Knock_Out_Move *knock_move = dynamic_cast<Knock_Out_Move *>(move);
-      if( knock_move->to == from )
-	return true;
-    }
-
-    return false;
+    return move == 0;
   }
-  bool Knock_Out_Move::may_be_first_move( Game &game ) const
+  bool Jump_Move::may_be_first_move( Game &game ) const
   {
     return true;
   }
-  bool Knock_Out_Move::may_be_last_move( Game &game ) const
+  bool Jump_Move::may_be_last_move( Game &game ) const
   {
-    return !game.board.is_knock_out_possible(to);
+    return true;
   }
 
-  std::escape_ostream &Knock_Out_Move::output( std::escape_ostream &eos ) const
+  std::escape_ostream &Jump_Move::output( std::escape_ostream &eos ) const
   {
-    eos << get_type() << from.x << from.y << over.x << over.y << to.x << to.y;
+    eos << get_type() << from.x << from.y << to.x << to.y;
     return eos;
   }
-  bool Knock_Out_Move::input( std::escape_istream &eis )
+  bool Jump_Move::input( std::escape_istream &eis )
   {
-    eis >> from.x >> from.y >> over.x >> over.y >> to.x >> to.y;
-    if( (from.x < 0) || (from.y < 0) || (over.x < 0) || (over.y < 0) || (to.x < 0) || (to.y < 0) )
+    eis >> from.x >> from.y >> to.x >> to.y;
+    if( (from.x < 0) || (from.y < 0) || (to.x < 0) || (to.y < 0) )
       return false;
     return true;
   }
 
-  Move *Knock_Out_Move::clone() const
+  Move *Jump_Move::clone() const
   {
-    return new Knock_Out_Move(*this);
+    return new Jump_Move(*this);
   }
   
-  Knock_Out_Move::Knock_Out_Move()
+  Jump_Move::Jump_Move()
   {
   }
-  Knock_Out_Move::Knock_Out_Move( Field_Pos from, Field_Pos over, 
-				  Field_Pos to )
-    : from(from), over(over), to(to)
+  Jump_Move::Jump_Move( Field_Pos from, Field_Pos to )
+    : from(from), to(to)
   {
   }
 
@@ -2012,46 +2035,124 @@ namespace holtz
   void Set_Move::do_move( Game &game )
   {
     assert( check_move(game) );
-    if( game.common_stones.stone_count[ stone_type ] > 0 )
+
+    std::deque<Field_State_Type> &pos_stack = game.board.field[pos.x][pos.y];
+    assert( pos_stack.size() == 1 );
+    assert( pos_stack.back() == field_empty );
+    assert( game.board.game_state == Board::set_moves );
+    if( game.common_stones.stone_count[ Stones::red_stone ] > 0 )
     {
-      --game.common_stones.stone_count[ stone_type ];
-      own_stone = false;
+      --game.common_stones.stone_count[ Stones::red_stone ];
+      pos_stack.back() = Field_State_Type(Stones::red_stone);
     }
     else
     {
-      assert( game.current_player->stones.stone_count[ stone_type ] > 0 );
-      --game.current_player->stones.stone_count[ stone_type ];
-      own_stone = true;
+      if( game.current_player->stone_type == Stones::white_stone ) // white player
+      {
+	assert( game.common_stones.stone_count[ Stones::white_stone ] > 0 );
+	--game.common_stones.stone_count[ Stones::white_stone ];
+	pos_stack.back() = Field_State_Type(Stones::white_stone);
+
+	// fun solution if more empty fields than stones
+	if( game.common_stones.stone_count[ Stones::black_stone ] == 0 )
+	  game.board.game_state = Board::jump_moves;
+      }
+      else // black_player
+      {
+	assert( game.common_stones.stone_count[ Stones::black_stone ] > 0 );
+	--game.common_stones.stone_count[ Stones::black_stone ];
+	pos_stack.back() = Field_State_Type(Stones::black_stone);
+
+	// fun solution if more empty fields than stones
+	if( game.common_stones.stone_count[ Stones::white_stone ] == 0 )
+	  game.board.game_state = Board::jump_moves;
+      }
     }
-    game.board.field[pos.x][pos.y] = Field_State_Type(stone_type);
+
+    assert(game.board.num_empty_fields > 0);
+    game.board.num_empty_fields--;
+    if( game.board.num_empty_fields == 1 )
+    {
+      std::list<Field_Pos> empty_fields = game.board.get_empty_fields();
+      assert(empty_fields.size()==1);
+      pos2 = empty_fields.back();
+      std::deque<Field_State_Type> &pos2_stack = game.board.field[pos2.x][pos2.y];
+      assert( pos2_stack.size() == 1 );
+      assert( pos2_stack.back() == field_empty );
+      // set the last stone of the other player autmatically
+      if( game.current_player->stone_type == Stones::black_stone ) // black player
+      {
+	if( game.common_stones.stone_count[ Stones::white_stone ] > 0 )
+	{
+	  --game.common_stones.stone_count[ Stones::white_stone ];
+	  pos2_stack.back() = Field_State_Type(Stones::white_stone);
+	}
+      }
+      else // white_player
+      {
+	if( game.common_stones.stone_count[ Stones::black_stone ] > 0 )
+	{
+	  --game.common_stones.stone_count[ Stones::black_stone ];
+	  pos2_stack.back() = Field_State_Type(Stones::black_stone);
+	}
+      }
+      game.board.num_empty_fields--;
+      game.board.game_state = Board::jump_moves;
+    }
   }
   void Set_Move::undo_move( Game &game )
   {
-    if( own_stone )
+    std::deque<Field_State_Type> &pos_stack = game.board.field[pos.x][pos.y];
+    assert( pos_stack.size() == 1 );
+    pos_stack.back() = Field_State_Type(field_empty);
+    game.board.num_empty_fields++;
+    game.board.game_state = Board::set_moves;
+
+    if( game.current_player->stone_type == Stones::white_stone ) // white player
     {
-      ++game.current_player->stones.stone_count[ stone_type ];
+      if( game.common_stones.stone_count[ Stones::white_stone ] >= 
+	  game.ruleset->common_stones.stone_count[ Stones::white_stone ] )
+	++game.common_stones.stone_count[ Stones::red_stone ];
+      else
+	++game.common_stones.stone_count[ Stones::white_stone ];
     }
-    else
+    else // black_player
     {
-      ++game.common_stones.stone_count[ stone_type ];
+      if( game.common_stones.stone_count[ Stones::black_stone ] >= 
+	  game.ruleset->common_stones.stone_count[ Stones::black_stone ] )
+	++game.common_stones.stone_count[ Stones::red_stone ];
+      else
+	++game.common_stones.stone_count[ Stones::black_stone ];
     }
-    game.board.field[pos.x][pos.y] = field_empty;
+
+    if( game.board.num_empty_fields==1 ) // were there a 2nd automatic set?
+    {
+      std::deque<Field_State_Type> &pos2_stack = game.board.field[pos2.x][pos2.y];
+      pos2_stack.back() = Field_State_Type(field_empty);
+      game.board.num_empty_fields++;
+      // remove the stone which was automatically set for the other player
+      if( game.current_player->stone_type == Stones::black_stone ) // black player
+      {
+	++game.common_stones.stone_count[ Stones::white_stone ];
+      }
+      else // white_player
+      {
+	++game.common_stones.stone_count[ Stones::black_stone ];
+      }
+    }
   }
+
   // true: move ok
   bool Set_Move::check_move( Game &game ) const 
   {
-    if( !Board::is_empty( game.board.field[pos.x][pos.y] ) ) return false;
-    if( game.common_stones.stone_count[ stone_type ] <= 0 )
-    {
-      // if there are other common stones
-      if( game.common_stones.stone_count[ Stones::white_stone ] +
-	  game.common_stones.stone_count[ Stones::grey_stone ]  +
-	  game.common_stones.stone_count[ Stones::black_stone ] > 0 )
-	return false;
-      else						 // there are no common stones
-	if( game.current_player->stones.stone_count[ stone_type ] <= 0 )
-	  return false;					 // return false if player doesn't have that stone
-    }
+    if( game.board.game_state == Board::jump_moves )
+      return false;
+
+    Field_Iterator p1(pos,&game.board);
+    if( p1->size() != 1 ) 
+      return false;
+    if( p1->back() != field_empty ) 
+      return false;    
 
     return true;
   }
@@ -2062,35 +2163,24 @@ namespace holtz
   }
   bool Set_Move::may_be_first_move( Game &game ) const
   {
-    return !game.board.is_knock_out_possible();
+    return true;
   }
   bool Set_Move::may_be_last_move( Game &game ) const
   {
-    return !game.board.is_any_field_removable();
+    return true;
   }
 
   std::escape_ostream &Set_Move::output( std::escape_ostream &eos ) const
   {
-    eos << get_type() << pos.x << pos.y << stone_type;
+    eos << get_type() << pos.x << pos.y;
     return eos;
   }
   bool Set_Move::input( std::escape_istream &eis )
   {
-    int stone;
-    eis >> pos.x >> pos.y >> stone;
+    eis >> pos.x >> pos.y;
     if( (pos.x < 0) || (pos.y < 0) )
       return false;
-    stone_type = Stones::Stone_Type(stone);
-    switch(stone_type)
-    {
-      case Stones::white_stone:
-      case Stones::grey_stone:
-      case Stones::black_stone:
-	return true;
-      case Stones::invalid_stone:
-	return false;
-    }
-    return false;
+    return true;
   }
   
   Move *Set_Move::clone() const
@@ -2102,77 +2192,8 @@ namespace holtz
   {
   }
 
-  Set_Move::Set_Move( Field_Pos pos, Stones::Stone_Type stone_type  )
-    : pos(pos), stone_type(stone_type)
-  {
-  }
-
-  // ----------------------------------------------------------------------------
-  // Remove
-  // ----------------------------------------------------------------------------
-
-  Move::Move_Type Remove::get_type() const
-  {
-    return remove;
-  }
-
-  void Remove::do_move( Game &game )
-  {
-    assert( check_move(game) );
-    game.board.field[remove_pos.x][remove_pos.y] = field_removed;
-  }
-  void Remove::undo_move( Game &game )
-  {
-    game.board.field[remove_pos.x][remove_pos.y] = field_empty;
-  }
-  // true: move ok
-  bool Remove::check_move( Game &game ) const 
-  {
-    if( !Board::is_empty( game.board.field[remove_pos.x][remove_pos.y] ) ) return false;
-
-    return game.board.is_removable(remove_pos);
-  }
-  // true: type ok
-  bool Remove::check_previous_move( Game &, Move *move ) const 
-  {
-    if( !move )
-      return false;
-
-    return move->get_type() == set_move;
-  }
-  bool Remove::may_be_first_move( Game & ) const
-  {
-    return false;
-  }
-  bool Remove::may_be_last_move( Game & ) const
-  {
-    return true;
-  }
-
-  std::escape_ostream &Remove::output( std::escape_ostream &eos ) const
-  {
-    eos << get_type() << remove_pos.x << remove_pos.y;
-    return eos;
-  }
-  bool Remove::input( std::escape_istream &eis )
-  {
-    eis >> remove_pos.x >> remove_pos.y;
-    if( (remove_pos.x < 0) || (remove_pos.y < 0) )
-      return false;
-    return true;
-  }
-  
-  Move *Remove::clone() const
-  {
-    return new Remove(*this);
-  }
-
-  Remove::Remove()
-  {
-  }
-
-  Remove::Remove( Field_Pos remove_pos )
-    : remove_pos(remove_pos)
+  Set_Move::Set_Move( Field_Pos pos )
+    : pos(pos)
   {
   }
 
@@ -2190,7 +2211,7 @@ namespace holtz
   {
   public:
     Area()
-      : main_area(0), filled(true)
+      : main_area(0), living(false)
     {
     }
     inline void set_main_area( Area *area )
@@ -2212,33 +2233,34 @@ namespace holtz
       Area *m2 = area->get_main_area();
       if( m1 != m2 )					 // area areas not already connected?
       {
-	if( !m2->is_filled() )
+	if( m2->is_living() )
 	{
-	  m1->set_unfilled();
+	  m1->set_living();
 	}
 	m2->set_main_area(m1);
       }
     }
-    inline void set_unfilled() 
+    inline void set_living() 
     { 
-      get_main_area()->filled = false; 
+      get_main_area()->living = true; 
     }
-    inline bool is_filled()
+    inline bool is_living()
     {
-      return get_main_area()->filled;
+      return get_main_area()->living;
     }
   private:
     Area *main_area;					 // connected area which stores all relevant data
-    bool filled;					 // whether this area is totally filled
+    bool living;					 // whether this area includes a red stone
   };
 
   void Finish_Move::do_move( Game &game )
   {
     removed_stones.clear();
+
     // **********************************
     // search for filled isolated islands
 
-    // tells for all areas whether they are totally filled
+    // tells for all areas whether they are isolated
     std::list<Area> areas; 
     Area *current_area;
 
@@ -2264,7 +2286,7 @@ namespace holtz
 	assert( p1.is_valid_field() );
 
 	current_area = 0;
-	if( !Board::is_removed(*p1) )			 // removed fields don't belong to area
+	if( Board::is_stone(*p1) )			 // only stone fields are interesting
 	{
 	  for( dir = Field_Iterator::top_right;
 	       dir <= Field_Iterator::left; ++dir )
@@ -2296,32 +2318,32 @@ namespace holtz
 	    current_area = &areas.back();
 	  }
 
-	  if( Board::is_empty(*p1) )			 // if field is empty
-	    current_area->set_unfilled();		 // area of this field can't be filled
+	  if( Board::includes_red_stone(*p1) )		 // if stack includes red stone
+	    current_area->set_living();			 // area of this field is living
 	}
 	
-	field_area[pos.x][pos.y] = current_area;	  
+	field_area[pos.x][pos.y] = current_area;
       }
-    }    
+    }   
 
     // **********************************
-    // check for filled isolated islands
+    // check for dead isolated areas
 
     std::list<Area>::iterator area;
-    bool any_filled_areas = false;
+    bool any_dead_areas = false;
     for( area = areas.begin(); area != areas.end(); ++area )
     {
-      if( area->is_filled() )
+      if( !area->is_living() )
       {
-	any_filled_areas = true;
+	any_dead_areas = true;
 	break;
       }
     }
 
     // **************************************
-    // collect all stones from filled areas
+    // collect all stones from dead areas
 
-    if( any_filled_areas )
+    if( any_dead_areas )
     {
       for( pos.x = 0; pos.x < game.board.get_x_size(); ++pos.x )
       {
@@ -2330,17 +2352,15 @@ namespace holtz
 	  Area *area = field_area[pos.x][pos.y];
 	  if( area )
 	  {
-	    if( area->is_filled() )
+	    if( !area->is_living() )
 	    {
 	      p1.set_pos(pos);
 	      assert( Board::is_stone(*p1) );
-	      Stones::Stone_Type stone_type = Stones::Stone_Type(*p1);
 	      
-	      ++game.current_player->stones.stone_count[ stone_type ];
+	      removed_stones.push_back( std::pair<Field_Pos,std::deque<Field_State_Type> >(pos,*p1) );
 	      
-	      removed_stones.push_back( std::pair<Field_Pos,Stones::Stone_Type>(pos,stone_type) );
-	      
-	      *p1 = field_removed;
+	      p1->clear();
+	      p1->push_back( field_empty );
 	    }
 	  }
 	}
@@ -2352,16 +2372,11 @@ namespace holtz
     Field_Iterator p1( &game.board );
 
     // restore stones removed because of filled islands
-    std::list< std::pair<Field_Pos,Stones::Stone_Type> >::iterator i;
+    std::list< std::pair<Field_Pos,std::deque<Field_State_Type> > >::iterator i;
     for( i = removed_stones.begin(); i != removed_stones.end(); ++i )
     {
-      Stones::Stone_Type &stone_type = i->second;
-
       p1.set_pos(i->first);
-      *p1 = Field_State_Type(stone_type);
-
-      --game.current_player->stones.stone_count[ stone_type ];
-      assert( game.current_player->stones.stone_count[ stone_type ] >= 0 );
+      *p1 = i->second;
     }
     removed_stones.clear();				 // empty list
   }
@@ -2376,7 +2391,7 @@ namespace holtz
     if( !move )
       return false;
 
-    return move->may_be_last_move(game);
+    return move->get_type() == jump_move;
   }
   bool Finish_Move::may_be_first_move( Game & ) const
   {
@@ -2451,7 +2466,8 @@ namespace holtz
       --last_done_move;
       prev_move = *move;
     }
-    if( moves->back()->get_type() != Move::finish_move ) 
+    if( moves->back()->get_type() != Move::finish_move &&
+	moves->back()->get_type() != Move::set_move ) 
       is_move_ok = false;
     // undo all moves
     for( ; last_done_move != moves->rend(); ++last_done_move )
@@ -2486,10 +2502,9 @@ namespace holtz
       type = Move::Move_Type(move_type);
       switch( type )
       {
-	case Move::knock_out_move:	move = new Knock_Out_Move(); break;
-	case Move::set_move:		move = new Set_Move(); break;
-	case Move::remove:		move = new Remove(); break;
-	case Move::finish_move:		move = new Finish_Move(); break;
+	case Move::jump_move:	move = new Jump_Move(); break;
+	case Move::set_move:	move = new Set_Move(); break;
+	case Move::finish_move:	move = new Finish_Move(); break;
 	default: return false;
       }
       if( !move->input(eis) )
@@ -2502,13 +2517,13 @@ namespace holtz
     return true;
   }
 
-  // true: add ok
+  // this function takes care of the reserved memory
   void Move_Sequence::add_move( Move *move )
   {
     moves->push_back( move );
   }
 
-  // true: add ok
+  // this function takes care of the reserved memory
   bool Move_Sequence::add_move( Game &game, Move *move )
   {
     if( !move->check_previous_move( game, get_last_move() ) )
@@ -2641,146 +2656,30 @@ namespace holtz
   Move_Sequence Standard_Move_Translator::decode( std::istream &is )
   {
     Move_Sequence sequence;
-    char first;
-    is >> first;
-    if( (first == 'x') || (first == 'X') ) // is knock out move ?
+
+    std::string word;
+    is >> word;
+
+    // EOF, pass and resign may be ignored
+    if( !is ) return sequence;
+    if( word == "pass" ) return sequence;
+    if( word == "resign" ) return sequence;
+
+    if( word.size() == 2 )
     {
-      std::string str;
-      is >> str;
-      size_t i;
-      // search for letters followed by digits
-      for( i = 0; i < str.size(); ++i ) if( !isalpha( str[i] ) ) break;
-      for( ; i < str.size(); ++i )	if( !isdigit( str[i] ) ) break;
-      Field_Pos from = coordinate_translator->get_field_pos( str.substr(0,i) );
-      if( from.x < 0 ) return Move_Sequence();
-      do
-      {
-	Stones::Stone_Type stone; // stone won't be checked
-	switch( str[i] )
-	{
-	  case 'w':
-	  case 'W': stone = Stones::white_stone; break;
-	  case 'g':
-	  case 'G': stone = Stones::grey_stone; break;
-	  case 'b':
-	  case 'B': stone = Stones::black_stone; break;
-	  default: return Move_Sequence();
-	}
-	++i;
-	size_t start = i;
-	// search for letters followed by digits
-	for( ; i < str.size(); ++i ) if( !isalpha( str[i] ) ) break;
-	for( ; i < str.size(); ++i ) if( !isdigit( str[i] ) ) break;
-	Field_Pos to = coordinate_translator->get_field_pos( str.substr(start, i - start) );
-	if( to.x < 0 ) return Move_Sequence();
-
-	Field_Pos middle = Field_Pos::get_middle(from, to);
-
-	Knock_Out_Move *move = new Knock_Out_Move(from, middle, to);
-	sequence.add_move( move );
-
-	from = to;
-      }while( i < str.size() );
-      sequence.add_move( new Finish_Move() );
+      Field_Pos pos = coordinate_translator->get_field_pos( word );
+      Set_Move *move = new Set_Move(pos);
+      sequence.add_move( move );
     }
-    else			// set move
+    else if( word.size() == 4 )
     {
-      Stones::Stone_Type stone;
-      switch( first )		// first character already read
-      {
-	case 'w':
-	case 'W': stone = Stones::white_stone; break;
-	case 'g':
-	case 'G': stone = Stones::grey_stone; break;
-	case 'b':
-	case 'B': stone = Stones::black_stone; break;
-	default: return Move_Sequence();
-      }
-
-      std::string str;
-      is >> str;
-      size_t i;
-      // search for letters followed by digits
-      for( i = 0; i < str.size(); ++i ) if( !isalpha( str[i] ) ) break;
-      for( ; i < str.size(); ++i )	if( !isdigit( str[i] ) ) break;
-      Field_Pos pos = coordinate_translator->get_field_pos( str.substr(0,i) );
-      if( pos.x < 0 ) return Move_Sequence();
-      
-      sequence.add_move( new Set_Move( pos, stone ) );
-
-      if( str[i] != ',' ) return Move_Sequence();
-      ++i;
-
-      size_t start = i;
-      // search for letters followed by digits
-      for( ; i < str.size(); ++i ) if( !isalpha( str[i] ) ) break;
-      for( ; i < str.size(); ++i ) if( !isdigit( str[i] ) ) break;
-      if( i < str.size() ) return Move_Sequence();
-      pos = coordinate_translator->get_field_pos( str.substr(start,i - start) );
-      if( pos.x < 0 ) return Move_Sequence();
-
-      sequence.add_move( new Remove(pos) );
+      Field_Pos from = coordinate_translator->get_field_pos( word.substr(0,2) );
+      Field_Pos to   = coordinate_translator->get_field_pos( word.substr(2) );
+      Jump_Move *move = new Jump_Move(from,to);
+      sequence.add_move( move );
       sequence.add_move( new Finish_Move() );
-
-      // read probable removed stones
-      char next;
-      is >> next;
-      if( next != 'x' )
-	is.unget();
-      else
-      {
-	is >> str;		// read removed fields
-	// and forget
-      }
     }
     return sequence;
-  }
-
-  // ----------------------------------------------------------------------------
-  // Generic_Win_Condition
-  // ----------------------------------------------------------------------------
-
-  Generic_Win_Condition::Generic_Win_Condition( int num_white, int num_grey, int num_black, int num_all )
-    : Win_Condition( generic ), num_white(num_white), num_grey(num_grey), num_black(num_black),
-      num_all(num_all)
-  {
-  }
-
-  bool Generic_Win_Condition::did_player_win( Game &game, Player &player )
-    const
-  {
-    if( player.stones.stone_count[Stones::white_stone] >= num_white )
-      return true;
-    if( player.stones.stone_count[Stones::grey_stone]  >= num_grey )
-      return true;
-    if( player.stones.stone_count[Stones::black_stone] >= num_black )
-      return true;
-    if(( player.stones.stone_count[Stones::white_stone] >= num_all ) &&
-       ( player.stones.stone_count[Stones::grey_stone]  >= num_all ) &&
-       ( player.stones.stone_count[Stones::black_stone] >= num_all ))
-      return true;
-
-    bool any_field_left = false;
-    Field_Pos pos;
-    for( pos.x = 0; pos.x < game.board.get_x_size(); ++pos.x )
-      for( pos.y = 0; pos.y < game.board.get_y_size(); ++pos.y )
-      {
-	if( game.board.field[pos.x][pos.y] != field_removed )
-	{
-	  any_field_left = true;
-	  break;
-	}
-      }
-
-    if( !any_field_left )	// current player wins, if no field left
-      return true;
-
-    return false;
-  }  
-
-  Win_Condition *Generic_Win_Condition::clone()
-  {
-    return new Generic_Win_Condition( num_white, num_grey, num_black, num_all );
   }
 
   // ----------------------------------------------------------------------------
@@ -2788,19 +2687,26 @@ namespace holtz
   // ----------------------------------------------------------------------------
 
   Standard_Win_Condition::Standard_Win_Condition()
-    : Generic_Win_Condition(3,4,5,2)
   {
     type = standard;
   }
 
-  // ----------------------------------------------------------------------------
-  // Tournament_Win_Condition
-  // ----------------------------------------------------------------------------
-
-  Tournament_Win_Condition::Tournament_Win_Condition()
-    : Generic_Win_Condition(4,5,6,3)
+  bool Standard_Win_Condition::did_player_win( Game &game, Player &player )
+    const
   {
-    type = tournament;
+    if( game.board.is_any_move_possible() )
+      return false;
+
+    Stones::Stone_Type other_player;
+    if( player.stone_type == Stones::white_stone )
+      other_player = Stones::black_stone;
+    else
+      other_player = Stones::white_stone;
+
+    //count stones:
+    std::map<Stones::Stone_Type,int> count = game.board.count_controled_stones();
+      
+    return count[player.stone_type] > count[other_player];
   }
 
   // ----------------------------------------------------------------------------
@@ -2811,26 +2717,10 @@ namespace holtz
     : Ruleset( standard,
 	       Board( (const int*) standard_board, 
 		      sizeof(standard_board[0]) / sizeof(standard_board[0][0]),
-		      sizeof(standard_board)    / sizeof(standard_board[0]), Board::s37_rings ),
+		      sizeof(standard_board)    / sizeof(standard_board[0]), Board::standard ),
 	       Standard_Common_Stones(),
 	       new Standard_Win_Condition(), 0 /*coordinate translator init below */,
 	       true /*undo possible*/, 2, 2 )
-  {
-    coordinate_translator = new Standard_Coordinate_Translator(board);
-  }
-
-  // ----------------------------------------------------------------------------
-  // Tournament_Ruleset
-  // ----------------------------------------------------------------------------
-
-  Tournament_Ruleset::Tournament_Ruleset()
-    : Ruleset( tournament, 
-	       Board( (const int*) standard_board, 
-		      sizeof(standard_board[0]) / sizeof(standard_board[0][0]),
-		      sizeof(standard_board)    / sizeof(standard_board[0]), Board::s37_rings ),
-	       Tournament_Common_Stones(),
-	       new Tournament_Win_Condition(), 0 /*coordinate translator init below */,
-	       false /*no undo possible*/, 2, 2 )  
   {
     coordinate_translator = new Standard_Coordinate_Translator(board);
   }
@@ -2906,8 +2796,8 @@ namespace holtz
   // Sequence_Generator
   // ----------------------------------------------------------------------------
 
-  Sequence_Generator::Sequence_Generator( Game &game, bool easy_multiple_knock )
-    : game(game), state(begin), easy_multiple_knock(easy_multiple_knock)
+  Sequence_Generator::Sequence_Generator( Game &game )
+    : game(game), state(begin)
   {
   }
 
@@ -2918,222 +2808,120 @@ namespace holtz
     move_done = 0;
     Field_Iterator p1( pos, &game.board );
 
-    switch( state )
+    switch( game.board.game_state )
     {
-      case begin:
-	if( Board::is_stone(*p1) )			 // clicked on stone?
+      // is Set-Move required?
+      case Board::set_moves:
+      {
+	switch( state )
 	{
-	  /* user will recognize his fault himself...
-	     if( !game.board.is_knock_out_possible(pos) )
-	     return error_...;
-	  */
-	  from = pos;
-	  picked_stone = Stones::Stone_Type(*p1);
-	  state = move_from;
-	  return Sequence_State(hold_prefix + *p1);
-	}
-	else
-	{
-	  if( game.board.is_knock_out_possible() )
-	    return error_require_knock_out;
-	  else
-	    return error_require_set;
-	}
-	break;
-      case move_from:
-	if( Board::is_empty(*p1) )			 // clicked on stone?
-	{
-	  std::pair<bool,Field_Pos> ret = game.board.is_knock_out_possible(from,pos);
-	  if( !ret.first )
-	  {
-	    return error_can_t_move_here;
-	  }
-	  const Field_Pos &over = ret.second;
-
-	  to.push(pos);
-
-	  Move *move = new Knock_Out_Move(from,over,pos);
-	  if( !move->check_move(game) )
-	  {
-	    delete move;
-	    state = begin;
-	    return fatal_error;				 // why isn't this possible?
-	  }
-
-	  if( !sequence.add_move(game,move) )		 // check whether move may be added yet
-	  {
-	    delete move;
-	    return fatal_error;
-	  }
-	  move->do_move(game);
-	  move_done = move;
-
-	  if( game.board.is_knock_out_possible(pos) )	 // another knock out possible from position?
-	  {
-	    if( easy_multiple_knock )
+	  case begin:
+	    if( Board::is_empty(*p1) ) // clicked on empty field
 	    {
-	      from = to.top();
-	      // picked_stone is still the same
-	      state = move_from;
-	      return Sequence_State(hold_prefix + picked_stone);
+	      Move *move = new Set_Move(pos);
+	      if( !move->check_move(game) )
+	      {
+		delete move;
+		state = begin;
+		return fatal_error;				 // why isn't this possible?
+	      }
+	      if( !sequence.add_move(game,move) )		 // check whether move may be added yet
+	      {
+		delete move;
+		return fatal_error;
+	      }
+	      move->do_move(game);
+	      move_done = move;
+
+	      state = move_finished;
+	      return finished;
 	    }
 	    else
-	      state = move_dest;
-
-	    return another_click;
-	  }
-	  else
-	  {
-	    // add finish move
-	    move = new Finish_Move();
-	    bool ret = sequence.add_move(game,move);
-	    assert( ret );
-	    move->do_move(game);
-	  
-	    state = move_finished;
-	    return finished;
-	  }
-	}
-	else
-	  return error_can_t_move_here;
-	break;
-      case move_dest:
-	if( pos != to.top() )
-	  return error_must_knock_out_with_same_stone;
-	else
-	{
-	  assert( Board::is_stone(*p1) );			 // clicked on stone!
-
-	  from = pos;
-	  picked_stone = Stones::Stone_Type(*p1);
-	  state = move_from;
-	  return Sequence_State(hold_prefix + *p1);
-	}
-	break;
-      case stone_picked:
-	if( Board::is_empty(*p1) )			 // clicked on stone?
-	{
-	  Move *move = new Set_Move( pos, picked_stone );
-	  if( !move->check_move(game) )
-	  {
-	    delete move;
-	    state = begin;
-	    return fatal_error;				 // why isn't this possible?
-	  }
-
-	  if( !sequence.add_move(game,move) )		 // check whether move may be added yet
-	  {
-	    delete move;
+	    {
+	      return error_require_set;
+	    }
+	  case move_from:
+	  case move_finished:
 	    return fatal_error;
-	  }
-	  move->do_move(game);
-	  move_done = move;
-
-	  if( game.board.is_any_field_removable() )
-	  {
-	    state = stone_set;
-	    return another_click;
-	  }
-	  else
-	  {
-	    // add finish move
-	    move = new Finish_Move();
-	    bool ret = sequence.add_move(game,move);
-	    assert( ret );
-	    move->do_move(game);
-	  
-	    state = move_finished;
-	    return finished;
-	  }
 	}
-	else
-	  return error_can_t_set_here;
-	break;
-      case stone_set:
-	if( Board::is_empty(*p1) )			 // clicked on stone?
+      }
+      break;
+      // is Jump-Move required?
+      case Board::jump_moves:
+      {
+	switch( state )
 	{
-	  if( !game.board.is_removable(pos) )
-	    return error_can_t_remove;
+	  case begin:
+	    if( Board::is_stone(*p1) ) // clicked on stone field
+	    {
+	      Field_State_Type required_stone_field 
+		= Field_State_Type(game.current_player->stone_type);
 
-	  Move *move = new Remove( pos );
-	  if( !move->check_move(game) )
-	  {
-	    delete move;
-	    state = begin;
-	    return fatal_error;				 // why isn't this possible?
-	  }
+	      if( p1->back() != required_stone_field )
+		return error_wrong_player_stack;
+	      else      // right player
+	      {
+		// this disables clicking on immovable stones
+		if( !game.board.is_move_possible(pos) )
+		  return error_impossible_yet;
+		else
+		{
+		  from = pos;
+		  picked_stone = p1->back();
+		  state = move_from;
+		  return Sequence_State(hold_prefix + required_stone_field);
+		}
+	      }
+	    }
+	    else
+	    {
+	      return error_require_jump;
+	    }
+	    break;
+	  case move_from:
+	    if( Board::is_stone(*p1) ) // clicked on stone field
+	    {
+	      // is it possible to move there?
+	      if( !game.board.is_move_possible(from, pos) )
+		return error_can_t_move_here;
+	      else // yes
+	      {
+		Move *move = new Jump_Move(from,pos);
+		if( !move->check_move(game) )
+		{
+		  delete move;
+		  state = begin;
+		  return fatal_error;				 // why isn't this possible?
+		}
+		if( !sequence.add_move(game,move) )		 // check whether move may be added yet
+		{
+		  delete move;
+		  return fatal_error;
+		}
+		move->do_move(game);
+		move_done = move;
 
-	  if( !sequence.add_move(game,move) )		 // check whether move may be added yet
-	  {
-	    delete move;
+		// add finish move
+		move = new Finish_Move();
+		bool ret = sequence.add_move(game,move);
+		assert( ret );
+		move->do_move(game);
+	    
+		state = move_finished;
+		return finished;
+	      }
+	    }
+	    else
+	      return error_can_t_move_here;
+	    break;
+	  case move_finished:
 	    return fatal_error;
-	  }
-	  move->do_move(game);
-	  move_done = move;
-
-	  // add finish move
-	  move = new Finish_Move();
-	  bool ret = sequence.add_move(game,move);
-	  assert( ret );
-	  move->do_move(game);
-	
-	  state = move_finished;
-	  return finished;
 	}
-	else
-	  return error_require_remove;
-	break;
-      case move_finished:
-	return fatal_error;
+      }
+      break;
     }
     assert( false );
     return fatal_error;
-  }
-
-  Sequence_Generator::Sequence_State Sequence_Generator::add_click_common_stone
-  ( Stones::Stone_Type stone_type )
-  {
-    move_done = 0;
-    if( state != begin )
-      return error_impossible_yet;
-
-    if( game.board.is_knock_out_possible() )
-      return error_require_knock_out;
-
-    if( game.common_stones.stone_count[stone_type] <= 0 )
-      return fatal_error;				 // clicked on stone which is not there?!?
-
-    picked_stone = stone_type;
-    state = stone_picked;
-
-    return Sequence_State(hold_prefix + stone_type);
-  }
-
-  Sequence_Generator::Sequence_State Sequence_Generator::add_click_player_stone
-  ( int player_id, Stones::Stone_Type stone_type )
-  {
-    move_done = 0;
-    if( state != begin )
-      return error_impossible_yet;
-
-    if( player_id != game.current_player->id )
-      return error_wrong_player;
-
-    if( game.current_player->stones.stone_count[stone_type] <= 0 ) 
-      return fatal_error;		 // clicked on stone which is not there?!?
-
-    if( game.board.is_knock_out_possible() )
-      return error_require_knock_out;
-
-    if( game.common_stones.stone_count[Stones::white_stone] +
-	game.common_stones.stone_count[Stones::grey_stone]  +
-	game.common_stones.stone_count[Stones::black_stone] > 0 )
-      return error_must_pick_common_stone;
-
-    picked_stone = stone_type;
-    state = stone_picked;
-
-    return Sequence_State(hold_prefix + stone_type);
   }
 
   Sequence_Generator::Sequence_State Sequence_Generator::undo_click()
@@ -3144,51 +2932,8 @@ namespace holtz
 	// nothing to be done (already at beginning of sequence)
 	break;
       case move_from:
-	// undo partial move (undo hold)
-	if( to.size() == 0 )
-	  state = begin;
-	else
-	{
-	  if( easy_multiple_knock )
-	  {
-	    to.pop();						 // reload to position from last move
-
-	    sequence.undo_last_move(game);
-
-	    if( to.size() == 0 )
-	      state = begin;
-	    else
-	    {
-	      from = to.top();
-	      return Sequence_State(hold_prefix + picked_stone);
-	    }
-	  }
-	  else
-	    state = move_dest;
-	}
-	break;
-      case move_dest:
-	assert( to.size() != 0 );
-	to.pop();						 // reload to position from last move
-
-	sequence.undo_last_move(game);
-
-	if( to.size() == 0 )
-	  state = begin;
-	else
-	{
-	  from = to.top();
-	  return Sequence_State(hold_prefix + picked_stone);
-	}
-	break;
-      case stone_picked:
 	state = begin;
-	break;
-      case stone_set:
-	sequence.undo_last_move(game);
-	state = begin;
-      
-	break;
+	return another_click;
       default:
 	assert(false);
     }
@@ -3197,70 +2942,38 @@ namespace holtz
 
   Move::Move_Type Sequence_Generator::get_required_move_type()
   {
-    switch( state )
-    {
-      case begin:
-      case move_from:
-      {
-	if( game.board.is_knock_out_possible() )
-	  return Move::knock_out_move;
-	else
-	  return Move::set_move;
-      }
-      break;
-      case move_dest:
-      {
-	return Move::knock_out_move;
-      }
-      break;
-      case stone_picked:
-      {
-	return Move::set_move;
-      }
-      break;
-      case stone_set:
-      {
-	return Move::remove;
-      }
-      break;
-      case move_finished:
-	break;
-    }
-    return Move::no_move;
+    if( state == move_finished )
+      return Move::no_move;
+
+    if( game.board.game_state == Board::set_moves )
+      return Move::set_move;
+    else
+      return Move::jump_move;
   }
 
   std::list<Field_Pos> Sequence_Generator::get_possible_clicks()
   {
     std::list<Field_Pos> ret;
+
     switch( get_required_move_type() )
     {
-      case Move::knock_out_move:
+      case Move::jump_move:
       {
 	switch( state)
 	{
 	  case begin:
 	  {
-	    std::list<Knock_Out_Move> moves = game.board.get_knock_out_moves();
-	    std::list<Knock_Out_Move>::iterator move;
-	    for( move = moves.begin(); move != moves.end(); ++move )
-	    {
-	      ret.push_back( move->from );
-	    }
+	    ret = game.board.get_movable_fields(*game.current_player);
 	  }
 	  break;
 	  case move_from:
 	  {
-	    std::list<Knock_Out_Move> moves = game.board.get_knock_out_moves( from );
-	    std::list<Knock_Out_Move>::iterator move;
+	    std::list<Jump_Move> moves = game.board.get_jump_moves(from);
+	    std::list<Jump_Move>::iterator move;
 	    for( move = moves.begin(); move != moves.end(); ++move )
 	    {
 	      ret.push_back( move->to );
 	    }
-	  }
-	  break;
-	  case move_dest:
-	  {
-	    ret.push_back( to.top() ); // only another knock out with this stone is possible
 	  }
 	  break;
 	  default: assert( false );
@@ -3269,17 +2982,10 @@ namespace holtz
       break;
       case Move::set_move:
       {
-	ret = game.board.get_empty_fields();
+	// don't show set moves
       }
       break;
-      case Move::remove:
-      {
-	ret = game.board.get_removable_fields();
-      }
-      break;
-      case Move::no_move:
-      case Move::finish_move:
-	break;
+      default: assert( false );
     }
     return ret;
   }
@@ -3290,14 +2996,9 @@ namespace holtz
     {
       case move_from:
 	return from;
-	break;
       case begin:
-      case move_dest:
-      case stone_picked:	// I know only selected stone type
-      case stone_set:
       case move_finished:
 	return Field_Pos();
-	break;
     }
     assert(false);
   }
@@ -3306,8 +3007,6 @@ namespace holtz
   {
     sequence.undo_sequence(game);
     sequence.clear();
-    while( to.size() > 0 ) 
-      to.pop();
     state = begin;
   }
 
@@ -3348,38 +3047,51 @@ namespace holtz
   std::string Standard_Coordinate_Translator::get_field_name( Field_Pos pos )
   {
     std::string name;
-    int first_x;
-    for( first_x = 0; first_x < orig_board.get_x_size(); ++first_x )
-      if( !Board::is_removed(orig_board.field[first_x][pos.y]) )
-	break;
 
-    name += 'a' + pos.y;
-    name += long_to_string( pos.x - first_x + 1 );
+    char letter = 'a' + pos.x;
+    switch(pos.y)
+    {
+      case 0: letter++; break;
+      case 1: break;
+      case 2: break;
+      case 3: letter--; break;
+      case 4: letter--; break;
+    }
+    name += letter;
+    name += long_to_string( 5-pos.y );
     return name;
   }
 
   Field_Pos Standard_Coordinate_Translator::get_field_pos ( std::string name )
   {
     Field_Pos pos;
-
     if( name.size() > 1 )
     {
-      if( (name[0] >= 'a') && (name[0] <= 'z') )
+      std::string num_string = name.substr(1);
+      std::pair<long,unsigned/*digits*/> num = string_to_long( num_string );
+      if( num.second == num_string.size() )
       {
-	std::string num_string = name.substr(1);
-	std::pair<long,unsigned/*digits*/> num = string_to_long( num_string );
-	if( num.second == num_string.size() )
+	if( num.first >= 1 && num.first <= 5 )
 	{
-	  if( num.first > 0 )
+	  pos.y = 5 - num.first;
+	  if( (name[0] >= 'a') && (name[0] <= 'z') )
 	  {
-	    pos.x = num.first - 1;
-	    pos.y = name[0] - 'a';
+	    pos.x = name[0] - 'a';
+	  }
+	  else if( (name[0] >= 'A') && (name[0] <= 'Z') )
+	  {
+	    pos.x = name[0] - 'A';
+	  }
+	  else
+	    return pos;
 
-	    int first_x;
-	    for( first_x = 0; first_x < orig_board.get_x_size(); ++first_x )
-	      if( !Board::is_removed(orig_board.field[first_x][pos.y]) )
-		break;
-	    pos.x += first_x;
+	  switch(pos.y)
+	  {
+	    case 0: pos.x--; break;
+	    case 1: break;
+	    case 2: break;
+	    case 3: pos.x++; break;
+	    case 4: pos.x++; break;
 	  }
 	}
       }

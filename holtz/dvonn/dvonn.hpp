@@ -1,5 +1,5 @@
 /*
- * holtz.cpp
+ * dvonn.cpp
  * 
  * Game declaration
  * 
@@ -14,8 +14,8 @@
  * 
  */
 
-#ifndef __HOLTZ_MAIN__
-#define __HOLTZ_MAIN__
+#ifndef __DVONN_MAIN__
+#define __DVONN_MAIN__
 
 #include <string>
 #include <list>
@@ -27,7 +27,7 @@
 
 #include "util.hpp"
 
-namespace holtz
+namespace dvonn
 {
   class Stones;
   class Player;
@@ -37,9 +37,9 @@ namespace holtz
   class Field_Iterator;
   class Board;
   class Move;
-  class Knock_Out_Move;
+  class Jump_Move;
   class Set_Move;
-  class Remove;
+  class Finish_Move;
   class Move_Sequence;
   class Variant;
   class Variant_Tree;
@@ -49,7 +49,6 @@ namespace holtz
   class No_Output;
   class Stream_Output;
   class Stream_Input;
-  class AI_Input;
   class Sequence_Generator;
   class Generic_Mouse_Input;
   class Coordinate_Translator;
@@ -57,68 +56,18 @@ namespace holtz
   class Move_Translator;
   
   typedef enum Field_State_Type{ field_removed=-1, field_empty=0, 
-				 field_white=1, field_grey=2, field_black=3 };
+				 field_red=1, field_white=2, field_black=3 };
 
-  const int standard_board[][7] =
-    { {   -1,  0,  0,  0,  0, -1, -1 },
-      { -1,  0,  0,  0,  0,  0, -1 },
-      {    0,  0,  0,  0,  0,  0, -1 },
-      {  0,  0,  0,  0,  0,  0,  0 },
-      {    0,  0,  0,  0,  0,  0, -1 },
-      { -1,  0,  0,  0,  0,  0, -1 },
-      {   -1,  0,  0,  0,  0, -1, -1 } };
+  const int standard_board[][11] =
+    { {   -1,  0,  0,  0,  0,  0,  0,  0,  0,  0, -1 },
+      { -1,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0 },
+      {    0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0 },
+      { -1,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0 },
+      {   -1,  0,  0,  0,  0,  0,  0,  0,  0,  0, -1 } };
 
-  const int board_37[][7] =
-    { {   -1,  0,  0,  0,  0, -1, -1 },
-      { -1,  0,  0,  0,  0,  0, -1 },
-      {    0,  0,  0,  0,  0,  0, -1 },
-      {  0,  0,  0,  0,  0,  0,  0 },
-      {    0,  0,  0,  0,  0,  0, -1 },
-      { -1,  0,  0,  0,  0,  0, -1 },
-      {   -1,  0,  0,  0,  0, -1, -1 } };
-
-  const int board_40[][7] =
-    { {   -1,  0,  0,  0,  0, -1, -1 },
-      { -1,  0,  0,  0,  0,  0, -1 },
-      {    0,  0,  0,  0,  0,  0, -1 },
-      {  0,  0,  0,  0,  0,  0,  0 },
-      {    0,  0,  0,  0,  0,  0, -1 },
-      { -1,  0,  0,  0,  0,  0, -1 },
-      {   -1,  0,  0,  0,  0, -1, -1 },
-      { -1, -1,  0,  0,  0, -1, -1 } };
-
-  const int board_44[][8] =
-    { {   -1,  0,  0,  0,  0,  0, -1, -1 },
-      { -1,  0,  0,  0,  0,  0,  0, -1 },
-      {    0,  0,  0,  0,  0,  0,  0, -1 },
-      {  0,  0,  0,  0,  0,  0,  0,  0 },
-      {    0,  0,  0,  0,  0,  0,  0, -1 },
-      { -1,  0,  0,  0,  0,  0,  0, -1 },
-      {   -1,  0,  0,  0,  0,  0, -1, -1 } };
-
-  const int board_48[][8] =
-    { {   -1,  0,  0,  0,  0,  0, -1, -1 },
-      { -1,  0,  0,  0,  0,  0,  0, -1 },
-      {    0,  0,  0,  0,  0,  0,  0, -1 },
-      {  0,  0,  0,  0,  0,  0,  0,  0 },
-      {    0,  0,  0,  0,  0,  0,  0, -1 },
-      { -1,  0,  0,  0,  0,  0,  0, -1 },
-      {   -1,  0,  0,  0,  0,  0, -1, -1 },
-      { -1, -1,  0,  0,  0,  0, -1, -1 } };
-
-  const int board_61[][9] =
-    { {   -1, -1,  0,  0,  0,  0,  0, -1, -1 },
-      { -1, -1,  0,  0,  0,  0,  0,  0, -1 },
-      {   -1,  0,  0,  0,  0,  0,  0,  0, -1 },
-      { -1,  0,  0,  0,  0,  0,  0,  0,  0 },
-      {    0,  0,  0,  0,  0,  0,  0,  0,  0 },
-      { -1,  0,  0,  0,  0,  0,  0,  0,  0 },
-      {   -1,  0,  0,  0,  0,  0,  0,  0, -1 },
-      { -1, -1,  0,  0,  0,  0,  0,  0, -1 },
-      {   -1, -1,  0,  0,  0,  0,  0, -1, -1 } };
 }
 
-namespace holtz
+namespace dvonn
 {
   class Exception
   {
@@ -143,7 +92,7 @@ namespace holtz
   public:
     Stones();
 
-    typedef enum Stone_Type{ invalid_stone=0, white_stone=1, grey_stone=2, black_stone=3 };
+    typedef enum Stone_Type{ invalid_stone=0, red_stone=1, white_stone=2, black_stone=3 };
     std::map<Stone_Type, int> stone_count;
 
 #ifndef __WXMSW__
@@ -156,7 +105,7 @@ namespace holtz
   class Common_Stones : public Stones
   {
   public:
-    typedef enum Common_Stones_Type{ standard=0, tournament, custom };
+    typedef enum Common_Stones_Type{ standard=0, custom };
 
     Common_Stones( Common_Stones_Type type=custom );
     Common_Stones_Type get_type() const { return type; }
@@ -170,16 +119,10 @@ namespace holtz
     Standard_Common_Stones();
   };
 
-  class Tournament_Common_Stones : public Common_Stones
-  {
-  public:
-    Tournament_Common_Stones();
-  };
-
   class Custom_Common_Stones : public Common_Stones
   {
   public:
-    Custom_Common_Stones( int white_num, int grey_num, int black_num );
+    Custom_Common_Stones( int red_num, int white_num, int black_num );
   };
 
   class Player_Input
@@ -214,7 +157,7 @@ namespace holtz
 	    std::string host="", Player_Type type=unknown, Help_Mode help_mode = no_help, 
 	    Origin origin = local );
 
-    std::string name; int id;
+    std::string name; int id; 
     std::string host; 
     Player_Type type;
     Help_Mode help_mode;
@@ -222,7 +165,8 @@ namespace holtz
     long total_time, average_time;
     int num_measures;		// of average time
 
-    Stones stones;
+    Stones::Stone_Type stone_type; // stone type is set by game when player is added
+
     Player_Input *input;
     std::list<Player_Output*> outputs; 
     bool is_active;
@@ -263,6 +207,7 @@ namespace holtz
     static Direction get_far_direction( Field_Pos from, Field_Pos to );
     static Field_Pos get_next( Field_Pos p1, Direction dir );
 
+    // the following functions may move out of the board area => check validity
     Field_Iterator Next_Left() const;
     Field_Iterator Next_Right() const;
     Field_Iterator Next_Top_Left() const;
@@ -280,7 +225,8 @@ namespace holtz
     Field_Iterator &Go( Direction );
 
     bool is_valid_field();	// tells whether field is in range
-    Field_State_Type &operator*();
+    std::deque<Field_State_Type> &operator*(); // don't call with invalid field
+    inline std::deque<Field_State_Type> *operator->() {return &(operator*());}
   private:
     Field_Pos current_pos;
     Board *board;
@@ -294,15 +240,22 @@ namespace holtz
   class Board
   {
   public:
-    typedef enum Board_Type{ s37_rings=0, s40_rings, s44_rings, s48_rings, s61_rings, custom=99 };
+    typedef enum Board_Type{ standard=0, custom=99 };
+    typedef enum Game_State{ set_moves=0, jump_moves };
 
     Board( const int *field_array, int width, int height, Board_Type type = custom );
     // field must be rectangular array!
-    Board( const std::vector< std::vector<Field_State_Type> > fields, Board_Type type = custom );
+    Board( Game_State game_state, int num_empty_fields,
+	   const std::vector< std::vector< std::deque<Field_State_Type> > > fields, 
+	   Board_Type type = custom );
     Board();			// should only be used for structures 
 
     Board_Type board_type;
     inline Board_Type get_type() const { return board_type; }
+
+    Game_State game_state;
+    inline Game_State get_game_state() const { return game_state; }
+    int num_empty_fields;
 
     inline int get_stone_type_number( Field_State_Type state )
     { return state; }
@@ -312,26 +265,37 @@ namespace holtz
     { return state == field_empty; }
     static inline bool is_removed( Field_State_Type state )
     { return state == field_removed; }
+    static inline bool is_stone( const std::deque<Field_State_Type> &stack )
+    { assert(stack.size()>0); return stack.back() > 0; }
+    static inline bool is_empty( const std::deque<Field_State_Type> &stack )
+    { assert(stack.size()>0); return (stack.size()==1)&&(stack.back()==field_empty); }
+    static inline bool is_removed( const std::deque<Field_State_Type> &stack )
+    { assert(stack.size()>0); return (stack.size()==1)&&(stack.back()==field_removed); }
 
-    bool is_knock_out_possible(); // is any knock out possible
-    bool is_knock_out_possible( Field_Pos from );
-    std::pair<bool,Field_Pos> is_knock_out_possible( Field_Pos from, Field_Pos to );
+    static bool includes_red_stone( const std::deque<Field_State_Type> &stack );
+    bool is_blocked( Field_Pos ); // checks whether field is surrounded by stones
+
+    bool is_any_move_possible(); // is any move possible by anyone
+    bool is_any_move_possible( const Player &player ); // is any move possible
+    //bool is_move_possible( const Player &player, Field_Pos from );
+    //bool is_move_possible( const Player &player, Field_Pos from, Field_Pos to );
+    bool is_move_possible( Field_Pos from );		   // no player check
+    bool is_move_possible( Field_Pos from, Field_Pos to ); // no player check
     // is knock out possible within these three fields
-    static bool is_knock_out_possible( Field_Iterator p1,
-				       Field_Iterator p2,
-				       Field_Iterator p3 ); 
-    std::list<Knock_Out_Move> get_knock_out_moves();
-    std::list<Knock_Out_Move> get_knock_out_moves( Field_Pos from );
+    //std::list<Set_Move> get_set_moves();
+    //std::list<Jump_Move> get_jump_moves();
+    std::list<Jump_Move> get_jump_moves( Field_Pos from );
 
-    bool is_removable( Field_Pos );
-    bool is_any_field_removable();
     std::list<Field_Pos> get_empty_fields();
-    std::list<Field_Pos> get_removable_fields();
+    std::list<Field_Pos> get_movable_fields( const Player &player );
+
+    std::map<Stones::Stone_Type,int> count_controled_stones();
 
     Field_Iterator first_field();
 
-    std::vector< std::vector<Field_State_Type> > field; // field[x][y]
-    inline Field_State_Type get_field( Field_Pos pos ) { return field[pos.x][pos.y]; }
+    std::vector< std::vector< std::deque<Field_State_Type> > > field; // field[x][y]
+    inline Field_State_Type get_field_top( Field_Pos pos ) { return field[pos.x][pos.y].back(); }
+    inline std::deque<Field_State_Type> get_field( Field_Pos pos ) { return field[pos.x][pos.y]; }
     inline int get_x_size() const { return field.size(); }
     inline int get_y_size() const { return field[0].size(); }
   };
@@ -339,7 +303,7 @@ namespace holtz
   class Move
   {
   public:
-    typedef enum Move_Type { no_move=0, knock_out_move, set_move, remove, finish_move };
+    typedef enum Move_Type { no_move=0, jump_move, set_move, finish_move };
 
     virtual Move_Type get_type() const = 0;
     virtual void do_move( Game & ) = 0;
@@ -357,7 +321,7 @@ namespace holtz
     virtual ~Move();
   };
 
-  class Knock_Out_Move : public Move
+  class Jump_Move : public Move
   {
   public:
     virtual Move_Type get_type() const;
@@ -372,12 +336,13 @@ namespace holtz
 
     virtual Move *clone() const;
 
-    Knock_Out_Move();
-    Knock_Out_Move( Field_Pos from, Field_Pos over, Field_Pos to );
+    Jump_Move();
+    Jump_Move( Field_Pos from, Field_Pos to );
 
   //private:
-    Field_Pos from, over, to;
-    Field_State_Type knocked_stone;
+    Field_Pos from, to;
+    //stored for undo:
+    int num_moved_stones;	// number of moved stones
   };
 
   class Set_Move : public Move
@@ -396,33 +361,12 @@ namespace holtz
     virtual Move *clone() const;
 
     Set_Move();
-    Set_Move( Field_Pos pos, Stones::Stone_Type stone_type );
+    Set_Move( Field_Pos pos );
 
   //private:
     Field_Pos pos;
-    Stones::Stone_Type stone_type;
-    bool own_stone;		// whether stone belonged to player
-  };
-
-  class Remove : public Move
-  {
-  public:
-    virtual Move_Type get_type() const;
-    virtual void do_move( Game & );
-    virtual void undo_move( Game & );
-    virtual bool check_move( Game & ) const; // true: move ok
-    virtual bool check_previous_move( Game &, Move * ) const; // true: type ok
-    virtual bool may_be_first_move( Game & ) const;
-    virtual bool may_be_last_move( Game & ) const;
-    virtual std::escape_ostream &output( std::escape_ostream & ) const;
-    virtual bool input( std::escape_istream & );
-
-    virtual Move *clone() const;
-
-    Remove();
-    Remove( Field_Pos remove_pos );
-  //private:
-    Field_Pos remove_pos;
+    //stored for undo:
+    Field_Pos pos2;		// in case only two fields are empty this move sets two stones
   };
 
   // must be added as last move
@@ -443,7 +387,9 @@ namespace holtz
 
     Finish_Move();
   //private:
-    std::list< std::pair<Field_Pos,Stones::Stone_Type> > removed_stones;
+    //stored for undo:
+
+    std::list< std::pair<Field_Pos,std::deque<Field_State_Type> > > removed_stones;
   };
 
   class Move_Sequence
@@ -461,7 +407,9 @@ namespace holtz
     std::escape_ostream &output( std::escape_ostream & ) const;
     bool input( std::escape_istream & );
 
+    // this function takes care of the reserved memory
     void add_move( Move * );		// add move unchecked
+    // this function takes care of the reserved memory
     bool add_move( Game&, Move * );	// true: adding move ok (only relative check)
     Move *get_last_move();
     void undo_last_move( Game & );	// calls undo for last move and removes it
@@ -487,6 +435,8 @@ namespace holtz
   inline std::istream &operator>>( std::istream &is, Move_Sequence &s )
   { std::escape_istream eis(is); s.input(eis); return is; }
 
+  // with this class a variant tree could be built that stores different
+  // move possibilities
   class Variant
   {
   public:
@@ -514,6 +464,7 @@ namespace holtz
     static Variant *default_clone; // just as unused default argument in clone method
   };
 
+  // encapsulates a variant tree
   class Variant_Tree
   {
   public:
@@ -543,7 +494,7 @@ namespace holtz
   class Win_Condition
   {
   public:
-    typedef enum Win_Condition_Type{ standard=0, tournament, generic, full_custom };
+    typedef enum Win_Condition_Type{ standard=0, full_custom };
 
     Win_Condition( Win_Condition_Type type = full_custom );
     virtual ~Win_Condition();
@@ -570,7 +521,7 @@ namespace holtz
   class Ruleset
   {
   public:
-    typedef enum Ruleset_Type { standard=0, tournament, custom };
+    typedef enum Ruleset_Type { standard=0, custom };
     Ruleset( const Ruleset & );
     Ruleset();
     Ruleset &operator=( const Ruleset & );
@@ -638,7 +589,7 @@ namespace holtz
     inline unsigned get_max_players() { return ruleset->max_players; }
 
     int get_num_possible_moves(); // number of possible moves in current situation
-    std::list<Move_Sequence> get_possible_moves(); // get possible moves in situation
+    //std::list<Move_Sequence> get_possible_moves(); // get possible moves in situation
     
     std::vector<Player>::iterator get_next_player( std::vector<Player>::iterator player );
     std::vector<Player>::iterator get_prev_player( std::vector<Player>::iterator player );
@@ -721,34 +672,14 @@ namespace holtz
     Coordinate_Translator *coordinate_translator;
   };
   
-  class Generic_Win_Condition : public Win_Condition
+  class Standard_Win_Condition : public Win_Condition
   {
   public:
-    Generic_Win_Condition( int num_white, int num_grey, int num_black, int num_all );
-
     virtual bool did_player_win( Game &, Player & ) const;
-    virtual Win_Condition *clone();
 
-    int num_white;		// white stones to win
-    int num_grey;		// grey stones to win
-    int num_black;		// black stones to win
-    int num_all;		// number of stones of each colour to win
-  };
-
-  class Standard_Win_Condition : public Generic_Win_Condition
-  {
-  public:
     virtual Win_Condition *clone() { return new Standard_Win_Condition(); }
 
     Standard_Win_Condition();
-  };
-
-  class Tournament_Win_Condition : public Generic_Win_Condition
-  {
-  public:
-    virtual Win_Condition *clone() { return new Tournament_Win_Condition(); }
-
-    Tournament_Win_Condition();
   };
 
   class Custom_Ruleset : public Ruleset
@@ -757,7 +688,7 @@ namespace holtz
     // win_condition and coordinate translator will be deleted by Ruleset!
     Custom_Ruleset( Board, Common_Stones, Win_Condition *, Coordinate_Translator *, 
 		    bool undo_possible = true, 
-		    unsigned min_players = 2, unsigned max_players = 4 );
+		    unsigned min_players = 2, unsigned max_players = 2 );
   };
 
   class Standard_Ruleset : public Ruleset
@@ -766,17 +697,12 @@ namespace holtz
     Standard_Ruleset();
   };
 
-  class Tournament_Ruleset : public Ruleset
-  {
-  public:
-    Tournament_Ruleset();
-  };
-  
   class No_Output : public Player_Output
   {
   public:
     virtual void report_move( const Move_Sequence & );
   };
+
   class Stream_Output : public Player_Output
   {
   public:
@@ -804,28 +730,20 @@ namespace holtz
   {
   public:
     typedef enum Sequence_State{ finished=0,
-				 hold_prefix=0, hold_white=1, hold_grey=2, hold_black=3,
+				 hold_prefix=0, hold_red=1, hold_white=2, hold_black=3,
 				 another_click=4,
 
-				 error_require_knock_out=-500, 
+				 error_require_jump=-500, 
 				 error_require_set,
-				 error_require_remove,
-				 error_can_t_remove,
 				 error_can_t_move_here, 
-				 error_can_t_set_here,
-				 error_must_pick_common_stone,
-				 error_wrong_player, 
+				 error_wrong_player_stack, 
 				 error_impossible_yet,
-				 error_must_knock_out_with_same_stone,
 
 				 fatal_error=-1000 };
 
-    Sequence_Generator( Game &, bool easy_multiple_knock = true );
+    Sequence_Generator( Game & );
     // synthesize move sequence from clicks
     Sequence_State add_click( Field_Pos pos ); 
-    Sequence_State add_click_common_stone( Stones::Stone_Type stone_type ); 
-    Sequence_State add_click_player_stone( int player_id, 
-					   Stones::Stone_Type stone_type );
     Sequence_State undo_click(); // undo click 
     
     Move::Move_Type get_required_move_type();
@@ -844,16 +762,13 @@ namespace holtz
     Move_Sequence sequence;
     Game &game;
 
-    typedef enum Internal_State{ begin, move_from, move_dest, stone_picked, stone_set, move_finished };
+    typedef enum Internal_State{ begin, move_from, move_finished };
     Internal_State state;
 
-    Stones::Stone_Type picked_stone;
     Field_Pos from;
-    std::stack<Field_Pos> to;	// destination positions of moves
+    Field_State_Type picked_stone;
 
     Move *move_done;
-
-    bool easy_multiple_knock;	// true: don't have to click on stone again for following knock out moves
   };
 
   class Generic_Mouse_Input : public Player_Input

@@ -24,7 +24,7 @@
 #include <wx/fontdlg.h>
 #include <fstream>
 
-namespace holtz
+namespace dvonn
 {
 
   // ----------------------------------------------------------------------------
@@ -197,23 +197,27 @@ namespace holtz
     continue_game = new wxRadioButton( this, -1, _("Continue game") );
     don_t_change  = new wxRadioButton( this, -1, _("Don't care which game to play") );
 
+    /*
     wxString new_game_choices[4];
     new_game_choices[0] = wxString(_("Standard Rules"));
     new_game_choices[1] = wxString(_("Tournament Rules"));
     new_game_choices[2] = wxString(_("Custom"));
     new_game_choices[3] = wxString(_("Rules of last game"));
+    new_game_choice = 0;
     new_game_choice = new wxRadioBox( this, -1, _("Rules for new game"), wxDefaultPosition,
-				      wxDefaultSize, 4, new_game_choices, 2, wxRA_SPECIFY_COLS );
+    				      wxDefaultSize, 4, new_game_choices, 2, wxRA_SPECIFY_COLS );
+    */
 
-    wxString continue_game_choices[2];
+    wxString continue_game_choices[3];
     continue_game_choices[0] = wxString(_("Continue last game"));
-    continue_game_choices[1] = wxString(_("Load game"));
+    continue_game_choices[1] = wxString(_("Load PBM game"));
+    continue_game_choices[2] = wxString(_("Load Littlegolem game"));
     continue_game_choice = new wxRadioBox( this, -1, _("Which game to continue"), wxDefaultPosition,
-					   wxDefaultSize, 2, continue_game_choices, 1, wxRA_SPECIFY_COLS );
+					   wxDefaultSize, 3, continue_game_choices, 1, wxRA_SPECIFY_COLS );
 
     wxBoxSizer *top_sizer = new wxBoxSizer( wxVERTICAL );
     top_sizer->Add( new_game, 0, wxALL, 10 );
-    top_sizer->Add( new_game_choice, 0, wxCENTER | wxALL, 10 );
+    //top_sizer->Add( new_game_choice, 0, wxCENTER | wxALL, 10 );
     top_sizer->Add( continue_game, 0, wxALL, 10 );
     top_sizer->Add( continue_game_choice, 0, wxCENTER | wxALL, 10 );
     top_sizer->Add( don_t_change, 0, wxALL, 10 );
@@ -230,10 +234,13 @@ namespace holtz
 
   wxWizardPage *Board_Page::GetNext() const
   {
-    if( new_game->GetValue() && (new_game_choice->GetSelection() == 2) )
-      return &game_dialog.custom_board_page;
-    else if( continue_game->GetValue() && (continue_game_choice->GetSelection() == 1) )
-      return &game_dialog.load_board_page;
+    //if( new_game->GetValue() && (new_game_choice->GetSelection() == 2) )
+    //  return &game_dialog.custom_board_page;
+    //else 
+    if( continue_game->GetValue() && (continue_game_choice->GetSelection() == 1) )
+      return &game_dialog.load_pbm_board_page;
+    else if( continue_game->GetValue() && (continue_game_choice->GetSelection() == 2) )
+      return &game_dialog.load_lg_board_page;
     else
       return &game_dialog.player_page;
   }
@@ -244,21 +251,24 @@ namespace holtz
     {
       if( new_game->GetValue() )
       {
+	game_dialog.game = Game( Standard_Ruleset() );
+	/*
 	switch( new_game_choice->GetSelection() )
 	{
 	  case 0: game_dialog.game = Game( Standard_Ruleset() ); break;
-	  case 1: game_dialog.game = Game( Tournament_Ruleset() ); break;
-	  case 2: /*game will be set up in next page*/ break;
+	    //case 1: game_dialog.game = Game( Tournament_Ruleset() ); break;
+	  case 2: / *game will be set up in next page* / break;
 	  case 3: game_dialog.game = Game( *game_dialog.game_manager.get_game().ruleset ); 
 	}
 	if( new_game_choice->GetSelection() != 2 )
 	{
+	*/
 	  if( game_dialog.game_setup_manager->ask_change_board( game_dialog.game ) == 
 	      Game_Setup_Manager::deny )
 	  {
 	    game_dialog.board_change_denied();
 	  }
-	}
+	//}
       }
       else if( continue_game->GetValue() )
       {
@@ -279,7 +289,8 @@ namespace holtz
 	}
       }
       game_dialog.custom_board_page.restore();
-      game_dialog.load_board_page.restore();
+      game_dialog.load_pbm_board_page.restore();
+      game_dialog.load_lg_board_page.restore();
       game_dialog.player_page.restore();
 
       changes = false;
@@ -292,21 +303,27 @@ namespace holtz
     changes = true;		// take first setting as change
     //!!! ask game_setup_manager which option is default !!! Client: don_t_change
     new_game->SetValue(true);
-  
+    /*
     switch( game_dialog.game.ruleset->get_type() )
     {
       case Ruleset::standard:   new_game_choice->SetSelection(0); break;
-      case Ruleset::tournament: new_game_choice->SetSelection(1); break;
+	//      case Ruleset::tournament: new_game_choice->SetSelection(1); break;
       case Ruleset::custom:     new_game_choice->SetSelection(2); break;
     }
+    */
   }
 
   wxWizardPage *Board_Page::get_last_board_page() const
   {
+    /*
     if( new_game->GetValue() && (new_game_choice->GetSelection() == 2) )
       return &game_dialog.custom_board_page;
-    else if( continue_game->GetValue() && (continue_game_choice->GetSelection() == 1) )
-      return &game_dialog.load_board_page;
+    else 
+    */
+    if( continue_game->GetValue() && (continue_game_choice->GetSelection() == 1) )
+      return &game_dialog.load_pbm_board_page;
+    else if( continue_game->GetValue() && (continue_game_choice->GetSelection() == 2) )
+      return &game_dialog.load_lg_board_page;
     else
       return &game_dialog.board_page;
   }
@@ -395,17 +412,20 @@ namespace holtz
     wxCommandEvent dummy;
     switch( ruleset->board.board_type )
     {
-      case Board::s37_rings: board_choice->SetSelection(0); break;
+      case Board::standard: board_choice->SetSelection(0); break;
+	/*
       case Board::s40_rings: board_choice->SetSelection(1); break;
       case Board::s44_rings: board_choice->SetSelection(2); break;
       case Board::s48_rings: board_choice->SetSelection(3); break;
       case Board::s61_rings: board_choice->SetSelection(4); break;
+	*/
       case Board::custom:    /* board_choice->SetSelection(5); // shouldn't happen */ break;
     }
     switch( ruleset->win_condition->get_type() )
     {
       case Win_Condition::standard:    win_choice->SetSelection(0); on_change_win(dummy); break;
-      case Win_Condition::tournament:  win_choice->SetSelection(1); on_change_win(dummy); break;
+	//      case Win_Condition::tournament:  win_choice->SetSelection(1); on_change_win(dummy); break;
+	/*
       case Win_Condition::generic:     
       {
 	win_choice->SetSelection(2);
@@ -416,17 +436,18 @@ namespace holtz
 	win_all  ->SetValue( wc->num_all );
       }
       break;
+	*/
       case Win_Condition::full_custom: /*win_choice->SetSelection(3); // shouldn't happen */ break;
     }
     switch( ruleset->common_stones.get_type() )
     {
       case Common_Stones::standard:   stones_choice->SetSelection(0); on_change_stones(dummy); break;
-      case Common_Stones::tournament: stones_choice->SetSelection(1); on_change_stones(dummy); break;
+	//      case Common_Stones::tournament: stones_choice->SetSelection(1); on_change_stones(dummy); break;
       case Common_Stones::custom:
       {
 	stones_choice->SetSelection(2);
 	stones_white->SetValue( ruleset->common_stones.stone_count[ Stones::white_stone ] );
-	stones_grey ->SetValue( ruleset->common_stones.stone_count[ Stones::grey_stone  ] );
+	stones_grey ->SetValue( ruleset->common_stones.stone_count[ Stones::red_stone  ] );
 	stones_black->SetValue( ruleset->common_stones.stone_count[ Stones::black_stone ] );
       }
       break;
@@ -444,11 +465,12 @@ namespace holtz
     {
       case -1:
       case 0:
-	board = new Board( (const int*) board_37, 
-			   sizeof(board_37[0]) / sizeof(board_37[0][0]),
-			   sizeof(board_37)    / sizeof(board_37[0]),
-			   Board::s37_rings );
+	board = new Board( (const int*) standard_board, 
+			   sizeof(standard_board[0]) / sizeof(standard_board[0][0]),
+			   sizeof(standard_board)    / sizeof(standard_board[0]),
+			   Board::standard );
 	break;
+	/*
       case 1:
 	board = new Board( (const int*) board_40, 
 			   sizeof(board_40[0]) / sizeof(board_40[0][0]),
@@ -473,6 +495,7 @@ namespace holtz
 			   sizeof(board_61)    / sizeof(board_61[0]),
 			   Board::s61_rings );
 	break;
+	*/
       default:
 	assert(false);
 	break;
@@ -483,13 +506,15 @@ namespace holtz
 	win_condition = new Standard_Win_Condition();
 	break;
       case 1:
-	win_condition = new Tournament_Win_Condition();
+	//	win_condition = new Tournament_Win_Condition();
 	break;
       case 2:
+	/*
 	win_condition = new Generic_Win_Condition( win_white->GetValue(), 
 						   win_grey ->GetValue(), 
 						   win_black->GetValue(), 
 						   win_all  ->GetValue() );
+	*/
 	break;
       default:
 	assert(false);
@@ -501,7 +526,7 @@ namespace holtz
 	common_stones = new Standard_Common_Stones();
 	break;
       case 1:
-	common_stones = new Tournament_Common_Stones();
+	//	common_stones = new Tournament_Common_Stones();
 	break;
       case 2:
 	common_stones = new Custom_Common_Stones( stones_white->GetValue(), 
@@ -529,19 +554,23 @@ namespace holtz
       case 0:
       {
 	Standard_Win_Condition standard;
+	/*
 	win_white->SetValue( standard.num_white );
 	win_grey ->SetValue( standard.num_grey );
 	win_black->SetValue( standard.num_black );
 	win_all  ->SetValue( standard.num_all );
+	*/
       }
       break;
       case 1:
       {
+	/*
 	Tournament_Win_Condition tournament;
 	win_white->SetValue( tournament.num_white );
 	win_grey ->SetValue( tournament.num_grey );
 	win_black->SetValue( tournament.num_black );
 	win_all  ->SetValue( tournament.num_all );
+	*/
       }
       break;
       case 2:
@@ -564,16 +593,18 @@ namespace holtz
       {
 	Standard_Common_Stones common_stones;
 	stones_white->SetValue( common_stones.stone_count[ Stones::white_stone ] );
-	stones_grey ->SetValue( common_stones.stone_count[ Stones::grey_stone  ] );
+	stones_grey ->SetValue( common_stones.stone_count[ Stones::red_stone  ] );
 	stones_black->SetValue( common_stones.stone_count[ Stones::black_stone ] );
       }
       break;
       case 1:
       {
+	/*
 	Tournament_Common_Stones common_stones;
 	stones_white->SetValue( common_stones.stone_count[ Stones::white_stone ] );
-	stones_grey ->SetValue( common_stones.stone_count[ Stones::grey_stone  ] );
+	stones_grey ->SetValue( common_stones.stone_count[ Stones::red_stone  ] );
 	stones_black->SetValue( common_stones.stone_count[ Stones::black_stone ] );
+	*/
       }
       break;
       case 2:
@@ -661,39 +692,39 @@ namespace holtz
   END_EVENT_TABLE()								//**/
 
   // ----------------------------------------------------------------------------
-  // Load_Board_Page
+  // Load_PBM_Board_Page
   // ----------------------------------------------------------------------------
 
-  Load_Board_Page::Load_Board_Page( wxWizard *parent, Game_Dialog &game_dialog )
+  Load_PBM_Board_Page::Load_PBM_Board_Page( wxWizard *parent, Game_Dialog &game_dialog )
     : wxWizardPage(parent), game_dialog(game_dialog), changes(true)
   {
     wxBoxSizer *top_sizer = new wxBoxSizer( wxVERTICAL );
 
     wxBoxSizer *pbm_sizer = new wxBoxSizer( wxHORIZONTAL );
-    //pbm_choice = new wxRadioBox( this, -1 );
-    pbm_sizer->Add( new wxStaticText(this,-1,_("Directory") ), 0, wxALL, 10 );
-    pbm_directory = new wxTextCtrl( this, DIALOG_CHANGE_DIRECTORY, wxT("") );
-    pbm_sizer->Add( pbm_directory, 2, wxALL, 10 );
-    pbm_sizer->Add( new wxButton( this, DIALOG_CHOOSE_DIRECTORY, _("Choose...") ), 0, wxALL, 10 );
-    pbm_game_list = new wxListBox( this,-1,wxDefaultPosition, wxSize(100,100), 0, 0, wxLB_SINGLE );
-    pbm_sizer->Add( pbm_game_list, 1, wxALL, 10 );
-    top_sizer->Add( pbm_sizer, 0, wxCENTER | wxVERTICAL );
+    pbm_sizer->Add( new wxStaticText(this,-1,_("PBM Directory") ), 0, wxALL, 10 );
+    pbm_directory = new wxTextCtrl( this, DIALOG_CHANGE_PBM_DIRECTORY, wxT("") );
+    pbm_sizer->Add( pbm_directory, 1, wxALL, 10 );
+    pbm_sizer->Add( new wxButton( this, DIALOG_CHOOSE_PBM_DIRECTORY, _("Choose...") ), 0, wxALL, 10 );
+    top_sizer->Add( pbm_sizer, 0, wxEXPAND | wxALL, 10 );
+
+    pbm_game_list = new wxListBox( this,-1,wxDefaultPosition, wxSize(400,100), 0, 0, wxLB_SINGLE );
+    top_sizer->Add( pbm_game_list, 1, wxEXPAND | wxALL, 20 );
 
     SetAutoLayout( true );
     SetSizer( top_sizer );
   }
 
-  wxWizardPage *Load_Board_Page::GetPrev() const
+  wxWizardPage *Load_PBM_Board_Page::GetPrev() const
   {
     return &game_dialog.board_page;
   }
 
-  wxWizardPage *Load_Board_Page::GetNext() const
+  wxWizardPage *Load_PBM_Board_Page::GetNext() const
   {
     return &game_dialog.player_page;
   }
 
-  bool Load_Board_Page::TransferDataFromWindow()
+  bool Load_PBM_Board_Page::TransferDataFromWindow()
   {
     if( changes )
     {
@@ -741,15 +772,15 @@ namespace holtz
     return true;
   }
 
-  void Load_Board_Page::restore()		// display stored game state
+  void Load_PBM_Board_Page::restore()		// display stored game state
   {
     changes = true;		// take first setting as change
 
-    if( valid_directory != wxT("") )
-      scan_directory( valid_directory );
+    if( valid_pbm_directory != wxT("") )
+      scan_pbm_directory( valid_pbm_directory );
   }
 
-  bool Load_Board_Page::scan_directory( wxString directory )
+  bool Load_PBM_Board_Page::scan_pbm_directory( wxString directory )
   {
     wxDir dir(directory);
 
@@ -766,10 +797,9 @@ namespace holtz
       if( is )
       {
 	PBM_Content content = scan_pbm_file( is );
-	
 	if( content.id > 0 )
 	{
-	  pbm_files[content.id].push_back( std::pair<PBM_Content,std::string>( content, filename ) );
+	   pbm_files[content.id].push_back( std::pair<PBM_Content,std::string>( content, filename ) );
 	}
       }
 
@@ -800,7 +830,6 @@ namespace holtz
 	  if( content.to   > master_content.to   ) master_content.to   = content.to;
 	}
       }
-
       assert( master_content.id >= 0 );
       
       if( master_content.from == 0 )	// display only boards that are specified from the first move on
@@ -820,9 +849,9 @@ namespace holtz
     return true;
   }
 
-  void Load_Board_Page::on_choose_directory( wxCommandEvent& WXUNUSED(event) )
+  void Load_PBM_Board_Page::on_choose_pbm_directory( wxCommandEvent& WXUNUSED(event) )
   {
-    wxString directory = valid_directory;
+    wxString directory = valid_pbm_directory;
     if( directory == wxT("") ) 
       directory = wxGetCwd();
 
@@ -830,26 +859,183 @@ namespace holtz
     if( dialog->ShowModal() == wxID_OK )
     {
       changes = true;
-      if( scan_directory( dialog->GetPath() ) )
+      if( scan_pbm_directory( dialog->GetPath() ) )
       {
-	valid_directory = dialog->GetPath();
-	pbm_directory->SetValue( valid_directory );
+	valid_pbm_directory = dialog->GetPath();
+	pbm_directory->SetValue( valid_pbm_directory );
       }
     }
   }
 
-  void Load_Board_Page::on_change_directory( wxCommandEvent& WXUNUSED(event) )
+  void Load_PBM_Board_Page::on_change_pbm_directory( wxCommandEvent& WXUNUSED(event) )
   {
     changes = true;
-    if( scan_directory( pbm_directory->GetValue() ) )
+    if( scan_pbm_directory( pbm_directory->GetValue() ) )
     {
-      valid_directory = pbm_directory->GetValue();
+      valid_pbm_directory = pbm_directory->GetValue();
     }
   }
 
-  BEGIN_EVENT_TABLE(Load_Board_Page, wxWizardPage)				
-    EVT_BUTTON(DIALOG_CHOOSE_DIRECTORY,		Load_Board_Page::on_choose_directory)		
-    EVT_TEXT_ENTER(DIALOG_CHANGE_DIRECTORY,	Load_Board_Page::on_change_directory)	//**/
+  BEGIN_EVENT_TABLE(Load_PBM_Board_Page, wxWizardPage)				
+    EVT_BUTTON(DIALOG_CHOOSE_PBM_DIRECTORY,	Load_PBM_Board_Page::on_choose_pbm_directory)		
+    EVT_TEXT_ENTER(DIALOG_CHANGE_PBM_DIRECTORY,	Load_PBM_Board_Page::on_change_pbm_directory)//**/
+  END_EVENT_TABLE()								//**/
+
+  // ----------------------------------------------------------------------------
+  // Load_LG_Board_Page
+  // ----------------------------------------------------------------------------
+
+  Load_LG_Board_Page::Load_LG_Board_Page( wxWizard *parent, Game_Dialog &game_dialog )
+    : wxWizardPage(parent), game_dialog(game_dialog), changes(true)
+  {
+    wxBoxSizer *top_sizer = new wxBoxSizer( wxVERTICAL );
+
+    wxBoxSizer *lgolem_sizer = new wxBoxSizer( wxHORIZONTAL );
+    lgolem_sizer->Add( new wxStaticText(this,-1,_("Littlegolem Directory") ), 0, wxALL, 10 );
+    lgolem_directory = new wxTextCtrl( this, DIALOG_CHANGE_LG_DIRECTORY, wxT("") );
+    lgolem_sizer->Add( lgolem_directory, 1, wxALL, 10 );
+    lgolem_sizer->Add( new wxButton( this, DIALOG_CHOOSE_LG_DIRECTORY, _("Choose...") ), 0, wxALL, 10 );
+    top_sizer->Add( lgolem_sizer, 0, wxEXPAND | wxALL, 10 );
+
+    lgolem_game_list = new wxListBox( this,-1,wxDefaultPosition, wxSize(400,100), 0, 0, wxLB_SINGLE );
+    top_sizer->Add( lgolem_game_list, 1, wxEXPAND | wxALL, 20 );
+
+    SetAutoLayout( true );
+    SetSizer( top_sizer );
+  }
+
+  wxWizardPage *Load_LG_Board_Page::GetPrev() const
+  {
+    return &game_dialog.board_page;
+  }
+
+  wxWizardPage *Load_LG_Board_Page::GetNext() const
+  {
+    return &game_dialog.player_page;
+  }
+
+  bool Load_LG_Board_Page::TransferDataFromWindow()
+  {
+    if( changes )
+    {
+      int index = lgolem_game_list->GetSelection();
+
+      // load board
+      int cnt=0;
+      std::list< std::pair<LG_Content,std::string> >::iterator i;
+      for( i = lgolem_files.begin(); i != lgolem_files.end(); ++i )
+      {
+	if( cnt == index )
+	{
+	  std::ifstream is( i->second.c_str() );
+	  int num_moves = load_littlegolem_file( is, game_dialog.game );
+	  if( num_moves < 0 ) return false;
+
+#ifndef __WXMSW__
+	  std::cout << "Loaded Littlegolem file. Moves: " << num_moves <<  std::endl;
+	  std::cout << "Number of Players: " << game_dialog.game.players.size() <<  std::endl;
+#endif
+	}
+	cnt++;
+      }
+
+      if( game_dialog.game_setup_manager->ask_change_board( game_dialog.game ) == 
+	  Game_Setup_Manager::deny )
+      {
+	game_dialog.board_change_denied();
+      }
+      game_dialog.player_page.restore();
+
+      changes = false;
+    }
+    return true;
+  }
+
+  void Load_LG_Board_Page::restore()		// display stored game state
+  {
+    changes = true;		// take first setting as change
+
+    if( valid_lgolem_directory != wxT("") )
+      scan_lgolem_directory( valid_lgolem_directory );
+  }
+
+  bool Load_LG_Board_Page::scan_lgolem_directory( wxString directory )
+  {
+    wxDir dir(directory);
+
+    if( !dir.IsOpened() ) return false;
+
+    // scan files
+    lgolem_files.clear();
+    wxString wx_filename;
+    bool ok = dir.GetFirst( &wx_filename, wxT("*"), wxDIR_FILES );
+    while( ok )
+    {
+      std::string filename = wxstr_to_str(directory + wxT('/') + wx_filename);
+      std::ifstream is( filename.c_str() );
+      if( is )
+      {
+	LG_Content content = scan_littlegolem_file( is );
+	if( content.moves >= 0 )
+	{
+	  lgolem_files.push_back( std::pair<LG_Content,std::string>( content, filename ) );
+	}
+      }
+
+      ok = dir.GetNext( &wx_filename );
+    }
+
+    // setup list box
+    lgolem_game_list->Clear();
+    std::list< std::pair<LG_Content,std::string> >::iterator i;
+    for( i = lgolem_files.begin(); i != lgolem_files.end(); ++i )
+    {
+      wxString board_str;
+      board_str << /*_("Event ") << */str_to_wxstr(i->first.event) << wxT(" ") 
+		<< str_to_wxstr(i->first.white_name) << wxT(":")
+		<< str_to_wxstr(i->first.black_name) << wxT(" (") 
+		<< i->first.moves << wxT(" ") << _("moves") << wxT(")");
+	/*
+	board_str.Printf( _("Board %d %s : %s (%d moves)"), master_content.id, 
+			  str_to_wxstr(master_content.player1).c_str(), str_to_wxstr(master_content.player2).c_str(), 
+			  master_content.to );
+	*/
+      lgolem_game_list->Append( board_str );
+    }
+
+    return true;
+  }
+
+  void Load_LG_Board_Page::on_choose_lgolem_directory( wxCommandEvent& WXUNUSED(event) )
+  {
+    wxString directory = valid_lgolem_directory;
+    if( directory == wxT("") ) 
+      directory = wxGetCwd();
+
+    wxDirDialog *dialog = new wxDirDialog( this, _("Choose a directory"), directory );
+    if( dialog->ShowModal() == wxID_OK )
+    {
+      changes = true;
+      if( scan_lgolem_directory( dialog->GetPath() ) )
+      {
+	valid_lgolem_directory = dialog->GetPath();
+	lgolem_directory->SetValue( valid_lgolem_directory );
+      }
+    }
+  }
+
+  void Load_LG_Board_Page::on_change_lgolem_directory( wxCommandEvent& WXUNUSED(event) )
+  {
+    changes = true;
+    if( scan_lgolem_directory( lgolem_directory->GetValue() ) )
+    {
+      valid_lgolem_directory = lgolem_directory->GetValue();
+    }
+  }
+
+  BEGIN_EVENT_TABLE(Load_LG_Board_Page, wxWizardPage)				
+    EVT_BUTTON(DIALOG_CHOOSE_LG_DIRECTORY,	Load_LG_Board_Page::on_choose_lgolem_directory)
+    EVT_TEXT_ENTER(DIALOG_CHANGE_LG_DIRECTORY,	Load_LG_Board_Page::on_change_lgolem_directory)//**/
   END_EVENT_TABLE()								//**/
 
   // ----------------------------------------------------------------------------
@@ -948,12 +1134,14 @@ namespace holtz
 
       Player::Player_Type type;
       Player_Input *input;
+      /*
       if( ai->GetValue() )
       {
 	type  = Player::ai;
 	input = game_dialog.game_manager.get_player_ai();
       }
       else
+      */
       {
 	type = Player::user;
 	input = game_dialog.gui_manager.get_user_input();
@@ -1295,14 +1483,16 @@ namespace holtz
       setup_manager_page( wizard, *this ),
       board_page( wizard, *this ),
       custom_board_page( wizard, *this ),
-      load_board_page( wizard, *this ),
+      load_pbm_board_page( wizard, *this ),
+      load_lg_board_page( wizard, *this ),
       player_page( wizard, *this ),
       dummy( wizard )
   {
     wxSize size = bounding_size( setup_manager_page.GetBestSize(), board_page.GetBestSize() );
     size = bounding_size( size, custom_board_page.GetBestSize() );
     size = bounding_size( size, custom_board_page.GetBestSize() );
-    size = bounding_size( size, load_board_page.GetBestSize() );
+    size = bounding_size( size, load_pbm_board_page.GetBestSize() );
+    size = bounding_size( size, load_lg_board_page.GetBestSize() );
     size = bounding_size( size, player_page.GetBestSize() );
     wizard->SetPageSize(size);
   }
@@ -1457,7 +1647,8 @@ namespace holtz
     // init all pages
     board_page.restore();
     custom_board_page.restore();
-    load_board_page.restore();
+    load_pbm_board_page.restore();
+    load_lg_board_page.restore();
     player_page.restore();
   }
 
@@ -1573,7 +1764,7 @@ namespace holtz
       case Game_Panel::Settings::arrange_stones_right: arrangement_choice->SetSelection(1); break;
     }
     multiple_common_stones->SetValue( dialog->game_settings.common_stone_settings.multiple_stones );
-    multiple_player_stones->SetValue( dialog->game_settings.player_settings.stone_settings.multiple_stones );
+    //multiple_player_stones->SetValue( dialog->game_settings.player_settings.stone_settings.multiple_stones );
   }
 
   void Display_Setup_Page::apply()
@@ -1582,8 +1773,8 @@ namespace holtz
       = orientation_choice->GetSelection() == 0 ? false : true;
     dialog->game_settings.common_stone_settings.rotate_stones          
       = dialog->game_settings.board_settings.rotate_board;
-    dialog->game_settings.player_settings.stone_settings.rotate_stones 
-      = dialog->game_settings.board_settings.rotate_board;
+    //dialog->game_settings.player_settings.stone_settings.rotate_stones 
+    //  = dialog->game_settings.board_settings.rotate_board;
     dialog->game_settings.board_settings.show_coordinates              
       = show_coordinates->GetValue();
     switch( arrangement_choice->GetSelection() )
@@ -1593,8 +1784,8 @@ namespace holtz
     }
     dialog->game_settings.common_stone_settings.multiple_stones		 
       = multiple_common_stones->GetValue();
-    dialog->game_settings.player_settings.stone_settings.multiple_stones 
-      = multiple_player_stones->GetValue();
+    //dialog->game_settings.player_settings.stone_settings.multiple_stones 
+    //  = multiple_player_stones->GetValue();
   }
 
   BEGIN_EVENT_TABLE(Display_Setup_Page, wxPanel)			
@@ -1750,8 +1941,9 @@ namespace holtz
     // set fonts
     dialog->game_settings.player_settings.player_font		    = player_font;
     dialog->game_settings.board_settings.coord_font		    = coord_font;
+    dialog->game_settings.board_settings.stack_font		    = stone_font; //!!! own font setting?
     dialog->game_settings.common_stone_settings.stone_font	    = stone_font;
-    dialog->game_settings.player_settings.stone_settings.stone_font = stone_font;
+    //dialog->game_settings.player_settings.stone_settings.stone_font = stone_font;
   }
 
   void Look_Feel_Page::on_choose_skin( wxCommandEvent& WXUNUSED(event) )

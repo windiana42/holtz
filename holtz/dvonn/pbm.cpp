@@ -18,7 +18,7 @@
 
 #include <iostream>
 
-namespace holtz
+namespace dvonn
 {
   bool operator<  ( const PBM_Content& c1, const PBM_Content& c2 )
   {
@@ -66,7 +66,7 @@ namespace holtz
 #endif
 
 	  is >> str; 
-	  if( (str == "Zertz") || (str=="Zertz+11") )
+	  if( str == "Dvonn" )
 	  {
 	    is >> str; 
 	    if( str == "Board" )
@@ -78,7 +78,7 @@ namespace holtz
 	  }
 	}
       }
-      // check for "A new Zertz board (<board_num>)"
+      // check for "A new Dvonn board (<board_num>)"
       else if( str == "A" )
       {
 #ifndef __WXMSW__
@@ -88,13 +88,13 @@ namespace holtz
 	if( str == "new" )
 	{
 	  is >> str;
-	  if( (str == "Zertz") || (str == "Zertz+11") )
+	  if( str == "Dvonn" )
 	  {
 	    is >> str;
 	    if( str == "board" )
 	    {
 #ifndef __WXMSW__
-	      std::cout << "  \"A new Zertz board\" found" << std::endl;
+	      std::cout << "  \"A new Dvonn board\" found" << std::endl;
 #endif
 	      char c;
 	      is >> c;
@@ -129,18 +129,14 @@ namespace holtz
     }
 
     is >> str;
-    do				// search for "Player 2"
+    while( str != "Black(b)" )
     {
-      while( str != "Player" )
-      {
-	if( !is ) return invalid;	// eof?
-	is >> str;
-      }
+      if( !is ) return invalid;	// eof?
       is >> str;
-    }while( str != "2" );
+    }
 
 #ifndef __WXMSW__
-    std::cout << "  \"Player 2\" found" << std::endl;
+    std::cout << "  \"Black(b)\" found" << std::endl;
 #endif
 
     // get player names
@@ -164,19 +160,7 @@ namespace holtz
     {
       char next;
       // dump move
-      is >> next;
-      if( next == 'x' )		// knock out move
-	is >> str;
-      else			// set move
-      {
-	is >> str;
-
-	is >> next;
-	if( next == 'x' )		// some fields removed?
-	  is >> str;
-	else
-	  is.unget();
-      }
+      is >> str;
 
       // check for automove
       is >> next;
@@ -190,7 +174,7 @@ namespace holtz
 	is.unget();
 
       is >> next;
-      if( isdigit(next ) )
+      if( isdigit(next) )
       {
 	is.unget();
 	is >> move_num;
@@ -210,7 +194,6 @@ namespace holtz
     std::string str; int board_num;
 
     bool ok = false;
-    bool zertz_plus_11 = false;
 
     is >> str;
     while( is )
@@ -226,11 +209,8 @@ namespace holtz
 #endif
 
 	  is >> str; 
-	  if( (str == "Zertz") || (str == "Zertz+11") )
+	  if( str == "Dvonn" )
 	  {
-	    if( str == "Zertz+11" )
-	      zertz_plus_11 = true;
-
 	    is >> str; 
 	    if( str == "Board" )
 	    {
@@ -251,16 +231,13 @@ namespace holtz
 	if( str == "new" )
 	{
 	  is >> str;
-	  if( (str == "Zertz") || (str == "Zertz+11") )
+	  if( str == "Dvonn" )
 	  {
-	    if( str == "Zertz+11" )
-	      zertz_plus_11 = true;
-
 	    is >> str;
 	    if( str == "board" )
 	    {
 #ifndef __WXMSW__
-	      std::cout << "  \"A new Zertz board\" found" << std::endl;
+	      std::cout << "  \"A new Dvonn board\" found" << std::endl;
 #endif
 	      char c;
 	      is >> c;
@@ -294,19 +271,15 @@ namespace holtz
     }
 
     is >> str;
-    do				// search for "Player 2"
+    while( str != "Black(b)" )
     {
-      while( str != "Player" )
-      {
-	if( !is ) return -1;	// eof?
-
-	is >> str;
-      }
+      if( !is ) return -1;	// eof?
+      
       is >> str;
-    }while( str != "2" );
+    }
 
 #ifndef __WXMSW__
-    std::cout << "  \"Player 2\" found" << std::endl;
+    std::cout << "  \"Black(b)\" found" << std::endl;
 #endif
 
     std::string name1, name2;
@@ -317,19 +290,7 @@ namespace holtz
     if( from == 0 )		// if this is the first call of load_game setup a new game
     {
       Ruleset *ruleset;
-      if( zertz_plus_11 )
-      {
-	Board board( (const int*) board_48, 
-		     sizeof(board_48[0]) / sizeof(board_48[0][0]),
-		     sizeof(board_48)    / sizeof(board_48[0]),
-		     Board::s48_rings );
-
-	ruleset = new Custom_Ruleset( board, Tournament_Common_Stones(), 
-				      new Tournament_Win_Condition(), 
-				      new Standard_Coordinate_Translator(board) );
-      }
-      else
-	ruleset = new Tournament_Ruleset();
+      ruleset = new Standard_Ruleset();
 
       ruleset->min_players = 2;	// exact 2 players
       ruleset->max_players = 2;	// exact 2 players

@@ -1,5 +1,5 @@
 /*
- * wxholtz.hpp
+ * wxdvonn.hpp
  * 
  * GUI declaration
  * 
@@ -19,8 +19,8 @@
 #include <wx/wave.h>
 #include <wx/html/helpctrl.h> // use HTML help
 
-#ifndef __WXHOLTZ__
-#define __WXHOLTZ__
+#ifndef __WXDVONN__
+#define __WXDVONN__
 
 #ifndef DEFAULT_DATA_DIR
 #define DEFAULT_DATA_DIR "./"
@@ -32,9 +32,9 @@
 #define DEFAULT_BEEP_FILE DEFAULT_DATA_DIR wxT("sounds/beep.wav")
 #endif
 
-#include "holtz.hpp"
+#include "dvonn.hpp"
 
-namespace holtz
+namespace dvonn
 {
   class WX_GUI_Manager;
 }
@@ -42,9 +42,9 @@ namespace holtz
 #include "manager.hpp"
 #include "network.hpp"
 #include "animations.hpp"
-#include "ai.hpp"
+//#include "ai.hpp"
 
-namespace holtz
+namespace dvonn
 {
 //#include "wxmain.hpp"
   class Game_Window;
@@ -67,7 +67,7 @@ namespace holtz
 #define DOUBLE_BUFFER
 #endif
 
-namespace holtz
+namespace dvonn
 {
   // ============================================================================
   // generic classes
@@ -75,7 +75,9 @@ namespace holtz
 
   struct Dimensions
   {
+    //!!! check that
     int field_x, field_y, field_width, field_height, field_packed_width, field_packed_height;
+    int stack_shift_x, stack_shift_y;
     int caption_height, stone_offset, board_x_offset, board_y_offset;
     int board_stones_spacing, player_player_spacing, stones_player_spacing;
     bool rotation_symmetric, rotate_background;
@@ -188,11 +190,13 @@ namespace holtz
   public:
     struct Settings
     {
+      //!!! check that
       bool rotate_board;	// display board rotated
       bool show_coordinates;
       wxFont coord_font;
-      Settings( bool rotate_board = true, bool show_coordinates = true, 
-		wxFont coord_font = wxNullFont );
+      wxFont stack_font;
+      Settings( bool rotate_board = false, bool show_coordinates = true, 
+		wxFont coord_font = wxNullFont, wxFont stack_font = wxNullFont );
     };
 
     Board_Panel( Settings &settings, Game_Manager &, WX_GUI_Manager &, Sequence_Generator* & );
@@ -204,6 +208,7 @@ namespace holtz
 
     Field_Pos		get_field( int x, int y ) const;
     std::pair<int,int>  get_field_pos( int col, int row ) const;
+    std::pair<int,int>  get_stack_top_pos( int col, int row ) const;
     Bitmap_Set         &get_bitmap_set() const;
   private:
     Settings &settings;
@@ -256,10 +261,7 @@ namespace holtz
   public:
     struct Settings
     {
-      Settings( const holtz::Stone_Panel::Settings &stone_settings,
-		wxFont player_font = wxNullFont );
-
-      holtz::Stone_Panel::Settings stone_settings;
+      Settings( wxFont player_font = wxNullFont );
 
       wxFont player_font;
     };
@@ -268,7 +270,6 @@ namespace holtz
 
     virtual void on_click( int x, int y ) const;
 
-    inline const Stone_Panel &get_stone_panel() const { return stone_panel; }
     inline int get_id() const { return player.id; }
   private:
     Settings &settings;
@@ -279,8 +280,6 @@ namespace holtz
 
     Bitmap_Handler &bitmap_handler;
     Sequence_Generator* &sequence_generator;
-
-    Stone_Panel stone_panel;
 
     class Header_Panel : public Basic_Panel
     {
@@ -304,7 +303,7 @@ namespace holtz
       Settings( const Board_Panel::Settings &board_settings, 
 		const Player_Panel::Settings &player_settings,
 		const Stone_Panel::Settings &common_stone_settings,
-		Arrangement_Type arrangement = arrange_stones_right,
+		Arrangement_Type arrangement = arrange_standard,
 		wxString skin_file = wxT(""), wxString beep_file = wxT(""), bool play_sound = false );
       Settings();
 
@@ -367,7 +366,7 @@ namespace holtz
     wxStopWatch stop_watch;
     long used_time;
 
-    AI_Input *ai;		// for giving hints
+    //    AI_Input *ai;		// for giving hints
   };
 
   // ============================================================================
@@ -396,7 +395,7 @@ namespace holtz
 
     // interface for giving information to the user
     virtual void show_user_information( bool visible = true, bool do_refresh = true );
-    virtual void give_hint( AI_Result ai_result );
+    //virtual void give_hint( AI_Result ai_result );
     virtual void remove_hint();
     virtual void allow_user_activity();
     virtual void stop_user_activity();
@@ -447,7 +446,7 @@ namespace holtz
     std::list< std::pair<int,int> > field_mark_positions; // permanent marks
 
     Move_Sequence_Animation *move_animation;
-    AI_Result current_hint;	// move sequence recommented by the AI
+    //AI_Result current_hint;	// move sequence recommented by the AI
 
     Mouse_Handler mouse_handler;
 

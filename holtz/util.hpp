@@ -26,10 +26,10 @@
 
 #include <wx/wx.h>
 
-#ifndef __OLD_GCC__
-  #include <sstream>
-#else
+#ifdef __OLD_GCC__
   #include <strstream>
+#else
+  #include <sstream>
 #endif
 
 namespace holtz
@@ -52,13 +52,18 @@ namespace holtz
 
   std::string long_to_string( long );
   std::pair<long,unsigned /*digits*/> string_to_long( std::string, int base = 10 );
+  // convert double to string with a certain number of digits after the decimal point
+  // and with an asserted maximum number of digits before the point
+  std::string double_to_string( double, int post_point_digits=-1, 
+				int assert_max_pre_point_digits=-1 );
 
   inline std::string wxstr_to_str( const wxString &str )
   {
 #if wxUSE_UNICODE
     return str.mb_str( wxConvUTF8 ).data();
 #else
-    return str.c_str();
+    return str.mb_str( wxConvUTF8 );
+    //return str.c_str();
 #endif
   }
 
@@ -67,12 +72,22 @@ namespace holtz
 #ifdef wxUSE_UNICODE
     return wxString(str.c_str(), wxConvUTF8);
 #else
-    return str.c_str();
+    return wxString(str.c_str(), wxConvUTF8);
 #endif
   }
 }
 namespace std
 {
+#ifdef __OLD_GCC__
+  class istringstream : public istrstream
+  {
+  public:
+    istringstream( std::string );
+  private:
+    std::string str;
+  };
+#endif
+
   // returns an escaped string for transmission over streams (includes space separator at end)
   // escaped strings are quoted ("str"); quotes and backslashes are escaped
   std::string escape( const std::string str );
@@ -83,8 +98,12 @@ namespace std
   {
   public:
     Escaped_String( string &str );
+    bool did_error_occur()	{ return error; }
+    void set_error()		{ error=true; }
+    void reset_error()		{ error=false; }
   private:
     string &str;
+    bool error;
     friend istream &operator>>( istream &, Escaped_String );
   };
   istream &operator>>( istream &, Escaped_String );
@@ -98,17 +117,42 @@ namespace std
 
     inline escape_istream &operator>>( string &str )
     {
-      is >> unescape(str);
+      Escaped_String estr(str);
+      is >> estr;
+      error = error || estr.did_error_occur();
+      error = error || is.fail();
+      return *this;
+    }
+    inline escape_istream &operator>>( bool &var )
+    {
+      int i;
+      is >> i;
+      if( (i < 0) || (i > 1) )	// i should be '1' for true or '0' for false
+	error = true;
+      else
+	var = i;		
+      error = error || is.fail();
+      return *this;
+    }
+    inline escape_istream &operator>>( int &i )
+    { 
+      is >> i;
+      error = error || is.fail();
       return *this;
     }
     template<class T>
     inline escape_istream &operator>>( T &obj )
     { 
       is >> obj;
+      error = error || is.fail();
       return *this;
     }
+    bool did_error_occur()	{ return error; }
+    void set_error()		{ error=true; }
+    void reset_error()		{ error=false; }
   private:
     istream &is;
+    bool error;
   };
 
   // for writing escaped strings to any ostream with operator<<
@@ -118,15 +162,20 @@ namespace std
   public:
     escape_ostream( ostream & );
 
+    inline escape_ostream &operator<<( const string &str )
+    {
+      os << escape(str);	// escape includes seperator space at the end
+      return *this;
+    }
+    inline escape_ostream &operator<<( bool var )
+    {
+      os << (var ? 1:0) << ' ';	// output boolean as numbers
+      return *this;
+    }
     template<class T>
     inline escape_ostream &operator<<( T obj )
     { 
       os << obj << ' ';
-      return *this;
-    }
-    inline escape_ostream &operator<<( const string &str )
-    {
-      os << escape(str);	// escape includes seperator space at the end
       return *this;
     }
   private:

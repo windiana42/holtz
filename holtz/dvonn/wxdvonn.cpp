@@ -1,5 +1,5 @@
 /*
- * wxholtz.cpp
+ * wxdvonn.cpp
  * 
  * GUI implementation
  * 
@@ -29,12 +29,11 @@
 // headers
 // ----------------------------------------------------------------------------
 
-#include "wxholtz.hpp"
-#include "holtz.hpp"
+#include "wxdvonn.hpp"
+#include "dvonn.hpp"
 #include "dialogs.hpp"
-#include "ai.hpp"
+//#include "ai.hpp"
 #include "util.hpp"
-#include "pbm.hpp"
 #include "wxmain.hpp"
 
 #include <wx/zipstrm.h>
@@ -59,7 +58,7 @@
 #error "wxHTML is required for the wxWindows HTML help system."
 #endif
 
-namespace holtz
+namespace dvonn
 {
   // ----------------------------------------------------------------------------
   // resources
@@ -163,9 +162,11 @@ namespace holtz
   // Dimensions
   // ----------------------------------------------------------------------------
 
+  //!!! implement that
   Dimensions::Dimensions()
     : field_x(0), field_y(0), field_width(51), field_height(51), 
       field_packed_width(44), field_packed_height(44),
+      stack_shift_x(0), stack_shift_y(4),
       caption_height(30), stone_offset(20), board_x_offset(10), board_y_offset(10),
       board_stones_spacing(30), player_player_spacing(10), 
       stones_player_spacing(10), rotation_symmetric(false), 
@@ -173,8 +174,10 @@ namespace holtz
   {
   }
 
+  //!!! implement that
   Dimensions::Dimensions( char **field_xpm )
-    : field_x(0), field_y(0), caption_height(30), stone_offset(20),
+    : field_x(0), field_y(0), stack_shift_x(0), stack_shift_y(3),      
+      caption_height(30), stone_offset(20),
       board_x_offset(10), board_y_offset(10),
       board_stones_spacing(30), player_player_spacing(10), 
       stones_player_spacing(10), rotation_symmetric(false), 
@@ -187,9 +190,11 @@ namespace holtz
     field_packed_width  = int(field_width  * 0.866);	// height * cos(30deg)
   }
 
+  //!!! implement that
   Dimensions::Dimensions( wxConfigBase &config, wxBitmap &bitmap )	// load from configuration
-    : field_x(0), field_y(0), caption_height(30), stone_offset(20),
-      board_x_offset(10), board_y_offset(10),
+    : field_x(0), field_y(0), stack_shift_x(0), stack_shift_y(3),
+      caption_height(30), stone_offset(20),
+      board_x_offset(10), board_y_offset(70),
       board_stones_spacing(30), player_player_spacing(10), 
       stones_player_spacing(10), rotation_symmetric(false), 
       rotate_background(false)
@@ -208,6 +213,8 @@ namespace holtz
     if( config.Read( wxT("field_height"), &buf ) ) field_height = buf;
     if( config.Read( wxT("field_packed_width"), &buf ) ) field_packed_width = buf;
     if( config.Read( wxT("field_packed_height"), &buf ) ) field_packed_height = buf;
+    if( config.Read( wxT("stack_shift_x"), &buf ) ) stack_shift_x = buf;
+    if( config.Read( wxT("stack_shift_y"), &buf ) ) stack_shift_y = buf;
     if( config.Read( wxT("caption_height"), &buf ) ) caption_height = buf;
     if( config.Read( wxT("stone_offset"), &buf ) ) stone_offset = buf;
     if( config.Read( wxT("board_stones_spacing"), &buf ) ) board_stones_spacing = buf;
@@ -597,12 +604,18 @@ namespace holtz
   // Board_Panel
   // ----------------------------------------------------------------------------
 
-  Board_Panel::Settings::Settings( bool rotate_board, bool show_coordinates, wxFont coord_font )
-    : rotate_board(rotate_board), show_coordinates(show_coordinates), coord_font(coord_font)
+  Board_Panel::Settings::Settings( bool rotate_board, bool show_coordinates, 
+				   wxFont coord_font, wxFont stack_font )
+    : rotate_board(rotate_board), show_coordinates(show_coordinates), 
+    coord_font(coord_font), stack_font(stack_font)
   {
     if( coord_font == wxNullFont )
     {
       this->coord_font = wxFont(16,wxDEFAULT,wxNORMAL,wxBOLD);
+    }
+    if( stack_font == wxNullFont )
+    {
+      this->stack_font = wxFont(14,wxDEFAULT,wxNORMAL,wxBOLD);
     }
   }
 
@@ -638,12 +651,18 @@ namespace holtz
       if( settings.rotate_board )
       {
 	if( bitmap_handler.dimensions.rotation_symmetric )
+	{
 	  board_y += bitmap_handler.dimensions.field_width;
+	}
 	else
+	{
 	  board_y += bitmap_handler.dimensions.field_height;
+	}
       }
       else
+      {
 	board_x += bitmap_handler.dimensions.field_width;
+      }
     }
 
     if( settings.rotate_board )
@@ -656,7 +675,10 @@ namespace holtz
 	  bitmap_handler.dimensions.field_height / 2 + board_y; 
 	
 	if( settings.show_coordinates )
-	  height += bitmap_handler.dimensions.field_height;
+	{
+	  height += bitmap_handler.dimensions.field_width;
+	  width  += bitmap_handler.dimensions.field_packed_width;
+	}
       }
       else
       {
@@ -666,7 +688,10 @@ namespace holtz
 	  bitmap_handler.dimensions.field_width / 2 + board_y; 
 	
 	if( settings.show_coordinates )
-	  height += bitmap_handler.dimensions.field_width;
+	{
+	  height += bitmap_handler.dimensions.field_height;
+	  width  += bitmap_handler.dimensions.field_packed_width;
+	}
       }
     }
     else
@@ -677,7 +702,10 @@ namespace holtz
 	+ bitmap_handler.dimensions.field_height + board_y;
 
       if( settings.show_coordinates )
-	width += bitmap_handler.dimensions.field_width;
+      {
+	width  += bitmap_handler.dimensions.field_width;
+	height += bitmap_handler.dimensions.field_height;
+      }
     }
   }
 
@@ -692,16 +720,54 @@ namespace holtz
       {
 	std::pair<int,int> pos = get_field_pos( fx, fy );
 
-	dc.DrawBitmap( bitmap_set.field_bitmaps[ game.board.field[fx][fy] ], 
-		       pos.first,  pos.second, true );
+	assert(game.board.field[fx][fy].size() > 0 );
+	std::deque<Field_State_Type>::iterator i;
+	int cnt=0;
+	for( i=game.board.field[fx][fy].begin(); i != game.board.field[fx][fy].end(); ++i )
+	{
+	  dc.DrawBitmap( bitmap_set.field_bitmaps[ *i ], 
+			 pos.first + bitmap_handler.dimensions.stack_shift_x*cnt,  
+			 pos.second - bitmap_handler.dimensions.stack_shift_y*cnt, true );
+	  ++cnt;
+	}
       }
     }
   }
   void Board_Panel::draw_text( wxDC &dc ) const 
   {
+    // draw number to visualize stack hight
+    Game &game = gui_manager.get_display_game();
+
+    for( int fy = 0; fy < game.board.get_y_size(); ++fy )
+    {
+      for( int fx = 0; fx < game.board.get_x_size(); ++fx )
+      {
+	std::pair<int,int> pos = get_field_pos( fx, fy );
+
+	int size = game.board.field[fx][fy].size();
+	if( size > 1 )
+	{
+	  wxString str;
+	  str.Printf(wxT("%d"), size);
+
+	  dc.SetTextForeground(*wxRED/*settings.stone_font_colour*/);
+	  dc.SetFont( settings.stack_font );
+	  wxCoord w,h;
+	  dc.GetTextExtent(str,&w,&h);
+
+	  dc.DrawText( str, 
+		       pos.first + (bitmap_handler.dimensions.field_width  - w) / 2 +
+		       bitmap_handler.dimensions.field_x + 
+		       bitmap_handler.dimensions.stack_shift_x*(size-1), 
+		       pos.second + (bitmap_handler.dimensions.field_height - h) / 2 +
+		       bitmap_handler.dimensions.field_y - 
+		       bitmap_handler.dimensions.stack_shift_y*(size-1) );
+	}
+      }
+    }
+
     if( settings.show_coordinates )
     {
-      Game &game = gui_manager.get_display_game();
       dc.SetTextForeground(*wxBLACK/*settings.coordinate_font_colour*/);
       dc.SetFont( settings.coord_font );
       for( int fy = 0; fy < game.board.get_y_size(); ++fy )
@@ -713,7 +779,7 @@ namespace holtz
 	    Field_Pos pos;
 	    pos.x = fx;
 	    pos.y = fy;
-	    std::string coord_name = game.ruleset->get_coordinate_translator()->get_field_name( pos );
+	    std::string coord_name = "5"; coord_name[0] -= fy;
 	    wxCoord w,h;
 	    dc.GetTextExtent( str_to_wxstr(coord_name), &w, &h );
 	    std::pair<int,int> field = get_field_pos( fx, fy );
@@ -745,47 +811,64 @@ namespace holtz
 	    dc.DrawText( str_to_wxstr(coord_name), coord_x, coord_y  );
 	    break;
 	  }
-	}      
-	for( int fx2 = game.board.get_x_size() - 1; fx2 >= 0; --fx2 )
+	}
+      }
+      Field_Iterator p1( Field_Pos(0,game.board.get_y_size() - 1), &game.board );
+      assert( p1.is_valid_field() );
+      while( Board::is_removed(*p1) )
+      {
+	p1.Right();
+	assert( p1.is_valid_field() );
+      }
+      Field_Pos pos;int fx,fy;
+      while( true )
+      {
+	pos = p1.get_pos();
+	fx = pos.x; fy = pos.y;
+
+	std::string coord_name = game.ruleset->get_coordinate_translator()->get_field_name( pos );
+	wxCoord w,h;
+	dc.GetTextExtent( str_to_wxstr(coord_name), &w, &h );
+	std::pair<int,int> field = get_field_pos( fx, fy );
+	int coord_x, coord_y;
+	if( settings.rotate_board )
 	{
-	  if( !Board::is_removed(game.board.field[fx2][fy]) )
+	  if( bitmap_handler.dimensions.rotation_symmetric )
 	  {
-	    Field_Pos pos;
-	    pos.x = fx2;
-	    pos.y = fy;
-	    std::string coord_name = game.ruleset->get_coordinate_translator()->get_field_name( pos );
-	    wxCoord w,h;
-	    dc.GetTextExtent( str_to_wxstr(coord_name), &w, &h );
-	    std::pair<int,int> field = get_field_pos( fx2, fy );
-	    int coord_x, coord_y;
-	    if( settings.rotate_board )
-	    {
-	      if( bitmap_handler.dimensions.rotation_symmetric )
-	      {
-		coord_x = field.first  + (bitmap_handler.dimensions.field_width  - w) / 2 +
-		  bitmap_handler.dimensions.field_x;
-		coord_y = field.second - (bitmap_handler.dimensions.field_height + h) / 2 +
-		  bitmap_handler.dimensions.field_y;
-	      }
-	      else
-	      {
-		coord_x = field.first  + (bitmap_handler.dimensions.field_height - w) / 2 +
-		  bitmap_handler.dimensions.field_y;
-		coord_y = field.second - (bitmap_handler.dimensions.field_width  + h) / 2 +
-		  bitmap_handler.dimensions.field_x;
-	      }
-	    }
-	    else
-	    {
-	      coord_x = field.first  + (bitmap_handler.dimensions.field_width * 3  - w) / 2 +
-		bitmap_handler.dimensions.field_x;
-	      coord_y = field.second + (bitmap_handler.dimensions.field_height     - h) / 2 +
-		bitmap_handler.dimensions.field_y;
-	    }
-	    dc.DrawText( str_to_wxstr(coord_name), coord_x, coord_y  );
-	    break;
+	    coord_x = field.first + bitmap_handler.dimensions.field_packed_width + 
+	      (bitmap_handler.dimensions.field_width - w) / 2 +
+	      bitmap_handler.dimensions.field_x;
+	    coord_y = field.second - (bitmap_handler.dimensions.field_height - h / 2) +
+	      bitmap_handler.dimensions.field_y;
+	  }
+	  else
+	  {
+	    coord_x = field.first + bitmap_handler.dimensions.field_packed_height +
+	      (bitmap_handler.dimensions.field_height - w) / 2 +
+	      bitmap_handler.dimensions.field_y;
+	    coord_y = field.second - (bitmap_handler.dimensions.field_width - h / 2) +
+	      bitmap_handler.dimensions.field_x;
 	  }
 	}
+	else
+	{
+	  coord_x = field.first  + bitmap_handler.dimensions.field_width  - w / 2 +
+	    bitmap_handler.dimensions.field_x;
+	  coord_y = field.second + bitmap_handler.dimensions.field_packed_height +
+	    (bitmap_handler.dimensions.field_height - h) / 2 +
+	    bitmap_handler.dimensions.field_y;
+	}
+	dc.DrawText( str_to_wxstr(coord_name), coord_x, coord_y  );
+
+	p1.Right();
+	if( p1.is_valid_field() )
+	  if( !Board::is_removed(*p1) )
+	    continue;
+	p1.Top_Left();
+	if( p1.is_valid_field() )
+	  if( !Board::is_removed(*p1) )
+	    continue;
+	break;
       }
     }
   }
@@ -809,11 +892,11 @@ namespace holtz
 	    sequence_generator = 0;
 	    game_manager.continue_game();
 	    break;
+	  case Sequence_Generator::hold_red:
 	  case Sequence_Generator::hold_white:
-	  case Sequence_Generator::hold_grey:
 	  case Sequence_Generator::hold_black:
 	    {
-	      std::pair<int,int> coord = get_field_pos( pos.x, pos.y );
+	      std::pair<int,int> coord = get_stack_top_pos( pos.x, pos.y );
 	      gui_manager.set_mark( coord.first, coord.second );
 	      gui_manager.show_user_information( true );
 	    }
@@ -826,35 +909,20 @@ namespace holtz
 	    msg.Printf( _("Fatal Error!") );
 	    gui_manager.report_error( msg, _("Click Error") );
 	    break;
-	  case Sequence_Generator::error_require_knock_out:
-	    gui_manager.show_status_text(_("You must do the knock out move!"));
+	  case Sequence_Generator::error_require_jump:
+	    gui_manager.show_status_text(_("You have to move a stack!"));
 	    break;
 	  case Sequence_Generator::error_require_set:
 	    gui_manager.show_status_text(_("You have to set a stone!"));
 	    break;
-	  case Sequence_Generator::error_require_remove:
-	    gui_manager.show_status_text(_("You have to remove an empty border field!"));
-	    break;
-	  case Sequence_Generator::error_can_t_remove:
-	    gui_manager.show_status_text(_("Field can't be removed without moving another stone!"));
-	    break;
 	  case Sequence_Generator::error_can_t_move_here:
-	    gui_manager.show_status_text(_("You can't move to that field!"));
+	    gui_manager.show_status_text(_("You can't move the stack to that field!"));
 	    break;
-	  case Sequence_Generator::error_can_t_set_here:
-	    gui_manager.show_status_text(_("Please set the stone on an empty field!"));
-	    break;
-	  case Sequence_Generator::error_must_pick_common_stone:
-	    gui_manager.show_status_text(_("You must pick a common stone!"));
-	    break;
-	  case Sequence_Generator::error_wrong_player:
-	    gui_manager.show_status_text(_("Its not the turn of that player!"));
+	  case Sequence_Generator::error_wrong_player_stack:
+	    gui_manager.show_status_text(_("Stack is controled by other player!"));
 	    break;
 	  case Sequence_Generator::error_impossible_yet:
 	    gui_manager.show_status_text(_("You can't do that at the moment!"));
-	    break;
-	  case Sequence_Generator::error_must_knock_out_with_same_stone:
-	    gui_manager.show_status_text(_("You must knock out once more with the same stone!"));
 	    break;
 	    /*
 	      default:
@@ -984,6 +1052,23 @@ namespace holtz
     }
   }
 
+
+  std::pair<int,int> Board_Panel::get_stack_top_pos( int col, int row ) const
+  {
+    std::pair<int,int> ret;
+    Game &game = gui_manager.get_display_game();
+
+    Field_Pos pos(col,row);
+    Field_Iterator p1(pos, &game.board);
+    int stack_height = p1->size();
+    
+    ret = get_field_pos( col, row );
+    ret.first  += bitmap_handler.dimensions.stack_shift_x * (stack_height-1);
+    ret.second -= bitmap_handler.dimensions.stack_shift_y * (stack_height-1);
+    
+    return ret;
+  }
+
   Bitmap_Set &Board_Panel::get_bitmap_set() const
   {
     if( settings.rotate_board && !bitmap_handler.dimensions.rotation_symmetric )
@@ -1019,10 +1104,10 @@ namespace holtz
 
   void Stone_Panel::calc_dimensions()
   {
-    if( settings.multiple_stones )
+    if( settings.rotate_stones && !bitmap_handler.dimensions.rotation_symmetric )
     {
-      width  = bitmap_handler.dimensions.field_width * settings.max_stones;
-      height = 3 * bitmap_handler.dimensions.field_height;
+      width  = 3 * bitmap_handler.dimensions.field_height;
+      height = bitmap_handler.dimensions.field_width;
     }
     else
     {
@@ -1035,165 +1120,51 @@ namespace holtz
   {
     int stone_type;
     int y_pos = y, x_pos = x;
-    for( stone_type = Stones::white_stone; stone_type <= Stones::black_stone; ++stone_type )
+    for( stone_type = Stones::red_stone; stone_type <= Stones::black_stone; ++stone_type )
     {
-      if( settings.multiple_stones )
+      if( settings.rotate_stones && !bitmap_handler.dimensions.rotation_symmetric )
       {
-	int count = stones.stone_count[ Stones::Stone_Type(stone_type) ];
-	if( count > settings.max_stones ) count = settings.max_stones;
-	
-	x_pos = x;
-	int i;
-	for( i = 0; i < count; ++i )
-	{
-	  if( settings.rotate_stones && !bitmap_handler.dimensions.rotation_symmetric )
-	  {
-	    dc.DrawBitmap( bitmap_handler.normal.field_bitmaps[ field_empty ], 
-			   x_pos, y_pos, true );
-	    dc.DrawBitmap( bitmap_handler.rotated.stone_bitmaps[ Stones::Stone_Type(stone_type) ], 
-			   x_pos, y_pos, true );
-	  }
-	  else
-	    dc.DrawBitmap( bitmap_handler.normal.field_bitmaps[ Field_State_Type(stone_type) ], 
-			   x_pos, y_pos, true );
-	  
-	  x_pos += bitmap_handler.dimensions.field_width;
-	}
-	for( ; i < settings.max_stones; ++i )
-	{
-	  dc.DrawBitmap( bitmap_handler.normal.field_bitmaps[ field_removed ], x_pos, y_pos, true );
-	  x_pos += bitmap_handler.dimensions.field_width;
-	}
-      
-	y_pos += bitmap_handler.dimensions.field_height;
+	dc.DrawBitmap( bitmap_handler.normal.field_bitmaps[ field_empty ], 
+		       x_pos, y_pos, true );
+	dc.DrawBitmap( bitmap_handler.rotated.stone_bitmaps[ Stones::Stone_Type(stone_type) ], 
+		       x_pos, y_pos, true );
       }
-      else			// display only one stone and write count as text on it
-      {
-	if( settings.rotate_stones && !bitmap_handler.dimensions.rotation_symmetric )
-	{
-	  dc.DrawBitmap( bitmap_handler.normal.field_bitmaps[ field_empty ], 
-			 x_pos, y_pos, true );
-	  dc.DrawBitmap( bitmap_handler.rotated.stone_bitmaps[ Stones::Stone_Type(stone_type) ], 
-			 x_pos, y_pos, true );
-	}
-	else
-	  dc.DrawBitmap( bitmap_handler.normal.field_bitmaps[ Field_State_Type(stone_type) ], 
-			 x_pos, y_pos, true );
+      else
+	dc.DrawBitmap( bitmap_handler.normal.field_bitmaps[ Field_State_Type(stone_type) ], 
+		       x_pos, y_pos, true );
 
-	x_pos += bitmap_handler.dimensions.field_width;
-      }
+      x_pos += bitmap_handler.dimensions.field_width;
     }
   }
 
   void Stone_Panel::draw_text( wxDC &dc ) const
   {
-    if( !settings.multiple_stones ) // display only one stone and write count as text on it
+    int stone_type;
+    int y_pos = y, x_pos = x;
+    for( stone_type = Stones::red_stone; stone_type <= Stones::black_stone; ++stone_type )
     {
-      int stone_type;
-      int y_pos = y, x_pos = x;
-      for( stone_type = Stones::white_stone; stone_type <= Stones::black_stone; ++stone_type )
-      {
-	int count = stones.stone_count[ Stones::Stone_Type(stone_type) ];
+      int count = stones.stone_count[ Stones::Stone_Type(stone_type) ];
 
-	wxString str;
-	str.Printf(wxT("%d"), count);
+      wxString str;
+      str.Printf(wxT("%d"), count);
 
-	dc.SetTextForeground(*wxRED/*settings.stone_font_colour*/);
-	dc.SetFont( settings.stone_font );
-	wxCoord w,h;
-	dc.GetTextExtent(str,&w,&h);
+      dc.SetTextForeground(*wxRED /*settings.stone_font_colour*/);
+      dc.SetFont( settings.stone_font );
+      wxCoord w,h;
+      dc.GetTextExtent(str,&w,&h);
 
-	dc.DrawText( str, 
-		     x_pos + (bitmap_handler.dimensions.field_width  - w) / 2 +
-		     bitmap_handler.dimensions.field_x, 
-		     y_pos + (bitmap_handler.dimensions.field_height - h) / 2 +
-		     bitmap_handler.dimensions.field_y );
+      dc.DrawText( str, 
+		   x_pos + (bitmap_handler.dimensions.field_width  - w) / 2 +
+		   bitmap_handler.dimensions.field_x, 
+		   y_pos + (bitmap_handler.dimensions.field_height - h) / 2 +
+		   bitmap_handler.dimensions.field_y );
 
-	x_pos += bitmap_handler.dimensions.field_width;
-      }
+      x_pos += bitmap_handler.dimensions.field_width;
     }
   }
   
   void Stone_Panel::on_click( int click_x, int click_y ) const
   {
-    wxString msg;
-    if( sequence_generator )
-    {
-      std::pair<Stones::Stone_Type,int> clicked_stone = get_stone( click_x, click_y );
-      Stones::Stone_Type &type = clicked_stone.first;
-      int &col = clicked_stone.second;
-
-      if( type != Stones::invalid_stone )
-      {
-	if( col < stones.stone_count[type] )
-	{
-	  Sequence_Generator::Sequence_State state;
-	  state = sequence_generator->add_click_common_stone( type );
-	  
-	  switch( state )
-	  {
-	    case Sequence_Generator::finished:
-	      gui_manager.set_mark(-1,-1);
-	      sequence_generator = 0;
-	      game_manager.continue_game();
-	      break;
-	    case Sequence_Generator::hold_white:
-	    case Sequence_Generator::hold_grey:
-	    case Sequence_Generator::hold_black:
-	    {
-	      std::pair<int,int> coord = get_field_pos( col, type );
-	      gui_manager.set_mark( coord.first, coord.second );
-	      gui_manager.show_user_information( true );
-	    }
-	    break;
-	    case Sequence_Generator::another_click:
-	      gui_manager.set_mark(-1,-1);
-	      gui_manager.show_user_information( true );
-	      break;
-	    case Sequence_Generator::fatal_error:
-	      msg.Printf( _("Fatal Error!") );
-	      gui_manager.report_error( msg, _("Click Error") );
-	      break;
-	    case Sequence_Generator::error_require_knock_out:
-	      gui_manager.show_status_text(_("You must do the knock out move!"));
-	      break;
-	    case Sequence_Generator::error_require_set:
-	      gui_manager.show_status_text(_("You have to set a stone!"));
-	      break;
-	    case Sequence_Generator::error_require_remove:
-	      gui_manager.show_status_text(_("You have to remove an empty border field!"));
-	      break;
-	    case Sequence_Generator::error_can_t_remove:
-	      gui_manager.show_status_text(_("Field can't be removed without moving another stone!"));
-	      break;
-	    case Sequence_Generator::error_can_t_move_here:
-	      gui_manager.show_status_text(_("You can't move to that field!"));
-	      break;
-	    case Sequence_Generator::error_can_t_set_here:
-	      gui_manager.show_status_text(_("Please set the stone on an empty field!"));
-	      break;
-	    case Sequence_Generator::error_must_pick_common_stone:
-	      gui_manager.show_status_text(_("You must pick a common stone!"));
-	      break;
-	    case Sequence_Generator::error_wrong_player:
-	      gui_manager.show_status_text(_("Its not the turn of that player!"));
-	      break;
-	    case Sequence_Generator::error_impossible_yet:
-	      gui_manager.show_status_text(_("You can't do that at the moment!"));
-	      break;
-	    case Sequence_Generator::error_must_knock_out_with_same_stone:
-	      gui_manager.show_status_text(_("You must knock out once more with the same stone!"));
-	      break;
-	      /*
-		default:
-		msg.Printf( _("Click impossible") );
-	    
-		wxMessageBox(msg, _("Click"), wxOK | wxICON_INFORMATION, 0);
-	      */
-	  }
-	}
-      }
-    }
   }
 
   std::pair<int,int> Stone_Panel::get_field_pos( int col, Stones::Stone_Type type ) const
@@ -1236,9 +1207,8 @@ namespace holtz
   // Player Panel
   // ----------------------------------------------------------------------------
 
-  Player_Panel::Settings::Settings( const holtz::Stone_Panel::Settings &stone_settings,
-				    wxFont player_font )
-    : stone_settings(stone_settings), player_font( player_font )
+  Player_Panel::Settings::Settings( wxFont player_font )
+    : player_font( player_font )
   {
     if( player_font == wxNullFont )
     {
@@ -1252,96 +1222,14 @@ namespace holtz
     : settings(settings), player(player), 
       game_manager(game_manager), gui_manager(gui_manager), 
       bitmap_handler(gui_manager.get_bitmap_handler()), 
-      sequence_generator(sg), 
-      stone_panel( settings.stone_settings, player.stones, game_manager, gui_manager, sg ),
+      sequence_generator(sg),
       header_panel( settings, player )
   {
     add( &header_panel );
-    Horizontal_Sizer *stone_sizer = new Horizontal_Sizer();
-    stone_sizer->add( new Spacer(bitmap_handler.dimensions.stone_offset,0), true /*deleted by sizer*/ );
-    stone_sizer->add( &stone_panel );
-    add( stone_sizer, true /*deleted by sizer*/ );
   }
 
   void Player_Panel::on_click( int cl_x, int cl_y ) const
   {
-    wxString msg;
-    if( sequence_generator )
-    {
-      std::pair<Stones::Stone_Type,int> clicked_stone = stone_panel.get_stone( cl_x, cl_y );
-      if( clicked_stone.first != Stones::invalid_stone )
-      {
-	Stones::Stone_Type type = clicked_stone.first;
-
-	if( clicked_stone.second < player.stones.stone_count[type] )
-	{
-	  Sequence_Generator::Sequence_State state;
-	  state = sequence_generator->add_click_player_stone( player.id, type );
-
-	  switch( state )
-	  {
-	    case Sequence_Generator::finished:
-	      gui_manager.set_mark(-1,-1);
-	      sequence_generator = 0;
-	      game_manager.continue_game();
-	      break;
-	    case Sequence_Generator::hold_white:
-	    case Sequence_Generator::hold_grey:
-	    case Sequence_Generator::hold_black:
-	    {
-	      std::pair<int,int> field = stone_panel.get_field_pos( clicked_stone );
-	      gui_manager.set_mark( field.first, field.second );
-	      gui_manager.show_user_information( true );
-	    }
-	    break;
-	    case Sequence_Generator::another_click:
-	      gui_manager.set_mark(-1,-1);
-	      gui_manager.show_user_information( true );
-	      break;
-	    case Sequence_Generator::fatal_error:
-	      msg.Printf( _("Fatal Error!") );
-	      gui_manager.report_error( msg, _("Click Error") );
-	      break;
-	    case Sequence_Generator::error_require_knock_out:
-	      gui_manager.show_status_text(_("You must do the knock out move!"));
-	      break;
-	    case Sequence_Generator::error_require_set:
-	      gui_manager.show_status_text(_("You have to set a stone!"));
-	      break;
-	    case Sequence_Generator::error_require_remove:
-	      gui_manager.show_status_text(_("You have to remove an empty border field!"));
-	      break;
-	    case Sequence_Generator::error_can_t_remove:
-	      gui_manager.show_status_text(_("Field can't be removed without moving another stone!"));
-	      break;
-	    case Sequence_Generator::error_can_t_move_here:
-	      gui_manager.show_status_text(_("You can't move to that field!"));
-	      break;
-	    case Sequence_Generator::error_can_t_set_here:
-	      gui_manager.show_status_text(_("Please set the stone on an empty field!"));
-	      break;
-	    case Sequence_Generator::error_must_pick_common_stone:
-	      gui_manager.show_status_text(_("You must pick a common stone!"));
-	      break;
-	    case Sequence_Generator::error_wrong_player:
-	      gui_manager.show_status_text(_("Its not the turn of that player!"));
-	      break;
-	    case Sequence_Generator::error_impossible_yet:
-	      gui_manager.show_status_text(_("You can't do that at the moment!"));
-	      break;
-	    case Sequence_Generator::error_must_knock_out_with_same_stone:
-	      gui_manager.show_status_text(_("You must knock out once more with the same stone!"));
-	      break;
-	      /*
-		default:
-		msg.Printf( _("Click impossible") );
-	    
-		wxMessageBox(msg, _("Click"), wxOK | wxICON_INFORMATION, 0);
-	      */
-	  }
-	}
-      }
-    }
   }
 
   Player_Panel::Header_Panel::Header_Panel( Player_Panel::Settings &settings, Player &player )
@@ -1351,12 +1239,18 @@ namespace holtz
 
   void Player_Panel::Header_Panel::draw_text( wxDC &dc ) const
   {
-    std::string str = player.name;
+    std::string str;
+    if( player.stone_type == Stones::white_stone )
+      str = "White: ";
+    else
+      str = "Black: ";
+    str = str + player.name;
     if( player.host != "" )
       str = str + " (" + player.host + ")";
-    wxString wxstr = str_to_wxstr(str);
     if( player.type == Player::ai )
-      wxstr = _("[AI] ") + wxstr;
+      str = str + " [AI]";
+
+    wxString wxstr = str_to_wxstr(str);
 
     dc.SetTextForeground(*wxBLACK/*settings.player_font_colour*/);
     dc.SetFont( settings.player_font );
@@ -1414,7 +1308,7 @@ namespace holtz
 				Sequence_Generator * &sg )
     : Generic_Mouse_Input(gui_manager.get_display_game()), 
       game_manager(game_manager), gui_manager(gui_manager), 
-      sequence_generator_hook(sg), ai(0)
+    sequence_generator_hook(sg)/*, ai(0)*/
   {
   }
   
@@ -1428,8 +1322,8 @@ namespace holtz
     gui_manager.allow_user_activity();
     if( game.current_player->help_mode == Player::show_hint )
     {
-      ai = game_manager.get_hint_ai();
-      ai->determine_hints();
+      //ai = game_manager.get_hint_ai();
+      //ai->determine_hints();
     }
   }
   void Mouse_Handler::disable_mouse_input() 
@@ -1442,7 +1336,7 @@ namespace holtz
     used_time = stop_watch.Time();
     if( game.current_player->help_mode == Player::show_hint )
     {
-      ai->abort();
+      //ai->abort();
       gui_manager.remove_hint();
     }
 
@@ -1509,11 +1403,11 @@ namespace holtz
       switch( state )
       {
 	case Sequence_Generator::hold_white:
-	case Sequence_Generator::hold_grey:
+	case Sequence_Generator::hold_red:
 	case Sequence_Generator::hold_black:
 	{
 	  Field_Pos pos = sequence_generator->get_selected_pos();
-	  std::pair<int,int> coord = board_panel.get_field_pos( pos.x, pos.y );
+	  std::pair<int,int> coord = board_panel.get_stack_top_pos( pos.x, pos.y );
 	  gui_manager.set_mark( coord.first, coord.second );
 	  gui_manager.show_user_information( true );
 	}
@@ -1537,22 +1431,42 @@ namespace holtz
       {
 	Vertical_Sizer *vertical = new Vertical_Sizer();
 	vertical->add( &board_panel );
+
+	Horizontal_Sizer *horiz = new Horizontal_Sizer();
+	horiz->add( new Spacer( bitmap_handler.dimensions.board_stones_spacing, 0 ), 
+		       true /*destroy on remove*/ );
+	horiz->add( &stone_panel );
+	horiz->add( new Spacer( bitmap_handler.dimensions.board_stones_spacing, 0 ), 
+		       true /*destroy on remove*/ );
+	horiz->add( &player_panel_sizer );						     
+	horiz->add( new Spacer( 100, 0 ), true /*destroy on remove*/ ); 
+				// reported width of text is to small
+
 	vertical->add( new Spacer( 0, bitmap_handler.dimensions.board_stones_spacing ), 
 		       true /*destroy on remove*/ );
-	vertical->add( &stone_panel );
+	vertical->add( horiz, true /*destroy on remove*/ );
+
 	add( vertical, true /* destroy on remove */ );
-	add( new Spacer( bitmap_handler.dimensions.stones_player_spacing, 0 ), true );
-	add( &player_panel_sizer );						     
       }
       break;
       case Settings::arrange_stones_right:
       {
-	add( &board_panel );
 	Vertical_Sizer *vertical = new Vertical_Sizer();
-	vertical->add( &stone_panel );
-	vertical->add( new Spacer( 0, bitmap_handler.dimensions.stones_player_spacing ), true );
-	vertical->add( &player_panel_sizer );						     
-	add( new Spacer( bitmap_handler.dimensions.board_stones_spacing, 0 ), true );
+	vertical->add( &board_panel );
+
+	Horizontal_Sizer *horiz = new Horizontal_Sizer();
+	horiz->add( new Spacer( bitmap_handler.dimensions.board_stones_spacing, 0 ), 
+		       true /*destroy on remove*/ );
+	horiz->add( &player_panel_sizer );
+	horiz->add( new Spacer( 100, 0 ), true /*destroy on remove*/ ); 
+				// reported width of text is to small
+	horiz->add( new Spacer( bitmap_handler.dimensions.board_stones_spacing, 0 ), 
+		       true /*destroy on remove*/ );
+	horiz->add( &stone_panel );
+	vertical->add( new Spacer( 0, bitmap_handler.dimensions.board_stones_spacing ), 
+		       true /*destroy on remove*/ );
+	vertical->add( horiz, true /*destroy on remove*/ );
+
 	add( vertical, true /* destroy on remove */ );
       }
       break;
@@ -1580,7 +1494,8 @@ namespace holtz
     player_panels.push_back( player_panel );
     
     if( !first ) 
-      player_panel_sizer.add( new Spacer(0,bitmap_handler.dimensions.player_player_spacing), true );
+      player_panel_sizer.add( new Spacer(bitmap_handler.dimensions.player_player_spacing,
+					 bitmap_handler.dimensions.player_player_spacing), true );
     player_panel_sizer.add( player_panel );
   }
 
@@ -1611,7 +1526,7 @@ namespace holtz
     : Game_UI_Manager( game_manager.get_game() ),
       game_manager(game_manager), game_window(game_window),
       game_settings( Board_Panel::Settings(),
-		     Player_Panel::Settings(Stone_Panel::Settings()),
+		     Player_Panel::Settings(),
 		     Stone_Panel::Settings() ),
       game_panel( game_settings, game_manager, *this, sequence_generator ), 
       sequence_generator(0),
@@ -1704,18 +1619,14 @@ namespace holtz
 	{
 	  if( sequence_generator )
 	  {
-	    if( sequence_generator->get_required_move_type() != Move::set_move )
+	    if( sequence_generator->get_required_move_type() == Move::jump_move )
 	    {
 	      std::list<Field_Pos> clicks = sequence_generator->get_possible_clicks();
 	      std::list<Field_Pos>::iterator click;
 	      for( click = clicks.begin(); click != clicks.end(); ++click )
 	      {
-		if( sequence_generator->get_required_move_type() == Move::remove )
-		  field_mark_positions.push_back
-		    ( game_panel.get_board_panel().get_field_pos( click->x, click->y ) );
-		else
-		  stone_mark_positions.push_back
-		    ( game_panel.get_board_panel().get_field_pos( click->x, click->y ) );
+		stone_mark_positions.push_back
+		  ( game_panel.get_board_panel().get_stack_top_pos( click->x, click->y ) );
 	      }
 	    }
 	  }
@@ -1723,10 +1634,11 @@ namespace holtz
 	break;
 	case Player::show_hint:
 	{
+	  /*
 	  if( current_hint.valid )
 	  {
-	    const std::list<holtz::Move*> &moves = current_hint.sequence.get_moves();
-	    std::list<holtz::Move*>::const_iterator move;
+	    const std::list<dvonn::Move*> &moves = current_hint.sequence.get_moves();
+	    std::list<dvonn::Move*>::const_iterator move;
 	    for( move = moves.begin(); move != moves.end(); ++move )
 	    {
 	      switch( (*move)->get_type() )
@@ -1790,12 +1702,14 @@ namespace holtz
 	      }
 	    }
 	  }
+	  */
 	}
 	break;
       }
 
       if( sequence_generator )
       {
+	/*
 	switch ( sequence_generator->get_required_move_type() )
 	{
 	  case Move::knock_out_move:
@@ -1811,6 +1725,7 @@ namespace holtz
 	  case Move::finish_move:
 	    break;
 	}
+	*/
       }
     }
     else
@@ -1820,16 +1735,16 @@ namespace holtz
     if( do_refresh )
       refresh();
   }
-
+  /*
   void WX_GUI_Manager::give_hint( AI_Result ai_result )
   {
     current_hint = ai_result;
     show_user_information( true, true );
   }
-
+  */
   void WX_GUI_Manager::remove_hint()
   {
-    current_hint = AI_Result();
+    //current_hint = AI_Result();
     show_user_information( true, false );
   }
 
@@ -1965,7 +1880,6 @@ namespace holtz
 	}
       }
     }
-    
     if( !ok )
     {
       buf = wxFileSelector( _("Choose a skin File"), wxT(""), 
@@ -1987,7 +1901,7 @@ namespace holtz
       bitmap_handler.normal.field_bitmaps[field_removed]	= wxBitmap(field_removed_xpm);
       bitmap_handler.normal.field_bitmaps[field_empty]		= wxBitmap(field_empty_xpm);
       bitmap_handler.normal.stone_bitmaps[Stones::white_stone]	= wxBitmap(stone_white_xpm);
-      bitmap_handler.normal.stone_bitmaps[Stones::grey_stone]	= wxBitmap(stone_grey_xpm);
+      bitmap_handler.normal.stone_bitmaps[Stones::red_stone]	= wxBitmap(stone_grey_xpm);
       bitmap_handler.normal.stone_bitmaps[Stones::black_stone]	= wxBitmap(stone_black_xpm);
       bitmap_handler.normal.click_mark				= wxBitmap(click_mark_xpm);
       bitmap_handler.normal.field_mark				= wxBitmap(field_mark_xpm);
@@ -2091,7 +2005,7 @@ namespace holtz
     input = new wxZipInputStream( filename, wxT("stone_grey.png") );
     if( input->Eof() ) { delete input; return false; }
     image.LoadFile( *input, wxBITMAP_TYPE_PNG );
-    bitmap_handler.normal.stone_bitmaps[Stones::grey_stone] = image.ConvertToBitmap();
+    bitmap_handler.normal.stone_bitmaps[Stones::red_stone] = image.ConvertToBitmap();
     delete input;
     input = new wxZipInputStream( filename, wxT("stone_black.png") );
     if( input->Eof() ) { delete input; return false; }

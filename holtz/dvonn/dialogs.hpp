@@ -14,21 +14,22 @@
  * 
  */
 
-#ifndef __WXHOLTZ_DIALOG__
-#define __WXHOLTZ_DIALOG__
+#ifndef __WXDVONN_DIALOG__
+#define __WXDVONN_DIALOG__
 
 #define DEFAULT_PORT 6211
 
-namespace holtz
+namespace dvonn
 {
   class Game_Dialog;
   class Settings_Dialog;
 }
 
 #include "network.hpp"
-#include "holtz.hpp"
-#include "wxholtz.hpp"
+#include "dvonn.hpp"
+#include "wxdvonn.hpp"
 #include "pbm.hpp"
+#include "littlegolem.hpp"
 
 #include <wx/wx.h>
 #include <wx/wizard.h>
@@ -37,7 +38,7 @@ namespace holtz
 #include <map>
 #include <string>
 
-namespace holtz
+namespace dvonn
 {
   // ============================================================================
   // Game_Dialog
@@ -136,10 +137,10 @@ namespace holtz
     DECLARE_EVENT_TABLE() //**/
   };
 
-  class Load_Board_Page : public wxWizardPage
+  class Load_PBM_Board_Page : public wxWizardPage
   {
   public:
-    Load_Board_Page( wxWizard *parent, Game_Dialog & );
+    Load_PBM_Board_Page( wxWizard *parent, Game_Dialog & );
 
     virtual wxWizardPage *GetPrev() const;
     virtual wxWizardPage *GetNext() const;
@@ -147,20 +148,49 @@ namespace holtz
 
     void restore();		// display stored game state
   private:
-    bool scan_directory( wxString directory );
-    void on_choose_directory( wxCommandEvent& event );
-    void on_change_directory( wxCommandEvent& event );
+    bool scan_pbm_directory( wxString directory );
+    void on_choose_pbm_directory( wxCommandEvent& event );
+    void on_change_pbm_directory( wxCommandEvent& event );
 
     Game_Dialog &game_dialog;
     bool changes;
 
-    wxRadioBox *pbm_choice;
+    //wxRadioBox *pbm_choice;
     wxTextCtrl *pbm_directory;
     wxListBox  *pbm_game_list;
 
-    wxString valid_directory;	// stores only a valid directory path or ""
+    wxString valid_pbm_directory;	// stores only a valid directory path or ""
     std::map< int, std::list< std::pair<PBM_Content,std::string> > > pbm_files; 
 				// board_num -> last_move_num -> file
+
+    friend class Game_Dialog;
+    DECLARE_EVENT_TABLE() //**/
+  };
+
+  class Load_LG_Board_Page : public wxWizardPage
+  {
+  public:
+    Load_LG_Board_Page( wxWizard *parent, Game_Dialog & );
+
+    virtual wxWizardPage *GetPrev() const;
+    virtual wxWizardPage *GetNext() const;
+    virtual bool TransferDataFromWindow();
+
+    void restore();		// display stored game state
+  private:
+    bool scan_lgolem_directory( wxString directory );
+    void on_choose_lgolem_directory( wxCommandEvent& event );
+    void on_change_lgolem_directory( wxCommandEvent& event );
+
+    Game_Dialog &game_dialog;
+    bool changes;
+
+    //wxRadioBox *pbm_choice;
+    wxTextCtrl *lgolem_directory;
+    wxListBox  *lgolem_game_list;
+
+    wxString valid_lgolem_directory;	// stores only a valid directory path or ""
+    std::list< std::pair<LG_Content,std::string> > lgolem_files; 
 
     friend class Game_Dialog;
     DECLARE_EVENT_TABLE() //**/
@@ -265,7 +295,8 @@ namespace holtz
     Setup_Manager_Page  setup_manager_page;
     Board_Page		board_page;
     Custom_Board_Page   custom_board_page;
-    Load_Board_Page     load_board_page;
+    Load_PBM_Board_Page load_pbm_board_page;
+    Load_LG_Board_Page  load_lg_board_page;
     Player_Page		player_page;
     wxWizardPageSimple  dummy;
 
@@ -273,7 +304,8 @@ namespace holtz
     friend class Board_Page;
     friend class Custom_Board_Setup_Panel;
     friend class Custom_Board_Page;
-    friend class Load_Board_Page;
+    friend class Load_PBM_Board_Page;
+    friend class Load_LG_Board_Page;
     friend class Player_Setup_Panel;
     friend class Player_Page;
   };

@@ -5,7 +5,7 @@ Name: holtz
 Version: 1.1.11
 Release: %rel
 
-Summary: Holtz is a think game similar sophisticated than chess
+Summary: Holtz is an implementation of the abstract board game Zertz which is similar sophisticated than chess
 Copyright: GPL
 Group: Recreation/
 Vendor: Martin Trautmann <martintrautmann@gmx.de>

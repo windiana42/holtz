@@ -19,7 +19,7 @@
 #include "wxmain.hpp"
 #include <stdlib.h>
 
-namespace holtz
+namespace dvonn
 {
   inline int min( int a, int b )
   {
@@ -288,6 +288,7 @@ namespace holtz
   bool Move_Sequence_Animation::step()
   {
     bool ret = true;
+    /*
     switch( state )
       {
       case begin:
@@ -564,6 +565,7 @@ namespace holtz
       case finished:
 	break;
     }
+    */
 
     return ret;
   }
@@ -573,6 +575,7 @@ namespace holtz
   bool Move_Sequence_Animation::step_undo()
   {
     bool ret = true;
+    /*
     switch( state )
     {
       case begin:
@@ -905,7 +908,7 @@ namespace holtz
       case finished:
 	break;
     }
-
+    */
     return ret;
   }
 

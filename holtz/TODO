@@ -1,3 +1,6 @@
+*BUGS:
+- for any reason reading skin.ini files with 3 lines crashes...
+
 - better network protocol
 - better AI (looking for sente moves first, rate situations better)
 - save settings, last ruleset
