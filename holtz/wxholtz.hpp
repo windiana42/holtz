@@ -313,7 +313,7 @@ namespace holtz
     };
 
     Player_Panel( Player &, Game_Window &, Bitmap_Handler &, Sequence_Generator* &, 
-		  Stone_Panel::Settings &stone_settings, Player_Panel::Settings &settings );
+		holtz::Stone_Panel::Settings &stone_settings, Settings &settings );
 
     virtual void on_click( int x, int y );
 
@@ -334,7 +334,7 @@ namespace holtz
     class Header_Panel : public Basic_Panel
     {
     public:
-      Header_Panel( Player &player, Player_Panel::Settings& );
+	  Header_Panel( Player &player, Settings& );
       void draw_text( wxDC &dc );
       void calc_dimensions();
     private:
