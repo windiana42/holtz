@@ -804,17 +804,17 @@ namespace holtz
 	    break;
 	  }
 	}      
-	for( int fx = game.board.get_x_size() - 1; fx >= 0; --fx )
+	for( int fx2 = game.board.get_x_size() - 1; fx2 >= 0; --fx2 )
 	{
-	  if( !Board::is_removed(game.board.field[fx][fy]) )
+	  if( !Board::is_removed(game.board.field[fx2][fy]) )
 	  {
 	    Field_Pos pos;
-	    pos.x = fx;
+	    pos.x = fx2;
 	    pos.y = fy;
 	    std::string coord_name = game.ruleset->get_coordinate_translator()->get_field_name( pos );
 	    wxCoord w,h;
 	    dc.GetTextExtent( str_to_wxstr(coord_name), &w, &h );
-	    std::pair<int,int> field = get_field_pos( fx, fy );
+	    std::pair<int,int> field = get_field_pos( fx2, fy );
 	    int coord_x, coord_y;
 	    if( settings.rotate_board )
 	    {

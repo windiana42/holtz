@@ -499,7 +499,7 @@ namespace holtz
       case Board::s44_rings: board_choice->SetSelection(2); break;
       case Board::s48_rings: board_choice->SetSelection(3); break;
       case Board::s61_rings: board_choice->SetSelection(4); break;
-      case Board::custom:    board_choice->SetSelection(-1); break;
+      case Board::custom:    /* board_choice->SetSelection(-1); // this isn't allowed and won't work anywway (look @ wxwin sourcecode) */ break;
     }
   }
 
