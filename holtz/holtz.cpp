@@ -770,7 +770,7 @@ namespace holtz
 	(players.size() > ruleset->max_players) ) 
       return wrong_number_of_players;
 
-    if( !save_game ) 
+    if( !save_game )
       save_game = new Game(*this);
 
     do{
@@ -801,16 +801,48 @@ namespace holtz
 	  if( win_condition->did_player_win(*this,*current_player) )
 	    return finished;
 
+	  // check if still stones are there
+	  bool common_stones_avail;
+	  if( common_stones.stone_count[ Stones::white_stone ] +
+	      common_stones.stone_count[ Stones::gray_stone ] +
+	      common_stones.stone_count[ Stones::black_stone ] == 0 )
+	    common_stones_avail = false;
+	  else
+	    common_stones_avail = true;
+
 	  // change player
 	  current_player->is_active = false;
-	  ++current_player; 
-	  ++save_game->current_player;
-	  if( current_player == players.end() )		 // if last player
+	  save_game->current_player->is_active = false;
+	  bool next_player; unsigned players_skipped = 0;
+	  do
 	  {
-	    current_player = players.begin();		 // cycle to first player
-	    save_game->current_player = save_game->players.begin();
-	  }
+	    ++current_player; 
+	    ++save_game->current_player;
+	    if( current_player == players.end() )		 // if last player
+	    {
+	      current_player = players.begin();		 // cycle to first player
+	      save_game->current_player = save_game->players.begin();
+	    }
+	    next_player = false;
+	    if( !common_stones_avail )
+	    {
+	      // assert that player has stones if no knock out move is possible
+	      if( !board.is_knock_out_possible() )
+	      {
+		if( current_player->stones.stone_count[ Stones::white_stone ] +
+		    current_player->stones.stone_count[ Stones::gray_stone ] +
+		    current_player->stones.stone_count[ Stones::black_stone ] == 0 )
+		{
+		  next_player = true; // player can't move
+		  ++players_skipped;
+		  if( players_skipped >= players.size() )
+		    return finished; // no player may move
+		}
+	      }
+	    }
+	  }while( next_player );
 	  current_player->is_active = true;
+	  save_game->current_player->is_active = true;
 
 	  return next_players_turn;
 	}
@@ -1603,6 +1635,21 @@ namespace holtz
        ( player.stones.stone_count[Stones::black_stone] >= 2 ))
       return true;
 
+    bool any_field_left = false;
+    Field_Pos pos;
+    for( pos.x = 0; pos.x < game.board.get_x_size(); ++pos.x )
+      for( pos.y = 0; pos.y < game.board.get_y_size(); ++pos.y )
+      {
+	if( game.board.field[pos.x][pos.y] != field_removed )
+	{
+	  any_field_left = true;
+	  break;
+	}
+      }
+
+    if( !any_field_left )	// player wins, if no field left
+      return true;
+
     return false;
   }
 
@@ -1618,6 +1665,21 @@ namespace holtz
     if(( player.stones.stone_count[Stones::white_stone] >= 3 ) &&
        ( player.stones.stone_count[Stones::gray_stone]  >= 3 ) &&
        ( player.stones.stone_count[Stones::black_stone] >= 3 ))
+      return true;
+
+    bool any_field_left = false;
+    Field_Pos pos;
+    for( pos.x = 0; pos.x < game.board.get_x_size(); ++pos.x )
+      for( pos.y = 0; pos.y < game.board.get_y_size(); ++pos.y )
+      {
+	if( game.board.field[pos.x][pos.y] != field_removed )
+	{
+	  any_field_left = true;
+	  break;
+	}
+      }
+
+    if( !any_field_left )	// player wins, if no field left
       return true;
 
     return false;

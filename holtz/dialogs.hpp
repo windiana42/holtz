@@ -94,7 +94,6 @@ namespace holtz
     std::map<int,int> player_id;   // item_number->id
     std::map<int,int> player_item; // id->item_number
 
-    static const wxString help_choices[], ruleset_choices[];
     wxRadioBox *help_choice, *ruleset_choice;
     int current_ruleset, last_ruleset;
 

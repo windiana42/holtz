@@ -1,4 +1,4 @@
-SUBDIRS=skins sounds eins
+SUBDIRS=skins sounds eins locale
 
 INCLUDES=		`wx-config --cxxflags`
 bin_PROGRAMS=		holtz

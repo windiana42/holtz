@@ -2998,7 +2998,7 @@ fi
 #esac
 
 
-ac_config_files="$ac_config_files Makefile skins/Makefile sounds/Makefile eins/Makefile"
+ac_config_files="$ac_config_files Makefile skins/Makefile sounds/Makefile eins/Makefile locale/Makefile locale/de/Makefile locale/de/LC_MESSAGES/Makefile"
 cat >confcache <<\_ACEOF
 # This file is a shell script that caches the results of configure
 # tests run on this system so they can be shared between configure
@@ -3517,6 +3517,9 @@ do
   "skins/Makefile" ) CONFIG_FILES="$CONFIG_FILES skins/Makefile" ;;
   "sounds/Makefile" ) CONFIG_FILES="$CONFIG_FILES sounds/Makefile" ;;
   "eins/Makefile" ) CONFIG_FILES="$CONFIG_FILES eins/Makefile" ;;
+  "locale/Makefile" ) CONFIG_FILES="$CONFIG_FILES locale/Makefile" ;;
+  "locale/de/Makefile" ) CONFIG_FILES="$CONFIG_FILES locale/de/Makefile" ;;
+  "locale/de/LC_MESSAGES/Makefile" ) CONFIG_FILES="$CONFIG_FILES locale/de/LC_MESSAGES/Makefile" ;;
   "depfiles" ) CONFIG_COMMANDS="$CONFIG_COMMANDS depfiles" ;;
   *) { { echo "$as_me:$LINENO: error: invalid argument: $ac_config_target" >&5
 echo "$as_me: error: invalid argument: $ac_config_target" >&2;}

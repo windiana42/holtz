@@ -22,4 +22,7 @@ AC_OUTPUT(
 	skins/Makefile
 	sounds/Makefile
 	eins/Makefile
+	locale/Makefile
+	locale/de/Makefile
+	locale/de/LC_MESSAGES/Makefile
 	)

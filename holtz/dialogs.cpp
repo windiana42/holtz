@@ -20,29 +20,32 @@
 
 namespace holtz
 {
-  const wxString Player_Setup_Dialog::help_choices[] =
-  { wxString(_("No help")), wxString(_("Show possible moves")), wxString(_("Show Hint"))};
-
-  const wxString Player_Setup_Dialog::ruleset_choices[] =
-  { wxString(_("Standard")), wxString(_("Tournament")), wxString(_("Custom"))};
-
   Player_Setup_Dialog::Player_Setup_Dialog( wxWindow *parent, Game_Window &game_window, 
 					    Player_Setup_Manager &player_setup_manager )
     : wxDialog(parent,-1,wxString(_("Player setup"))),
       game_window(game_window),
       player_setup_manager(&player_setup_manager),
-      player_name( new wxTextCtrl( this, -1, _("player 1") ) ),
+      player_name( new wxTextCtrl( this, -1, _("Player 1") ) ),
       ai( new wxCheckBox( this, -1, _("AI") ) ),
       player_list( new wxListBox( this, LISTBOX_DCLICK, wxDefaultPosition, 
 				  wxSize(200,150), 0, 0, wxLB_SINGLE ) ),
-      help_choice( new wxRadioBox( this, -1, _("Help mode"), wxDefaultPosition,
-				      wxDefaultSize, 
-				      3, help_choices, 3, wxRA_SPECIFY_COLS ) ),
-      ruleset_choice( new wxRadioBox( this,DIALOG_RULESET, _("Ruleset"), wxDefaultPosition,
-				      wxDefaultSize, 
-				      3, ruleset_choices, 3, wxRA_SPECIFY_COLS ) ),
       current_ruleset(0), last_ruleset(0)
   {
+    // update choice names with correct translation
+    wxString help_choices[3], ruleset_choices[3];
+    help_choices[0] = wxString(_("No help"));
+    help_choices[1] = wxString(_("Show possible moves"));
+    help_choices[2] = wxString(_("Show Hint"));
+    help_choice = new wxRadioBox( this, -1, _("Help mode"), wxDefaultPosition,
+				  wxDefaultSize, 
+				  3, help_choices, 3, wxRA_SPECIFY_COLS );
+    ruleset_choices[0] = wxString(_("Standard"));
+    ruleset_choices[1] = wxString(_("Tournament"));
+    ruleset_choices[2] = wxString(_("Custom"));
+    ruleset_choice = new wxRadioBox( this,DIALOG_RULESET, _("Ruleset"), wxDefaultPosition,
+				     wxDefaultSize, 
+				     3, ruleset_choices, 3, wxRA_SPECIFY_COLS );
+
     player_setup_manager.set_player_handler(this);
 
     wxBoxSizer *top_sizer = new wxBoxSizer( wxVERTICAL );
@@ -56,7 +59,7 @@ namespace holtz
     add_player_sizer->Add( add_button, 0, wxALL, 10 );
     top_sizer->Add( add_player_sizer, 0, wxALIGN_CENTER );
 
-    top_sizer->Add( help_choice, 0, wxALIGN_CENTER );
+    top_sizer->Add( help_choice, 0, wxALIGN_CENTER | wxALL, 10 );
 
     wxBoxSizer *player_list_sizer  = new wxBoxSizer( wxHORIZONTAL );
     player_list_sizer->Add( player_list, 1, wxEXPAND | wxALL, 10 );
@@ -135,10 +138,9 @@ namespace holtz
       }
       else
       {
-	std::ostringstream os;
-	os << "player " << num_players + 2;
-	player_name->Clear();
-	player_name->AppendText(str_to_wxstr(os.str()));
+	wxString default_name;
+	default_name.Printf( _("Player %d"), num_players + 2 );
+	player_name->SetValue(default_name);
       }
     }
   }
@@ -152,7 +154,7 @@ namespace holtz
       {
 	if( !player_setup_manager->remove_player( player_id[item] ) )
 	{
-	  wxMessageBox( _("Could not remove player"), 
+	  wxMessageBox( _("Could not remove player!"), 
 		        _("Remove player"), wxOK | wxICON_INFORMATION, this );
 	}
       }
@@ -168,7 +170,7 @@ namespace holtz
       {
 	if( !player_setup_manager->player_up( player_id[item] ) )
 	{
-	  wxMessageBox( _("Could not move player"), _("Move player"), 
+	  wxMessageBox( _("Could not move player!"), _("Move player"), 
 		        wxOK | wxICON_INFORMATION, this );
 	}
       }
@@ -184,7 +186,7 @@ namespace holtz
       {
 	if( !player_setup_manager->player_down( player_id[item] ) )
 	{
-	  wxMessageBox( _("Could not move player"), _("Move player"), 
+	  wxMessageBox( _("Could not move player!"), _("Move player"), 
 		        wxOK | wxICON_INFORMATION, this );
 	}
       }
@@ -201,7 +203,7 @@ namespace holtz
 	  {
 	    if( current_ruleset != ruleset_choice->GetSelection() )
 	      ruleset_choice->SetSelection(current_ruleset);
-	    wxMessageBox(_("Could not change Ruleset"), _("Ruleset"), wxOK | wxICON_INFORMATION, this);
+	    wxMessageBox(_("Could not change Ruleset!"), _("Ruleset"), wxOK | wxICON_INFORMATION, this);
 	  }
 	  break;
 	case 1: 
@@ -209,13 +211,13 @@ namespace holtz
 	  {
 	    if( current_ruleset != ruleset_choice->GetSelection() )
 	      ruleset_choice->SetSelection(current_ruleset);
-	    wxMessageBox(_("Could not change Ruleset"), _("Ruleset"), wxOK | wxICON_INFORMATION, this);
+	    wxMessageBox(_("Could not change Ruleset!"), _("Ruleset"), wxOK | wxICON_INFORMATION, this);
 	  }
 	  break;
 	case 2: 
 	  if( current_ruleset != ruleset_choice->GetSelection() )
 	    ruleset_choice->SetSelection(current_ruleset);
-	  wxMessageBox(_("Cannot compose a custom ruleset yet"), 
+	  wxMessageBox(_("Cannot compose a custom ruleset yet!"), 
 		       _("Custom Ruleset"), wxOK | wxICON_INFORMATION, this);
 	  break;
 	case -1:
@@ -244,11 +246,10 @@ namespace holtz
     player_list->Append( str_to_wxstr(name) );
 
     int num_players = player_list->Number();
-    std::ostringstream os;
-    os << "player " << num_players + 1;
-    player_name->Clear();
-    player_name->AppendText( str_to_wxstr(os.str()) );
-    player_name->SetSelection( 0, player_name->GetLineLength(0) );
+    wxString default_name;
+    default_name.Printf( _("Player %d"), num_players + 1 );
+    player_name->SetValue( default_name );
+    player_name->SetSelection( 0, player_name->GetLastPosition() );
   }
 
   void Player_Setup_Dialog::player_removed( const Player &player )
@@ -321,7 +322,7 @@ namespace holtz
 
   void Player_Setup_Dialog::player_change_denied()
   {
-    wxMessageBox( _("Change for this player denied"), _("Denied"), wxOK | wxICON_INFORMATION, this);
+    wxMessageBox( _("Change for this player denied!"), _("Denied"), wxOK | wxICON_INFORMATION, this);
   }
 
   void Player_Setup_Dialog::ruleset_changed( Ruleset::type type )
@@ -349,7 +350,7 @@ namespace holtz
   {
     current_ruleset = last_ruleset;
     ruleset_choice->SetSelection( last_ruleset );
-    wxMessageBox( _("Change of ruleset denied"), _("Ruleset denied"), wxOK | wxICON_INFORMATION, this);
+    wxMessageBox( _("Change of ruleset denied!"), _("Ruleset denied"), wxOK | wxICON_INFORMATION, this);
   }
 
   void Player_Setup_Dialog::aborted()
@@ -420,8 +421,9 @@ namespace holtz
     wxString hostname = event.m_commandString;
     if( network_manager.may_disconnect( socket ) )
     {
-      if( wxMessageBox( _("Do you really want to disconnect ") + hostname, 
-			_("Disconnect?"), wxYES | wxNO | wxCANCEL | wxICON_QUESTION ) == wxYES )
+      wxString msg;
+      msg.Printf( _("Do you really want to disconnect %s?"), hostname.c_str() );
+      if( wxMessageBox( msg, _("Disconnect?"), wxYES | wxNO | wxCANCEL | wxICON_QUESTION ) == wxYES )
       {
 	network_manager.disconnect( socket );
 	client_list->Delete(event.m_commandInt);
@@ -429,8 +431,9 @@ namespace holtz
     }
     else
     {
-      wxMessageBox( _("Can't disconnect host ") + hostname + _(" yet"), 
-		    _("Can't disconnect!"), wxOK | wxICON_ERROR );
+      wxString msg;
+      msg.Printf( _("Can't disconnect host %s yet!"), hostname.c_str() );
+      wxMessageBox( msg, _("Can't disconnect!"), wxOK | wxICON_ERROR );
     }
 
   }
