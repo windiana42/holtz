@@ -2,16 +2,21 @@
   StartPage("Links", "Links");
 ?>
 
+  <h2> General Links </h2>
   <ul>
     <li>
-      Play Z&egrave;ertz via EMail: 
+      Official Z&egrave;rtz Homepage: 
+      <a href="http://www.gipf.com/zertz/index.html">http://www.gipf.com/zertz/index.html</a>
+    </li>
+    <li>
+      Play Z&egrave;rtz via EMail: 
       <a href="http://www.gamerz.net/pbmserv/">http://www.gamerz.net/pbmserv/</a>
     </li>
     <li>
       A newsgroup: <a href="http://groups.yahoo.com/group/zertz">http://groups.yahoo.com/group/zertz</a>
     </li>
   </ul>
-  <h2> Some other Zertz implementations </h2>
+  <h2> Other Zertz implementations </h2>
   <ul>
     <li>
       ZF1: 
