@@ -1,2 +1,2 @@
 soundsdir = $(pkgdatadir)/sounds
-dist_sounds_DATA = *.wav
+sounds_DATA = *.wav

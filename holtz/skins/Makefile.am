@@ -1,2 +1,2 @@
 skinsdir = $(pkgdatadir)/skins
-dist_skins_DATA = *.zip
+skins_DATA = *.zip
