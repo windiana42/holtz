@@ -324,7 +324,7 @@ namespace holtz
 		const Player_Panel::Settings &player_settings,
 		const Stone_Panel::Settings &common_stone_settings,
 		Arrangement_Type arrangement = arrange_stones_right,
-		wxString skin_file = "", wxString beep_file = "", bool play_sound = false );
+		wxString skin_file = wxT(""), wxString beep_file = wxT(""), bool play_sound = false );
       Settings();
 
       Board_Panel::Settings  board_settings;
