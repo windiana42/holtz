@@ -1,5 +1,5 @@
 /*
- * wxholtz.hpp
+ * Wxholtz.hpp
  * 
  * GUI declaration
  * 
@@ -37,8 +37,8 @@ namespace holtz
     virtual void player_up( const Player & ) = 0;
     virtual void player_down( const Player & ) = 0;
     virtual void player_change_denied() = 0;
-    virtual void ruleset_changed( Ruleset::type ) = 0;
-    virtual void ruleset_changed( Ruleset::type, Ruleset& ) = 0;
+    virtual void ruleset_changed( Ruleset::Ruleset_Type ) = 0;
+    virtual void ruleset_changed( Ruleset::Ruleset_Type, Ruleset& ) = 0;
     virtual void ruleset_change_denied() = 0;
     virtual void aborted() = 0;
 
@@ -57,7 +57,7 @@ namespace holtz
     virtual bool remove_player( int id ) = 0;
     virtual bool player_up( int id ) = 0;
     virtual bool player_down( int id ) = 0;
-    virtual bool change_ruleset( Ruleset::type, Ruleset& ) = 0;
+    virtual bool change_ruleset( Ruleset::Ruleset_Type, Ruleset& ) = 0;
     virtual bool ready() = 0;		// ready with adding players; game may start
 
     virtual ~Player_Setup_Manager();
@@ -176,10 +176,10 @@ namespace holtz
 
     inline bool is_in( int _x, int _y ) const { return (_x>=x)&&(_y>=y)&&(_x<x+width)&&(_y<y+height); }
 
-    virtual void draw( wxDC &dc ) {}
-    virtual void draw_text( wxDC &dc ) {}
-    virtual void on_click( int /*x*/, int /*y*/ ) {}
     virtual void calc_dimensions() = 0;
+    virtual void draw( wxDC &dc ) const {}
+    virtual void draw_text( wxDC &dc ) const {}
+    virtual void on_click( int /*x*/, int /*y*/ ) const {}
   protected:
     int x,y;
     int width, height;
@@ -197,15 +197,16 @@ namespace holtz
   public:
     typedef enum Align_Type { top, bottom, middle };
     Horizontal_Sizer( Align_Type align = top );
+    ~Horizontal_Sizer();
 
     void add( Basic_Panel *, bool destroy_on_remove = false );
     void erase( Basic_Panel * );
     void clear();
 
-    virtual void draw( wxDC &dc );
-    virtual void draw_text( wxDC &dc );
-    virtual void on_click( int x, int y );
     virtual void calc_dimensions();
+    virtual void draw( wxDC &dc ) const;
+    virtual void draw_text( wxDC &dc ) const;
+    virtual void on_click( int x, int y ) const;
   private:
     std::list< std::pair<Basic_Panel*,bool /*destroy*/> > elements;
     Align_Type align;
@@ -216,15 +217,16 @@ namespace holtz
   public:
     typedef enum Align_Type { left, right, center };
     Vertical_Sizer( Align_Type align = left );
+    ~Vertical_Sizer();
 
     void add( Basic_Panel *, bool destroy_on_remove = false );
     void erase( Basic_Panel * );
     void clear();
 
-    virtual void draw( wxDC &dc );
-    virtual void draw_text( wxDC &dc );
-    virtual void on_click( int x, int y );
     virtual void calc_dimensions();
+    virtual void draw( wxDC &dc ) const;
+    virtual void draw_text( wxDC &dc ) const;
+    virtual void on_click( int x, int y ) const;
   private:
     std::list< std::pair<Basic_Panel*,bool /*destroy*/> > elements;
     Align_Type align;
@@ -247,26 +249,25 @@ namespace holtz
 		wxFont coord_font = default_font );
     };
 
-    Board_Panel( Game &, Game_Window &, Bitmap_Handler &, Sequence_Generator* &, Settings &settings );
+    Board_Panel( Settings &settings, Game &, Game_Window &, Bitmap_Handler &, Sequence_Generator* & );
 
     void calc_dimensions();
+    void draw( wxDC &dc ) const;
+    void draw_text( wxDC &dc ) const;
+    void on_click( int x, int y ) const;
 
-    void draw( wxDC &dc );
-    void draw_text( wxDC &dc );
-
-    void on_click( long x, long y );
     Field_Pos		get_field( int x, int y ) const;
     std::pair<int,int>  get_field_pos( int col, int row ) const;
     Bitmap_Set         &get_bitmap_set() const;
   private:
+    Settings &settings;
+
     Game &game;
     Game_Window &game_window;
 
     Bitmap_Handler &bitmap_handler;
     int board_x, board_y;
     Sequence_Generator* &sequence_generator;
-
-    Settings &settings;
   };
 
   class Stone_Panel : public Basic_Panel
@@ -278,28 +279,29 @@ namespace holtz
       bool multiple_stones;	// false: display count on stone
       bool horizontal;
       int max_stones;		// for multiple stones
+      wxFont stone_font;
       Settings( bool rotate_stones=true, bool multiple_stones=true, bool horizontal=true, 
-		int max_stones=10 );
+		int max_stones=10, wxFont stone_font = wxFont(20,wxDECORATIVE,wxNORMAL,wxNORMAL) );
     };
 
-    Stone_Panel( Stones &, Game_Window &, Bitmap_Handler &, Sequence_Generator* &, Settings &settings );
+    Stone_Panel( Settings &, Stones &, Game_Window &, Bitmap_Handler &, Sequence_Generator* & );
 
     void calc_dimensions();
+    void draw( wxDC &dc ) const;
+    void draw_text( wxDC &dc ) const;
+    void on_click( int x, int y ) const;
 
-    void draw( wxDC &dc );
-
-    void on_click( long x, long y );
     std::pair<int,int> get_field_pos( int stone_num, Stones::Stone_Type type ) const;
     std::pair<int,int> get_field_pos( std::pair<Stones::Stone_Type,int> ) const;
     std::pair<Stones::Stone_Type,int> get_stone( int x, int y ) const;
   private:
+    Settings &settings;
+
     Stones &stones;
     Game_Window &game_window;
 
     Bitmap_Handler &bitmap_handler;
     Sequence_Generator* &sequence_generator;
-
-    Settings &settings;
   };
 
   class Player_Panel : public Vertical_Sizer
@@ -307,41 +309,88 @@ namespace holtz
   public:
     struct Settings
     {
+      Settings( const holtz::Stone_Panel::Settings &stone_settings,
+		wxFont player_font = wxFont(20,wxDECORATIVE,wxNORMAL,wxNORMAL) );
+
+      holtz::Stone_Panel::Settings stone_settings;
+
       wxFont player_font;
       static wxFont default_font;
-      Settings( wxFont player_font = wxFont(20,wxDECORATIVE,wxNORMAL,wxNORMAL) );
     };
 
-    Player_Panel( Player &, Game_Window &, Bitmap_Handler &, Sequence_Generator* &, 
-		holtz::Stone_Panel::Settings &stone_settings, Settings &settings );
+    Player_Panel( Settings &, Player &, Game_Window &, Bitmap_Handler &, Sequence_Generator* & );
 
-    virtual void on_click( int x, int y );
+    virtual void on_click( int x, int y ) const;
 
     inline const Stone_Panel &get_stone_panel() const { return stone_panel; }
     inline int get_id() const { return player.id; }
   private:
+    Settings &settings;
+
     Player &player;
     Game_Window &game_window;
-
-    wxFont player_font;
 
     Bitmap_Handler &bitmap_handler;
     Sequence_Generator* &sequence_generator;
 
     Stone_Panel stone_panel;
-    Settings &settings;
 
     class Header_Panel : public Basic_Panel
     {
     public:
-	  Header_Panel( Player &player, Settings& );
-      void draw_text( wxDC &dc );
+	  Header_Panel( Settings&, Player &player );
+      void draw_text( wxDC &dc ) const;
       void calc_dimensions();
     private:
-      Player &player;
       Settings &settings;
+      Player &player;
     };
     Header_Panel header_panel;
+  };
+
+  class Game_Panel : public Horizontal_Sizer
+  {
+  public:
+    struct Settings
+    {
+      typedef enum Arrangement_Type { arrange_standard, arrange_stones_right };
+      Settings( const Board_Panel::Settings &board_settings, 
+		const Player_Panel::Settings &player_settings,
+		const Stone_Panel::Settings &common_stone_settings,
+		Arrangement_Type arrangement = arrange_stones_right );
+
+      Board_Panel::Settings  board_settings;
+      Player_Panel::Settings player_settings;
+      Stone_Panel::Settings  common_stone_settings;
+
+      Arrangement_Type arrangement;
+    };
+
+    Game_Panel( Settings &, Game &, Game_Window &, Bitmap_Handler &, Sequence_Generator* & );
+    ~Game_Panel();
+    virtual void calc_dimensions();
+
+    void remove_players();
+    void add_player( Player &player );
+
+    inline const Board_Panel &get_board_panel() const { return board_panel; }
+    inline const Stone_Panel &get_stone_panel() const { return stone_panel; }
+    inline const std::list<Player_Panel*> &get_player_panels() const { return player_panels; }
+    const Player_Panel *get_player_panel( int id ) const;
+  private:
+    void rearrange_panels();
+
+    Settings &settings;
+
+    Game &game;
+    Game_Window &game_window;
+    Bitmap_Handler &bitmap_handler;
+    Sequence_Generator* &sequence_generator;
+
+    Board_Panel board_panel;
+    std::list<Player_Panel*> player_panels;
+    Vertical_Sizer player_panel_sizer;
+    Stone_Panel stone_panel;
   };
   
   // ============================================================================
@@ -406,22 +455,20 @@ namespace holtz
     inline AI_Input &get_ai_handler() { return ai; }
     inline Mouse_Handler &get_mouse_handler() { return mouse_handler; }
     inline Bitmap_Handler &get_bitmap_handler() { return bitmap_handler; }
-    inline const Board_Panel &get_board_panel() const { return board_panel; }
-    inline const Stone_Panel &get_stone_panel() const { return stone_panel; }
-    inline const std::list<Player_Panel*> &get_player_panels() const { return player_panels; }
-    const Player_Panel *get_player_panel( int id ) const;
+    inline const Game_Panel &get_game_panel() const { return game_panel; }
+    /* only forwarded functions (for compatibility)*/
+    inline const Board_Panel &get_board_panel() const { return game_panel.get_board_panel(); }
+    inline const Stone_Panel &get_stone_panel() const { return game_panel.get_stone_panel(); }
+    inline const std::list<Player_Panel*> &get_player_panels() const 
+    { return game_panel.get_player_panels(); }
+    inline const Player_Panel *get_player_panel( int id ) const { return game_panel.get_player_panel(id); }
   private:
     wxFrame &parent_frame;
     Bitmap_Handler bitmap_handler;
     wxFont default_font;
 
-    Board_Panel::Settings board_settings;
-    Board_Panel board_panel;
-    Player_Panel::Settings player_settings;
-    std::list<Player_Panel*> player_panels;
-    Vertical_Sizer player_panel_sizer;
-    Stone_Panel::Settings player_stone_settings, common_stone_settings;
-    Stone_Panel stone_panel;
+    Game_Panel::Settings game_settings;
+    Game_Panel game_panel;
     friend class Display_Setup_Page;	// dialogs.hpp
 
     Mouse_Handler mouse_handler;
@@ -464,7 +511,7 @@ namespace holtz
     virtual bool remove_player( int id );
     virtual bool player_up( int id );
     virtual bool player_down( int id );
-    virtual bool change_ruleset( Ruleset::type, Ruleset & );
+    virtual bool change_ruleset( Ruleset::Ruleset_Type, Ruleset & );
     virtual bool ready();		// ready with adding players; game may start
   private:
     Game_Window &game_window;
@@ -475,7 +522,7 @@ namespace holtz
     std::map<int,std::list<Player>::iterator> id_player; // Table id->player
 
     Ruleset *ruleset;
-    Ruleset::type ruleset_type;
+    Ruleset::Ruleset_Type ruleset_type;
   };
 
   // Define a new frame type: this is going to be our main frame
@@ -540,7 +587,7 @@ namespace holtz
     HOLTZ_ABOUT,
 
     DIALOG_READY,
-	DIALOG_PLAYER_NAME,
+    DIALOG_PLAYER_NAME,
     DIALOG_ADD_PLAYER,
     DIALOG_REMOVE_PLAYER,
     DIALOG_PLAYER_UP,
@@ -548,8 +595,13 @@ namespace holtz
     DIALOG_DISCONNECT,
     DIALOG_HELP,
     DIALOG_RULESET,
+    DIALOG_WIN_CHOICE,
+    DIALOG_WIN_SPIN,
+    DIALOG_STONES_CHOICE,
+    DIALOG_STONES_SPIN,
     DIALOG_APPLY,
     DIALOG_RESTORE,
+    DIALOG_SPIN,
 
     LISTBOX_DCLICK,
 

@@ -64,13 +64,13 @@ namespace holtz
 
     void on_ready( wxCommandEvent& event );
     void on_cancel( wxCommandEvent& event );
-	void on_player_name( wxCommandEvent& event );
+    void on_player_name( wxCommandEvent& event );
     void on_add_player( wxCommandEvent& event );
     void on_remove_player( wxCommandEvent& event );
     void on_player_up( wxCommandEvent& event );
     void on_player_down( wxCommandEvent& event );
     void on_change_ruleset( wxCommandEvent& event );
-	void on_close( wxCloseEvent& event );
+    void on_close( wxCloseEvent& event );
     void set_custom_ruleset( Ruleset& );
 
     // as player handler this dialog has to show results of player manipulations
@@ -79,8 +79,8 @@ namespace holtz
     virtual void player_up( const Player & );
     virtual void player_down( const Player & );
     virtual void player_change_denied();
-    virtual void ruleset_changed( Ruleset::type );
-    virtual void ruleset_changed( Ruleset::type, Ruleset& );
+    virtual void ruleset_changed( Ruleset::Ruleset_Type );
+    virtual void ruleset_changed( Ruleset::Ruleset_Type, Ruleset& );
     virtual void ruleset_change_denied();
     virtual void aborted();
 
@@ -114,11 +114,19 @@ namespace holtz
     void on_apply  ( wxCommandEvent& event );
     void on_restore( wxCommandEvent& event );
     void on_cancel ( wxCommandEvent& event );
+    void on_change_win  ( wxCommandEvent& event );
+    void on_spin_win ( wxCommandEvent& event );
+    void on_change_stones  ( wxCommandEvent& event );
+    void on_spin_stones ( wxCommandEvent& event );
   private:
     Player_Setup_Dialog *dialog;
     Ruleset *ruleset;
 
     wxRadioBox *board_choice;
+    wxRadioBox *win_choice;
+    wxSpinCtrl *win_white, *win_grey, *win_black, *win_all;
+    wxRadioBox *stones_choice;
+    wxSpinCtrl *stones_white, *stones_grey, *stones_black;
 
     DECLARE_EVENT_TABLE()
   };
@@ -156,13 +164,14 @@ namespace holtz
   private:
     Settings_Dialog *dialog;
     Game_Window &game_window;
-    
-    Board_Panel::Settings board_settings;
-    Player_Panel::Settings player_settings;
-    Stone_Panel::Settings common_stone_settings, player_stone_settings;
+
+    Game_Panel::Settings game_settings;
 
     wxRadioBox *orientation_choice;
     wxCheckBox *show_coordinates;
+    wxRadioBox *arrangement_choice;
+    wxCheckBox *multiple_player_stones;
+    wxCheckBox *multiple_common_stones;
 
     DECLARE_EVENT_TABLE()
   };

@@ -437,13 +437,13 @@ namespace holtz
   AI::AI( Game &game )
     : max_time(30000), average_time(5000), num_measures(0), max_positions_expanded(150000),
       max_depth(12),
-      rate_white(4.5), rate_gray(3.5), rate_black(2.5), rate_current_player_bonus(0.3),
+      rate_white(4.5), rate_grey(3.5), rate_black(2.5), rate_current_player_bonus(0.3),
       min_depth(2), deep_knocking_possible(true), while_deep_knocking(false),
       field_permutation( game.board )
   {
     stone_types.resize(3);
     stone_types[0] = Stones::white_stone;
-    stone_types[1] = Stones::gray_stone;
+    stone_types[1] = Stones::grey_stone;
     stone_types[2] = Stones::black_stone;
     real_average_time = average_time;
   }
@@ -570,7 +570,7 @@ namespace holtz
   {
     double rate = 0;
     rate += player.stones.stone_count[Stones::white_stone] * rate_white;
-    rate += player.stones.stone_count[Stones::gray_stone] * rate_gray;
+    rate += player.stones.stone_count[Stones::grey_stone]  * rate_grey;
     rate += player.stones.stone_count[Stones::black_stone] * rate_black;
     return rate;
   }

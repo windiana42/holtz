@@ -53,7 +53,7 @@ namespace holtz
   class Move_Translator;
   
   typedef enum Field_State_Type{ field_removed=-1, field_empty=0, 
-				 field_white=1, field_gray=2, field_black=3 };
+				 field_white=1, field_grey=2, field_black=3 };
 
   const int standard_board[][7] =
     { {   -1,  0,  0,  0,  0, -1, -1 },
@@ -133,14 +133,41 @@ namespace holtz
     
     int cnt;
   };
-
+  
   class Stones
   {
   public:
-    typedef enum Stone_Type{ invalid_stone=0, white_stone=1, gray_stone=2, black_stone=3 };
+    typedef enum Stone_Type{ invalid_stone=0, white_stone=1, grey_stone=2, black_stone=3 };
     std::map<Stone_Type, int> stone_count;
 
     void remove_stones();
+  };
+
+  class Common_Stones : public Stones
+  {
+  public:
+    typedef enum Common_Stones_Type{ standard, tournament, custom };
+
+    Common_Stones( Common_Stones_Type );
+    Common_Stones_Type type;
+  };
+
+  class Standard_Common_Stones : public Common_Stones
+  {
+  public:
+    Standard_Common_Stones();
+  };
+
+  class Tournament_Common_Stones : public Common_Stones
+  {
+  public:
+    Tournament_Common_Stones();
+  };
+
+  class Custom_Common_Stones : public Common_Stones
+  {
+  public:
+    Custom_Common_Stones( int white_num, int grey_num, int black_num );
   };
 
   class Player_Input
@@ -290,32 +317,61 @@ namespace holtz
     inline int get_y_size() { return field[0].size(); }
   };
 
+  class Win_Condition
+  {
+  public:
+    typedef enum Win_Condition_Type{ standard, tournament, generic, full_custom };
+
+    Win_Condition( Win_Condition_Type type = full_custom );
+    virtual ~Win_Condition();
+
+    virtual bool did_player_win( Game &, Player & ) const = 0;
+    virtual Win_Condition *clone() = 0;
+
+    Win_Condition_Type type;	// is generic win condition with number of white/grey/black/all stones
+  };
+
+  class Coordinate_Translator
+  {
+  public:
+    virtual ~Coordinate_Translator() {}
+
+    virtual std::string get_field_name( Field_Pos pos ) = 0;
+    virtual Field_Pos   get_field_pos ( std::string name ) = 0;
+
+    virtual Coordinate_Translator *clone() = 0;
+  };
+
   class Ruleset
   {
   public:
-    typedef enum type { standard_ruleset, tournament_ruleset, custom_ruleset };
+    typedef enum Ruleset_Type { standard, tournament, custom };
+    Ruleset( const Ruleset & );
+    Ruleset &operator=( Ruleset & );
     virtual ~Ruleset();
-    virtual Ruleset *clone() const = 0;
+    virtual Ruleset *clone() const { return new Ruleset(*this); }
 
     inline unsigned get_min_players() const { return min_players; }
     inline unsigned get_max_players() const { return max_players; }
     inline Coordinate_Translator *get_coordinate_translator() const { return coordinate_translator; }
+    inline void set_win_condition( Win_Condition *wc ) { delete win_condition; win_condition = wc; }
+    inline void set_coordinate_translator( Coordinate_Translator *ct ) 
+    { delete coordinate_translator; coordinate_translator = ct; }
+  public:			// semi public 
+    // win_condition and coordinate translator will be deleted by Ruleset!
+    Ruleset( Ruleset_Type type, Board, Common_Stones, Win_Condition *, Coordinate_Translator *, 
+	     bool undo_possible, unsigned min_players, unsigned max_players ); 
 
-  public:			// semi public
-    Ruleset( Board, Win_Condition *, Coordinate_Translator *, bool undo_possible, 
-	     unsigned min_players, unsigned max_players );
+    Ruleset_Type type;
 
     Board board;
-    Stones common_stones;
+    Common_Stones common_stones;
     Win_Condition *win_condition;
     Coordinate_Translator *coordinate_translator;
     bool undo_possible;
     unsigned min_players, max_players;
 
     friend class Game;
-  private:
-    //Ruleset( Ruleset& );
-    //Ruleset &operator=( Ruleset & );
   };
 
   class Game
@@ -363,14 +419,6 @@ namespace holtz
   private:
     void remove_filled_areas();
   };
-
-  class Win_Condition
-  {
-  public:
-    virtual bool did_player_win( Game &, Player & ) const = 0;
-    virtual ~Win_Condition();
-  };
-
 
   class Move
   {
@@ -517,22 +565,17 @@ namespace holtz
   inline std::istream &operator>>( std::istream &is, Sequence &s )
   { return s.input(is); }
 
-  class Coordinate_Translator
-  {
-  public:
-    virtual std::string get_field_name( Field_Pos pos ) = 0;
-    virtual Field_Pos   get_field_pos ( std::string name ) = 0;
-  };
-
   class Standard_Coordinate_Translator : public Coordinate_Translator
   {
   public:
-    Standard_Coordinate_Translator( Board &original_board );
+    Standard_Coordinate_Translator( const Board &original_board );
 
     virtual std::string get_field_name( Field_Pos pos );
     virtual Field_Pos   get_field_pos ( std::string name );
+
+    virtual Coordinate_Translator *clone();
   private:
-    Board &orig_board;
+    Board orig_board;
   };
 
   class Move_Translator
@@ -542,42 +585,54 @@ namespace holtz
     virtual Sequence    decode( std::string ) = 0;
   };
   
-  class Standard_Win_Condition : public Win_Condition
+  class Generic_Win_Condition : public Win_Condition
   {
   public:
+    Generic_Win_Condition( int num_white, int num_grey, int num_black, int num_all );
+
     virtual bool did_player_win( Game &, Player & ) const;
+    virtual Win_Condition *clone();
+
+    int num_white;		// white stones to win
+    int num_grey;		// grey stones to win
+    int num_black;		// black stones to win
+    int num_all;		// number of stones of each colour to win
   };
 
-  class Tournament_Win_Condition : public Win_Condition
+  class Standard_Win_Condition : public Generic_Win_Condition
   {
   public:
-    virtual bool did_player_win( Game &, Player & ) const;
+    virtual Win_Condition *clone() { return new Standard_Win_Condition(); }
+
+    Standard_Win_Condition();
+  };
+
+  class Tournament_Win_Condition : public Generic_Win_Condition
+  {
+  public:
+    virtual Win_Condition *clone() { return new Tournament_Win_Condition(); }
+
+    Tournament_Win_Condition();
+  };
+
+  class Custom_Ruleset : public Ruleset
+  {
+  public:
+    Custom_Ruleset( Board, Common_Stones, Win_Condition *, Coordinate_Translator *, 
+		    bool undo_possible = true, 
+		    unsigned min_players = 2, unsigned max_players = 4 );
   };
 
   class Standard_Ruleset : public Ruleset
   {
   public:
     Standard_Ruleset();
-    Standard_Ruleset( const Standard_Ruleset & );
-    Standard_Ruleset &operator=( Standard_Ruleset & );
-
-    virtual Ruleset *clone() const;
-  private:
-    static Standard_Win_Condition standard_win_condition;
-    Standard_Coordinate_Translator standard_coordinate_translator;
   };
 
   class Tournament_Ruleset : public Ruleset
   {
   public:
     Tournament_Ruleset();
-    Tournament_Ruleset( const Tournament_Ruleset & );
-    Tournament_Ruleset &operator=( Tournament_Ruleset & );
-
-    virtual Ruleset *clone() const;
-  private:
-    static Tournament_Win_Condition tournament_win_condition;
-    Standard_Coordinate_Translator standard_coordinate_translator;
   };
   
   class No_Output : public Player_Output
@@ -612,7 +667,7 @@ namespace holtz
   {
   public:
     typedef enum Sequence_State{ finished=0,
-				 hold_prefix=0, hold_white=1, hold_gray=2, hold_black=3,
+				 hold_prefix=0, hold_white=1, hold_grey=2, hold_black=3,
 				 another_click=4,
 
 				 error_require_knock_out=-500, 

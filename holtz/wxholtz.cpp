@@ -94,7 +94,7 @@ namespace holtz
 #include "skins/purist/field_removed.xpm"
 #include "skins/purist/field_empty.xpm"
 #include "skins/purist/field_white.xpm"
-#include "skins/purist/field_gray.xpm"
+#include "skins/purist/field_grey.xpm"
 #include "skins/purist/field_black.xpm"
 #include "skins/purist/field_mark.xpm"
 #include "skins/purist/field_mark2.xpm"
@@ -111,7 +111,7 @@ namespace holtz
 #include "skins/hex50/field_removed.xpm"
 #include "skins/hex50/field_empty.xpm"
 #include "skins/hex50/field_white.xpm"
-#include "skins/hex50/field_gray.xpm"
+#include "skins/hex50/field_grey.xpm"
 #include "skins/hex50/field_black.xpm"
 #include "skins/hex50/field_mark.xpm"
 #include "skins/hex50/field_mark2.xpm"
@@ -128,7 +128,7 @@ namespace holtz
 #include "skins/hex70/field_removed.xpm"
 #include "skins/hex70/field_empty.xpm"
 #include "skins/hex70/field_white.xpm"
-#include "skins/hex70/field_gray.xpm"
+#include "skins/hex70/field_grey.xpm"
 #include "skins/hex70/field_black.xpm"
 #include "skins/hex70/field_mark.xpm"
 #include "skins/hex70/field_mark2.xpm"
@@ -145,7 +145,7 @@ namespace holtz
 #include "skins/hex100/field_removed.xpm"
 #include "skins/hex100/field_empty.xpm"
 #include "skins/hex100/field_white.xpm"
-#include "skins/hex100/field_gray.xpm"
+#include "skins/hex100/field_grey.xpm"
 #include "skins/hex100/field_black.xpm"
 #include "skins/hex100/field_mark.xpm"
 #include "skins/hex100/field_mark2.xpm"
@@ -162,7 +162,7 @@ namespace holtz
 #include "skins/eins/field_removed.xpm"
 #include "skins/eins/field_empty.xpm"
 #include "skins/eins/field_white.xpm"
-#include "skins/eins/field_gray.xpm"
+#include "skins/eins/field_grey.xpm"
 #include "skins/eins/field_black.xpm"
 #include "skins/eins/field_mark.xpm"
 #include "skins/eins/field_mark2.xpm"
@@ -483,6 +483,11 @@ namespace holtz
   {
   }
 
+  Horizontal_Sizer::~Horizontal_Sizer()
+  {
+    clear();
+  }
+
   void Horizontal_Sizer::add( Basic_Panel *panel, bool destroy_on_remove )
   {
     elements.push_back( std::pair<Basic_Panel*,bool>(panel, destroy_on_remove) );
@@ -512,15 +517,16 @@ namespace holtz
 	delete element->first;
     }
     elements.clear();
-    calc_dimensions();
+    width = 0;
+    height = 0;
   }
 
-  void Horizontal_Sizer::draw( wxDC &dc )
+  void Horizontal_Sizer::draw( wxDC &dc ) const
   {
     //wxBrush brush1(*wxBLACK,wxTRANSPARENT);
     //wxBrush brush2(*wxRED,wxTRANSPARENT);
     //dc.SetBrush(brush1);
-    std::list< std::pair<Basic_Panel*,bool /*destroy*/> >::iterator element;
+    std::list< std::pair<Basic_Panel*,bool /*destroy*/> >::const_iterator element;
     for( element = elements.begin(); element != elements.end(); ++element )
     {
       //dc.DrawRectangle( element->first->get_x(), element->first->get_y(), 
@@ -531,20 +537,20 @@ namespace holtz
     //dc.DrawRectangle( get_x(), get_y(), get_width(), get_height() );
   }
 
-  void Horizontal_Sizer::draw_text( wxDC &dc )
+  void Horizontal_Sizer::draw_text( wxDC &dc ) const
   {
-    std::list< std::pair<Basic_Panel*,bool /*destroy*/> >::iterator element;
+    std::list< std::pair<Basic_Panel*,bool /*destroy*/> >::const_iterator element;
     for( element = elements.begin(); element != elements.end(); ++element )
     {
       element->first->draw_text(dc);
     }
   }
-
-  void Horizontal_Sizer::on_click( int cl_x, int cl_y )
+  
+  void Horizontal_Sizer::on_click( int cl_x, int cl_y ) const
   {
     if( is_in(cl_x,cl_y) )
     {
-      std::list< std::pair<Basic_Panel*,bool /*destroy*/> >::iterator element;
+      std::list< std::pair<Basic_Panel*,bool /*destroy*/> >::const_iterator element;
       for( element = elements.begin(); element != elements.end(); ++element )
       {
 	if( cl_x < element->first->get_x() + element->first->get_width() )
@@ -592,6 +598,11 @@ namespace holtz
   {
   }
 
+  Vertical_Sizer::~Vertical_Sizer()
+  {
+    clear();
+  }
+
   void Vertical_Sizer::add( Basic_Panel *panel, bool destroy_on_remove )
   {
     elements.push_back( std::pair<Basic_Panel*,bool>(panel, destroy_on_remove) );
@@ -621,12 +632,13 @@ namespace holtz
 	delete element->first;
     }
     elements.clear();
-    calc_dimensions();
+    width = 0;
+    height = 0;
   }
 
-  void Vertical_Sizer::draw( wxDC &dc )
+  void Vertical_Sizer::draw( wxDC &dc ) const
   {
-    std::list< std::pair<Basic_Panel*,bool /*destroy*/> >::iterator element;
+    std::list< std::pair<Basic_Panel*,bool /*destroy*/> >::const_iterator element;
     for( element = elements.begin(); element != elements.end(); ++element )
     {
       //dc.DrawRectangle( element->first->get_x(), element->first->get_y(), 
@@ -636,20 +648,20 @@ namespace holtz
     //dc.DrawRectangle( get_x(), get_y(), get_width(), get_height() );
   }
 
-  void Vertical_Sizer::draw_text( wxDC &dc )
+  void Vertical_Sizer::draw_text( wxDC &dc ) const
   {
-    std::list< std::pair<Basic_Panel*,bool /*destroy*/> >::iterator element;
+    std::list< std::pair<Basic_Panel*,bool /*destroy*/> >::const_iterator element;
     for( element = elements.begin(); element != elements.end(); ++element )
     {
       element->first->draw_text(dc);
     }
   }
 
-  void Vertical_Sizer::on_click( int cl_x, int cl_y )
+  void Vertical_Sizer::on_click( int cl_x, int cl_y ) const
   {
     if( is_in(cl_x,cl_y) )
     {
-      std::list< std::pair<Basic_Panel*,bool /*destroy*/> >::iterator element;
+      std::list< std::pair<Basic_Panel*,bool /*destroy*/> >::const_iterator element;
       for( element = elements.begin(); element != elements.end(); ++element )
       {
 	if( cl_y < element->first->get_y() + element->first->get_height() )
@@ -699,14 +711,13 @@ namespace holtz
   {
   }
 
-  Board_Panel::Board_Panel( Game &game, Game_Window &game_window,
+  Board_Panel::Board_Panel( Settings &settings, Game &game, Game_Window &game_window,
 			    Bitmap_Handler &bitmap_handler, 
-			    Sequence_Generator* &sg, Settings &settings )
-    : game(game), game_window(game_window), bitmap_handler(bitmap_handler), 
+			    Sequence_Generator* &sg )
+    : settings(settings), game(game), game_window(game_window), bitmap_handler(bitmap_handler), 
       board_x(bitmap_handler.dimensions.board_x_offset), 
       board_y(bitmap_handler.dimensions.board_y_offset),
-      sequence_generator( sg ),
-      settings(settings)
+      sequence_generator( sg )     
   {
     if( settings.show_coordinates )
     {
@@ -751,7 +762,7 @@ namespace holtz
     }
   }
 
-  void Board_Panel::draw( wxDC &dc )
+  void Board_Panel::draw( wxDC &dc ) const
   {
     Bitmap_Set &bitmap_set = get_bitmap_set();
 
@@ -766,12 +777,13 @@ namespace holtz
       }
     }
   }
-  void Board_Panel::draw_text( wxDC &dc )
+  void Board_Panel::draw_text( wxDC &dc ) const 
   {
     if( settings.show_coordinates )
     {
+      dc.SetTextForeground(*wxBLACK/*settings.coordinate_font_colour*/);
       wxFont font(20,wxDECORATIVE,wxNORMAL,wxNORMAL);
-      dc.SetFont( font );
+      dc.SetFont( font /*settings.coordinate_font*/ );
       for( int fy = 0; fy < game.board.get_y_size(); ++fy )
       {
 	for( int fx = 0; fx < game.board.get_x_size(); ++fx )
@@ -838,7 +850,7 @@ namespace holtz
     }
   }
 
-  void Board_Panel::on_click( long click_x, long click_y )
+  void Board_Panel::on_click( int click_x, int click_y ) const
   {
     if( sequence_generator )
     {
@@ -859,7 +871,7 @@ namespace holtz
 	  game_window.continue_game();
 	  break;
 	case Sequence_Generator::hold_white:
-	case Sequence_Generator::hold_gray:
+	case Sequence_Generator::hold_grey:
 	case Sequence_Generator::hold_black:
 	{
 	  std::pair<int,int> coord = get_field_pos( pos.x, pos.y );
@@ -1000,38 +1012,71 @@ namespace holtz
   // ----------------------------------------------------------------------------
 
   Stone_Panel::Settings::Settings( bool rotate_stones, bool multiple_stones, bool horizontal, 
-				   int max_stones )
+				   int max_stones, wxFont stone_font )
     : rotate_stones(rotate_stones), multiple_stones(multiple_stones), horizontal(horizontal), 
-      max_stones(max_stones)
+      max_stones(max_stones), stone_font(stone_font)
   {
   }
 
-  Stone_Panel::Stone_Panel( Stones &stones, Game_Window &game_window,
+  Stone_Panel::Stone_Panel( Settings &settings, Stones &stones, Game_Window &game_window,
 			    Bitmap_Handler &bitmap_handler, 
-			    Sequence_Generator* &sg, Settings &settings )
-    : stones(stones), game_window(game_window), bitmap_handler(bitmap_handler), 
-      sequence_generator(sg), settings(settings)
+			    Sequence_Generator* &sg )
+    : settings(settings), stones(stones), game_window(game_window), bitmap_handler(bitmap_handler), 
+      sequence_generator(sg)
   {
   }
 
   void Stone_Panel::calc_dimensions()
   {
-    width  = bitmap_handler.dimensions.field_width * settings.max_stones;
-    height = 3 * bitmap_handler.dimensions.field_height;
+    if( settings.multiple_stones )
+    {
+      width  = bitmap_handler.dimensions.field_width * settings.max_stones;
+      height = 3 * bitmap_handler.dimensions.field_height;
+    }
+    else
+    {
+      width  = 3 * bitmap_handler.dimensions.field_width;
+      height = bitmap_handler.dimensions.field_height;
+    }
   }
   
-  void Stone_Panel::draw( wxDC &dc )
+  void Stone_Panel::draw( wxDC &dc ) const
   {
     int stone_type;
-    int y_pos = y, x_pos;
+    int y_pos = y, x_pos = x;
     for( stone_type = Stones::white_stone; stone_type <= Stones::black_stone; ++stone_type )
     {
-      int count = stones.stone_count[ Stones::Stone_Type(stone_type) ];
-      if( count > settings.max_stones ) count = settings.max_stones;
+      if( settings.multiple_stones )
+      {
+	int count = stones.stone_count[ Stones::Stone_Type(stone_type) ];
+	if( count > settings.max_stones ) count = settings.max_stones;
+	
+	x_pos = x;
+	int i;
+	for( i = 0; i < count; ++i )
+	{
+	  if( settings.rotate_stones )
+	  {
+	    dc.DrawBitmap( bitmap_handler.normal.field_bitmaps[ field_empty ], 
+			 x_pos, y_pos, true );
+	    dc.DrawBitmap( bitmap_handler.rotated.stone_bitmaps[ Stones::Stone_Type(stone_type) ], 
+			   x_pos, y_pos, true );
+	  }
+	  else
+	    dc.DrawBitmap( bitmap_handler.normal.field_bitmaps[ Field_State_Type(stone_type) ], 
+			   x_pos, y_pos, true );
+	  
+	  x_pos += bitmap_handler.dimensions.field_width;
+	}
+	for( ; i < settings.max_stones; ++i )
+	{
+	  dc.DrawBitmap( bitmap_handler.normal.field_bitmaps[ field_removed ], x_pos, y_pos, true );
+	  x_pos += bitmap_handler.dimensions.field_width;
+	}
       
-      x_pos = x;
-      int i;
-      for( i = 0; i < count; ++i )
+	y_pos += bitmap_handler.dimensions.field_height;
+      }
+      else			// display only one stone and write count as text on it
       {
 	if( settings.rotate_stones )
 	{
@@ -1046,98 +1091,116 @@ namespace holtz
 
 	x_pos += bitmap_handler.dimensions.field_width;
       }
-      for( ; i < settings.max_stones; ++i )
+    }
+  }
+
+  void Stone_Panel::draw_text( wxDC &dc ) const
+  {
+    if( !settings.multiple_stones ) // display only one stone and write count as text on it
+    {
+      int stone_type;
+      int y_pos = y, x_pos = x;
+      for( stone_type = Stones::white_stone; stone_type <= Stones::black_stone; ++stone_type )
       {
-	dc.DrawBitmap( bitmap_handler.normal.field_bitmaps[ field_removed ], x_pos, y_pos, true );
+	int count = stones.stone_count[ Stones::Stone_Type(stone_type) ];
+
+	wxString str;
+	str.Printf("%d", count);
+
+	dc.SetTextForeground(*wxRED/*settings.stone_font_colour*/);
+	wxFont font(20,wxDECORATIVE,wxNORMAL,wxNORMAL);
+	dc.SetFont(font/*settings.stone_font*/);
+	wxCoord w,h;
+	dc.GetTextExtent(str,&w,&h);
+
+	dc.DrawText( str, 
+		     x_pos + (bitmap_handler.dimensions.field_width  - w) / 2 +
+		     bitmap_handler.dimensions.field_x, 
+		     y_pos + (bitmap_handler.dimensions.field_height - h) / 2 +
+		     bitmap_handler.dimensions.field_y );
+
 	x_pos += bitmap_handler.dimensions.field_width;
       }
-      
-      y_pos += bitmap_handler.dimensions.field_height;
     }
   }
   
-  void Stone_Panel::on_click( long click_x, long click_y )
+  void Stone_Panel::on_click( int click_x, int click_y ) const
   {
     wxString msg;
     if( sequence_generator )
     {
-      if( (click_x >= x) && (click_y >= y ) )
-      {
-	int row = (click_y - y) / bitmap_handler.dimensions.field_height;
-	int col = (click_x - x) / bitmap_handler.dimensions.field_width;
+      std::pair<Stones::Stone_Type,int> clicked_stone = get_stone( click_x, click_y );
+      Stones::Stone_Type &type( clicked_stone.first );
+      int &col = clicked_stone.second;
 
-	if( (row >= 0) && (row < 3) && (col >= 0) && (col < settings.max_stones) )
+      if( type != Stones::invalid_stone )
+      {
+	if( col < stones.stone_count[type] )
 	{
-	  Stones::Stone_Type type( Stones::Stone_Type(row + 1) );
-	  assert( Board::is_stone(Field_State_Type(type)) );
-	
-	  if( col < stones.stone_count[type] )
-	  {
-	    Sequence_Generator::Sequence_State state;
-	    state = sequence_generator->add_click_common_stone( type );
-	    game_window.set_mark( -1, -1 );
-	    game_window.get_frame().SetStatusText(wxT(""));
+	  Sequence_Generator::Sequence_State state;
+	  state = sequence_generator->add_click_common_stone( type );
+	  game_window.set_mark( -1, -1 );
+	  game_window.get_frame().SetStatusText(wxT(""));
 	  
-	    switch( state )
-	    {
-	      case Sequence_Generator::finished:
-		sequence_generator = 0;
-		game_window.continue_game();
-		break;
-	      case Sequence_Generator::hold_white:
-	      case Sequence_Generator::hold_gray:
-	      case Sequence_Generator::hold_black:
-	      {
-		std::pair<int,int> coord = get_field_pos( col, type );
-		game_window.set_mark( coord.first, coord.second );
-		game_window.show_user_information( true );
-	      }
+	  switch( state )
+	  {
+	    case Sequence_Generator::finished:
+	      sequence_generator = 0;
+	      game_window.continue_game();
 	      break;
-	      case Sequence_Generator::another_click:
-		game_window.show_user_information( true );
-		break;
-	      case Sequence_Generator::fatal_error:
-		msg.Printf( _("Fatal Error!") );
-	    
-		wxMessageBox(msg, _("Click Error"), wxOK | wxICON_ERROR, &game_window);
-		break;
-	      case Sequence_Generator::error_require_knock_out:
-		game_window.get_frame().SetStatusText(_("You must do the knock out move!"));
-		break;
-	      case Sequence_Generator::error_require_set:
-		game_window.get_frame().SetStatusText(_("You have to set a stone!"));
-		break;
-	      case Sequence_Generator::error_require_remove:
-		game_window.get_frame().SetStatusText(_("You have to remove an empty border field!"));
-		break;
-	      case Sequence_Generator::error_can_t_remove:
-		game_window.get_frame().SetStatusText(_("Field can't be removed without moving another stone!"));
-		break;
-	      case Sequence_Generator::error_can_t_move_here:
-		game_window.get_frame().SetStatusText(_("You can't move to that field!"));
-		break;
-	      case Sequence_Generator::error_can_t_set_here:
-		game_window.get_frame().SetStatusText(_("Please set the stone on an empty field!"));
-		break;
-	      case Sequence_Generator::error_must_pick_common_stone:
-		game_window.get_frame().SetStatusText(_("You must pick a common stone!"));
-		break;
-	      case Sequence_Generator::error_wrong_player:
-		game_window.get_frame().SetStatusText(_("Its not the turn of that player!"));
-		break;
-	      case Sequence_Generator::error_impossible_yet:
-		game_window.get_frame().SetStatusText(_("You can't do that at the moment!"));
-		break;
-	      case Sequence_Generator::error_must_knock_out_with_same_stone:
-		game_window.get_frame().SetStatusText(_("You must knock out once more with the same stone!"));
-		break;
-		/*
-		  default:
-		  msg.Printf( _("Click impossible") );
-	    
-		  wxMessageBox(msg, _("Click"), wxOK | wxICON_INFORMATION, 0);
-		*/
+	    case Sequence_Generator::hold_white:
+	    case Sequence_Generator::hold_grey:
+	    case Sequence_Generator::hold_black:
+	    {
+	      std::pair<int,int> coord = get_field_pos( col, type );
+	      game_window.set_mark( coord.first, coord.second );
+	      game_window.show_user_information( true );
 	    }
+	    break;
+	    case Sequence_Generator::another_click:
+	      game_window.show_user_information( true );
+	      break;
+	    case Sequence_Generator::fatal_error:
+	      msg.Printf( _("Fatal Error!") );
+	    
+	      wxMessageBox(msg, _("Click Error"), wxOK | wxICON_ERROR, &game_window);
+	      break;
+	    case Sequence_Generator::error_require_knock_out:
+	      game_window.get_frame().SetStatusText(_("You must do the knock out move!"));
+	      break;
+	    case Sequence_Generator::error_require_set:
+	      game_window.get_frame().SetStatusText(_("You have to set a stone!"));
+	      break;
+	    case Sequence_Generator::error_require_remove:
+	      game_window.get_frame().SetStatusText(_("You have to remove an empty border field!"));
+	      break;
+	    case Sequence_Generator::error_can_t_remove:
+	      game_window.get_frame().SetStatusText(_("Field can't be removed without moving another stone!"));
+	      break;
+	    case Sequence_Generator::error_can_t_move_here:
+	      game_window.get_frame().SetStatusText(_("You can't move to that field!"));
+	      break;
+	    case Sequence_Generator::error_can_t_set_here:
+	      game_window.get_frame().SetStatusText(_("Please set the stone on an empty field!"));
+	      break;
+	    case Sequence_Generator::error_must_pick_common_stone:
+	      game_window.get_frame().SetStatusText(_("You must pick a common stone!"));
+	      break;
+	    case Sequence_Generator::error_wrong_player:
+	      game_window.get_frame().SetStatusText(_("Its not the turn of that player!"));
+	      break;
+	    case Sequence_Generator::error_impossible_yet:
+	      game_window.get_frame().SetStatusText(_("You can't do that at the moment!"));
+	      break;
+	    case Sequence_Generator::error_must_knock_out_with_same_stone:
+	      game_window.get_frame().SetStatusText(_("You must knock out once more with the same stone!"));
+	      break;
+	      /*
+		default:
+		msg.Printf( _("Click impossible") );
+	    
+		wxMessageBox(msg, _("Click"), wxOK | wxICON_INFORMATION, 0);
+	      */
 	  }
 	}
       }
@@ -1146,8 +1209,11 @@ namespace holtz
 
   std::pair<int,int> Stone_Panel::get_field_pos( int col, Stones::Stone_Type type ) const
   {
-    return std::pair<int,int>( x + col * bitmap_handler.dimensions.field_width, 
-			       y + (int(type) - 1) * bitmap_handler.dimensions.field_height );
+    if( settings.multiple_stones )
+      return std::pair<int,int>( x + col * bitmap_handler.dimensions.field_width, 
+				 y + (int(type) - 1) * bitmap_handler.dimensions.field_height );
+    else
+      return std::pair<int,int>( x + (int(type) - 1) * bitmap_handler.dimensions.field_width, y );
   }
 
   std::pair<int,int> Stone_Panel::get_field_pos( std::pair<Stones::Stone_Type,int> stone ) const
@@ -1160,13 +1226,21 @@ namespace holtz
     if( !is_in(cl_x,cl_y) )
       return std::pair<Stones::Stone_Type,int>(Stones::invalid_stone,-1);
 
-    int row = (cl_y - y) / bitmap_handler.dimensions.field_height;
-    int col = (cl_x - x) / bitmap_handler.dimensions.field_width;
+    if( settings.multiple_stones )
+    {
+      int row = (cl_y - y) / bitmap_handler.dimensions.field_height;
+      int col = (cl_x - x) / bitmap_handler.dimensions.field_width;
 
-    if( (row < 0) || (row > 2) || (col < 0) || (col >= settings.max_stones) )
-      return std::pair<Stones::Stone_Type,int>(Stones::invalid_stone,-1);
+      if( (row < 0) || (row > 2) || (col < 0) || (col >= settings.max_stones) )
+	return std::pair<Stones::Stone_Type,int>(Stones::invalid_stone,-1);
 
-    return std::pair<Stones::Stone_Type,int>( Stones::Stone_Type(row + 1), col );
+      return std::pair<Stones::Stone_Type,int>( Stones::Stone_Type(row + 1), col );
+    }
+    else
+    {
+      int type_num = (cl_x - x) / bitmap_handler.dimensions.field_width;
+      return std::pair<Stones::Stone_Type,int>( Stones::Stone_Type(type_num + 1), 0 );
+    }
   }
 
   // ----------------------------------------------------------------------------
@@ -1175,20 +1249,20 @@ namespace holtz
 
   wxFont Player_Panel::Settings::default_font( 20, wxDECORATIVE, wxNORMAL, wxNORMAL );
 
-  Player_Panel::Settings::Settings( wxFont player_font )
-    : player_font( player_font )
+  Player_Panel::Settings::Settings( const holtz::Stone_Panel::Settings &stone_settings,
+				    wxFont player_font )
+    : stone_settings(stone_settings), player_font( player_font )
   {
   }
 				   
   
-  Player_Panel::Player_Panel( Player &player, Game_Window &game_window,
+  Player_Panel::Player_Panel( Settings &settings, Player &player, Game_Window &game_window,
 			      Bitmap_Handler &bitmap_handler, 
-			      Sequence_Generator* &sg, 
-			      Stone_Panel::Settings &stone_settings, Settings &settings )
-    : player(player), game_window(game_window), 
-      bitmap_handler(bitmap_handler), sequence_generator(sg),
-      stone_panel( player.stones, game_window, bitmap_handler, sg, stone_settings ),
-      settings(settings), header_panel( player, settings )
+			      Sequence_Generator* &sg )
+    : settings(settings), player(player), game_window(game_window), 
+      bitmap_handler(bitmap_handler), sequence_generator(sg), 
+      stone_panel( settings.stone_settings, player.stones, game_window, bitmap_handler, sg ),
+      header_panel( settings, player )
   {
     add( &header_panel );
     Horizontal_Sizer *stone_sizer = new Horizontal_Sizer();
@@ -1197,7 +1271,7 @@ namespace holtz
     add( stone_sizer, true /*deleted by sizer*/ );
   }
 
-  void Player_Panel::on_click( int cl_x, int cl_y )
+  void Player_Panel::on_click( int cl_x, int cl_y ) const
   {
     wxString msg;
     if( sequence_generator )
@@ -1221,7 +1295,7 @@ namespace holtz
 	      game_window.continue_game();
 	      break;
 	    case Sequence_Generator::hold_white:
-	    case Sequence_Generator::hold_gray:
+	    case Sequence_Generator::hold_grey:
 	    case Sequence_Generator::hold_black:
 	    {
 	      std::pair<int,int> field = stone_panel.get_field_pos( clicked_stone );
@@ -1279,12 +1353,12 @@ namespace holtz
     }
   }
 
-  Player_Panel::Header_Panel::Header_Panel( Player &player, Player_Panel::Settings &settings )
-    : player(player), settings(settings)
+  Player_Panel::Header_Panel::Header_Panel( Player_Panel::Settings &settings, Player &player )
+    : settings(settings), player(player)
   {
   }
 
-  void Player_Panel::Header_Panel::draw_text( wxDC &dc )
+  void Player_Panel::Header_Panel::draw_text( wxDC &dc ) const
   {
     std::string str = player.name;
     if( player.host != "" )
@@ -1293,6 +1367,7 @@ namespace holtz
     if( player.type == Player::ai )
       wxstr = _("[AI] ") + wxstr;
 
+    dc.SetTextForeground(*wxBLACK/*settings.player_font_colour*/);
     wxFont font(20,wxDECORATIVE,wxNORMAL,wxNORMAL);
     dc.SetFont(font/*settings.player_font*/);
     wxCoord w,h;
@@ -1376,6 +1451,116 @@ namespace holtz
   }
 
   // ----------------------------------------------------------------------------
+  // Game Panel
+  // ----------------------------------------------------------------------------
+
+  Game_Panel::Settings::Settings( const Board_Panel::Settings &board_settings, 
+				  const Player_Panel::Settings &player_settings,
+				  const Stone_Panel::Settings &common_stone_settings,
+				  Arrangement_Type arrangement )
+    : board_settings(board_settings), player_settings(player_settings), 
+      common_stone_settings(common_stone_settings ), arrangement(arrangement )
+  {
+  }
+
+  Game_Panel::Game_Panel( Settings &settings, Game &game, Game_Window &game_window, 
+			  Bitmap_Handler &bitmap_handler, Sequence_Generator* &sequence_generator )
+    : settings(settings), game(game), game_window(game_window), bitmap_handler(bitmap_handler),
+      sequence_generator(sequence_generator),
+      board_panel( settings.board_settings, game, game_window, bitmap_handler, sequence_generator ),
+      stone_panel( settings.common_stone_settings, game.common_stones, game_window, bitmap_handler,
+		   sequence_generator )
+  {
+    //rearrange_panels();		// will be done with calc_dimensions
+  }
+
+  Game_Panel::~Game_Panel()
+  {
+    if( player_panels.size() )
+    {
+      std::list<Player_Panel*>::iterator panel;
+      for( panel = player_panels.begin(); panel != player_panels.end(); ++panel )
+      {
+	delete *panel;
+      }
+      player_panels.clear();
+    }
+  }
+
+  void Game_Panel::calc_dimensions()
+  {
+    rearrange_panels();
+    Horizontal_Sizer::calc_dimensions();
+  }
+
+  void Game_Panel::rearrange_panels()
+  {
+    clear();
+    switch( settings.arrangement )
+    {
+      case Settings::arrange_standard:
+      {
+	Vertical_Sizer *vertical = new Vertical_Sizer();
+	vertical->add( &board_panel );
+	vertical->add( new Spacer( 0, bitmap_handler.dimensions.board_stones_spacing ), 
+		       true /*destroy on remove*/ );
+	vertical->add( &stone_panel );
+	add( vertical, true /* destroy on remove */ );
+	add( new Spacer( bitmap_handler.dimensions.stones_player_spacing, 0 ), true );
+	add( &player_panel_sizer );						     
+      }
+      break;
+      case Settings::arrange_stones_right:
+      {
+	add( &board_panel );
+	Vertical_Sizer *vertical = new Vertical_Sizer();
+	vertical->add( &stone_panel );
+	vertical->add( new Spacer( 0, bitmap_handler.dimensions.stones_player_spacing ), true );
+	vertical->add( &player_panel_sizer );						     
+	add( new Spacer( bitmap_handler.dimensions.board_stones_spacing, 0 ), true );
+	add( vertical, true /* destroy on remove */ );
+      }
+      break;
+    }
+  }
+
+  void Game_Panel::remove_players()
+  {
+    player_panel_sizer.clear();
+    if( player_panels.size() )
+    {
+      std::list<Player_Panel*>::iterator panel;
+      for( panel = player_panels.begin(); panel != player_panels.end(); ++panel )
+      {
+	delete *panel;
+      }
+      player_panels.clear();
+    }
+  }
+  void Game_Panel::add_player( Player &player )
+  {
+    bool first = player_panels.empty();
+    Player_Panel *player_panel = new Player_Panel( settings.player_settings, player, game_window, 
+						   bitmap_handler, sequence_generator );
+    player_panels.push_back( player_panel );
+    
+    if( !first ) 
+      player_panel_sizer.add( new Spacer(0,bitmap_handler.dimensions.player_player_spacing,true) );
+    player_panel_sizer.add( player_panel );
+  }
+
+  const Player_Panel *Game_Panel::get_player_panel( int id ) const
+  {
+    std::list<Player_Panel*>::const_iterator i;
+    for( i = player_panels.begin(); i != player_panels.end(); ++i )
+    {
+      if( (*i)->get_id() == id )
+	return *i;
+    }
+    return 0;
+  }
+
+  // ----------------------------------------------------------------------------
   // Game Window
   // ----------------------------------------------------------------------------
 
@@ -1383,12 +1568,10 @@ namespace holtz
     : wxScrolledWindow( parent_frame ),
       parent_frame(*parent_frame),
       default_font(20, wxDECORATIVE, wxNORMAL, wxNORMAL),
-      board_settings( true, true, default_font ),
-      board_panel( game, *this, bitmap_handler, sequence_generator, board_settings ), 
-      player_settings( default_font ),
-      player_stone_settings( true ), common_stone_settings( true ), 
-      stone_panel( game.common_stones, *this, bitmap_handler, 
-		   sequence_generator, common_stone_settings ),
+      game_settings( Board_Panel::Settings( true, true, default_font ),
+		     Player_Panel::Settings( Stone_Panel::Settings( true ), default_font ),
+		     Stone_Panel::Settings( true ) ),
+      game_panel( game_settings, game, *this, bitmap_handler, sequence_generator ), 
       mouse_handler( game, *this, sequence_generator ), 
       ai( game, *this ), game(game), sequence_generator(0), 
       move_animation( new Move_Sequence_Animation(*this) ),
@@ -1398,19 +1581,22 @@ namespace holtz
   {
     SetBackgroundColour(*wxWHITE);
 
+    bool skin_loaded = false;
     wxConfigBase* cfg = wxConfig::Get();
     wxString buf; bool bool_buf;
     if( cfg->Read( wxT("skin_file"), &buf) )
     {
       skin_file = buf;
-      load_skin( skin_file );
+      if( load_skin( skin_file ) )
+	skin_loaded = true;
     }
-    else
+
+    if( !skin_loaded )
     {
       bitmap_handler.normal.field_bitmaps[field_removed]	= wxBitmap(field_removed_xpm);
       bitmap_handler.normal.field_bitmaps[field_empty]		= wxBitmap(field_empty_xpm);
       bitmap_handler.normal.stone_bitmaps[Stones::white_stone]	= wxBitmap(field_white_xpm);
-      bitmap_handler.normal.stone_bitmaps[Stones::gray_stone]	= wxBitmap(field_gray_xpm);
+      bitmap_handler.normal.stone_bitmaps[Stones::grey_stone]	= wxBitmap(field_grey_xpm);
       bitmap_handler.normal.stone_bitmaps[Stones::black_stone]	= wxBitmap(field_black_xpm);
       bitmap_handler.field_mark					= wxBitmap(field_mark_xpm);
       bitmap_handler.field_mark2				= wxBitmap(field_mark2_xpm);
@@ -1433,13 +1619,7 @@ namespace holtz
       play_sound = false;
 #endif
 
-    Vertical_Sizer *vertical = new Vertical_Sizer();
-    vertical->add( &board_panel );
-    vertical->add( new Spacer( 0, bitmap_handler.dimensions.board_stones_spacing ), true /*destroy on rm*/ );
-    vertical->add( &stone_panel );
-    add( vertical, true /* destroy on remove */ );
-    add( new Spacer( bitmap_handler.dimensions.stones_player_spacing, 0 ), true );
-    add( &player_panel_sizer );						     
+    add( &game_panel );
 
     x = 0; y = 0;
     calc_dimensions();
@@ -1456,15 +1636,6 @@ namespace holtz
     if( player_setup_manager )
       delete player_setup_manager;
 
-    if( player_panels.size() )
-    {
-      std::list<Player_Panel*>::iterator panel;
-      for( panel = player_panels.begin(); panel != player_panels.end(); ++panel )
-      {
-	delete *panel;
-      }
-      player_panels.clear();
-    }
     delete move_animation;
   }
   
@@ -1536,7 +1707,8 @@ namespace holtz
 	      std::list<Field_Pos>::iterator click;
 	      for( click = clicks.begin(); click != clicks.end(); ++click )
 	      {
-		field_mark2_positions.push_back( board_panel.get_field_pos( click->x, click->y ) );
+		field_mark2_positions.push_back
+		  ( game_panel.get_board_panel().get_field_pos( click->x, click->y ) );
 	      }
 	    }
 	  }
@@ -1558,10 +1730,10 @@ namespace holtz
 	      case Move::knock_out_move:
 	      {
 		Knock_Out_Move *knock_move = dynamic_cast<Knock_Out_Move *>(*move);
-		field_mark2_positions.push_back( board_panel.get_field_pos( knock_move->from.x, 
-									    knock_move->from.y ) );
-		field_mark2_positions.push_back( board_panel.get_field_pos( knock_move->to.x, 
-									    knock_move->to.y ) );
+		field_mark2_positions.push_back
+		  ( game_panel.get_board_panel().get_field_pos( knock_move->from.x, knock_move->from.y ) );
+		field_mark2_positions.push_back
+		  ( game_panel.get_board_panel().get_field_pos( knock_move->to.x, knock_move->to.y ) );
 	      }
 	      break;
 	      case Move::set_move:
@@ -1572,14 +1744,15 @@ namespace holtz
 		  int stone_count = game.common_stones.stone_count[ set_move->stone_type ];
 		  if( stone_count > 0 )
 		  {
-		    field_mark2_positions.push_back( stone_panel.get_field_pos( stone_count - 1, 
-										set_move->stone_type ) );
+		    field_mark2_positions.push_back
+		      ( game_panel.get_stone_panel().get_field_pos( stone_count-1, set_move->stone_type ) );
 		  }
 		}
 		else
 		{
-		  std::list<Player_Panel*>::iterator panel;
-		  for( panel = player_panels.begin(); panel != player_panels.end(); ++panel )
+		  std::list<Player_Panel*>::const_iterator panel;
+		  for( panel = game_panel.get_player_panels().begin(); 
+		       panel != game_panel.get_player_panels().end(); ++panel )
 		  {
 		    if( (*panel)->get_id() == game.current_player->id )
 		    {
@@ -1594,15 +1767,15 @@ namespace holtz
 		    }
 		  }
 		}
-		field_mark2_positions.push_back( board_panel.get_field_pos( set_move->pos.x, 
-									    set_move->pos.y ) );
+		field_mark2_positions.push_back
+		  ( game_panel.get_board_panel().get_field_pos( set_move->pos.x, set_move->pos.y ) );
 	      }
 	      break;
 	      case Move::remove:
 	      {
 		Remove *remove = dynamic_cast<Remove *>(*move);
-		field_mark_positions.push_back( board_panel.get_field_pos( remove->remove_pos.x, 
-									    remove->remove_pos.y ) );
+		field_mark_positions.push_back
+		  ( game_panel.get_board_panel().get_field_pos(remove->remove_pos.x,remove->remove_pos.y) );
 	      }
 	      break;
 	      }
@@ -1800,16 +1973,7 @@ namespace holtz
     sequence_generator = 0;
     game.reset_game( ruleset );
     game.remove_players();
-    player_panel_sizer.clear();
-    if( player_panels.size() )
-    {
-      std::list<Player_Panel*>::iterator panel;
-      for( panel = player_panels.begin(); panel != player_panels.end(); ++panel )
-      {
-	delete *panel;
-      }
-      player_panels.clear();
-    }
+    game_panel.remove_players();
     // remove marks
     field_mark_x = -1;
     field_mark2_positions.clear();
@@ -1819,21 +1983,11 @@ namespace holtz
   {
     reset(ruleset);
 
-    bool first = true;
     std::list<Player>::iterator player;
     for( player = new_players.begin(); player != new_players.end(); ++player )
     {
       game.add_player( *player );
-      Player_Panel *player_panel = new Player_Panel( game.players.back(), *this, bitmap_handler, 
-						     sequence_generator, player_stone_settings, 
-						     player_settings );
-      player_panels.push_back( player_panel );
-
-      if( first ) 
-	first = false;
-      else
-	player_panel_sizer.add( new Spacer(bitmap_handler.dimensions.player_player_spacing,true) );
-      player_panel_sizer.add( player_panel );
+      game_panel.add_player( game.players.back() );
     }
     calc_dimensions();
     SetScrollbars( 10, 10, get_width() / 10 + 1, get_height() / 10 + 1 );
@@ -1980,19 +2134,19 @@ namespace holtz
     _dc.DrawBitmap( bitmap_handler.normal.field_bitmaps[field_removed], 300,   0, true );
     _dc.DrawBitmap( bitmap_handler.normal.field_bitmaps[field_empty]  , 300, 100, true );
     _dc.DrawBitmap( bitmap_handler.normal.field_bitmaps[field_white]  , 300, 200, true );
-    _dc.DrawBitmap( bitmap_handler.normal.field_bitmaps[field_gray]   , 300, 300, true );
+    _dc.DrawBitmap( bitmap_handler.normal.field_bitmaps[field_grey]   , 300, 300, true );
     _dc.DrawBitmap( bitmap_handler.normal.field_bitmaps[field_black]  , 300, 400, true );
     _dc.DrawBitmap( bitmap_handler.normal.stone_bitmaps[Stones::white_stone]  , 400,   0, true );
-    _dc.DrawBitmap( bitmap_handler.normal.stone_bitmaps[Stones::gray_stone]   , 400, 100, true );
+    _dc.DrawBitmap( bitmap_handler.normal.stone_bitmaps[Stones::grey_stone]   , 400, 100, true );
     _dc.DrawBitmap( bitmap_handler.normal.stone_bitmaps[Stones::black_stone]  , 400, 200, true );
 
     _dc.DrawBitmap( bitmap_handler.rotated.field_bitmaps[field_removed], 500,   0, true );
     _dc.DrawBitmap( bitmap_handler.rotated.field_bitmaps[field_empty]  , 500, 100, true );
     _dc.DrawBitmap( bitmap_handler.rotated.field_bitmaps[field_white]  , 500, 200, true );
-    _dc.DrawBitmap( bitmap_handler.rotated.field_bitmaps[field_gray]   , 500, 300, true );
+    _dc.DrawBitmap( bitmap_handler.rotated.field_bitmaps[field_grey]   , 500, 300, true );
     _dc.DrawBitmap( bitmap_handler.rotated.field_bitmaps[field_black]  , 500, 400, true );
     _dc.DrawBitmap( bitmap_handler.rotated.stone_bitmaps[Stones::white_stone]  , 600,   0, true );
-    _dc.DrawBitmap( bitmap_handler.rotated.stone_bitmaps[Stones::gray_stone]   , 600, 100, true );
+    _dc.DrawBitmap( bitmap_handler.rotated.stone_bitmaps[Stones::grey_stone]   , 600, 100, true );
     _dc.DrawBitmap( bitmap_handler.rotated.stone_bitmaps[Stones::black_stone]  , 600, 200, true );
     */
   }
@@ -2007,17 +2161,11 @@ namespace holtz
     {
       get_frame().SetStatusText(wxT("")); // remove old status text message
 
-      int x, y;
-      GetViewStart( &x, &y );	// window might be scrolled
-      x = x*10 + event.GetX();
-      y = y*10 + event.GetY();
-      board_panel.on_click( x, y );
-      stone_panel.on_click( x, y );
-      std::list<Player_Panel*>::iterator i;
-      for( i = player_panels.begin(); i != player_panels.end(); ++i )
-      {
-	(*i)->on_click( x, y );
-      }
+      int cl_x, cl_y;
+      GetViewStart( &cl_x, &cl_y );	// window might be scrolled
+      cl_x = cl_x*10 + event.GetX();
+      cl_y = cl_y*10 + event.GetY();
+      on_click( cl_x, cl_y );
     }
     else
     {
@@ -2069,10 +2217,10 @@ namespace holtz
     image.LoadFile( *input, wxBITMAP_TYPE_PNG );
     bitmap_handler.normal.stone_bitmaps[Stones::white_stone] = image.ConvertToBitmap();
     delete input;
-    input = new wxZipInputStream( filename, wxT("field_gray.png") );
+    input = new wxZipInputStream( filename, wxT("field_grey.png") );
     if( input->Eof() ) { delete input; return false; }
     image.LoadFile( *input, wxBITMAP_TYPE_PNG );
-    bitmap_handler.normal.stone_bitmaps[Stones::gray_stone] = image.ConvertToBitmap();
+    bitmap_handler.normal.stone_bitmaps[Stones::grey_stone] = image.ConvertToBitmap();
     delete input;
     input = new wxZipInputStream( filename, wxT("field_black.png") );
     if( input->Eof() ) { delete input; return false; }
@@ -2162,25 +2310,13 @@ namespace holtz
 #endif
   }
 
-  const Player_Panel *Game_Window::get_player_panel( int id ) const
-  {
-    std::list<Player_Panel*>::const_iterator i;
-    for( i = player_panels.begin(); i != player_panels.end(); ++i )
-    {
-      if( (*i)->get_id() == id )
-	return *i;
-    }
-    return 0;
-  }
-
-
   // ----------------------------------------------------------------------------
   // Standalone_Player_Setup_Manager
   // ----------------------------------------------------------------------------
 
   Standalone_Player_Setup_Manager::Standalone_Player_Setup_Manager( Game_Window &game_window )
     : game_window(game_window), player_handler(0), current_id(42),
-      ruleset(new Standard_Ruleset()), ruleset_type(Ruleset::standard_ruleset)
+      ruleset(new Standard_Ruleset()), ruleset_type(Ruleset::standard)
   {
   }
   Standalone_Player_Setup_Manager::~Standalone_Player_Setup_Manager()
@@ -2204,7 +2340,7 @@ namespace holtz
       }
 
       // tell handler which ruleset is currently active
-      if( ruleset_type == Ruleset::custom_ruleset )
+      if( ruleset_type == Ruleset::custom )
 	player_handler->ruleset_changed( ruleset_type, *ruleset );
       else
 	player_handler->ruleset_changed( ruleset_type );
@@ -2301,7 +2437,7 @@ namespace holtz
     return false;
   }
 
-  bool Standalone_Player_Setup_Manager::change_ruleset( Ruleset::type type, Ruleset &new_ruleset )
+  bool Standalone_Player_Setup_Manager::change_ruleset( Ruleset::Ruleset_Type type, Ruleset &new_ruleset )
   {
     ruleset_type = type;
     delete ruleset;
