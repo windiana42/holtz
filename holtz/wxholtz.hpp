@@ -123,11 +123,30 @@ namespace holtz
 
   class Game_Window;
 
+  struct Bitmap_Set
+  {
+    std::map<Field_State_Type,wxBitmap> field_bitmaps;
+    std::map<Stones::Stone_Type,wxBitmap> stone_bitmaps;
+  };
+  class Bitmap_Handler
+  {
+  public:
+    Bitmap_Set normal;
+    Bitmap_Set rotated;
+    wxBitmap field_mark, field_mark2;
+    wxBitmap background;
+
+    Dimensions dimensions;
+
+    void setup_field_stone_bitmaps();
+    void setup_rotated_bitmaps();
+  };
+
   class Board_Panel 
   {
   public:
-    Board_Panel( Game &, Game_Window &, std::map<Field_State_Type,wxBitmap> &bitmaps,
-		 int x, int y, Sequence_Generator* &, Dimensions & );
+    Board_Panel( Game &, Game_Window &, Bitmap_Handler &,
+		 int x, int y, Sequence_Generator* & );
 
     int get_width() const;
     int get_height() const;
@@ -141,23 +160,25 @@ namespace holtz
     void draw_text( wxDC &dc );
 
     void on_click( long x, long y );
-    std::pair<int,int> get_field_pos( int col, int row ) const;
+    Field_Pos		get_field( int x, int y ) const;
+    std::pair<int,int>  get_field_pos( int col, int row ) const;
+    Bitmap_Set         &get_bitmap_set() const;
   private:
     Game &game;
     Game_Window &game_window;
 
-    std::map<Field_State_Type,wxBitmap> &bitmaps;
-    int x,y;
+    Bitmap_Handler &bitmap_handler;
+    int x, y, board_x, board_y;
     Sequence_Generator* &sequence_generator;
 
-    Dimensions &dimensions;
+    bool rotate_board;		// display board rotated
   };
 
   class Stone_Panel
   {
   public:
-    Stone_Panel( Stones &, Game_Window &, std::map<Field_State_Type,wxBitmap> &bitmaps,
-		 int x, int y, Sequence_Generator* &, Dimensions &, int max_stones = 10 );
+    Stone_Panel( Stones &, Game_Window &, Bitmap_Handler &,
+		 int x, int y, Sequence_Generator* &, int max_stones = 10 );
 
     int get_width() const;
     int get_height() const;
@@ -171,24 +192,23 @@ namespace holtz
     void draw_text( wxDC &dc );
 
     void on_click( long x, long y );
-    std::pair<int,int> get_field_pos( int col, Stones::Stone_Type type ) const;
+    std::pair<int,int> get_field_pos( int stone_num, Stones::Stone_Type type ) const;
   private:
     Stones &stones;
     Game_Window &game_window;
 
-    std::map<Field_State_Type,wxBitmap> &bitmaps;
+    Bitmap_Handler &bitmap_handler;
     int x,y;
     Sequence_Generator* &sequence_generator;
 
-    Dimensions &dimensions;
     int max_stones;
   };
 
   class Player_Panel 
   {
   public:
-    Player_Panel( Player &, Game_Window &, std::map<Field_State_Type,wxBitmap> &bitmaps,
-		  int x, int y, Sequence_Generator* &, Dimensions & );
+    Player_Panel( Player &, Game_Window &, Bitmap_Handler &,
+		  int x, int y, Sequence_Generator* & );
 
     int get_width() const;
     int get_height() const;
@@ -211,12 +231,11 @@ namespace holtz
     wxFont player_font;
     //wxStaticText *caption_text;
 
+    Bitmap_Handler &bitmap_handler;
     int x,y;
     Sequence_Generator* &sequence_generator;
 
     Stone_Panel stone_panel;
-
-    Dimensions &dimensions;
   };
   
   class Mouse_Handler : public Generic_Mouse_Input
@@ -279,14 +298,15 @@ namespace holtz
     inline wxFrame &get_frame() { return parent_frame; }
     inline AI_Input &get_ai_handler() { return ai; }
     inline Mouse_Handler &get_mouse_handler() { return mouse_handler; }
-    inline std::map<Field_State_Type,wxBitmap> &get_bitmaps() { return bitmaps; }
+    inline Bitmap_Handler &get_bitmap_handler() { return bitmap_handler; }
     inline const Board_Panel &get_board_panel() const { return board_panel; }
     inline const Stone_Panel &get_stone_panel() const { return stone_panel; }
     inline const std::list<Player_Panel*> &get_player_panels() const { return player_panels; }
     const Player_Panel *get_player_panel( int id ) const;
   private:
     wxFrame &parent_frame;
-    Dimensions dimensions;
+    Bitmap_Handler bitmap_handler;
+
     Board_Panel board_panel;
     std::list<Player_Panel*> player_panels;
     Stone_Panel stone_panel;
@@ -302,8 +322,6 @@ namespace holtz
     Network_Clients_Dialog *clients_dialog;      
     Player_Setup_Dialog *player_dialog;
 
-    std::map<Field_State_Type,wxBitmap> bitmaps;
-    wxBitmap field_mark, field_mark2, background;
     int field_mark_x, field_mark_y; // always changing mark
     std::list< std::pair<int,int> > field_mark_positions;  // permanent marks
     std::list< std::pair<int,int> > field_mark2_positions; // also in different color

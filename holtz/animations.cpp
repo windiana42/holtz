@@ -256,8 +256,9 @@ namespace holtz
 	  {
 	    Knock_Out_Move *knock_move = dynamic_cast<Knock_Out_Move*>(*current_move);
 	    assert( knock_move );
-	    Field_State_Type stone = game->board.get_field(knock_move->from);
-	    assert( Board::is_stone(stone) );
+	    Field_State_Type stone_field = game->board.get_field(knock_move->from);
+	    assert( Board::is_stone(stone_field) );
+	    Stones::Stone_Type stone = Stones::Stone_Type(game->board.get_field(knock_move->from));
 
 	    std::pair<int,int> _from = 
 	      game_window.get_board_panel().get_field_pos( knock_move->from.x, knock_move->from.y );
@@ -275,21 +276,22 @@ namespace holtz
 	    wxWindowDC dc( &game_window );
 	    game_window.PrepareDC( dc );
 	    dc.BeginDrawing();
-	    dc.DrawBitmap( game_window.get_bitmaps()[field_empty], from.x, from.y, true );
+	    dc.DrawBitmap( game_window.get_board_panel().get_bitmap_set().field_bitmaps[field_empty], 
+			   from.x, from.y, true );
 	    dc.EndDrawing();
 	
 	    state = knock_out_jump;
 
-	    ret = bitmap_move_animation.move( game_window.get_bitmaps()[stone], from, to, 12, 35, 
-					      this, ANIMATION_DONE );
+	    ret = bitmap_move_animation.move
+	      ( game_window.get_board_panel().get_bitmap_set().stone_bitmaps[stone],
+		from, to, 12, 35, this, ANIMATION_DONE );
 	  }
 	  break;
 	  case Move::set_move:
 	  {
 	    Set_Move *set_move = dynamic_cast<Set_Move*>(*current_move);
 	    assert( set_move );
-	    Field_State_Type stone = Field_State_Type(set_move->stone_type);
-	    assert( Board::is_stone(stone) );
+	    Stones::Stone_Type stone = set_move->stone_type;
 
 	    std::pair<int,int> _from;
 	    if( set_move->own_stone ) // is stone owned by current_player
@@ -319,8 +321,9 @@ namespace holtz
 	    state = setting_stone;
 	    
 	    game_window.refresh(); // remove picked stone from screen
-	    ret = bitmap_move_animation.move( game_window.get_bitmaps()[stone], from, pos, 
-					       20, 40, this, ANIMATION_DONE );
+	    ret = bitmap_move_animation.move
+	      ( game_window.get_board_panel().get_bitmap_set().stone_bitmaps[stone],
+		from, pos, 20, 40, this, ANIMATION_DONE );
 	  }
 	  break;
 	  case Move::remove:
@@ -339,8 +342,9 @@ namespace holtz
 	    ++current_move;
 
 	    game_window.refresh(); // remove field from screen
-	    ret = bitmap_move_animation.move( game_window.get_bitmaps()[field_empty], remove_pos, 
-					       wxPoint(-1,-1), 20, 40, this, ANIMATION_DONE );
+	    ret = bitmap_move_animation.move
+	      ( game_window.get_board_panel().get_bitmap_set().field_bitmaps[field_empty], remove_pos, 
+		wxPoint(-1,-1), 20, 40, this, ANIMATION_DONE );
 	  }
 	  break;
 	  case Move::finish_move:
@@ -368,8 +372,9 @@ namespace holtz
       {
 	Knock_Out_Move *knock_move = dynamic_cast<Knock_Out_Move*>(*current_move);
 	assert( knock_move );
-	Field_State_Type stone = knock_move->knocked_stone;
-	assert( Board::is_stone(stone) );
+	Field_State_Type stone_field = knock_move->knocked_stone;
+	assert( Board::is_stone(stone_field) );
+	Stones::Stone_Type stone = Stones::Stone_Type(stone_field);
 
 	Field_Iterator to_field  ( knock_move->to,   &game->board );
 	Field_Iterator over_field( knock_move->over, &game->board );
@@ -383,23 +388,24 @@ namespace holtz
 
 	std::pair<int,int> _to;
 	const Player_Panel *panel = game_window.get_player_panel( game->current_player->id );
-	int col = game->current_player->stones.stone_count[Stones::Stone_Type(stone)];
+	int col = game->current_player->stones.stone_count[stone];
 	assert(col >= 0);
-	_to = panel->get_stone_panel().get_field_pos( col, Stones::Stone_Type(stone) );
+	_to = panel->get_stone_panel().get_field_pos( col, stone );
 	wxPoint to( _to.first, _to.second );
 
 	// remove stone which is knocked out
 	wxWindowDC dc( &game_window );
 	game_window.PrepareDC( dc );
 	dc.BeginDrawing();
-	dc.DrawBitmap( game_window.get_bitmaps()[field_empty], 
+	dc.DrawBitmap( game_window.get_board_panel().get_bitmap_set().field_bitmaps[field_empty], 
 		       over.x, over.y, true );
 	dc.EndDrawing();
 
-	save_field = stone;
+	save_field = stone_field;
 	state = knock_out_collects;
-	ret = bitmap_move_animation.move( game_window.get_bitmaps()[stone], over, to, 
-					   20, 40, this, ANIMATION_DONE );
+	ret = bitmap_move_animation.move
+	  ( game_window.get_board_panel().get_bitmap_set().stone_bitmaps[stone],
+	    over, to, 20, 40, this, ANIMATION_DONE );
       }
       break;
       case knock_out_collects:
@@ -457,9 +463,9 @@ namespace holtz
 	  state = finish_removes;
 
 	  game_window.refresh(); // remove field from screen
-	  ret = bitmap_move_animation.move( game_window.get_bitmaps()[Field_State_Type(stone)], 
-					     pos, to, 
-					     20, 40, this, ANIMATION_DONE );
+	  ret = bitmap_move_animation.move
+	    ( game_window.get_board_panel().get_bitmap_set().stone_bitmaps[stone], 
+	      pos, to, 20, 40, this, ANIMATION_DONE );
 	}
       }
       break;

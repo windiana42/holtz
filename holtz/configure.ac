@@ -34,8 +34,8 @@ fi
 AC_OUTPUT(
 	Makefile
 	skins/Makefile
+	skins/eins/Makefile
 	sounds/Makefile
-	eins/Makefile
 	locale/Makefile
 	locale/de/Makefile
 	locale/de/LC_MESSAGES/Makefile
