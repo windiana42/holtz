@@ -952,7 +952,7 @@ namespace holtz
   Field_Pos Board_Panel::get_field( int abs_x, int abs_y ) const
   {
     Game &game = gui_manager.get_display_game();
-    int rel_x, rel_y;
+    int rel_x, rel_y, field_width;
     if( settings.rotate_board )
     {
       // swap x-y coordinates
@@ -964,11 +964,13 @@ namespace holtz
       {
 	board_size_y = bitmap_handler.dimensions.field_height * game.board.get_x_size() 
 	  + bitmap_handler.dimensions.field_height / 2;
+	field_width = bitmap_handler.dimensions.field_height;
       }
       else
       {
 	board_size_y = bitmap_handler.dimensions.field_width * game.board.get_x_size() 
 	  + bitmap_handler.dimensions.field_width / 2;
+	field_width = bitmap_handler.dimensions.field_width;
       }
       rel_x = board_size_y - rel_x - 1;
     }
@@ -976,6 +978,7 @@ namespace holtz
     {
       rel_x = abs_x - x - board_x;
       rel_y = abs_y - y - board_y;
+      field_width = bitmap_handler.dimensions.field_width;
     }
     
     int half_diff = (bitmap_handler.dimensions.field_height - 
@@ -985,7 +988,7 @@ namespace holtz
     
     if( (rel_x >= offset) && (rel_y >= 0 ) )
     {
-      int col = (rel_x - offset) / bitmap_handler.dimensions.field_width;
+      int col = (rel_x - offset) / field_width;
       
       if( (col >= 0) && (row >= 0) && 
 	  (col < game.board.get_x_size()) && 
