@@ -1,3 +1,5 @@
+- better network protocol
+- better AI (looking for sente moves first, rate situations better)
 - save settings, last ruleset
 - PBM support
 - save game, load game
@@ -7,5 +9,5 @@
 - connect dialog resizable
 - show ready status in connect dialog
 - show ready status, ai status and help mode for each player
-- store moves played
+- store moves played (situation tree)
 - show moves review 

@@ -14,52 +14,281 @@
  * 
  */
 
-#include <wx/wx.h>
-#include <wx/spinctrl.h>
-
 #ifndef __WXHOLTZ_DIALOG__
 #define __WXHOLTZ_DIALOG__
 
+#define DEFAULT_PORT 6211
+
+namespace holtz
+{
+  class Game_Dialog;
+  class Settings_Dialog;
+}
+
 #include "network.hpp"
-#include "wxholtz.hpp"
 #include "holtz.hpp"
+#include "wxholtz.hpp"
+#include "pbm.hpp"
+
+#include <wx/wx.h>
+#include <wx/wizard.h>
+#include <wx/spinctrl.h>
+#include <list>
+#include <map>
+#include <string>
 
 namespace holtz
 {
   // ============================================================================
-  // Network_Clients_Dialog
+  // Game_Dialog
   // ============================================================================
 
-  class Network_Clients_Dialog : public wxDialog, Network_Connection_Handler
+  class Game_Dialog;
+
+  class Setup_Manager_Page : public wxWizardPage
   {
   public:
-    Network_Clients_Dialog( wxWindow *parent, Network_Manager &network_manager );
-    ~Network_Clients_Dialog();
+    Setup_Manager_Page( wxWizard *parent, Game_Dialog & );
 
-    virtual void new_connection( wxIPV4address host, wxSocketBase *socket );
-    virtual void closed_connection( wxSocketBase *socket );
+    virtual wxWizardPage *GetPrev() const;
+    virtual wxWizardPage *GetNext() const;
+    virtual bool TransferDataFromWindow();
 
-    void on_disconnect( wxCommandEvent& event );
-    void on_dclick( wxCommandEvent& event );
+    void restore();		// display stored game state
   private:
-    wxListBox *client_list;
-    std::map<void*,wxSocketBase*> client_data;
-    std::map<wxSocketBase*,int> client_item;
-    Network_Manager &network_manager;
+    Game_Dialog &game_dialog;
+    bool changes;
+    bool changed_setup_manager;
 
-    // any class wishing to process wxWindows events must use this macro
-    DECLARE_EVENT_TABLE();
+    wxRadioButton *alone, *network_server, *network_client, *don_t_change;
+    wxTextCtrl *hostname;
+    wxSpinCtrl *server_port, *client_port;
+
+    friend class Game_Dialog;
+    DECLARE_EVENT_TABLE() //**/
+  };
+
+  class Board_Page : public wxWizardPage
+  {
+  public:
+    Board_Page( wxWizard *parent, Game_Dialog & );
+
+    virtual wxWizardPage *GetPrev() const;
+    virtual wxWizardPage *GetNext() const;
+    virtual bool TransferDataFromWindow();
+    wxWizardPage *get_last_board_page() const;
+
+    void restore();		// display stored game state
+  private:
+    Game_Dialog &game_dialog;
+    bool changes;
+
+    wxRadioButton *new_game, *continue_game, *don_t_change;
+    wxRadioBox *new_game_choice, *continue_game_choice;
+
+    friend class Game_Dialog;
+    DECLARE_EVENT_TABLE() //**/
+  };
+
+  class Custom_Board_Setup_Panel : public wxPanel
+  {
+  public:
+    Custom_Board_Setup_Panel( wxWindow *parent, Game_Dialog & );
+    ~Custom_Board_Setup_Panel();
+
+    void on_change_win  ( wxCommandEvent& event );
+    void on_spin_win ( wxCommandEvent& event );
+    void on_change_stones  ( wxCommandEvent& event );
+    void on_spin_stones ( wxCommandEvent& event );
+
+    void restore();
+    Game get_board();		// get board according to chosen settings
+  private:
+    Game_Dialog &game_dialog;
+    bool changes;
+
+    wxRadioBox *board_choice;
+    wxRadioBox *win_choice;
+    wxSpinCtrl *win_white, *win_grey, *win_black, *win_all;
+    wxRadioBox *stones_choice;
+    wxSpinCtrl *stones_white, *stones_grey, *stones_black;
+
+    DECLARE_EVENT_TABLE()
+  };
+
+  class Custom_Board_Page : public wxWizardPage
+  {
+  public:
+    Custom_Board_Page( wxWizard *parent, Game_Dialog & );
+
+    virtual wxWizardPage *GetPrev() const;
+    virtual wxWizardPage *GetNext() const;
+    virtual bool TransferDataFromWindow();
+
+    void restore();		// display stored game state
+  private:
+    Game_Dialog &game_dialog;
+    bool changes;
+
+    Custom_Board_Setup_Panel *custom_board_panel;
+
+    friend class Game_Dialog;
+    DECLARE_EVENT_TABLE() //**/
+  };
+
+  class Load_Board_Page : public wxWizardPage
+  {
+  public:
+    Load_Board_Page( wxWizard *parent, Game_Dialog & );
+
+    virtual wxWizardPage *GetPrev() const;
+    virtual wxWizardPage *GetNext() const;
+    virtual bool TransferDataFromWindow();
+
+    void restore();		// display stored game state
+  private:
+    bool scan_directory( wxString directory );
+    void on_choose_directory( wxCommandEvent& event );
+    void on_change_directory( wxCommandEvent& event );
+
+    Game_Dialog &game_dialog;
+    bool changes;
+
+    wxRadioBox *pbm_choice;
+    wxTextCtrl *pbm_directory;
+    wxListBox  *pbm_game_list;
+
+    wxString valid_directory;	// stores only a valid directory path or ""
+    std::map< int, std::list< std::pair<PBM_Content,std::string> > > pbm_files; 
+				// board_num -> last_move_num -> file
+
+    friend class Game_Dialog;
+    DECLARE_EVENT_TABLE() //**/
+  };
+
+  class Player_Setup_Panel : public wxPanel
+  {
+  public:
+    Player_Setup_Panel( wxWindow *parent, Game_Dialog & );
+    ~Player_Setup_Panel();
+
+    void on_ready( wxCommandEvent& event );
+    void on_player_name( wxCommandEvent& event );
+    void on_add_player( wxCommandEvent& event );
+    void on_remove_player( wxCommandEvent& event );
+    void on_player_up( wxCommandEvent& event );
+    void on_player_down( wxCommandEvent& event );
+
+    // as player handler this dialog has to show results of player manipulations
+    void player_added( const Player & );
+    void player_removed( const Player & );
+    void player_up( const Player & );
+    void player_down( const Player & );
+    void player_change_denied();
+    void player_ready( const Player & );
+
+    void restore();		// display stored game state
+  private:
+    wxString get_default_name( int player_num );
+
+    Game_Dialog &game_dialog;
+
+    wxTextCtrl *player_name;
+    wxCheckBox *ai;
+    wxListBox *player_list;
+    std::map<int,Player> item_player;   // item_number->id
+    std::map<int,int> player_item; // id->item_number
+
+    wxRadioBox *help_choice;
+
+    friend class Game_Dialog;
+    DECLARE_EVENT_TABLE() //**/
+  };
+
+  class Player_Page : public wxWizardPage
+  {
+  public:
+    Player_Page( wxWizard *parent, Game_Dialog & );
+
+    virtual wxWizardPage *GetPrev() const;
+    virtual wxWizardPage *GetNext() const;
+    virtual bool TransferDataFromWindow();
+
+    void restore();		// display stored game state
+  private:
+    Game_Dialog &game_dialog;
+
+    Player_Setup_Panel *player_setup_panel;
+
+    wxNotebook *notebook;
+
+    friend class Game_Dialog;
+    DECLARE_EVENT_TABLE() //**/
+  };
+
+  class Game_Dialog : public Game_Setup_Display_Handler
+  {
+  public:
+    Game_Dialog( wxWindow *parent, Game_Manager&, WX_GUI_Manager& );
+    ~Game_Dialog();
+    void game_setup();
+
+    // board commands
+    virtual void set_board( const Game &game );
+    virtual bool ask_change_board( const Game &game, wxString who );
+    virtual void change_board( const Game &game );
+    virtual void board_change_accepted();
+    virtual void board_change_denied();
+    // player commands
+    virtual void player_added( const Player & );
+    virtual void player_removed( const Player & );
+    virtual void player_up( const Player & );
+    virtual void player_down( const Player & );
+    virtual void player_change_denied();
+    virtual void player_ready( const Player & );
+    // game commands
+    virtual void everything_ready();
+    virtual void aborted();
+    virtual bool ask_new_game( wxString who ); // other player asks for a new game (true: accept)
+    virtual void new_game_accepted();		  // other player accepted to start new game
+    virtual void new_game_denied();		  // other player rejected to play new game
+    virtual void new_game();	// force new game (network connections may be lost)
+  private:
+    void get_data_from_setup_manager();
+
+    Game_Manager   &game_manager;
+    WX_GUI_Manager &gui_manager;
+
+    Game game;
+    std::list<Player> players;
+    Game_Setup_Manager *game_setup_manager;
+
+    wxWizard		*wizard;
+    Setup_Manager_Page  setup_manager_page;
+    Board_Page		board_page;
+    Custom_Board_Page   custom_board_page;
+    Load_Board_Page     load_board_page;
+    Player_Page		player_page;
+    wxWizardPageSimple  dummy;
+
+    friend class Setup_Manager_Page;
+    friend class Board_Page;
+    friend class Custom_Board_Setup_Panel;
+    friend class Custom_Board_Page;
+    friend class Load_Board_Page;
+    friend class Player_Setup_Panel;
+    friend class Player_Page;
   };
 
   // ============================================================================
-  // Player_Setup_Dialog
+  // old Game_Setup_Dialog
   // ============================================================================
-
-  class Player_Setup_Page : public wxPanel, public Player_Handler
+  /*
+  class Player_Setup_Page : public wxPanel
   {
   public:
-    Player_Setup_Page( wxWindow *parent, Player_Setup_Dialog *, Game_Window &game_window, 
-		       Player_Setup_Manager &player_setup_manager );
+    Player_Setup_Page( wxWindow *parent, Game_Setup_Dialog *, Game_Window &game_window, 
+		       Game_Setup_Manager &game_setup_manager );
     ~Player_Setup_Page();
 
     void on_ready( wxCommandEvent& event );
@@ -85,9 +314,9 @@ namespace holtz
     virtual void aborted();
 
   private:
-    Player_Setup_Dialog *dialog;
+    Game_Setup_Dialog *dialog;
     Game_Window &game_window;
-    Player_Setup_Manager *player_setup_manager;
+    Game_Setup_Manager *game_setup_manager;
 
     wxTextCtrl *player_name;
     wxCheckBox *ai;
@@ -104,7 +333,7 @@ namespace holtz
   class Ruleset_Setup_Page : public wxPanel
   {
   public:
-    Ruleset_Setup_Page( wxWindow *parent, Player_Setup_Dialog * );
+    Ruleset_Setup_Page( wxWindow *parent, Game_Setup_Dialog * );
     ~Ruleset_Setup_Page();
 
     Ruleset *get_ruleset();	// get copy of ruleset
@@ -119,7 +348,7 @@ namespace holtz
     void on_change_stones  ( wxCommandEvent& event );
     void on_spin_stones ( wxCommandEvent& event );
   private:
-    Player_Setup_Dialog *dialog;
+    Game_Setup_Dialog *dialog;
     Ruleset *ruleset;
 
     wxRadioBox *board_choice;
@@ -131,11 +360,11 @@ namespace holtz
     DECLARE_EVENT_TABLE()
   };
 
-  class Player_Setup_Dialog : public wxDialog
+  class Game_Setup_Dialog : public wxDialog
   {
   public:
-    Player_Setup_Dialog( wxWindow *parent, Game_Window &game_window, 
-			 Player_Setup_Manager &player_setup_manager );
+    Game_Setup_Dialog( wxWindow *parent, Game_Window &game_window, 
+			 Game_Setup_Manager &game_setup_manager );
 
     void aborted();
 
@@ -144,7 +373,7 @@ namespace holtz
     Player_Setup_Page  *player_page;
     Ruleset_Setup_Page *ruleset_page;
   };
-
+  */
   // ============================================================================
   // Settings Dialog
   // ============================================================================
@@ -152,18 +381,14 @@ namespace holtz
   class Display_Setup_Page : public wxPanel
   {
   public:
-    Display_Setup_Page( wxWindow *parent, Settings_Dialog *, Game_Window & );
+    Display_Setup_Page( wxWindow *parent, Settings_Dialog *, WX_GUI_Manager & );
     ~Display_Setup_Page();
 
     void restore_settings();
-
-    void on_ok     ( wxCommandEvent& event );
-    void on_apply  ( wxCommandEvent& event );
-    void on_restore( wxCommandEvent& event );
-    void on_cancel ( wxCommandEvent& event );
+    void apply ();
   private:
     Settings_Dialog *dialog;
-    Game_Window &game_window;
+    WX_GUI_Manager &gui_manager;
 
     Game_Panel::Settings game_settings;
 
@@ -173,17 +398,83 @@ namespace holtz
     wxCheckBox *multiple_player_stones;
     wxCheckBox *multiple_common_stones;
 
-    DECLARE_EVENT_TABLE()
+    DECLARE_EVENT_TABLE()	//**/
+  };
+
+  class Look_Feel_Page : public wxPanel
+  {
+  public:
+    Look_Feel_Page( wxWindow *parent, Settings_Dialog *, WX_GUI_Manager & );
+    ~Look_Feel_Page();
+
+    void restore_settings();
+    void apply();
+
+    void on_choose_skin( wxCommandEvent& event );
+    void on_change_skin( wxCommandEvent& event );
+    void on_choose_beep( wxCommandEvent& event );
+    void on_change_beep( wxCommandEvent& event );
+  private:
+    Settings_Dialog *dialog;
+    WX_GUI_Manager &gui_manager;
+
+    wxTextCtrl *skin_file;
+    wxTextCtrl *beep_file;
+    wxCheckBox *play_sound;
+
+    wxString valid_skin_file;
+    wxString valid_beep_file;
+
+    DECLARE_EVENT_TABLE()	//**/
   };
 
   class Settings_Dialog : public wxDialog
   {
   public:
-    Settings_Dialog( wxWindow *parent, Game_Window &game_window );
+    Settings_Dialog( wxWindow *parent, WX_GUI_Manager &);
+
+    void on_ok     ( wxCommandEvent& event );
+    void on_apply  ( wxCommandEvent& event );
+    void on_restore( wxCommandEvent& event );
+    void on_cancel ( wxCommandEvent& event );
+
+  private:
+    WX_GUI_Manager &gui_manager;
 
     wxNotebook *notebook;
-
     Display_Setup_Page *display_page;
+    Look_Feel_Page *look_feel_page;
+
+    Game_Panel::Settings game_settings;
+    friend class Display_Setup_Page;
+    friend class Look_Feel_Page;
+
+    DECLARE_EVENT_TABLE()	//**/
+  };
+
+  // ============================================================================
+  // Network_Clients_Dialog
+  // ============================================================================
+
+  class Network_Clients_Dialog : public wxDialog, Network_Connection_Handler
+  {
+  public:
+    Network_Clients_Dialog( wxWindow *parent, Network_Manager &network_manager );
+    ~Network_Clients_Dialog();
+
+    virtual void new_connection( wxIPV4address host, wxSocketBase *socket );
+    virtual void closed_connection( wxSocketBase *socket );
+
+    void on_disconnect( wxCommandEvent& event );
+    void on_dclick( wxCommandEvent& event );
+  private:
+    wxListBox *client_list;
+    std::map<void*,wxSocketBase*> client_data;
+    std::map<wxSocketBase*,int> client_item;
+    Network_Manager &network_manager;
+
+    // any class wishing to process wxWindows events must use this macro
+    DECLARE_EVENT_TABLE()	//**/
   };
 
   // ============================================================================

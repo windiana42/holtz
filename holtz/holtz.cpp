@@ -19,19 +19,31 @@
 
 #include "util.hpp"
 
+#include <ctype.h>
+
 namespace holtz
 {
+  // ----------------------------------------------------------------------------
+  // Stones
+  // ----------------------------------------------------------------------------
+
   void Stones::remove_stones()
   {
     stone_count.clear();
   }
 
-  typedef enum Common_Stones_Type{ standard, tournament, custom };
+  // ----------------------------------------------------------------------------
+  // Common_Stones
+  // ----------------------------------------------------------------------------
 
-  Common_Stones::Common_Stones( Common_Stones_Type type )
+  Common_Stones::Common_Stones( Common_Stones::Common_Stones_Type type )
     : type(type)
   {
   }
+
+  // ----------------------------------------------------------------------------
+  // Standard_Common_Stones
+  // ----------------------------------------------------------------------------
 
   Standard_Common_Stones::Standard_Common_Stones()
     : Common_Stones( standard )
@@ -41,6 +53,10 @@ namespace holtz
     stone_count[ Stones::black_stone ] = 9;
   }
 
+  // ----------------------------------------------------------------------------
+  // Tournament_Common_Stones
+  // ----------------------------------------------------------------------------
+
   Tournament_Common_Stones::Tournament_Common_Stones()
     : Common_Stones( tournament )
   {
@@ -48,6 +64,10 @@ namespace holtz
     stone_count[ Stones::grey_stone ]  =  8;
     stone_count[ Stones::black_stone ] = 10;
   }
+
+  // ----------------------------------------------------------------------------
+  // Custom_Common_Stones
+  // ----------------------------------------------------------------------------
 
   Custom_Common_Stones::Custom_Common_Stones( int white_num, int grey_num, int black_num )
     : Common_Stones( custom )
@@ -57,13 +77,25 @@ namespace holtz
     stone_count[ Stones::black_stone ] = black_num;
   }
 
+  // ----------------------------------------------------------------------------
+  // Player_Input
+  // ----------------------------------------------------------------------------
+
   Player_Input::~Player_Input()
   {
   }
 
+  // ----------------------------------------------------------------------------
+  // Player_Output
+  // ----------------------------------------------------------------------------
+
   Player_Output::~Player_Output()
   {
   }
+
+  // ----------------------------------------------------------------------------
+  // Player
+  // ----------------------------------------------------------------------------
 
   std::list<Player_Output*> Player::no_output;
 
@@ -76,6 +108,10 @@ namespace holtz
   {
   }
 
+  // ----------------------------------------------------------------------------
+  // Win_Condition
+  // ----------------------------------------------------------------------------
+
   Win_Condition::Win_Condition( Win_Condition_Type type )
     : type(type)
   {
@@ -83,6 +119,10 @@ namespace holtz
   Win_Condition::~Win_Condition()
   {
   }
+
+  // ----------------------------------------------------------------------------
+  // Field_Pos
+  // ----------------------------------------------------------------------------
 
   Field_Pos::Field_Pos()
     : x(-1), y(-1)
@@ -103,6 +143,10 @@ namespace holtz
   {
     return ( p1.x != p2.x ) || ( p1.y != p2.y );
   }
+
+  // ----------------------------------------------------------------------------
+  // Field_Iterator
+  // ----------------------------------------------------------------------------
 
   Field_Iterator::Field_Iterator( Board *board )
     : board(board)
@@ -410,6 +454,10 @@ namespace holtz
     return board->field[ current_pos.x ][ current_pos.y ];
   }
 
+  // ----------------------------------------------------------------------------
+  // Board
+  // ----------------------------------------------------------------------------
+
   Board::Board( const int *field_array, int width, int height, Board_Type board_type )
     : board_type( board_type )
   {
@@ -708,6 +756,10 @@ namespace holtz
     return Field_Iterator( pos, this );
   }
 
+  // ----------------------------------------------------------------------------
+  // Ruleset
+  // ----------------------------------------------------------------------------
+
   Ruleset::Ruleset( Ruleset_Type type, Board board, Common_Stones common_stones, 
 		    Win_Condition *win_condition, Coordinate_Translator *coordinate_translator,
 		    bool undo_possible, unsigned min_players, unsigned max_players ) 
@@ -718,7 +770,7 @@ namespace holtz
   }
 
   Ruleset::Ruleset( const Ruleset &ruleset )
-    : board(ruleset.board), common_stones(ruleset.common_stones),
+    : type(ruleset.type), board(ruleset.board), common_stones(ruleset.common_stones),
       win_condition(ruleset.win_condition->clone()), 
       coordinate_translator(ruleset.coordinate_translator->clone()),
       undo_possible(ruleset.undo_possible),
@@ -728,6 +780,7 @@ namespace holtz
 
   Ruleset &Ruleset::operator=( Ruleset &ruleset )
   {
+    type		  = ruleset.type;
     board		  = ruleset.board;
     common_stones	  = ruleset.common_stones;
     win_condition	  = ruleset.win_condition->clone();
@@ -744,6 +797,104 @@ namespace holtz
     delete coordinate_translator;
   }
 
+  // ----------------------------------------------------------------------------
+  // Variant
+  // ----------------------------------------------------------------------------
+
+  Variant::Variant( std::list<Player>::iterator current_player, const Sequence &move_sequence, 
+		    Variant *prev = 0 )
+    : current_player(current_player), move_sequence(move_sequence), prev(prev)
+  {
+  }
+
+  Variant::Variant()			// for root variant
+    : prev(0)
+  {
+  }
+
+  Variant::~Variant()
+  {
+    std::list<Variant*>::iterator i;
+    for( i = variants.begin(); i != variants.end(); ++i )
+      delete *i;
+    //variants.clear();
+  }
+
+  Variant *Variant::add_variant( std::list<Player>::iterator current_player, const Sequence &move_sequence )
+  {
+    variants.push_back( new Variant( current_player, move_sequence, this ) );
+    return variants.back();
+  }
+
+  bool Variant::is_prev( Variant *variant )
+  {
+    if( variant == prev )
+      return true;
+
+    if( prev )
+      return prev->is_prev( variant );
+    else
+      return false;
+  }
+
+  // ----------------------------------------------------------------------------
+  // Variant_Tree
+  // ----------------------------------------------------------------------------
+
+  Variant_Tree::Variant_Tree()
+  {
+    root = new Variant();
+    current_variant = root;
+  }
+
+  Variant_Tree::~Variant_Tree()
+  {
+    delete root;
+  }
+
+  bool Variant_Tree::remove_subtree( Variant *variant )
+  {
+    if( !variant->is_prev( root ) ) // assure that variant is from this variant tree
+      return false;
+
+    if( variant == current_variant ) // that variant is not current variant
+      return false;
+
+    if( current_variant->is_prev( variant ) ) // that variant is not in current variant path
+      return false;
+
+    assert( variant->prev );
+
+    std::list<Variant*>::iterator i;
+    for( i = variant->prev->variants.begin(); i != variant->prev->variants.end(); ++i )
+    {
+      if( *i == variant )
+      {
+	variant->prev->variants.erase( i );
+	delete variant;
+	return true;
+      }
+    }
+    
+    return false;
+  }
+
+  void Variant_Tree::add_in_current_variant( std::list<Player>::iterator current_player, 
+					     const Sequence &sequence )
+  {
+    current_variant = current_variant->add_variant( current_player, sequence );
+  }
+  void Variant_Tree::move_a_variant_back()
+  {
+    assert( !is_first() );
+    current_variant = current_variant->prev;
+    assert( current_variant );
+  }
+
+  // ----------------------------------------------------------------------------
+  // Game
+  // ----------------------------------------------------------------------------
+
   Game::Game( const Ruleset &_ruleset )
     : ruleset(_ruleset.clone()), 
       board(ruleset->board), 
@@ -757,43 +908,69 @@ namespace holtz
     current_player = players.begin();
   }
 
-  Game::Game( Game &game )
+  Game::Game( const Game &game )
     : board(game.board), save_game(0)
   {
     *this = game;		// use operator=
   }
 
-  Game &Game::operator=( Game &game )
+  Game &Game::operator=( const Game &game )
   {
     // copy players
-    std::list<Player>::iterator player, player_src;
+    std::list<Player>::iterator player;
+    std::list<Player>::const_iterator player_src;
     if( players.size() == game.players.size() )
     {
+      current_player = players.begin();
+      last_player    = players.end();
       // if size is equal, use same player objects
       player_src = game.players.begin();
       for( player = players.begin(); player != players.end(); ++player, ++player_src )
       {
 	assert( player_src != game.players.end() );
 	*player = *player_src;
+
+	if( std::list<Player>::const_iterator(game.current_player) == player_src )
+	  current_player = player;
+	if( std::list<Player>::const_iterator(game.last_player) == player_src )
+	  last_player = player;
       }
     }
     else
-      players = game.players;
-
-    // copy current_player
-    current_player = players.end();
-    if( game.current_player != game.players.end() )
     {
-      for( player = players.begin(); player != players.end(); ++player )
+      players = game.players;
+      current_player = players.begin();
+      last_player    = players.end();
+
+      // copy current_player
+      current_player = players.end();
+      if( std::list<Player>::const_iterator(game.current_player) != game.players.end() )
       {
-	if( player->id == game.current_player->id )
+	for( player = players.begin(); player != players.end(); ++player )
 	{
-	  current_player = player;
-	  break;
+	  if( player->id == game.current_player->id )
+	  {
+	    current_player = player;
+	    break;
+	  }
+	}
+      }
+    
+      // copy last_player
+      last_player = players.end();
+      if( std::list<Player>::const_iterator(game.last_player) != game.players.end() )
+      {
+	for( player = players.begin(); player != players.end(); ++player )
+	{
+	  if( player->id == game.last_player->id )
+	  {
+	    last_player = player;
+	    break;
+	  }
 	}
       }
     }
-    
+
     board		  = game.board;
     common_stones 	  = game.common_stones;
     win_condition 	  = game.win_condition;
@@ -842,7 +1019,8 @@ namespace holtz
     if( !save_game )
       save_game = new Game(*this);
 
-    do{
+    do
+    {
       Player_Input::Player_State state = current_player->input->determine_move();
       switch( state )
       {
@@ -852,14 +1030,16 @@ namespace holtz
 	  sequence = current_player->input->get_move();
 
 	  // do move
-	  assert( current_player != players.end() );
-	  assert( save_game->current_player != save_game->players.end() );
-	  assert( current_player->id == save_game->current_player->id );
-	  assert( sequence.check_sequence(*save_game) );
-	  assert( sequence.get_moves().back()->get_type() == Move::finish_move );
-	  sequence.do_sequence(*save_game);
+	  save_game->do_move( sequence );
 	  save_game->copy_player_times( *this ); // rescue player times
 	  *this = *save_game;
+
+	  // calculate average time
+	  long time = current_player->input->get_used_time();
+	  current_player->total_time += time;
+	  current_player->average_time = current_player->average_time * current_player->num_measures + time;
+	  ++current_player->num_measures;
+	  current_player->average_time /= current_player->num_measures;
 
 	  // report move
 	  for( output =  current_player->outputs.begin();
@@ -868,51 +1048,14 @@ namespace holtz
 	    (*output)->report_move( sequence );
 
 	  // check win condition
-	  if( win_condition->did_player_win(*this,*current_player) )
-	    return finished;
-
-	  // check if still stones are there
-	  bool common_stones_avail;
-	  if( common_stones.stone_count[ Stones::white_stone ] +
-	      common_stones.stone_count[ Stones::grey_stone ] +
-	      common_stones.stone_count[ Stones::black_stone ] == 0 )
-	    common_stones_avail = false;
-	  else
-	    common_stones_avail = true;
-
-	  // change player
-	  current_player->is_active = false;
-	  save_game->current_player->is_active = false;
-	  bool next_player; unsigned players_skipped = 0;
-	  do
+	  if( win_condition->did_player_win(*this,*last_player) )
 	  {
-	    ++current_player; 
-	    ++save_game->current_player;
-	    if( current_player == players.end() )		 // if last player
-	    {
-	      current_player = players.begin();		 // cycle to first player
-	      save_game->current_player = save_game->players.begin();
-	    }
-	    next_player = false;
-	    if( !common_stones_avail )
-	    {
-	      // assert that player has stones if no knock out move is possible
-	      if( !board.is_knock_out_possible() )
-	      {
-		if( current_player->stones.stone_count[ Stones::white_stone ] +
-		    current_player->stones.stone_count[ Stones::grey_stone ] +
-		    current_player->stones.stone_count[ Stones::black_stone ] == 0 )
-		{
-		  next_player = true; // player can't move
-		  ++players_skipped;
-		  if( players_skipped >= players.size() )
-		    return finished; // no player may move
-		}
-	      }
-	    }
-	  }while( next_player );
-	  current_player->is_active = true;
-	  save_game->current_player->is_active = true;
+	    current_player->is_active = false;
+	    return finished;
+	  }
+
+	  if( !current_player->is_active ) // if no player is able to move
+	    return finished;
 
 	  return next_players_turn;
 	}
@@ -926,17 +1069,29 @@ namespace holtz
     }while(true);
   }
 
+  //! stop game to allow changing the position with do_move and undo_move
+  void Game::stop_game()		
+  {
+    if( save_game )
+    {
+      save_game->copy_player_times( *this ); // rescue player times
+      *this = *save_game;
+      delete save_game;
+    }
+    save_game = 0;
+  }
+
   Player *Game::get_winner()
   {
-    // check current player
-    if( win_condition->did_player_win(*this,*current_player) )
-      return &*current_player;
+    // check last player
+    if( win_condition->did_player_win(*this,*last_player) )
+      return &*last_player;
 
     // did any other player win?    
     std::list<Player>::iterator i;
     for( i = players.begin(); i != players.end(); ++i )
       if( win_condition->did_player_win(*this,*i) )
-	return &*current_player;
+	return &*i;
 
     return 0;			// no player won
   }
@@ -945,7 +1100,7 @@ namespace holtz
   {
     if( save_game )
       delete save_game;
-    save_game		= 0;
+    save_game = 0;
 
     board = ruleset->board;
     common_stones = ruleset->common_stones;
@@ -959,6 +1114,9 @@ namespace holtz
     {
       i->stones.remove_stones(); 
     }
+
+    current_player = players.begin();
+    last_player    = players.end();
   }
 
   void Game::reset_game( const Ruleset &ruleset )
@@ -977,12 +1135,64 @@ namespace holtz
     reset_game();
   }
 
+  // true: right number of players
+  bool Game::set_players( const std::list<Player> &new_players ) 
+  {
+    std::list<Player>::iterator player;
+    // if size is equal, use same player objects
+    if( players.size() == new_players.size() )
+    {
+      std::list<Player>::const_iterator player_src;
+
+      player_src = new_players.begin();
+      for( player = players.begin(); player != players.end(); ++player, ++player_src )
+      {
+	// rescue captured stones
+	Stones player_stones = player->stones;
+	// copy player
+	assert( player_src != new_players.end() );
+	*player = *player_src;
+
+	player->stones = player_stones;
+      }
+    }
+    else
+    {
+      players = new_players;
+
+      // remove player stones
+      for( player = players.begin(); player != players.end(); ++player )
+      {
+	player->stones = Stones();
+      }
+
+      current_player = players.begin();
+      last_player    = players.end();
+    }
+
+    // set player active
+    for( player = players.begin(); player != players.end(); ++player )
+    {
+      if( player == current_player )
+	player->is_active = true;
+      else
+	player->is_active = false;
+    }
+
+    return (players.size() >= get_min_players()) && (players.size() <= get_min_players());
+  }
+
   // true: enough players
   bool Game::add_player( const Player &player ) 
   {
+    if( players.size() >= ruleset->max_players )
+      return false;
+
     players.push_back( player );
     current_player = players.begin();
     current_player->is_active = true;
+    last_player    = players.end(); // no player was last
+
     return ( (players.size() >= ruleset->min_players) &&
 	     (players.size() <= ruleset->max_players) );
   }
@@ -990,20 +1200,92 @@ namespace holtz
   void Game::remove_players()
   {
     players.clear();
+    current_player = players.end();
+    last_player    = players.end();
   }
 
-  void Game::next_player()		// next player is current player
+  bool Game::next_player()		// next player is current player
   {
-    ++current_player;
-    if( current_player == players.end() )
-      current_player = players.begin();
+    last_player = current_player;
+
+    // check if still stones are there
+    bool common_stones_avail;
+    if( common_stones.stone_count[ Stones::white_stone ] +
+	common_stones.stone_count[ Stones::grey_stone ] +
+	common_stones.stone_count[ Stones::black_stone ] == 0 )
+      common_stones_avail = false;
+    else
+      common_stones_avail = true;
+
+    // change player
+    current_player->is_active = false;
+    bool next_player; unsigned players_skipped = 0;
+    do
+    {
+      ++current_player; 
+      if( current_player == players.end() )		 // if last player
+      {
+	current_player = players.begin();		 // cycle to first player
+      }
+      next_player = false;
+      if( !common_stones_avail )
+      {
+	// assert that player has stones if no knock out move is possible
+	if( !board.is_knock_out_possible() )
+	{
+	  if( current_player->stones.stone_count[ Stones::white_stone ] +
+	      current_player->stones.stone_count[ Stones::grey_stone  ] +
+	      current_player->stones.stone_count[ Stones::black_stone ] == 0 )
+	  {
+	    next_player = true; // player can't move
+	    ++players_skipped;
+	    if( players_skipped >= players.size() )
+	      return false; // no player may move
+	  }
+	}
+      }
+    }while( next_player );
+    current_player->is_active = true;
+    return true;
   }
 
-  void Game::prev_player()		// prev player is current player
+  bool Game::prev_player( std::list<Player>::iterator prev_last_player )// prev player is current player
   {
-    if( current_player == players.begin() )
-      current_player = players.end();
-    --current_player;
+    if( last_player == players.end() )
+      return false;
+
+    current_player->is_active = false;
+    current_player = last_player;
+    current_player->is_active = true;
+
+    last_player = prev_last_player;
+    return true;
+  }
+
+  void Game::do_move( const Sequence &sequence )
+  {
+    variant_tree.add_in_current_variant( current_player, sequence );
+    sequence.do_sequence( *this );
+    next_player();
+  }
+
+  bool Game::undo_move()
+  {
+    if( variant_tree.is_first() )
+      return false;
+
+    Sequence &sequence = variant_tree.get_current_variant()->move_sequence;
+
+    variant_tree.move_a_variant_back();
+    if( !variant_tree.is_first() )
+    {
+      prev_player( variant_tree.get_current_variant()->current_player );
+    }
+    else
+      prev_player( players.end() );
+
+    sequence.undo_sequence( *this );
+    return true;
   }
 
   void Game::copy_player_times( Game &from ) // number of players must be the same
@@ -1020,6 +1302,10 @@ namespace holtz
     }
   }
 
+  // ----------------------------------------------------------------------------
+  // Move
+  // ----------------------------------------------------------------------------
+
   Move::~Move()
   {
   }
@@ -1028,6 +1314,10 @@ namespace holtz
   {
     return knock_out_move;
   }
+
+  // ----------------------------------------------------------------------------
+  // Knock_Out_Move
+  // ----------------------------------------------------------------------------
 
   void Knock_Out_Move::do_move( Game &game )
   {
@@ -1116,6 +1406,10 @@ namespace holtz
     : from(from), over(over), to(to)
   {
   }
+
+  // ----------------------------------------------------------------------------
+  // Set_Move
+  // ----------------------------------------------------------------------------
 
   Move::Move_Type Set_Move::get_type() const
   {
@@ -1214,6 +1508,10 @@ namespace holtz
     return remove;
   }
 
+  // ----------------------------------------------------------------------------
+  // Remove
+  // ----------------------------------------------------------------------------
+
   void Remove::do_move( Game &game )
   {
     assert( check_move(game) );
@@ -1272,6 +1570,10 @@ namespace holtz
     : remove_pos(remove_pos)
   {
   }
+
+  // ----------------------------------------------------------------------------
+  // Finish_Move
+  // ----------------------------------------------------------------------------
 
   Move::Move_Type Finish_Move::get_type() const
   {
@@ -1499,6 +1801,10 @@ namespace holtz
   {
   }
 
+  // ----------------------------------------------------------------------------
+  // Sequence
+  // ----------------------------------------------------------------------------
+
   void Sequence::do_sequence( Game &game ) const
   {
     std::list<Move*>::iterator move;
@@ -1588,6 +1894,12 @@ namespace holtz
     }
     if( type != Move::no_move ) throw Input_Exception();
     return is;
+  }
+
+  // true: add ok
+  void Sequence::add_move( Move *move )
+  {
+    moves->push_back( move );
   }
 
   // true: add ok
@@ -1706,6 +2018,125 @@ namespace holtz
     }
   }
 
+  // ----------------------------------------------------------------------------
+  // Standard_Move_Translator
+  // ----------------------------------------------------------------------------
+
+  Standard_Move_Translator::Standard_Move_Translator( Coordinate_Translator *coordinate_translator,
+						      Board *board )
+    : coordinate_translator(coordinate_translator), board(board)
+  {
+  }
+
+  std::string Standard_Move_Translator::encode( Sequence sequence )
+  {
+    return "not implemented yet";
+  }
+
+  Sequence Standard_Move_Translator::decode( std::istream &is )
+  {
+    Sequence sequence;
+    char first;
+    is >> first;
+    if( (first == 'x') || (first == 'X') ) // is knock out move ?
+    {
+      std::string str;
+      is >> str;
+      std::size_t i;
+      // search for letters followed by digits
+      for( i = 0; i < str.size(); ++i ) if( !isalpha( str[i] ) ) break;
+      for( ; i < str.size(); ++i )	if( !isdigit( str[i] ) ) break;
+      Field_Pos from = coordinate_translator->get_field_pos( str.substr(0,i) );
+      if( from.x < 0 ) return Sequence();
+      do
+      {
+	Stones::Stone_Type stone; // stone won't be checked
+	switch( str[i] )
+	{
+	  case 'w':
+	  case 'W': stone = Stones::white_stone; break;
+	  case 'g':
+	  case 'G': stone = Stones::grey_stone; break;
+	  case 'b':
+	  case 'B': stone = Stones::black_stone; break;
+	  default: return Sequence();
+	}
+	++i;
+	std::size_t start = i;
+	// search for letters followed by digits
+	for( ; i < str.size(); ++i ) if( !isalpha( str[i] ) ) break;
+	for( ; i < str.size(); ++i ) if( !isdigit( str[i] ) ) break;
+	Field_Pos to = coordinate_translator->get_field_pos( str.substr(start, i) );
+	if( to.x < 0 ) return Sequence();
+
+	std::pair<bool,Field_Pos> knock = board->is_knock_out_possible( from, to );
+	if( !knock.first ) return Sequence();
+	Field_Pos &middle = knock.second;
+
+	Knock_Out_Move *move = new Knock_Out_Move(from, middle, to);
+	sequence.add_move( move );
+
+	from = to;
+      }while( i < str.size() );
+      sequence.add_move( new Finish_Move() );
+    }
+    else			// set move
+    {
+      Stones::Stone_Type stone;
+      switch( first )		// first character already read
+      {
+	case 'w':
+	case 'W': stone = Stones::white_stone; break;
+	case 'g':
+	case 'G': stone = Stones::grey_stone; break;
+	case 'b':
+	case 'B': stone = Stones::black_stone; break;
+	default: return Sequence();
+      }
+
+      std::string str;
+      is >> str;
+      std::size_t i;
+      // search for letters followed by digits
+      for( i = 0; i < str.size(); ++i ) if( !isalpha( str[i] ) ) break;
+      for( ; i < str.size(); ++i )	if( !isdigit( str[i] ) ) break;
+      Field_Pos pos = coordinate_translator->get_field_pos( str.substr(0,i) );
+      if( pos.x < 0 ) return Sequence();
+      
+      sequence.add_move( new Set_Move( pos, stone ) );
+
+      if( str[i] != ',' ) return Sequence();
+      ++i;
+
+      std::size_t start = i;
+      // search for letters followed by digits
+      for( ; i < str.size(); ++i ) if( !isalpha( str[i] ) ) break;
+      for( ; i < str.size(); ++i ) if( !isdigit( str[i] ) ) break;
+      if( i < str.size() ) return Sequence();
+      pos = coordinate_translator->get_field_pos( str.substr(start,i) );
+      if( pos.x < 0 ) return Sequence();
+
+      sequence.add_move( new Remove(pos) );
+      sequence.add_move( new Finish_Move() );
+
+      // read probable removed stones
+      char next;
+      is >> next;
+      if( next != 'x' )
+	is.unget();
+      else
+      {
+	is >> str;		// read removed fields
+	// and forget
+      }
+    }
+    return sequence;
+  }
+
+  // ----------------------------------------------------------------------------
+  // Generic_Win_Condition
+  // ----------------------------------------------------------------------------
+
   Generic_Win_Condition::Generic_Win_Condition( int num_white, int num_grey, int num_black, int num_all )
     : Win_Condition( generic ), num_white(num_white), num_grey(num_grey), num_black(num_black),
       num_all(num_all)
@@ -1749,11 +2180,19 @@ namespace holtz
     return new Generic_Win_Condition( num_white, num_grey, num_black, num_all );
   }
 
+  // ----------------------------------------------------------------------------
+  // Standard_Win_Condition
+  // ----------------------------------------------------------------------------
+
   Standard_Win_Condition::Standard_Win_Condition()
     : Generic_Win_Condition(3,4,5,2)
   {
     type = standard;
   }
+
+  // ----------------------------------------------------------------------------
+  // Tournament_Win_Condition
+  // ----------------------------------------------------------------------------
 
   Tournament_Win_Condition::Tournament_Win_Condition()
     : Generic_Win_Condition(4,5,6,3)
@@ -1761,11 +2200,15 @@ namespace holtz
     type = tournament;
   }
 
+  // ----------------------------------------------------------------------------
+  // Standard_Ruleset
+  // ----------------------------------------------------------------------------
+
   Standard_Ruleset::Standard_Ruleset()
     : Ruleset( standard,
 	       Board( (const int*) standard_board, 
 		      sizeof(standard_board[0]) / sizeof(standard_board[0][0]),
-		      sizeof(standard_board)    / sizeof(standard_board[0]) ),
+		      sizeof(standard_board)    / sizeof(standard_board[0]), Board::s37_rings ),
 	       Standard_Common_Stones(),
 	       new Standard_Win_Condition(), 0 /*coordinate translator init below */,
 	       true /*undo possible*/, 2, 4 )
@@ -1773,17 +2216,25 @@ namespace holtz
     coordinate_translator = new Standard_Coordinate_Translator(board);
   }
 
+  // ----------------------------------------------------------------------------
+  // Tournament_Ruleset
+  // ----------------------------------------------------------------------------
+
   Tournament_Ruleset::Tournament_Ruleset()
     : Ruleset( tournament, 
 	       Board( (const int*) standard_board, 
 		      sizeof(standard_board[0]) / sizeof(standard_board[0][0]),
-		      sizeof(standard_board)    / sizeof(standard_board[0]) ),
+		      sizeof(standard_board)    / sizeof(standard_board[0]), Board::s37_rings ),
 	       Tournament_Common_Stones(),
 	       new Tournament_Win_Condition(), 0 /*coordinate translator init below */,
 	       false /*no undo possible*/, 2, 4 )  
   {
     coordinate_translator = new Standard_Coordinate_Translator(board);
   }
+
+  // ----------------------------------------------------------------------------
+  // Custom_Ruleset
+  // ----------------------------------------------------------------------------
 
   Custom_Ruleset::Custom_Ruleset( Board board, Common_Stones common_stones, Win_Condition *win_condition, 
 				  Coordinate_Translator *coordinate_translator, 
@@ -1793,9 +2244,17 @@ namespace holtz
   {
   }
 
+  // ----------------------------------------------------------------------------
+  // No_Output
+  // ----------------------------------------------------------------------------
+
   void No_Output::report_move( const Sequence & )
   {
   }
+
+  // ----------------------------------------------------------------------------
+  // Stream_Output
+  // ----------------------------------------------------------------------------
 
   Stream_Output::Stream_Output( Game &game, std::ostream &os )
     : game(game), os(os)
@@ -1807,6 +2266,10 @@ namespace holtz
     os << "player " << game.current_player->id << " ";
     os << sequence;
   }
+
+  // ----------------------------------------------------------------------------
+  // Stream_Input
+  // ----------------------------------------------------------------------------
 
   Stream_Input::Stream_Input( Game &game, std::istream &is )
     : game(game), is(is)
@@ -1835,6 +2298,10 @@ namespace holtz
   {
     return sequence;
   }
+
+  // ----------------------------------------------------------------------------
+  // Sequence_Generator
+  // ----------------------------------------------------------------------------
 
   Sequence_Generator::Sequence_Generator( Game &game )
     : game(game), state(begin)
@@ -2195,6 +2662,10 @@ namespace holtz
     state = begin;
   }
 
+  // ----------------------------------------------------------------------------
+  // Generic_Mouse_Input
+  // ----------------------------------------------------------------------------
+
   Generic_Mouse_Input::Generic_Mouse_Input( Game &game )
     : sequence_generator(game), game(game)
   {
@@ -2217,6 +2688,10 @@ namespace holtz
     return sequence;
   }
 
+  // ----------------------------------------------------------------------------
+  // Standard_Coordinate_Translator
+  // ----------------------------------------------------------------------------
+
   Standard_Coordinate_Translator::Standard_Coordinate_Translator( const Board &board )
     : orig_board(board)
   {    
@@ -2237,10 +2712,6 @@ namespace holtz
   Field_Pos Standard_Coordinate_Translator::get_field_pos ( std::string name )
   {
     Field_Pos pos;
-    int first_x;
-    for( first_x = 0; first_x < orig_board.get_x_size(); ++first_x )
-      if( !Board::is_removed(orig_board.field[first_x][pos.y]) )
-	break;
 
     if( name.size() > 1 )
     {
@@ -2252,8 +2723,14 @@ namespace holtz
 	{
 	  if( num.first > 0 )
 	  {
-	    pos.x = name[0] - 'a';
-	    pos.y = num.first - 1;
+	    pos.x = num.first - 1;
+	    pos.y = name[0] - 'a';
+
+	    int first_x;
+	    for( first_x = 0; first_x < orig_board.get_x_size(); ++first_x )
+	      if( !Board::is_removed(orig_board.field[first_x][pos.y]) )
+		break;
+	    pos.x += first_x;
 	  }
 	}
       }

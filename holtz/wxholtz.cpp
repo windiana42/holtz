@@ -52,6 +52,7 @@
 #include "dialogs.hpp"
 #include "ai.hpp"
 #include "util.hpp"
+#include "pbm.hpp"
 
 #include <wx/zipstrm.h>
 #include <wx/image.h>
@@ -63,6 +64,7 @@
   #include <sstream>
 #endif
 */
+#include <fstream>
 #include <list>
 
 // wx html help
@@ -73,7 +75,6 @@
 #include <wx/fs_zip.h>
 #include <wx/html/helpctrl.h>
 #include <wx/cshelp.h>
-
 
 namespace holtz
 {
@@ -180,12 +181,7 @@ namespace holtz
   // simple menu events like this the static method is much simpler.
   BEGIN_EVENT_TABLE(Main_Frame, wxFrame)				//**/
   EVT_MENU(HOLTZ_NEW_GAME,	  Main_Frame::on_new_game)		//**/
-  EVT_MENU(HOLTZ_STANDALONE_GAME, Main_Frame::on_standalone_game)	//**/
-  EVT_MENU(HOLTZ_NETWORK_GAME,	  Main_Frame::on_network_game)		//**/
   EVT_MENU(HOLTZ_SETTINGS,	  Main_Frame::on_settings)		//**/
-  EVT_MENU(HOLTZ_SKIN,		  Main_Frame::on_choose_skin)		//**/
-  EVT_MENU(HOLTZ_BEEP,		  Main_Frame::on_choose_beep)		//**/
-  EVT_MENU(HOLTZ_SOUND,		  Main_Frame::on_toggle_sound)		//**/
   EVT_MENU(HOLTZ_QUIT,		  Main_Frame::on_quit)			//**/
   EVT_MENU(HOLTZ_HELP_CONTENTS,	  Main_Frame::on_help_contents)		//**/
   EVT_MENU(HOLTZ_HELP_LICENSE,	  Main_Frame::on_help_license)		//**/
@@ -204,14 +200,6 @@ namespace holtz
   // ============================================================================
   // implementation
   // ============================================================================
-
-  Player_Handler::~Player_Handler()
-  {
-  }
-
-  Player_Setup_Manager::~Player_Setup_Manager()
-  {
-  }
 
   // ----------------------------------------------------------------------------
   // the application class
@@ -232,18 +220,18 @@ namespace holtz
     wxConfig::Set(global_config);
 
     // this will link all image libraries, also the unused ones
-	// wxInitAllImageHandlers(); // make it possible to load PNG images
-	// that's better, we don't use other image formats:
+    // wxInitAllImageHandlers(); // make it possible to load PNG images
+    // that's better, we don't use other image formats:
     wxImage::AddHandler(new wxXPMHandler);
     wxImage::AddHandler(new wxPNGHandler);
     // for html help
     wxHelpControllerHelpProvider* provider = new wxHelpControllerHelpProvider;
     provider->SetHelpController(&get_help_controller());
     wxHelpProvider::Set(provider);
-	// for help: zip files
+    // for help: zip files
     wxFileSystem::AddHandler(new wxZipFSHandler);
-	if(!init_help(*loc))
-		wxLogWarning(_("No help file found."));
+    if(!init_help(*loc))
+      wxLogWarning(_("No help file found."));
 
     check_config(); // asks for configuration if not yet done
 
@@ -291,58 +279,6 @@ namespace holtz
 
   bool wxHoltz::check_config()
   {
-    bool ok = false;
-    wxConfigBase* cfg = wxConfig::Get();
-    wxString buf;
-    if( cfg->Read( wxT("skin_file"), &buf) )
-    {
-      if( wxFileExists(buf) )
-	ok = true;
-    }
-    if( !ok )
-    {
-      buf = wxT(DEFAULT_SKIN_FILE);
-      if( wxFileExists(buf) )
-      {
-	cfg->Write( wxT("skin_file"), buf);
-	cfg->Flush();
-	ok = true;
-      }
-    }
-    if( !ok )
-    {
-      buf = wxFileSelector( _("Choose a skin File"), wxT(""), 
-			    wxT(""), wxT(""), _("Skin Files (*.zip)|*.zip"),
-			    wxOPEN );
-      if( wxFileExists(buf) )
-      {
-	cfg->Write( wxT("skin_file"), buf);
-	cfg->Flush();
-      }
-    }     
-
-    ok = false;
-    if( cfg->Read( wxT("beep_file"), &buf) )
-    {
-      if( wxFileExists(buf) )
-	ok = true;
-    }
-    if( !ok )
-    {
-      buf = wxT(DEFAULT_BEEP_FILE);
-      if( wxFileExists(buf) )
-      {
-	cfg->Write( wxT("beep_file"), buf);
-	cfg->Flush();
-	ok = true;
-      }
-    }
-    if( !ok )
-    {
-      cfg->Write( wxT("play_sound"), false );
-      cfg->Flush();
-    }
-
     return true;
   }
 
@@ -357,10 +293,11 @@ namespace holtz
   // ----------------------------------------------------------------------------
 
   Dimensions::Dimensions()
-    : field_x(0), field_y(0), field_width(51), field_height(51), field_packed_height(44),
+    : field_x(0), field_y(0), field_width(51), field_height(51), 
+      field_packed_width(44), field_packed_height(44),
       caption_height(30), stone_offset(20), board_x_offset(10), board_y_offset(10),
       board_stones_spacing(30), player_player_spacing(10), 
-      stones_player_spacing(10)
+      stones_player_spacing(10), rotate_symmetric(false)
   {
   }
 
@@ -368,36 +305,41 @@ namespace holtz
     : field_x(0), field_y(0), caption_height(30), stone_offset(20),
       board_x_offset(10), board_y_offset(10),
       board_stones_spacing(30), player_player_spacing(10), 
-      stones_player_spacing(10)
+      stones_player_spacing(10), rotate_symmetric(false)
   {
     wxBitmap bitmap(field_xpm);
     field_width  = bitmap.GetWidth();
     field_height = bitmap.GetHeight();
     field_packed_height = int(field_height * 0.866);	// height * cos(30deg)
+    field_packed_width  = int(field_width  * 0.866);	// height * cos(30deg)
   }
 
   Dimensions::Dimensions( wxConfigBase &config, wxBitmap &bitmap )	// load from configuration
     : field_x(0), field_y(0), caption_height(30), stone_offset(20),
       board_x_offset(10), board_y_offset(10),
       board_stones_spacing(30), player_player_spacing(10), 
-      stones_player_spacing(10)
+      stones_player_spacing(10), rotate_symmetric(false)
   {
     field_width  = bitmap.GetWidth();
     field_height = bitmap.GetHeight();
     field_packed_height = int(field_height * 0.866);	// height * cos(30deg)
+    field_packed_width  = int(field_width  * 0.866);	// height * cos(30deg)
 
     int buf;
+    bool bool_buf;
 
     if( config.Read( wxT("field_x"), &buf ) ) field_x = buf;
     if( config.Read( wxT("field_y"), &buf ) ) field_y = buf;
     if( config.Read( wxT("field_width"), &buf ) ) field_width = buf;
     if( config.Read( wxT("field_height"), &buf ) ) field_height = buf;
+    if( config.Read( wxT("field_packed_width"), &buf ) ) field_packed_width = buf;
     if( config.Read( wxT("field_packed_height"), &buf ) ) field_packed_height = buf;
     if( config.Read( wxT("caption_height"), &buf ) ) caption_height = buf;
     if( config.Read( wxT("stone_offset"), &buf ) ) stone_offset = buf;
     if( config.Read( wxT("board_stones_spacing"), &buf ) ) board_stones_spacing = buf;
     if( config.Read( wxT("player_player_spacing"), &buf ) ) player_player_spacing = buf;
     if( config.Read( wxT("stones_player_spacing"), &buf ) ) stones_player_spacing = buf;
+    if( config.Read( wxT("rotate_symmetric"), &bool_buf ) ) rotate_symmetric = bool_buf;
   }
 
   // ----------------------------------------------------------------------------
@@ -413,42 +355,77 @@ namespace holtz
     {
       const Stones::Stone_Type &stone_type = stone_bitmap->first;
 
-      wxBitmap field_stone_bitmap = wxImage(normal.field_bitmaps[field_empty]).Copy().ConvertToBitmap();
-      wxMemoryDC dc;
-      dc.SelectObject( field_stone_bitmap );
-      dc.DrawBitmap( stone_bitmap->second, 0, 0, true );
+      wxImage field_stone_image (normal.field_bitmaps[field_empty]);
+      wxImage stone_image (stone_bitmap->second);
+      unsigned char *field_stone_data = field_stone_image.GetData();
+      unsigned char *stone_data       = stone_image.GetData();
+      unsigned char mask_colour[3];
+      mask_colour[0] = stone_image.GetMaskRed();
+      mask_colour[1] = stone_image.GetMaskGreen();
+      mask_colour[2] = stone_image.GetMaskBlue();
+      int min_width = field_stone_image.GetWidth() < stone_image.GetWidth() ? 
+	field_stone_image.GetWidth() : stone_image.GetWidth();
+      int min_height = field_stone_image.GetHeight() < stone_image.GetHeight() ? 
+	field_stone_image.GetHeight() : stone_image.GetHeight();
 
+      for( int x = 0; x < min_width; ++x )
+        for( int y = 0; y < min_height; ++y )
+	{
+	  bool masked = true;
+	  for( int c = 0; c < 3; ++c )
+	  {
+	    if( mask_colour[c] != stone_data[(x+y*stone_image.GetWidth())*3 + c] )
+	    {
+	      masked = false;
+	      break;
+	    }
+	  }
+	  if( !masked )
+	  {
+	    for( int c = 0; c < 3; ++c )
+	    {
+	      field_stone_data[(x+y*field_stone_image.GetWidth())*3 + c] = 
+		stone_data[(x+y*stone_image.GetWidth())*3 + c];
+	    }
+	  }
+	}
       Field_State_Type field_type = Field_State_Type(stone_type);
       assert( Board::is_stone( field_type ) );
-      normal.field_bitmaps[field_type] = field_stone_bitmap;
+      normal.field_bitmaps[field_type] = field_stone_image.ConvertToBitmap();
+
+      field_stone_image.Destroy();
+      stone_image.Destroy();
     }
   }
 
   void Bitmap_Handler::setup_rotated_bitmaps()
   {
-    // rotate field_bitmaps
-    rotated.field_bitmaps.clear();
-    std::map<Field_State_Type,wxBitmap>::iterator field_bitmap;
-    for( field_bitmap =  normal.field_bitmaps.begin();
-	 field_bitmap != normal.field_bitmaps.end(); ++field_bitmap )
+    if( !dimensions.rotate_symmetric )
     {
-      wxBitmap &normal_bitmap = field_bitmap->second;
-      const Field_State_Type &type = field_bitmap->first;
+      // rotate field_bitmaps
+      rotated.field_bitmaps.clear();
+      std::map<Field_State_Type,wxBitmap>::iterator field_bitmap;
+      for( field_bitmap =  normal.field_bitmaps.begin();
+	   field_bitmap != normal.field_bitmaps.end(); ++field_bitmap )
+      {
+	wxBitmap &normal_bitmap = field_bitmap->second;
+	const Field_State_Type &type = field_bitmap->first;
       wxImage normal_image = wxImage(normal_bitmap).Rotate90( false /*counter clockwise*/ );
       rotated.field_bitmaps.insert
 	(std::pair<Field_State_Type,wxBitmap>(type, normal_image.ConvertToBitmap()));
-    }
-    // rotate stone_bitmaps
-    rotated.stone_bitmaps.clear();
-    std::map<Stones::Stone_Type,wxBitmap>::iterator stone_bitmap;
-    for( stone_bitmap =  normal.stone_bitmaps.begin();
-	 stone_bitmap != normal.stone_bitmaps.end(); ++stone_bitmap )
-    {
-      wxBitmap &normal_bitmap = stone_bitmap->second;
-      const Stones::Stone_Type &type = stone_bitmap->first;
-      wxImage normal_image = wxImage(normal_bitmap).Rotate90( false /*counter clockwise*/ );
-      rotated.stone_bitmaps.insert
-	(std::pair<Stones::Stone_Type,wxBitmap>(type, normal_image.ConvertToBitmap()));
+      }
+      // rotate stone_bitmaps
+      rotated.stone_bitmaps.clear();
+      std::map<Stones::Stone_Type,wxBitmap>::iterator stone_bitmap;
+      for( stone_bitmap =  normal.stone_bitmaps.begin();
+	   stone_bitmap != normal.stone_bitmaps.end(); ++stone_bitmap )
+      {
+	wxBitmap &normal_bitmap = stone_bitmap->second;
+	const Stones::Stone_Type &type = stone_bitmap->first;
+	wxImage normal_image = wxImage(normal_bitmap).Rotate90( false /*counter clockwise*/ );
+	rotated.stone_bitmaps.insert
+	  (std::pair<Stones::Stone_Type,wxBitmap>(type, normal_image.ConvertToBitmap()));
+      }
     }
   }
   
@@ -711,10 +688,10 @@ namespace holtz
   {
   }
 
-  Board_Panel::Board_Panel( Settings &settings, Game &game, Game_Window &game_window,
-			    Bitmap_Handler &bitmap_handler, 
-			    Sequence_Generator* &sg )
-    : settings(settings), game(game), game_window(game_window), bitmap_handler(bitmap_handler), 
+  Board_Panel::Board_Panel( Settings &settings, Game_Manager &game_manager, 
+			    WX_GUI_Manager &gui_manager, Sequence_Generator* &sg )
+    : settings(settings), game_manager(game_manager), gui_manager(gui_manager), 
+      bitmap_handler(gui_manager.get_bitmap_handler()), 
       board_x(bitmap_handler.dimensions.board_x_offset), 
       board_y(bitmap_handler.dimensions.board_y_offset),
       sequence_generator( sg )     
@@ -722,7 +699,12 @@ namespace holtz
     if( settings.show_coordinates )
     {
       if( settings.rotate_board )
-	board_y += bitmap_handler.dimensions.field_packed_height;
+      {
+	if( bitmap_handler.dimensions.rotate_symmetric )
+	  board_y += bitmap_handler.dimensions.field_width;
+	else
+	  board_y += bitmap_handler.dimensions.field_height;
+      }
       else
 	board_x += bitmap_handler.dimensions.field_width;
     }
@@ -730,25 +712,44 @@ namespace holtz
 
   void Board_Panel::calc_dimensions()
   {
+    Game &game = gui_manager.get_display_game();
     board_x = bitmap_handler.dimensions.board_x_offset;
     board_y = bitmap_handler.dimensions.board_y_offset;
     if( settings.show_coordinates )
     {
       if( settings.rotate_board )
-	board_y += bitmap_handler.dimensions.field_packed_height;
+      {
+	if( bitmap_handler.dimensions.rotate_symmetric )
+	  board_y += bitmap_handler.dimensions.field_width;
+	else
+	  board_y += bitmap_handler.dimensions.field_height;
+      }
       else
 	board_x += bitmap_handler.dimensions.field_width;
     }
 
     if( settings.rotate_board )
     {
-      width = bitmap_handler.dimensions.field_packed_height * (game.board.get_y_size()-1) + 
-	bitmap_handler.dimensions.field_height + board_x; 
-      height = bitmap_handler.dimensions.field_width * game.board.get_x_size() +
-	bitmap_handler.dimensions.field_width / 2 + board_y; 
-
-      if( settings.show_coordinates )
-	height += bitmap_handler.dimensions.field_width;
+      if( bitmap_handler.dimensions.rotate_symmetric )
+      {
+	width = bitmap_handler.dimensions.field_packed_width * (game.board.get_y_size()-1) + 
+	  bitmap_handler.dimensions.field_width + board_x; 
+	height = bitmap_handler.dimensions.field_height * game.board.get_x_size() +
+	  bitmap_handler.dimensions.field_height / 2 + board_y; 
+	
+	if( settings.show_coordinates )
+	  height += bitmap_handler.dimensions.field_height;
+      }
+      else
+      {
+	width = bitmap_handler.dimensions.field_packed_height * (game.board.get_y_size()-1) + 
+	  bitmap_handler.dimensions.field_height + board_x; 
+	height = bitmap_handler.dimensions.field_width * game.board.get_x_size() +
+	  bitmap_handler.dimensions.field_width / 2 + board_y; 
+	
+	if( settings.show_coordinates )
+	  height += bitmap_handler.dimensions.field_width;
+      }
     }
     else
     {
@@ -764,6 +765,7 @@ namespace holtz
 
   void Board_Panel::draw( wxDC &dc ) const
   {
+    Game &game = gui_manager.get_display_game();
     Bitmap_Set &bitmap_set = get_bitmap_set();
 
     for( int fy = 0; fy < game.board.get_y_size(); ++fy )
@@ -781,6 +783,7 @@ namespace holtz
   {
     if( settings.show_coordinates )
     {
+      Game &game = gui_manager.get_display_game();
       dc.SetTextForeground(*wxBLACK/*settings.coordinate_font_colour*/);
       wxFont font(20,wxDECORATIVE,wxNORMAL,wxNORMAL);
       dc.SetFont( font /*settings.coordinate_font*/ );
@@ -800,10 +803,20 @@ namespace holtz
 	    int coord_x, coord_y;
 	    if( settings.rotate_board )
 	    {
-	      coord_x = field.first  + (bitmap_handler.dimensions.field_height    - w) / 2 +
-		bitmap_handler.dimensions.field_y;
-	      coord_y = field.second + (bitmap_handler.dimensions.field_width * 3 - h) / 2 +
-		bitmap_handler.dimensions.field_x;
+	      if( bitmap_handler.dimensions.rotate_symmetric )
+	      {
+		coord_x = field.first  + (bitmap_handler.dimensions.field_width      - w) / 2 +
+		  bitmap_handler.dimensions.field_x;
+		coord_y = field.second + (bitmap_handler.dimensions.field_height * 3 - h) / 2 +
+		  bitmap_handler.dimensions.field_y;
+	      }
+	      else
+	      {
+		coord_x = field.first  + (bitmap_handler.dimensions.field_height    - w) / 2 +
+		  bitmap_handler.dimensions.field_y;
+		coord_y = field.second + (bitmap_handler.dimensions.field_width * 3 - h) / 2 +
+		  bitmap_handler.dimensions.field_x;
+	      }
 	    }
 	    else
 	    {
@@ -830,10 +843,20 @@ namespace holtz
 	    int coord_x, coord_y;
 	    if( settings.rotate_board )
 	    {
-	      coord_x = field.first  + (bitmap_handler.dimensions.field_height - w) / 2 +
-		bitmap_handler.dimensions.field_y;
-	      coord_y = field.second - (bitmap_handler.dimensions.field_width  + h) / 2 +
-		bitmap_handler.dimensions.field_x;
+	      if( bitmap_handler.dimensions.rotate_symmetric )
+	      {
+		coord_x = field.first  + (bitmap_handler.dimensions.field_width  - w) / 2 +
+		  bitmap_handler.dimensions.field_x;
+		coord_y = field.second - (bitmap_handler.dimensions.field_height + h) / 2 +
+		  bitmap_handler.dimensions.field_y;
+	      }
+	      else
+	      {
+		coord_x = field.first  + (bitmap_handler.dimensions.field_height - w) / 2 +
+		  bitmap_handler.dimensions.field_y;
+		coord_y = field.second - (bitmap_handler.dimensions.field_width  + h) / 2 +
+		  bitmap_handler.dimensions.field_x;
+	      }
 	    }
 	    else
 	    {
@@ -861,61 +884,59 @@ namespace holtz
       {
 	Sequence_Generator::Sequence_State state;
 	state = sequence_generator->add_click( pos );
-	game_window.set_mark( -1, -1 );
-	game_window.get_frame().SetStatusText(wxT(""));
+	gui_manager.reset();
 	
 	switch( state )
 	{
 	case Sequence_Generator::finished:
 	  sequence_generator = 0;
-	  game_window.continue_game();
+	  game_manager.continue_game();
 	  break;
 	case Sequence_Generator::hold_white:
 	case Sequence_Generator::hold_grey:
 	case Sequence_Generator::hold_black:
 	{
 	  std::pair<int,int> coord = get_field_pos( pos.x, pos.y );
-	  game_window.set_mark( coord.first, coord.second );
-	  game_window.show_user_information( true );
+	  gui_manager.set_mark( coord.first, coord.second );
+	  gui_manager.show_user_information( true );
 	}
 	break;
 	case Sequence_Generator::another_click:
-	  game_window.show_user_information( true );
+	  gui_manager.show_user_information( true );
 	  break;
 	case Sequence_Generator::fatal_error:
 	  msg.Printf( _("Fatal Error!") );
-	      
-	  wxMessageBox( msg, _("Click Error"), wxOK | wxICON_ERROR, &game_window );
+	  gui_manager.report_error( msg, _("Click Error") );
 	  break;
 	case Sequence_Generator::error_require_knock_out:
-	  game_window.get_frame().SetStatusText(_("You must do the knock out move!"));
+	  gui_manager.show_status_text(_("You must do the knock out move!"));
 	  break;
 	case Sequence_Generator::error_require_set:
-	  game_window.get_frame().SetStatusText(_("You have to set a stone!"));
+	  gui_manager.show_status_text(_("You have to set a stone!"));
 	  break;
 	case Sequence_Generator::error_require_remove:
-	  game_window.get_frame().SetStatusText(_("You have to remove an empty border field!"));
+	  gui_manager.show_status_text(_("You have to remove an empty border field!"));
 	  break;
 	case Sequence_Generator::error_can_t_remove:
-	  game_window.get_frame().SetStatusText(_("Field can't be removed without moving another stone!"));
+	  gui_manager.show_status_text(_("Field can't be removed without moving another stone!"));
 	  break;
 	case Sequence_Generator::error_can_t_move_here:
-	  game_window.get_frame().SetStatusText(_("You can't move to that field!"));
+	  gui_manager.show_status_text(_("You can't move to that field!"));
 	  break;
 	case Sequence_Generator::error_can_t_set_here:
-	  game_window.get_frame().SetStatusText(_("Please set the stone on an empty field!"));
+	  gui_manager.show_status_text(_("Please set the stone on an empty field!"));
 	  break;
 	case Sequence_Generator::error_must_pick_common_stone:
-	  game_window.get_frame().SetStatusText(_("You must pick a common stone!"));
+	  gui_manager.show_status_text(_("You must pick a common stone!"));
 	  break;
 	case Sequence_Generator::error_wrong_player:
-	  game_window.get_frame().SetStatusText(_("Its not the turn of that player!"));
+	  gui_manager.show_status_text(_("Its not the turn of that player!"));
 	  break;
 	case Sequence_Generator::error_impossible_yet:
-	  game_window.get_frame().SetStatusText(_("You can't do that at the moment!"));
+	  gui_manager.show_status_text(_("You can't do that at the moment!"));
 	  break;
 	case Sequence_Generator::error_must_knock_out_with_same_stone:
-	  game_window.get_frame().SetStatusText(_("You must knock out once more with the same stone!"));
+	  gui_manager.show_status_text(_("You must knock out once more with the same stone!"));
 	  break;
 	  /*
 	    default:
@@ -930,6 +951,7 @@ namespace holtz
 
   Field_Pos Board_Panel::get_field( int abs_x, int abs_y ) const
   {
+    Game &game = gui_manager.get_display_game();
     int rel_x, rel_y;
     if( settings.rotate_board )
     {
@@ -937,8 +959,17 @@ namespace holtz
       rel_x = abs_y - y - board_y;
       rel_y = abs_x - x - board_x;
       // invert y-axis => rotated board
-      int board_size_y = bitmap_handler.dimensions.field_width * game.board.get_x_size() 
-	+ bitmap_handler.dimensions.field_width / 2;
+      int board_size_y;
+      if( bitmap_handler.dimensions.rotate_symmetric )
+      {
+	board_size_y = bitmap_handler.dimensions.field_height * game.board.get_x_size() 
+	  + bitmap_handler.dimensions.field_height / 2;
+      }
+      else
+      {
+	board_size_y = bitmap_handler.dimensions.field_width * game.board.get_x_size() 
+	  + bitmap_handler.dimensions.field_width / 2;
+      }
       rel_x = board_size_y - rel_x - 1;
     }
     else
@@ -968,22 +999,41 @@ namespace holtz
 
   std::pair<int,int> Board_Panel::get_field_pos( int col, int row ) const
   {
+    Game &game = gui_manager.get_display_game();
     int offset;
 
     if( settings.rotate_board )
     {
-      if( row & 1 )		// even row
-	offset = bitmap_handler.dimensions.field_width / 2;
-      else
-	offset = 0;
-      int anf_x = x + board_x - bitmap_handler.dimensions.field_y;
-      int anf_y = y + board_y - bitmap_handler.dimensions.field_x + offset;
+      if( bitmap_handler.dimensions.rotate_symmetric )
+      {
+	if( row & 1 )		// even row
+	  offset = bitmap_handler.dimensions.field_height / 2;
+	else
+	  offset = 0;
+	int anf_x = x + board_x - bitmap_handler.dimensions.field_x;
+	int anf_y = y + board_y - bitmap_handler.dimensions.field_y + offset;
 
-      // swap x-y and invert y-axis => rotated board
-      int field_y = anf_y
-	+ bitmap_handler.dimensions.field_width * (game.board.get_x_size() - 1 - col);
-      int field_x = anf_x + row*bitmap_handler.dimensions.field_packed_height;
-      return std::pair<int,int>( field_x, field_y );
+	// swap x-y and invert y-axis => rotated board
+	int field_y = anf_y
+	  + bitmap_handler.dimensions.field_height * (game.board.get_x_size() - 1 - col);
+	int field_x = anf_x + row*bitmap_handler.dimensions.field_packed_width;
+	return std::pair<int,int>( field_x, field_y );
+      }
+      else
+      {
+	if( row & 1 )		// even row
+	  offset = bitmap_handler.dimensions.field_width / 2;
+	else
+	  offset = 0;
+	int anf_x = x + board_x - bitmap_handler.dimensions.field_y;
+	int anf_y = y + board_y - bitmap_handler.dimensions.field_x + offset;
+
+	// swap x-y and invert y-axis => rotated board
+	int field_y = anf_y
+	  + bitmap_handler.dimensions.field_width * (game.board.get_x_size() - 1 - col);
+	int field_x = anf_x + row*bitmap_handler.dimensions.field_packed_height;
+	return std::pair<int,int>( field_x, field_y );
+      }
     }
     else
     {
@@ -1001,7 +1051,7 @@ namespace holtz
 
   Bitmap_Set &Board_Panel::get_bitmap_set() const
   {
-    if( settings.rotate_board )
+    if( settings.rotate_board && !bitmap_handler.dimensions.rotate_symmetric )
       return bitmap_handler.rotated;
     else
       return bitmap_handler.normal;
@@ -1018,10 +1068,12 @@ namespace holtz
   {
   }
 
-  Stone_Panel::Stone_Panel( Settings &settings, Stones &stones, Game_Window &game_window,
-			    Bitmap_Handler &bitmap_handler, 
+  Stone_Panel::Stone_Panel( Settings &settings, Stones &stones, Game_Manager &game_manager, 
+			    WX_GUI_Manager &gui_manager,
 			    Sequence_Generator* &sg )
-    : settings(settings), stones(stones), game_window(game_window), bitmap_handler(bitmap_handler), 
+    : settings(settings), stones(stones), 
+      game_manager(game_manager), gui_manager(gui_manager), 
+      bitmap_handler(gui_manager.get_bitmap_handler()), 
       sequence_generator(sg)
   {
   }
@@ -1055,10 +1107,10 @@ namespace holtz
 	int i;
 	for( i = 0; i < count; ++i )
 	{
-	  if( settings.rotate_stones )
+	  if( settings.rotate_stones && !bitmap_handler.dimensions.rotate_symmetric )
 	  {
 	    dc.DrawBitmap( bitmap_handler.normal.field_bitmaps[ field_empty ], 
-			 x_pos, y_pos, true );
+			   x_pos, y_pos, true );
 	    dc.DrawBitmap( bitmap_handler.rotated.stone_bitmaps[ Stones::Stone_Type(stone_type) ], 
 			   x_pos, y_pos, true );
 	  }
@@ -1078,7 +1130,7 @@ namespace holtz
       }
       else			// display only one stone and write count as text on it
       {
-	if( settings.rotate_stones )
+	if( settings.rotate_stones && !bitmap_handler.dimensions.rotate_symmetric )
 	{
 	  dc.DrawBitmap( bitmap_handler.normal.field_bitmaps[ field_empty ], 
 			 x_pos, y_pos, true );
@@ -1139,61 +1191,59 @@ namespace holtz
 	{
 	  Sequence_Generator::Sequence_State state;
 	  state = sequence_generator->add_click_common_stone( type );
-	  game_window.set_mark( -1, -1 );
-	  game_window.get_frame().SetStatusText(wxT(""));
+	  gui_manager.reset();
 	  
 	  switch( state )
 	  {
 	    case Sequence_Generator::finished:
 	      sequence_generator = 0;
-	      game_window.continue_game();
+	      game_manager.continue_game();
 	      break;
 	    case Sequence_Generator::hold_white:
 	    case Sequence_Generator::hold_grey:
 	    case Sequence_Generator::hold_black:
 	    {
 	      std::pair<int,int> coord = get_field_pos( col, type );
-	      game_window.set_mark( coord.first, coord.second );
-	      game_window.show_user_information( true );
+	      gui_manager.set_mark( coord.first, coord.second );
+	      gui_manager.show_user_information( true );
 	    }
 	    break;
 	    case Sequence_Generator::another_click:
-	      game_window.show_user_information( true );
+	      gui_manager.show_user_information( true );
 	      break;
 	    case Sequence_Generator::fatal_error:
 	      msg.Printf( _("Fatal Error!") );
-	    
-	      wxMessageBox(msg, _("Click Error"), wxOK | wxICON_ERROR, &game_window);
+	      gui_manager.report_error( msg, _("Click Error") );
 	      break;
 	    case Sequence_Generator::error_require_knock_out:
-	      game_window.get_frame().SetStatusText(_("You must do the knock out move!"));
+	      gui_manager.show_status_text(_("You must do the knock out move!"));
 	      break;
 	    case Sequence_Generator::error_require_set:
-	      game_window.get_frame().SetStatusText(_("You have to set a stone!"));
+	      gui_manager.show_status_text(_("You have to set a stone!"));
 	      break;
 	    case Sequence_Generator::error_require_remove:
-	      game_window.get_frame().SetStatusText(_("You have to remove an empty border field!"));
+	      gui_manager.show_status_text(_("You have to remove an empty border field!"));
 	      break;
 	    case Sequence_Generator::error_can_t_remove:
-	      game_window.get_frame().SetStatusText(_("Field can't be removed without moving another stone!"));
+	      gui_manager.show_status_text(_("Field can't be removed without moving another stone!"));
 	      break;
 	    case Sequence_Generator::error_can_t_move_here:
-	      game_window.get_frame().SetStatusText(_("You can't move to that field!"));
+	      gui_manager.show_status_text(_("You can't move to that field!"));
 	      break;
 	    case Sequence_Generator::error_can_t_set_here:
-	      game_window.get_frame().SetStatusText(_("Please set the stone on an empty field!"));
+	      gui_manager.show_status_text(_("Please set the stone on an empty field!"));
 	      break;
 	    case Sequence_Generator::error_must_pick_common_stone:
-	      game_window.get_frame().SetStatusText(_("You must pick a common stone!"));
+	      gui_manager.show_status_text(_("You must pick a common stone!"));
 	      break;
 	    case Sequence_Generator::error_wrong_player:
-	      game_window.get_frame().SetStatusText(_("Its not the turn of that player!"));
+	      gui_manager.show_status_text(_("Its not the turn of that player!"));
 	      break;
 	    case Sequence_Generator::error_impossible_yet:
-	      game_window.get_frame().SetStatusText(_("You can't do that at the moment!"));
+	      gui_manager.show_status_text(_("You can't do that at the moment!"));
 	      break;
 	    case Sequence_Generator::error_must_knock_out_with_same_stone:
-	      game_window.get_frame().SetStatusText(_("You must knock out once more with the same stone!"));
+	      gui_manager.show_status_text(_("You must knock out once more with the same stone!"));
 	      break;
 	      /*
 		default:
@@ -1256,12 +1306,13 @@ namespace holtz
   }
 				   
   
-  Player_Panel::Player_Panel( Settings &settings, Player &player, Game_Window &game_window,
-			      Bitmap_Handler &bitmap_handler, 
-			      Sequence_Generator* &sg )
-    : settings(settings), player(player), game_window(game_window), 
-      bitmap_handler(bitmap_handler), sequence_generator(sg), 
-      stone_panel( settings.stone_settings, player.stones, game_window, bitmap_handler, sg ),
+  Player_Panel::Player_Panel( Settings &settings, Player &player, Game_Manager &game_manager,
+			      WX_GUI_Manager &gui_manager, Sequence_Generator* &sg )
+    : settings(settings), player(player), 
+      game_manager(game_manager), gui_manager(gui_manager), 
+      bitmap_handler(gui_manager.get_bitmap_handler()), 
+      sequence_generator(sg), 
+      stone_panel( settings.stone_settings, player.stones, game_manager, gui_manager, sg ),
       header_panel( settings, player )
   {
     add( &header_panel );
@@ -1285,61 +1336,59 @@ namespace holtz
 	{
 	  Sequence_Generator::Sequence_State state;
 	  state = sequence_generator->add_click_player_stone( player.id, type );
-	  game_window.set_mark( -1, -1 );
-	  game_window.get_frame().SetStatusText(wxT(""));
+	  gui_manager.reset();
 
 	  switch( state )
 	  {
 	    case Sequence_Generator::finished:
 	      sequence_generator = 0;
-	      game_window.continue_game();
+	      game_manager.continue_game();
 	      break;
 	    case Sequence_Generator::hold_white:
 	    case Sequence_Generator::hold_grey:
 	    case Sequence_Generator::hold_black:
 	    {
 	      std::pair<int,int> field = stone_panel.get_field_pos( clicked_stone );
-	      game_window.set_mark( field.first, field.second );
-	      game_window.show_user_information( true );
+	      gui_manager.set_mark( field.first, field.second );
+	      gui_manager.show_user_information( true );
 	    }
 	    break;
 	    case Sequence_Generator::another_click:
-	      game_window.show_user_information( true );
+	      gui_manager.show_user_information( true );
 	      break;
 	    case Sequence_Generator::fatal_error:
 	      msg.Printf( _("Fatal Error!") );
-	      
-	      wxMessageBox(msg, _("Click Error"), wxOK | wxICON_ERROR, &game_window);
+	      gui_manager.report_error( msg, _("Click Error") );
 	      break;
 	    case Sequence_Generator::error_require_knock_out:
-	      game_window.get_frame().SetStatusText(_("You must do the knock out move!"));
+	      gui_manager.show_status_text(_("You must do the knock out move!"));
 	      break;
 	    case Sequence_Generator::error_require_set:
-	      game_window.get_frame().SetStatusText(_("You have to set a stone!"));
+	      gui_manager.show_status_text(_("You have to set a stone!"));
 	      break;
 	    case Sequence_Generator::error_require_remove:
-	      game_window.get_frame().SetStatusText(_("You have to remove an empty border field!"));
+	      gui_manager.show_status_text(_("You have to remove an empty border field!"));
 	      break;
 	    case Sequence_Generator::error_can_t_remove:
-	      game_window.get_frame().SetStatusText(_("Field can't be removed without moving another stone!"));
+	      gui_manager.show_status_text(_("Field can't be removed without moving another stone!"));
 	      break;
 	    case Sequence_Generator::error_can_t_move_here:
-	      game_window.get_frame().SetStatusText(_("You can't move to that field!"));
+	      gui_manager.show_status_text(_("You can't move to that field!"));
 	      break;
 	    case Sequence_Generator::error_can_t_set_here:
-	      game_window.get_frame().SetStatusText(_("Please set the stone on an empty field!"));
+	      gui_manager.show_status_text(_("Please set the stone on an empty field!"));
 	      break;
 	    case Sequence_Generator::error_must_pick_common_stone:
-	      game_window.get_frame().SetStatusText(_("You must pick a common stone!"));
+	      gui_manager.show_status_text(_("You must pick a common stone!"));
 	      break;
 	    case Sequence_Generator::error_wrong_player:
-	      game_window.get_frame().SetStatusText(_("Its not the turn of that player!"));
+	      gui_manager.show_status_text(_("Its not the turn of that player!"));
 	      break;
 	    case Sequence_Generator::error_impossible_yet:
-	      game_window.get_frame().SetStatusText(_("You can't do that at the moment!"));
+	      gui_manager.show_status_text(_("You can't do that at the moment!"));
 	      break;
 	    case Sequence_Generator::error_must_knock_out_with_same_stone:
-	      game_window.get_frame().SetStatusText(_("You must knock out once more with the same stone!"));
+	      gui_manager.show_status_text(_("You must knock out once more with the same stone!"));
 	      break;
 	      /*
 		default:
@@ -1385,10 +1434,10 @@ namespace holtz
     }
     else
     {
-      //dc.SetTextBackground(game_window.GetBackgroundColour());
-      //caption_text->SetBackgroundColour(game_window.GetBackgroundColour());
+      //dc.SetTextBackground(gui_manager.get_background_colour());
+      //caption_text->SetBackgroundColour(gui_manager.get_background_colour());
 #ifndef DRAW_BACKGROUND
-      dc.SetBrush( wxBrush(game_window.GetBackgroundColour(), wxSOLID) );
+      dc.SetBrush( wxBrush(gui_manager.get_background_colour(), wxSOLID) );
       dc.DrawRectangle( x, y, w, h );
 #endif
     }
@@ -1421,33 +1470,44 @@ namespace holtz
   // Mouse Handler
   // ----------------------------------------------------------------------------
   
-  Mouse_Handler::Mouse_Handler( Game &game, Game_Window &game_window, Sequence_Generator * &sg )
-    : Generic_Mouse_Input(game), game_window(game_window), sequence_generator_hook(sg), ai(0)
+  Mouse_Handler::Mouse_Handler( Game_Manager &game_manager, WX_GUI_Manager &gui_manager,
+				Sequence_Generator * &sg )
+    : Generic_Mouse_Input(gui_manager.get_display_game()), 
+      game_manager(game_manager), gui_manager(gui_manager), 
+      sequence_generator_hook(sg), ai(0)
   {
   }
   
   void Mouse_Handler::init_mouse_input() 
   {
+    Game &game = gui_manager.get_display_game();
     sequence_generator.reset();
     sequence_generator_hook = &sequence_generator;
 
-    game_window.allow_user_activity();
+    stop_watch.Start();
+    gui_manager.allow_user_activity();
     if( game.current_player->help_mode == Player::show_hint )
     {
-      ai = &game_window.get_ai_handler();
+      ai = game_manager.get_hint_ai();
       ai->determine_hints();
     }
   }
   void Mouse_Handler::disable_mouse_input() 
   {
+    Game &game = gui_manager.get_display_game();
     sequence_generator_hook = 0;
 
+    used_time = stop_watch.Time();
     if( game.current_player->help_mode == Player::show_hint )
     {
       ai->abort();
-      game_window.remove_hint();
+      gui_manager.remove_hint();
     }
-    game_window.stop_user_activity();
+    gui_manager.stop_user_activity();
+  }
+  long Mouse_Handler::get_used_time()
+  {
+    return used_time;
   }
 
   // ----------------------------------------------------------------------------
@@ -1457,19 +1517,22 @@ namespace holtz
   Game_Panel::Settings::Settings( const Board_Panel::Settings &board_settings, 
 				  const Player_Panel::Settings &player_settings,
 				  const Stone_Panel::Settings &common_stone_settings,
-				  Arrangement_Type arrangement )
+				  Arrangement_Type arrangement,
+				  wxString skin_file, wxString beep_file, bool play_sound )
     : board_settings(board_settings), player_settings(player_settings), 
-      common_stone_settings(common_stone_settings ), arrangement(arrangement )
+      common_stone_settings(common_stone_settings ), arrangement(arrangement ),
+      skin_file(skin_file), beep_file(beep_file), play_sound(play_sound)
   {
   }
 
-  Game_Panel::Game_Panel( Settings &settings, Game &game, Game_Window &game_window, 
-			  Bitmap_Handler &bitmap_handler, Sequence_Generator* &sequence_generator )
-    : settings(settings), game(game), game_window(game_window), bitmap_handler(bitmap_handler),
+  Game_Panel::Game_Panel( Settings &settings, Game_Manager &game_manager, 
+			  WX_GUI_Manager &gui_manager, Sequence_Generator* &sequence_generator )
+    : settings(settings), game_manager(game_manager), gui_manager(gui_manager),
+      bitmap_handler(gui_manager.get_bitmap_handler()), 
       sequence_generator(sequence_generator),
-      board_panel( settings.board_settings, game, game_window, bitmap_handler, sequence_generator ),
-      stone_panel( settings.common_stone_settings, game.common_stones, game_window, bitmap_handler,
-		   sequence_generator )
+      board_panel( settings.board_settings, game_manager, gui_manager, sequence_generator ),
+      stone_panel( settings.common_stone_settings, gui_manager.get_display_game().common_stones, 
+		   game_manager, gui_manager,sequence_generator )
   {
     //rearrange_panels();		// will be done with calc_dimensions
   }
@@ -1540,12 +1603,12 @@ namespace holtz
   void Game_Panel::add_player( Player &player )
   {
     bool first = player_panels.empty();
-    Player_Panel *player_panel = new Player_Panel( settings.player_settings, player, game_window, 
-						   bitmap_handler, sequence_generator );
+    Player_Panel *player_panel = new Player_Panel( settings.player_settings, player, game_manager, 
+						   gui_manager, sequence_generator );
     player_panels.push_back( player_panel );
     
     if( !first ) 
-      player_panel_sizer.add( new Spacer(0,bitmap_handler.dimensions.player_player_spacing,true) );
+      player_panel_sizer.add( new Spacer(0,bitmap_handler.dimensions.player_player_spacing), true );
     player_panel_sizer.add( player_panel );
   }
 
@@ -1561,135 +1624,96 @@ namespace holtz
   }
 
   // ----------------------------------------------------------------------------
-  // Game Window
+  // WX_GUI_Manager
   // ----------------------------------------------------------------------------
 
-  Game_Window::Game_Window( wxFrame *parent_frame, Game &game )
-    : wxScrolledWindow( parent_frame ),
-      parent_frame(*parent_frame),
+  WX_GUI_Manager::WX_GUI_Manager( Game_Manager& game_manager, Game_Window &game_window )
+    : Game_UI_Manager( game_manager.get_game() ),
+      game_manager(game_manager), game_window(game_window),
       default_font(20, wxDECORATIVE, wxNORMAL, wxNORMAL),
       game_settings( Board_Panel::Settings( true, true, default_font ),
 		     Player_Panel::Settings( Stone_Panel::Settings( true ), default_font ),
 		     Stone_Panel::Settings( true ) ),
-      game_panel( game_settings, game, *this, bitmap_handler, sequence_generator ), 
-      mouse_handler( game, *this, sequence_generator ), 
-      ai( game, *this ), game(game), sequence_generator(0), 
-      move_animation( new Move_Sequence_Animation(*this) ),
-      player_setup_manager(0), clients_dialog(0), player_dialog(0),
+      game_panel( game_settings, game_manager, *this, sequence_generator ), 
+      sequence_generator(0),
       field_mark_x(-1), 
-      play_sound(false)
+      move_animation( new Move_Sequence_Animation(*this,game_window) ),
+      mouse_handler( game_manager, *this, sequence_generator )
   {
-    SetBackgroundColour(*wxWHITE);
-
-    bool skin_loaded = false;
-    wxConfigBase* cfg = wxConfig::Get();
-    wxString buf; bool bool_buf;
-    if( cfg->Read( wxT("skin_file"), &buf) )
-    {
-      skin_file = buf;
-      if( load_skin( skin_file ) )
-	skin_loaded = true;
-    }
-
-    if( !skin_loaded )
-    {
-      bitmap_handler.normal.field_bitmaps[field_removed]	= wxBitmap(field_removed_xpm);
-      bitmap_handler.normal.field_bitmaps[field_empty]		= wxBitmap(field_empty_xpm);
-      bitmap_handler.normal.stone_bitmaps[Stones::white_stone]	= wxBitmap(field_white_xpm);
-      bitmap_handler.normal.stone_bitmaps[Stones::grey_stone]	= wxBitmap(field_grey_xpm);
-      bitmap_handler.normal.stone_bitmaps[Stones::black_stone]	= wxBitmap(field_black_xpm);
-      bitmap_handler.field_mark					= wxBitmap(field_mark_xpm);
-      bitmap_handler.field_mark2				= wxBitmap(field_mark2_xpm);
-      bitmap_handler.background					= wxBitmap(background_xpm);
-      bitmap_handler.dimensions = Dimensions( field_black_xpm );
-
-      bitmap_handler.setup_field_stone_bitmaps();
-      bitmap_handler.setup_rotated_bitmaps();
-    }
-
-    if( cfg->Read( wxT("play_sound"), &bool_buf) ) play_sound = bool_buf;
-#if wxUSE_WAVE
-    if( cfg->Read( wxT("beep_file"), &buf) ) beep_file = buf;
-    if( beep_file != wxT("") )
-    {
-      if( !sound_beep.Create( beep_file ) )
-	play_sound = false;
-    }
-    else
-      play_sound = false;
-#endif
+    load_settings();
 
     add( &game_panel );
 
     x = 0; y = 0;
     calc_dimensions();
-    SetScrollbars( 10, 10, get_width() / 10 + 1, get_height() / 10 + 1 );
   }
 
-  Game_Window::~Game_Window()
+  WX_GUI_Manager::~WX_GUI_Manager()
   {
-    stop_game();
-    if( player_dialog )
-      player_dialog->Destroy();
-    if( clients_dialog )
-      clients_dialog->Destroy();
-    if( player_setup_manager )
-      delete player_setup_manager;
-
     delete move_animation;
   }
+
+  void WX_GUI_Manager::calc_dimensions()
+  {
+    Horizontal_Sizer::calc_dimensions();
+    game_window.init_scrollbars();
+  }
+
+  void WX_GUI_Manager::setup_game_display() // setup all windows to display game
+  {
+    game_panel.remove_players();
+    std::list<Player>::iterator i;
+    for( i = get_display_game().players.begin(); i != get_display_game().players.end(); ++i )
+    {
+      game_panel.add_player( *i );
+    }
+    calc_dimensions();
+  }
+
+  void WX_GUI_Manager::set_board( const Game &new_game )
+  {
+    display_game = new_game;
+    refresh();
+  }
+
+  void WX_GUI_Manager::update_board( const Game &new_game )
+  {
+    set_board( new_game );
+  }
+
+  void WX_GUI_Manager::report_winner( Player *player )
+  {
+    if( player )
+    {
+      wxString msg;
+      msg.Printf( _("And the winner is: %s"), player->name.c_str() );
+      report_information( msg, _("Winner") );
+    }
+    else
+    {
+      report_information( _("It seems that nobody could win the game."), _("Winner") );
+    }
+  }
+
+  void WX_GUI_Manager::report_error( wxString msg, wxString caption )
+  {
+    wxMessageBox( msg, caption, wxOK | wxICON_ERROR, &game_window );
+  }
+
+  void WX_GUI_Manager::report_information( wxString msg, wxString caption )
+  {
+    wxMessageBox( msg, caption, wxOK | wxICON_INFORMATION, &game_window );
+  }
+
+  void WX_GUI_Manager::reset()
+  {
+    set_mark( -1, -1 );
+    show_status_text( wxT("") );
+  }
   
-  void Game_Window::on_close()
+  void WX_GUI_Manager::show_user_information( bool visible, bool do_refresh )
   {
-    if( player_dialog )
-    {
-      player_dialog->Destroy();
-      player_dialog = 0;
-    }
-    if( clients_dialog )
-    {
-      clients_dialog->Destroy();
-      clients_dialog = 0;
-    }
-  }
-
-  void Game_Window::set_mark( int x, int y )
-  {
-    field_mark_x = x;
-    field_mark_y = y;
-
-    wxClientDC dc(this);
-    dc.BeginDrawing();
-    PrepareDC(dc);
-    draw_mark(dc);
-    dc.EndDrawing();
-  }
-
-  void Game_Window::draw_mark( wxDC &dc )
-  {
-    std::list< std::pair<int,int> >::iterator position;
-    for( position = field_mark2_positions.begin();
-	 position != field_mark2_positions.end(); ++position )
-    {
-      int &x = position->first;
-      int &y = position->second;
-      dc.DrawBitmap( bitmap_handler.field_mark2, x, y, true );
-    }
-
-    for( position = field_mark_positions.begin();
-	 position != field_mark_positions.end(); ++position )
-    {
-      int &x = position->first;
-      int &y = position->second;
-      dc.DrawBitmap( bitmap_handler.field_mark, x, y, true );
-    }
-
-    if( field_mark_x >= 0 )
-      dc.DrawBitmap( bitmap_handler.field_mark, field_mark_x, field_mark_y, true );
-  }
-
-  void Game_Window::show_user_information( bool visible, bool do_refresh )
-  {
+    Game &game = get_display_game();
     field_mark_positions.clear();
     field_mark2_positions.clear();
     if( visible )
@@ -1790,13 +1814,13 @@ namespace holtz
 	switch ( sequence_generator->get_required_move_type() )
 	{
 	  case Move::knock_out_move:
-	    get_frame().SetStatusText(_("Please do a knock out move")); // remove old status text message
+	    show_status_text(_("Please do a knock out move")); // remove old status text message
 	    break;
 	  case Move::set_move:
-	    get_frame().SetStatusText(_("You should set a stone")); // remove old status text message
+	    show_status_text(_("You should set a stone")); // remove old status text message
 	    break;
 	  case Move::remove:
-	    get_frame().SetStatusText(_("Just remove a field")); // remove old status text message
+	    show_status_text(_("Just remove a field")); // remove old status text message
 	    break;
 	  case Move::no_move:
 	  case Move::finish_move:
@@ -1806,398 +1830,228 @@ namespace holtz
     }
     else
     {
-      get_frame().SetStatusText(wxT("")); // remove old status text message
+      show_status_text(wxT("")); // remove old status text message
     }
     if( do_refresh )
       refresh();
   }
 
-  void Game_Window::give_hint( AI_Result ai_result )
+  void WX_GUI_Manager::give_hint( AI_Result ai_result )
   {
     current_hint = ai_result;
     show_user_information( true, true );
   }
 
-  void Game_Window::remove_hint()
+  void WX_GUI_Manager::remove_hint()
   {
     current_hint = AI_Result();
     show_user_information( true, false );
   }
 
-  void Game_Window::setup_new_game()
+  void WX_GUI_Manager::set_mark( int x, int y )
   {
-    stop_game();
-    
-    if( !player_setup_manager )
-      player_setup_manager = new Standalone_Player_Setup_Manager( *this );
-    else
-      player_setup_manager->new_game();
+    field_mark_x = x;
+    field_mark_y = y;
 
-    if( player_dialog )
-    {
-      player_dialog->aborted();
-      player_dialog->Destroy();
-    }
-
-    player_dialog = new Player_Setup_Dialog( this, *this, *player_setup_manager );
-    player_dialog->Center();
-    player_dialog->Show(true);
+    wxClientDC dc(&game_window);
+    dc.BeginDrawing();
+    game_window.PrepareDC(dc);
+    draw_mark(dc);
+    dc.EndDrawing();
   }
 
-  void Game_Window::setup_standalone_game()
+  void WX_GUI_Manager::draw_mark( wxDC &dc )
   {
-    stop_game();
-
-    if( player_setup_manager )
+    std::list< std::pair<int,int> >::iterator position;
+    for( position = field_mark2_positions.begin();
+	 position != field_mark2_positions.end(); ++position )
     {
-      delete player_setup_manager;
+      int &x = position->first;
+      int &y = position->second;
+      dc.DrawBitmap( bitmap_handler.field_mark2, x, y, true );
     }
 
-    player_setup_manager = new Standalone_Player_Setup_Manager( *this );
-
-    if( player_dialog )
+    for( position = field_mark_positions.begin();
+	 position != field_mark_positions.end(); ++position )
     {
-      player_dialog->aborted();
-      player_dialog->Destroy();
+      int &x = position->first;
+      int &y = position->second;
+      dc.DrawBitmap( bitmap_handler.field_mark, x, y, true );
     }
 
-    player_dialog = new Player_Setup_Dialog( this, *this, *player_setup_manager );
-    player_dialog->Center();
-    player_dialog->Show(true);
+    if( field_mark_x >= 0 )
+      dc.DrawBitmap( bitmap_handler.field_mark, field_mark_x, field_mark_y, true );
   }
 
-  void Game_Window::ask_new_game( wxString host )
-  {
-    wxString msg;
-    msg.Printf( _("New game requested from %s.\nDo you really want to start a new game?"), host.c_str() );
-    if( wxMessageBox( msg, _("Network Message"), wxYES | wxNO | wxICON_QUESTION ) == wxYES, this )
-    {
-      setup_new_game();
-    }
-  }
-
-  void Game_Window::setup_network_game()
-  {
-    stop_game();
-
-    if( player_setup_manager )
-    {
-      delete player_setup_manager;
-      player_setup_manager = 0;
-    }
-
-    bool ok = false;
-    Network_Connection_Dialog dialog(this);
-    dialog.Centre();
-    if( dialog.ShowModal() == wxID_CANCEL )
-      ok = false;
-    else
-    {
-      if( dialog.server->GetValue() ) // setup server?
-      {
-	wxIPV4address port;
-	if( port.Service( dialog.port->GetValue() ) )
-	{
-	  if( clients_dialog )
-	    clients_dialog->Destroy();
-
-	  Network_Manager *network_manager = new Network_Manager( game, *this );
-	  clients_dialog = new Network_Clients_Dialog( this, *network_manager );
-	  clients_dialog->Show(true);
-
-	  if( network_manager->setup_server(port) )
-	  {
-	    if( player_setup_manager )
-	      delete player_setup_manager;
-	    player_setup_manager = network_manager;
-	    ok = true;
-	  }
-	  else
-	  {
-	    if( clients_dialog )
-	    {
-	      clients_dialog->Destroy();
-	      clients_dialog = 0;
-	    }
-
-	    delete network_manager;
-	    wxMessageBox(_("Can't listen port"), _("Network Message"), wxOK | wxICON_ERROR, this);
-	  }
-	}
-	else
-	  wxMessageBox(_("Illegal port"), _("Network Message"), wxOK | wxICON_ERROR, this);
-      }
-      else
-      {
-	assert( dialog.client->GetValue() );
-
-	wxIPV4address host;
-	if( host.Hostname(dialog.hostname->GetValue()) && 
-	    host.Service(dialog.port->GetValue()) )
-	{	  
-	  Network_Manager *network_manager = new Network_Manager( game, *this );
-	  if( network_manager->setup_client(host) )
-	  {
-	    if( player_setup_manager )
-	      delete player_setup_manager;
-	    player_setup_manager = network_manager;
-	    ok = true;
-	  }
-	  else
-	  {
-	    wxMessageBox(_("Connection to Server failed"), _("Network Message"), wxOK | wxICON_ERROR, this);
-	  }
-	}
-	else
-	  wxMessageBox(_("Illegal hostname"), _("Network Message"), wxOK | wxICON_ERROR, this);
-      }
-    }
-    if(ok)
-    {
-      assert( player_setup_manager );
-
-      if( player_dialog )
-      {
-	player_dialog->aborted();
-	player_dialog->Destroy();
-      }
-
-      player_dialog = new Player_Setup_Dialog( this, *this, *player_setup_manager );
-      player_dialog->Center();
-      player_dialog->Show(true);
-    }
-  }
-
-  void Game_Window::reset( const Ruleset &ruleset )
-  {
-    sequence_generator = 0;
-    game.reset_game( ruleset );
-    game.remove_players();
-    game_panel.remove_players();
-    // remove marks
-    field_mark_x = -1;
-    field_mark2_positions.clear();
-  }
-
-  void Game_Window::new_game( std::list<Player> new_players, const Ruleset &ruleset )
-  {
-    reset(ruleset);
-
-    std::list<Player>::iterator player;
-    for( player = new_players.begin(); player != new_players.end(); ++player )
-    {
-      game.add_player( *player );
-      game_panel.add_player( game.players.back() );
-    }
-    calc_dimensions();
-    SetScrollbars( 10, 10, get_width() / 10 + 1, get_height() / 10 + 1 );
-  }
-
-  void Game_Window::continue_game()
-  {
-    bool go_on = true;
-    while(go_on)
-    {
-      set_mark( -1, -1 ); // remove any mark
-      Game::Game_State state;
-      try
-      {
-	state = game.continue_game();
-      }
-      catch(Exception e)
-      {
-	wxString msg;
-	msg.Printf( _("Exception caught!") );
-	
-	wxMessageBox(msg, _("Exception!"), wxOK | wxICON_ERROR, this);
-      }
-      refresh();
-      Player *winner;
-      switch( state )
-      {
-	case Game::finished:
-	{
-	  winner = game.get_winner();
-
-	  wxString msg;
-	  if( winner != 0 )
-	  {
-	    msg.Printf( _("And the Winner is: %s"), str_to_wxstr(winner->name).c_str() );
-	    wxMessageBox( msg, _("Winner"), wxOK | wxICON_INFORMATION, this);
-	  }
-	  else
-	  {
-	    wxMessageBox( _("Nobody won the game!"), _("Players tied"), wxOK | wxICON_INFORMATION, this);
-	  }
-
-	  go_on = false;
-	}
-	break;
-	case Game::wait_for_event:
-	  go_on = false;
-	  break;
-	case Game::next_players_turn:
-	  break;
-	case Game::interruption_possible:
-	  break;
-	case Game::wrong_number_of_players:
-	  go_on = false;
-	  break;
-      }
-    }
-  }
-  
-  void Game_Window::stop_game()
-  {
-    sequence_generator = 0;	// disable mouse handler from processing mouse clicks
-  }
-
-  void Game_Window::allow_user_activity()
+  void WX_GUI_Manager::allow_user_activity()
   {
     show_user_information( true );
     beep();			// tell user that his activity is recommended
   }
-  void Game_Window::stop_user_activity()
+  void WX_GUI_Manager::stop_user_activity()
   {
     show_user_information( false, false );
   }
 
-  void Game_Window::do_move_slowly( Sequence sequence, wxEvtHandler *done_handler, 
-				    int event_id  ) // show user how move is done
+  void WX_GUI_Manager::do_move_slowly( Sequence sequence, wxEvtHandler *done_handler, 
+				       int event_id  ) // show user how move is done
   {
+    Game &game = get_display_game();
     assert( sequence.check_sequence( game ) );
     bool ret = move_animation->start( sequence, game, done_handler, event_id );
     //!!! should be handled easier in the future !!!
     assert( ret );
   }
 
-  void Game_Window::OnDraw( wxDC &_dc )
+  void WX_GUI_Manager::show_status_text( wxString text ) // shows text in status bar
   {
-    // prepare background:
-    int width, width2; 
-    int height, height2;
-    GetVirtualSize(&width,&height); // get size from scrolled window
-    GetSize(&width2,&height2);
-    if( width2  > width  ) width  = width2;
-    if( height2 > height ) height = height2;
+    game_window.show_status_text( text );
+  }
 
-#ifdef DOUBLE_BUFFER
-    wxBitmap buffer( width, height );
-    wxMemoryDC mem;
-    mem.SelectObject(buffer);
-    PrepareDC(mem);
-    wxDC *dc = &mem;
-#else
-    wxDC *dc = &_dc;
-    dc->BeginDrawing();
+  void WX_GUI_Manager::beep()
+  {
+#if wxUSE_WAVE
+    if( game_settings.play_sound )
+      sound_beep.Play();
 #endif
+  }
 
-#ifdef DRAW_BACKGROUND
-    int bg_width = bitmap_handler.background.GetWidth();
-    int bg_height = bitmap_handler.background.GetHeight();
-    for( int y = 0; y < height + bg_height; y += bg_height )
+  Player_Input *WX_GUI_Manager::get_user_input()
+  {
+    return &mouse_handler;
+  }
+
+  void WX_GUI_Manager::load_settings()
+  {
+    bool ok = false;
+    wxConfigBase* cfg = wxConfig::Get();
+    wxString buf;
+
+    if( cfg->Read( wxT("skin_file"), &buf) )
     {
-      for( int x = 0; x < width + bg_width; x += bg_width )
+      if( wxFileExists(buf) )
       {
-	dc->DrawBitmap( bitmap_handler.background, x, y );
+	if( load_skin( buf ) )
+	{
+	  game_settings.skin_file = buf;
+	  ok = true;
+	}
       }
     }
-#endif
-
-    draw( *dc );
-    draw_mark( *dc );
-
-#ifdef DOUBLE_BUFFER
-#ifdef __WXGTK__		// work around for wxGTK which doesn't draw text on MemoryDC
-    // draw text directly on the real device context
-    _dc.BeginDrawing();
-    _dc.Blit(0,0, width, height, dc, 0, 0 );
-    dc = &_dc;			
-#endif
-#endif
-
-    draw_text( *dc );
-
-#ifdef DOUBLE_BUFFER
-#ifndef __WXGTK__
-    // draw buffer on the real device context
-    _dc.BeginDrawing();
-    _dc.Blit(0,0, width, height, dc, 0, 0 );
-    _dc.EndDrawing();
-#else
-    _dc.EndDrawing();
-#endif
-#else
-    dc->EndDrawing();
-#endif
-    /* test bitmaps
-    _dc.DrawBitmap( bitmap_handler.normal.field_bitmaps[field_removed], 300,   0, true );
-    _dc.DrawBitmap( bitmap_handler.normal.field_bitmaps[field_empty]  , 300, 100, true );
-    _dc.DrawBitmap( bitmap_handler.normal.field_bitmaps[field_white]  , 300, 200, true );
-    _dc.DrawBitmap( bitmap_handler.normal.field_bitmaps[field_grey]   , 300, 300, true );
-    _dc.DrawBitmap( bitmap_handler.normal.field_bitmaps[field_black]  , 300, 400, true );
-    _dc.DrawBitmap( bitmap_handler.normal.stone_bitmaps[Stones::white_stone]  , 400,   0, true );
-    _dc.DrawBitmap( bitmap_handler.normal.stone_bitmaps[Stones::grey_stone]   , 400, 100, true );
-    _dc.DrawBitmap( bitmap_handler.normal.stone_bitmaps[Stones::black_stone]  , 400, 200, true );
-
-    _dc.DrawBitmap( bitmap_handler.rotated.field_bitmaps[field_removed], 500,   0, true );
-    _dc.DrawBitmap( bitmap_handler.rotated.field_bitmaps[field_empty]  , 500, 100, true );
-    _dc.DrawBitmap( bitmap_handler.rotated.field_bitmaps[field_white]  , 500, 200, true );
-    _dc.DrawBitmap( bitmap_handler.rotated.field_bitmaps[field_grey]   , 500, 300, true );
-    _dc.DrawBitmap( bitmap_handler.rotated.field_bitmaps[field_black]  , 500, 400, true );
-    _dc.DrawBitmap( bitmap_handler.rotated.stone_bitmaps[Stones::white_stone]  , 600,   0, true );
-    _dc.DrawBitmap( bitmap_handler.rotated.stone_bitmaps[Stones::grey_stone]   , 600, 100, true );
-    _dc.DrawBitmap( bitmap_handler.rotated.stone_bitmaps[Stones::black_stone]  , 600, 200, true );
-    */
-  }
-
-  void Game_Window::on_erase_background( wxEraseEvent &WXUNUSED(event) )
-  {
-    // do nothing, just don't erase background...
-  }
-  void Game_Window::on_mouse_event( wxMouseEvent &event )
-  {
-    if( event.LeftDown() )	// if event is left click
+    if( !ok )
     {
-      get_frame().SetStatusText(wxT("")); // remove old status text message
+      buf = wxT(DEFAULT_SKIN_FILE);
+      if( wxFileExists(buf) )
+      {
+	if( load_skin( buf ) )
+	{
+	  cfg->Write( wxT("skin_file"), buf);
+	  cfg->Flush();
+	  game_settings.skin_file = buf;
+	  ok = true;
+	}
+      }
+    }
+    if( !ok )
+    {
+      buf = wxFileSelector( _("Choose a skin File"), wxT(""), 
+			    wxT(""), wxT(""), _("Skin Files (*.zip)|*.zip"),
+			    wxOPEN );
+      if( wxFileExists(buf) )
+      {
+	if( load_skin( buf ) )
+	{
+	  cfg->Write( wxT("skin_file"), buf);
+	  cfg->Flush();
+	  game_settings.skin_file = buf;
+	  ok = true;
+	}
+      }
+    }
+    if( !ok )
+    {
+      bitmap_handler.normal.field_bitmaps[field_removed]	= wxBitmap(field_removed_xpm);
+      bitmap_handler.normal.field_bitmaps[field_empty]		= wxBitmap(field_empty_xpm);
+      bitmap_handler.normal.stone_bitmaps[Stones::white_stone]	= wxBitmap(field_white_xpm);
+      bitmap_handler.normal.stone_bitmaps[Stones::grey_stone]	= wxBitmap(field_grey_xpm);
+      bitmap_handler.normal.stone_bitmaps[Stones::black_stone]	= wxBitmap(field_black_xpm);
+      bitmap_handler.field_mark					= wxBitmap(field_mark_xpm);
+      bitmap_handler.field_mark2				= wxBitmap(field_mark2_xpm);
+      bitmap_handler.background					= wxBitmap(background_xpm);
+      bitmap_handler.dimensions = Dimensions( field_black_xpm );
 
-      int cl_x, cl_y;
-      GetViewStart( &cl_x, &cl_y );	// window might be scrolled
-      cl_x = cl_x*10 + event.GetX();
-      cl_y = cl_y*10 + event.GetY();
-      on_click( cl_x, cl_y );
+      bitmap_handler.setup_field_stone_bitmaps();
+      bitmap_handler.setup_rotated_bitmaps();
+    }
+
+    ok = false;
+    if( cfg->Read( wxT("beep_file"), &buf) )
+    {
+      if( wxFileExists(buf) )
+      {
+	if( load_beep(buf) )
+	{
+	  game_settings.beep_file = buf;
+	  ok = true;
+	}
+      }
+    }
+    if( !ok )
+    {
+      buf = wxT(DEFAULT_BEEP_FILE);
+      if( wxFileExists(buf) )
+      {
+	if( load_beep(buf) )
+	{
+	  cfg->Write( wxT("beep_file"), buf);
+	  cfg->Flush();
+	  game_settings.beep_file = buf;
+	  ok = true;
+	}
+      }
+    }
+    if( !ok )
+    {
+      if( load_beep(buf) )
+      {
+	cfg->Write( wxT("beep_file"), buf );
+	cfg->Flush();
+	game_settings.beep_file = buf;
+	ok = true;
+      }
+    }
+    if( !ok )		// disable sound if there is no valid sound file
+    {
+      game_settings.play_sound = false;
+      cfg->Write( wxT("play_sound"), false );
+      cfg->Flush();
     }
     else
     {
-      if( event.RightDown() )	// if event is left click
+      bool play_sound;
+      if( cfg->Read( wxT("play_sound"), &play_sound ) )
       {
-	if( sequence_generator )
-	{
-	  delete sequence_generator->undo_click();
-	}
-	set_mark(-1,-1);
-	get_frame().SetStatusText(wxT(""));
-	refresh();
+	game_settings.play_sound = play_sound;
       }
       else
-	assert(false);
+      {
+	game_settings.play_sound = true;
+	cfg->Write( wxT("play_sound"), true );
+	cfg->Flush();
+      }
     }
   }
-  
-  void Game_Window::refresh()
+
+  void WX_GUI_Manager::save_settings()
   {
-    Refresh();
-    Update();
-    /*
-    wxWindowDC dc(this);
-    dc.BeginDrawing();
-    PrepareDC(dc);
-    OnDraw(dc);
-    dc.EndDrawing();
-    */
+    wxConfigBase* cfg = wxConfig::Get();
+    cfg->Write( wxT("skin_file"),  game_settings.skin_file );
+    cfg->Write( wxT("beep_file"),  game_settings.beep_file );
+    cfg->Write( wxT("play_sound"), game_settings.play_sound );
+    cfg->Flush();
   }
-  
-  bool Game_Window::load_skin( wxString filename )
+
+  bool WX_GUI_Manager::load_skin( wxString filename )
   {
     wxZipInputStream *input;
     wxImage image;
@@ -2255,196 +2109,194 @@ namespace holtz
     bitmap_handler.setup_rotated_bitmaps();
 
     calc_dimensions();
-    SetScrollbars( 10, 10, get_width() / 10 + 1, get_height() / 10 + 1 );
     
     return true;
   }
-  void Game_Window::set_skin_file( wxString filename )
-  {
-    skin_file = filename;
-    if( load_skin(filename) )
-    {
-      wxConfigBase* cfg = wxConfig::Get();
-      cfg->Write( wxT("skin_file"), filename );
-      cfg->Flush();
-    }
-    //Clear();
-    Refresh();
-    Update();
-    refresh();
-  }
-  void Game_Window::set_beep_file( wxString filename )
+
+  bool WX_GUI_Manager::load_beep( wxString filename )
   {
     if( wxFile::Exists( filename ) )
     {
-      beep_file = filename;
-      set_play_sound( true );
 #if wxUSE_WAVE
       if( sound_beep.Create(filename) )
+      {
 	sound_beep.Play();
-      else
-	play_sound = false;
-#endif
-      
-      if( play_sound )
-      {
-	wxConfigBase* cfg = wxConfig::Get();
-	cfg->Write( wxT("beep_file"), filename );
-	cfg->Flush();
+	return true;
       }
-    }
-  }
-  void Game_Window::set_play_sound( bool sound )
-  {
-    play_sound = sound;
-
-    wxConfigBase* cfg = wxConfig::Get();
-    cfg->Write( wxT("play_sound"), sound );
-    cfg->Flush();
-  }
-  void Game_Window::beep()
-  {
-#if wxUSE_WAVE
-    if( play_sound )
-      sound_beep.Play();
 #endif
-  }
-
-  // ----------------------------------------------------------------------------
-  // Standalone_Player_Setup_Manager
-  // ----------------------------------------------------------------------------
-
-  Standalone_Player_Setup_Manager::Standalone_Player_Setup_Manager( Game_Window &game_window )
-    : game_window(game_window), player_handler(0), current_id(42),
-      ruleset(new Standard_Ruleset()), ruleset_type(Ruleset::standard)
-  {
-  }
-  Standalone_Player_Setup_Manager::~Standalone_Player_Setup_Manager()
-  {
-    if( player_handler )
-      player_handler->aborted();
-    delete ruleset;
-  }
-
-  // player commands
-  void Standalone_Player_Setup_Manager::set_player_handler( Player_Handler *handler )
-  {
-    player_handler = handler;
-    if( player_handler )
-    {
-      // tell handler all players
-      std::list<Player>::iterator player;
-      for( player = players.begin(); player != players.end(); ++player )
-      {
-	player_handler->player_added(*player);
-      }
-
-      // tell handler which ruleset is currently active
-      if( ruleset_type == Ruleset::custom )
-	player_handler->ruleset_changed( ruleset_type, *ruleset );
-      else
-	player_handler->ruleset_changed( ruleset_type );
-    }
-  }
-  void Standalone_Player_Setup_Manager::new_game()
-  {
-  }
-  void Standalone_Player_Setup_Manager::stop_game()
-  {
-  }
-  bool Standalone_Player_Setup_Manager::add_player( std::string name, Player::Player_Type type, 
-						    Player::Help_Mode help_mode )
-  {
-    if( players.size() < ruleset->get_max_players() )
-    {
-      int id = current_id; ++current_id;
-      
-      Player_Input *input;
-      if( type == Player::ai )
-	input = &game_window.get_ai_handler();
-      else
-	input = &game_window.get_mouse_handler();
-
-      Player player( name, id, input, Player::no_output,
-		   "", type, help_mode );
-      
-      std::list<Player>::iterator p = players.insert(players.end(), player);
-      id_player[id] = p;
-    
-      if( player_handler )
-	player_handler->player_added(*p);
-
-      return true;
-    }
-    return false;
-  }
-  bool Standalone_Player_Setup_Manager::remove_player( int id )
-  {
-    std::list<Player>::iterator player = id_player[id];
-    if( player_handler )
-      player_handler->player_removed(*player);
-
-    players.erase(player);
-    id_player.erase( id ); 
-    return true;
-  }
-  bool Standalone_Player_Setup_Manager::player_up( int id )
-  {
-    std::list<Player>::iterator player = id_player[id];
-    if( player == players.begin() ) // is first player
-      return false;
-    std::list<Player>::iterator player2 = player; --player2;
-
-    Player p1 = *player;
-    players.erase(player);
-    player = players.insert(player2,p1);	// insert player before player 2
-    
-    id_player[p1.id] = player;
-
-    if( player_handler )
-      player_handler->player_up(*player);
-
-    return true;
-  }
-  bool Standalone_Player_Setup_Manager::player_down( int id )
-  {
-    std::list<Player>::iterator player = id_player[id];
-    std::list<Player>::iterator player2 = player; ++player2;
-
-    if( player2 == players.end() ) // is last player
-      return false;
-
-    Player p2 = *player2;
-    players.erase(player2);
-    player2 = players.insert(player,p2);	// insert player 2 before player
-    
-    id_player[p2.id] = player2;
-
-    if( player_handler )
-      player_handler->player_down(*player);
-
-    return true;
-  }
-
-  bool Standalone_Player_Setup_Manager::ready()
-  {
-    if( players.size() >= ruleset->get_min_players() )
-    {
-      game_window.new_game( players, *ruleset );
-      game_window.continue_game();
-      return true;
     }
     return false;
   }
 
-  bool Standalone_Player_Setup_Manager::change_ruleset( Ruleset::Ruleset_Type type, Ruleset &new_ruleset )
+  void WX_GUI_Manager::mouse_click_left( int x, int y )
   {
-    ruleset_type = type;
-    delete ruleset;
-    ruleset = new_ruleset.clone();	// standalone may trust that ruleset corresponds to type
+    show_status_text(wxT("")); // remove old status text message
+    on_click( x, y );
+  }
+
+  void WX_GUI_Manager::mouse_click_right( int, int )
+  {
+    if( sequence_generator )
+    {
+      delete sequence_generator->undo_click();
+    }
+    set_mark(-1,-1);
+    show_status_text(wxT("")); // remove old status text message
+    refresh();
+  }
+  
+  void WX_GUI_Manager::refresh()
+  {
+    game_window.refresh();
+  }
+
+  // ----------------------------------------------------------------------------
+  // Game Window
+  // ----------------------------------------------------------------------------
+
+  Game_Window::Game_Window( wxFrame *parent_frame )
+    : wxScrolledWindow( parent_frame ),
+      parent_frame(*parent_frame),
+      gui_manager( game_manager, *this ),
+      game_dialog( new Game_Dialog(this, game_manager, gui_manager) )
+  {
+    game_manager.set_ui_manager( &gui_manager );
+
+    SetBackgroundColour(*wxWHITE);
+  }
+
+  Game_Window::~Game_Window()
+  {
+    game_manager.stop_game();
+    delete game_dialog;
+  }
+  
+  bool Game_Window::on_close()
+  {
     return true;
   }
 
+  void Game_Window::load_settings()
+  {
+    gui_manager.load_settings();
+  }
+  
+  void Game_Window::new_game()
+  {
+    game_dialog->game_setup();
+  }
+
+  void Game_Window::settings_dialog()
+  {
+    Settings_Dialog dialog( this, gui_manager );
+    dialog.Center();
+    dialog.ShowModal();
+  }
+
+  void Game_Window::show_status_text( wxString text ) // shows text in status bar
+  {
+    parent_frame.SetStatusText( text );
+  }
+  void Game_Window::init_scrollbars()
+  {
+    SetScrollbars( 10, 10, gui_manager.get_width() / 10 + 1, gui_manager.get_height() / 10 + 1 );
+  }
+    
+  void Game_Window::OnDraw( wxDC &_dc )
+  {
+    // prepare background:
+    int width, width2; 
+    int height, height2;
+    GetVirtualSize(&width,&height); // get size from scrolled window
+    GetSize(&width2,&height2);
+    if( width2  > width  ) width  = width2;
+    if( height2 > height ) height = height2;
+
+#ifdef DOUBLE_BUFFER
+    wxBitmap buffer( width, height );
+    wxMemoryDC mem;
+    mem.SelectObject(buffer);
+    PrepareDC(mem);
+    wxDC *dc = &mem;
+#else
+    wxDC *dc = &_dc;
+    dc->BeginDrawing();
+#endif
+
+#ifdef DRAW_BACKGROUND
+    int bg_width = gui_manager.get_bitmap_handler().background.GetWidth();
+    int bg_height = gui_manager.get_bitmap_handler().background.GetHeight();
+    for( int y = 0; y < height + bg_height; y += bg_height )
+    {
+      for( int x = 0; x < width + bg_width; x += bg_width )
+      {
+	dc->DrawBitmap( gui_manager.get_bitmap_handler().background, x, y );
+      }
+    }
+#endif
+
+    gui_manager.draw( *dc );
+    gui_manager.draw_mark( *dc );
+
+#ifdef DOUBLE_BUFFER
+#ifdef __WXGTK__		// work around for wxGTK which doesn't draw text on MemoryDC
+    // draw text directly on the real device context
+    _dc.BeginDrawing();
+    _dc.Blit(0,0, width, height, dc, 0, 0 );
+    dc = &_dc;			
+#endif
+#endif
+
+    gui_manager.draw_text( *dc );
+
+#ifdef DOUBLE_BUFFER
+#ifndef __WXGTK__
+    // draw buffer on the real device context
+    _dc.BeginDrawing();
+    _dc.Blit(0,0, width, height, dc, 0, 0 );
+    _dc.EndDrawing();
+#else
+    _dc.EndDrawing();
+#endif
+#else
+    dc->EndDrawing();
+#endif
+  }
+  void Game_Window::on_erase_background( wxEraseEvent &event )
+  {
+    // do nothing, just don't erase background...
+  }
+  void Game_Window::on_mouse_event( wxMouseEvent &event )
+  {
+    int cl_x, cl_y;
+    GetViewStart( &cl_x, &cl_y );	// window might be scrolled
+    cl_x = cl_x*10 + event.GetX();
+    cl_y = cl_y*10 + event.GetY();
+
+    if( event.LeftDown() )	// if event is left click
+    {
+      gui_manager.mouse_click_left( cl_x, cl_y );
+    }
+    else
+    {
+      if( event.RightDown() )	// if event is left click
+      {
+	gui_manager.mouse_click_right( cl_x, cl_y );
+      }
+    }
+  }
+  void Game_Window::refresh()
+  {
+    Refresh();
+    Update();
+  }
+  wxDC *Game_Window::get_client_dc()	// must be destroyed
+  {
+    wxDC *dc = new wxClientDC(this);
+    PrepareDC(*dc);
+    return dc;
+  }
+  
   // ----------------------------------------------------------------------------
   // main frame
   // ----------------------------------------------------------------------------
@@ -2453,9 +2305,7 @@ namespace holtz
   Main_Frame::Main_Frame( const wxString& title )
     : wxFrame( /*paRent*/0, /*id*/-1, title, restore_position(), restore_size(), 
 	       wxDEFAULT_FRAME_STYLE | wxHSCROLL | wxVSCROLL ),
-      ruleset( new Standard_Ruleset() ),
-      game( *ruleset ),
-      game_window(this, game),
+      game_window(this),
       setting_menu(0)
   {
     // set the frame icon
@@ -2475,7 +2325,6 @@ namespace holtz
 
   Main_Frame::~Main_Frame()
   {
-    delete ruleset;
   }
 
   wxMenuBar* Main_Frame::create_menu()
@@ -2483,19 +2332,12 @@ namespace holtz
     // create a menu bar
     wxMenu *menu_file = new wxMenu;
     menu_file->Append(HOLTZ_NEW_GAME,		_("&New Game...\tCtrl-N"), _("Start a new game"));
-    menu_file->Append(HOLTZ_STANDALONE_GAME,	_("Stand&alone Game...\tCtrl-A"), 
-						_("Start a game without network access"));
-    menu_file->Append(HOLTZ_NETWORK_GAME,	_("Ne&twork Game...\tCtrl-T"), _("Start a network game"));
     menu_file->AppendSeparator();
     menu_file->Append(HOLTZ_QUIT,		_("E&xit\tAlt-X"), _("Quit Holtz"));
 
     // the "Setting" item should be in the help menu
     setting_menu = new wxMenu;
-    setting_menu->Append(HOLTZ_SETTINGS, _("S&ettings...\tCtrl-E"),          _("Change settings"));
-    setting_menu->Append(HOLTZ_SKIN,     _("Choose &Skin...\tCtrl-S"),       _("Choose skin package file"));
-    setting_menu->Append(HOLTZ_BEEP,     _("Choose &Beep Sound...\tCtrl-B"), _("Choose beep wav file"));
-    setting_menu->Append(HOLTZ_SOUND,    _("&Play Sound\tCtrl-P"),        _("Switch Sounds on/off"), true);
-    setting_menu->Check( HOLTZ_SOUND, game_window.is_play_sound() );
+    setting_menu->Append(HOLTZ_SETTINGS, _("Display s&ettings...\tCtrl-E"),  _("Change display settings"));
 
     // the "About" item should be in the help menu
     wxMenu *help_menu = new wxMenu;
@@ -2541,62 +2383,22 @@ namespace holtz
     pos.y = cfg->Read(wxT("MainYPos"), -1);
     return pos;
   }
+
+  void Main_Frame::load_settings()
+  {
+    game_window.load_settings();
+  }
   
   // event handlers
 
   void Main_Frame::on_new_game(wxCommandEvent& WXUNUSED(event))
   {
-    game_window.setup_new_game();
-  }
-
-  void Main_Frame::on_standalone_game(wxCommandEvent& WXUNUSED(event))
-  {
-    game_window.setup_standalone_game();
-  }
-  
-  void Main_Frame::on_network_game(wxCommandEvent& WXUNUSED(event))
-  {
-    game_window.setup_network_game();
+    game_window.new_game();
   }
 
   void Main_Frame::on_settings(wxCommandEvent& WXUNUSED(event))
   {
-    Settings_Dialog dialog( this, game_window );
-    dialog.Center();
-    dialog.ShowModal();
-  }
-
-  void Main_Frame::on_choose_skin(wxCommandEvent& event)
-  {
-    wxString filename = wxFileSelector( _("Choose a skin File"), wxT(""), 
-					wxT(""), wxT(""), _("Skin Files (*.zip)|*.zip"),
-					wxOPEN );
-    if( filename )
-      game_window.set_skin_file( filename );
-  }
-
-  void Main_Frame::on_choose_beep(wxCommandEvent& event)
-  {
-    wxString filename = wxFileSelector( _("Choose a beep File"), wxT(""), 
-					wxT(""), wxT(""), _("Audio (*.wav)|*.wav"),
-					wxOPEN );
-    if( filename )
-      game_window.set_beep_file( filename );
-
-    // change Menu
-    bool sound = game_window.is_play_sound();
-    setting_menu->Check( HOLTZ_SOUND, sound );
-  }
-
-  void Main_Frame::on_toggle_sound(wxCommandEvent& event)
-  {
-    bool sound = game_window.is_play_sound();
-    sound = !sound;		// toggle
-    game_window.set_play_sound( sound );
-    sound = game_window.is_play_sound(); // get real state
-
-    // change Menu
-    setting_menu->Check( HOLTZ_SOUND, sound );
+    game_window.settings_dialog();
   }
 
   void Main_Frame::on_quit(wxCommandEvent& WXUNUSED(event))
@@ -2607,12 +2409,12 @@ namespace holtz
 
   void Main_Frame::on_help_contents(wxCommandEvent&)
   {
-	::wxGetApp().get_help_controller().DisplayContents();
+    ::wxGetApp().get_help_controller().DisplayContents();
   }
 
   void Main_Frame::on_help_license(wxCommandEvent&)
   {
-	::wxGetApp().get_help_controller().DisplaySection(wxT("helplic.htm"));
+    ::wxGetApp().get_help_controller().DisplaySection(wxT("helplic.htm"));
   }
 
   void Main_Frame::on_about(wxCommandEvent& WXUNUSED(event))

@@ -38,7 +38,7 @@ namespace holtz
   class Field_Permutation
   {
   public:
-    Field_Permutation( Board &board );
+    Field_Permutation( const Board &board );
 
     Field_Pos get_first( bool new_random = true );
     bool is_end();
@@ -114,8 +114,8 @@ namespace holtz
   class AI : public Position_Expanded_Handler
   {
   public:
-    AI( Game &game );
-    AI_Result get_move( Game &game );
+    AI( const Game &game );
+    AI_Result get_move( const Game &game );
 
     double rate_player( Player & );
     double rate_position( Game &, Position & );
@@ -164,7 +164,7 @@ namespace holtz
   class AI_Thread : public wxThread, public AI
   {
   public:
-    AI_Thread( wxEvtHandler *handler, Game &game, long last_average_time = -1, 
+    AI_Thread( wxEvtHandler *handler, const Game &game, long last_average_time = -1, 
 	       int num_measures = 0, bool give_hints_only = false );
 
     virtual ExitCode Entry();
@@ -173,7 +173,7 @@ namespace holtz
     virtual void report_current_hint( AI_Result hint );
   private:
     wxEvtHandler *handler;
-    Game &game;
+    const Game &game;
     bool give_hints_only;
   };
 
@@ -200,18 +200,21 @@ namespace holtz
     DECLARE_DYNAMIC_CLASS(AI_Event) //**/
   };
   
-  typedef void (wxEvtHandler::*AI_Event_Function) ( AI_Event &event );
+  class Game_Manager;
+  class Game_UI_Manager;
 
-  class Game_Window;
+  typedef void (wxEvtHandler::*AI_Event_Function) ( AI_Event &event );
 
   class AI_Input : public wxEvtHandler, public Player_Input
   {
   public:
-    AI_Input( Game &, Game_Window & );
+    AI_Input( Game_Manager&, Game_UI_Manager* );
     ~AI_Input();
+    inline void set_ui_manager( Game_UI_Manager *ui ) { ui_manager = ui; }
 
     virtual Player_State determine_move() throw(Exception);
     virtual Sequence get_move();
+    virtual long get_used_time();
     void determine_hints();
     void abort();
 
@@ -220,10 +223,12 @@ namespace holtz
     void on_finished( AI_Event & );
     void on_animation_done( wxTimerEvent &event );
   protected:
-    Game &game;
-    Game_Window &game_window;
+    Game_Manager    &game_manager;
+    Game_UI_Manager *ui_manager;
+
     Sequence sequence;
     bool ai_done, move_done;
+    long used_time;
 
     AI_Thread *thread;
     bool thread_active;

@@ -96,9 +96,8 @@ namespace holtz
 
   bool Bitmap_Move_Animation::step()
   {
-    wxWindowDC dc(&game_window);
-    game_window.PrepareDC(dc);
-    dc.BeginDrawing();
+    wxDC *dc = game_window.get_client_dc();
+    dc->BeginDrawing();
 
     int width  = bitmap.GetWidth();
     int height = bitmap.GetHeight();
@@ -123,19 +122,19 @@ namespace holtz
 
     // store new background
     if( current_step == 0 )
-      background_dc[bg]->Blit( 0, 0, bg_width[bg], bg_height[bg], &dc, bg_x, bg_y );
+      background_dc[bg]->Blit( 0, 0, bg_width[bg], bg_height[bg], dc, bg_x, bg_y );
     else
       //if( current_step > 0 )
     {
       if( pos_x == bg_x )
-	background_dc[bg]->Blit( width, 0, bg_width[bg] - width, bg_height[bg], &dc, bg_x + width, bg_y );
+	background_dc[bg]->Blit( width, 0, bg_width[bg] - width, bg_height[bg], dc, bg_x + width, bg_y );
       else
-	background_dc[bg]->Blit( 0, 0, bg_width[bg] - width, bg_height[bg], &dc, bg_x, bg_y );
+	background_dc[bg]->Blit( 0, 0, bg_width[bg] - width, bg_height[bg], dc, bg_x, bg_y );
       
       if( pos_y == bg_y )
-	background_dc[bg]->Blit( 0, height, bg_width[bg], bg_height[bg] - height, &dc, bg_x, bg_y + height);
+	background_dc[bg]->Blit( 0, height, bg_width[bg], bg_height[bg] - height, dc, bg_x, bg_y + height);
       else
-	background_dc[bg]->Blit( 0, 0, bg_width[bg], bg_height[bg] - height, &dc, bg_x, bg_y );
+	background_dc[bg]->Blit( 0, 0, bg_width[bg], bg_height[bg] - height, dc, bg_x, bg_y );
 
       // assert that position of new bitmap is within both backgrounds
       assert( (pos_x >= bg_x) && (pos_y >= bg_y) );
@@ -153,18 +152,18 @@ namespace holtz
       int add_x = 0, add_y = 0;
       if( old_bg_x < 0 ) add_x = -old_bg_x;
       if( old_bg_y < 0 ) add_y = -old_bg_y;
-      dc.Blit( old_bg_x + add_x, old_bg_y + add_y, 
+      dc->Blit( old_bg_x + add_x, old_bg_y + add_y, 
 	       bg_width[old_bg] - add_x, bg_height[old_bg] - add_y, 
 	       background_dc[old_bg], add_x, add_y );
     }
     else
     {
       // draw bitmap on background
-      dc.DrawBitmap( bitmap, pos_x, pos_y, true );
+      dc->DrawBitmap( bitmap, pos_x, pos_y, true );
     }
 
 
-    dc.EndDrawing();
+    dc->EndDrawing();
     old_bg_x = bg_x; old_bg_y = bg_y;
     old_x = pos_x; old_y = pos_y;
     pos_x = new_x; pos_y = new_y;
@@ -189,6 +188,7 @@ namespace holtz
     else
       finish();
 
+    delete dc;
     return true;
   }
 
@@ -208,8 +208,8 @@ namespace holtz
     step();
   }
 
-  Move_Sequence_Animation::Move_Sequence_Animation( Game_Window &game_window )
-    : game_window(game_window), bitmap_move_animation( game_window ),
+  Move_Sequence_Animation::Move_Sequence_Animation( WX_GUI_Manager &gui_manager, Game_Window &game_window )
+    : gui_manager(gui_manager), game_window(game_window), bitmap_move_animation( game_window ),
       done_handler(0), state(finished)
   {
     // connect event functions
@@ -261,9 +261,11 @@ namespace holtz
 	    Stones::Stone_Type stone = Stones::Stone_Type(game->board.get_field(knock_move->from));
 
 	    std::pair<int,int> _from = 
-	      game_window.get_board_panel().get_field_pos( knock_move->from.x, knock_move->from.y );
+	      gui_manager.get_game_panel().get_board_panel().get_field_pos( knock_move->from.x, 
+									    knock_move->from.y );
 	    std::pair<int,int> _to = 
-	      game_window.get_board_panel().get_field_pos( knock_move->to.x, knock_move->to.y );
+	      gui_manager.get_game_panel().get_board_panel().get_field_pos( knock_move->to.x, 
+									    knock_move->to.y );
 
 	    wxPoint from( _from.first, _from.second );
 	    wxPoint to( _to.first, _to.second );
@@ -273,17 +275,17 @@ namespace holtz
 	    save_field = *from_field;
 	    *from_field = field_empty;
 	    // draw removed stone
-	    wxWindowDC dc( &game_window );
-	    game_window.PrepareDC( dc );
-	    dc.BeginDrawing();
-	    dc.DrawBitmap( game_window.get_board_panel().get_bitmap_set().field_bitmaps[field_empty], 
-			   from.x, from.y, true );
-	    dc.EndDrawing();
+	    wxDC *dc = game_window.get_client_dc();
+	    dc->BeginDrawing();
+	    dc->DrawBitmap( gui_manager.get_game_panel().get_board_panel().get_bitmap_set().
+			    field_bitmaps[field_empty], from.x, from.y, true );
+	    dc->EndDrawing();
+	    delete dc;
 	
 	    state = knock_out_jump;
 
 	    ret = bitmap_move_animation.move
-	      ( game_window.get_board_panel().get_bitmap_set().stone_bitmaps[stone],
+	      ( gui_manager.get_game_panel().get_board_panel().get_bitmap_set().stone_bitmaps[stone],
 		from, to, 12, 35, this, ANIMATION_DONE );
 	  }
 	  break;
@@ -296,7 +298,8 @@ namespace holtz
 	    std::pair<int,int> _from;
 	    if( set_move->own_stone ) // is stone owned by current_player
 	    {
-	      const Player_Panel *panel = game_window.get_player_panel( game->current_player->id );
+	      const Player_Panel *panel = 
+		gui_manager.get_game_panel().get_player_panel( game->current_player->id );
 	      int col = game->current_player->stones.stone_count[set_move->stone_type] - 1;
 	      assert(col >= 0);
 	      _from = panel->get_stone_panel().get_field_pos( col, set_move->stone_type );
@@ -308,21 +311,23 @@ namespace holtz
 	      // get position of last stone of the right type
 	      int col = game->common_stones.stone_count[set_move->stone_type] - 1;
 	      assert(col >= 0);
-	      _from = game_window.get_stone_panel().get_field_pos( col, set_move->stone_type );
+	      _from = gui_manager.get_game_panel().get_stone_panel().get_field_pos( col, 
+										    set_move->stone_type );
 	      // really remove stone from reservoir
 	      --game->common_stones.stone_count[set_move->stone_type];
 	    }
 	    wxPoint from( _from.first, _from.second );
 
 	    std::pair<int,int> _pos = 
-	      game_window.get_board_panel().get_field_pos( set_move->pos.x, set_move->pos.y );
+	      gui_manager.get_game_panel().get_board_panel().get_field_pos( set_move->pos.x, 
+									    set_move->pos.y );
 	    wxPoint pos( _pos.first, _pos.second );
 
 	    state = setting_stone;
 	    
 	    game_window.refresh(); // remove picked stone from screen
 	    ret = bitmap_move_animation.move
-	      ( game_window.get_board_panel().get_bitmap_set().stone_bitmaps[stone],
+	      ( gui_manager.get_game_panel().get_board_panel().get_bitmap_set().stone_bitmaps[stone],
 		from, pos, 20, 40, this, ANIMATION_DONE );
 	  }
 	  break;
@@ -335,7 +340,7 @@ namespace holtz
 	    *field = field_removed;
 
 	    std::pair<int,int> _remove_pos = 
-	      game_window.get_board_panel().get_field_pos( remove->remove_pos.x, 
+	      gui_manager.get_game_panel().get_board_panel().get_field_pos( remove->remove_pos.x, 
 							   remove->remove_pos.y );
 	    wxPoint remove_pos( _remove_pos.first, _remove_pos.second );
 
@@ -343,8 +348,8 @@ namespace holtz
 
 	    game_window.refresh(); // remove field from screen
 	    ret = bitmap_move_animation.move
-	      ( game_window.get_board_panel().get_bitmap_set().field_bitmaps[field_empty], remove_pos, 
-		wxPoint(-1,-1), 20, 40, this, ANIMATION_DONE );
+	      ( gui_manager.get_game_panel().get_board_panel().get_bitmap_set().field_bitmaps[field_empty], 
+		remove_pos, wxPoint(-1,-1), 20, 40, this, ANIMATION_DONE );
 	  }
 	  break;
 	  case Move::finish_move:
@@ -383,28 +388,30 @@ namespace holtz
 	*over_field = field_empty;  // remove stone in the middle
 
 	std::pair<int,int> _over = 
-	  game_window.get_board_panel().get_field_pos( knock_move->over.x, knock_move->over.y );
+	  gui_manager.get_game_panel().get_board_panel().get_field_pos( knock_move->over.x, 
+									knock_move->over.y );
 	wxPoint over( _over.first, _over.second );
 
 	std::pair<int,int> _to;
-	const Player_Panel *panel = game_window.get_player_panel( game->current_player->id );
+	const Player_Panel *panel = 
+	  gui_manager.get_game_panel().get_player_panel( game->current_player->id );
 	int col = game->current_player->stones.stone_count[stone];
 	assert(col >= 0);
 	_to = panel->get_stone_panel().get_field_pos( col, stone );
 	wxPoint to( _to.first, _to.second );
 
 	// remove stone which is knocked out
-	wxWindowDC dc( &game_window );
-	game_window.PrepareDC( dc );
-	dc.BeginDrawing();
-	dc.DrawBitmap( game_window.get_board_panel().get_bitmap_set().field_bitmaps[field_empty], 
-		       over.x, over.y, true );
-	dc.EndDrawing();
+	wxDC *dc = game_window.get_client_dc();
+	dc->BeginDrawing();
+	dc->DrawBitmap( gui_manager.get_game_panel().get_board_panel().get_bitmap_set().
+			field_bitmaps[field_empty], over.x, over.y, true );
+	dc->EndDrawing();
+	delete dc;
 
 	save_field = stone_field;
 	state = knock_out_collects;
 	ret = bitmap_move_animation.move
-	  ( game_window.get_board_panel().get_bitmap_set().stone_bitmaps[stone],
+	  ( gui_manager.get_game_panel().get_board_panel().get_bitmap_set().stone_bitmaps[stone],
 	    over, to, 20, 40, this, ANIMATION_DONE );
       }
       break;
@@ -450,11 +457,12 @@ namespace holtz
 	  *field = field_removed;
 
 	  std::pair<int,int> _pos = 
-	    game_window.get_board_panel().get_field_pos( field_pos.x, field_pos.y );
+	    gui_manager.get_game_panel().get_board_panel().get_field_pos( field_pos.x, field_pos.y );
 	  wxPoint pos( _pos.first, _pos.second );
 
 	  std::pair<int,int> _to;
-	  const Player_Panel *panel = game_window.get_player_panel( game->current_player->id );
+	  const Player_Panel *panel = 
+	    gui_manager.get_game_panel().get_player_panel( game->current_player->id );
 	  int col = game->current_player->stones.stone_count[stone];
 	  assert(col >= 0);
 	  _to = panel->get_stone_panel().get_field_pos( col, stone );
@@ -464,7 +472,7 @@ namespace holtz
 
 	  game_window.refresh(); // remove field from screen
 	  ret = bitmap_move_animation.move
-	    ( game_window.get_board_panel().get_bitmap_set().stone_bitmaps[stone], 
+	    ( gui_manager.get_game_panel().get_board_panel().get_bitmap_set().stone_bitmaps[stone], 
 	      pos, to, 20, 40, this, ANIMATION_DONE );
 	}
       }

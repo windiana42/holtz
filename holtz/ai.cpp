@@ -38,7 +38,7 @@ namespace holtz
   // Field_Permutation
   // ----------------------------------------------------------------------------
 
-  Field_Permutation::Field_Permutation( Board &board )
+  Field_Permutation::Field_Permutation( const Board &board )
   {
     position_vector.resize( next_prime( board.get_x_size() * board.get_y_size() ) );
     unsigned num = 0;
@@ -434,7 +434,7 @@ namespace holtz
   // AI
   // ----------------------------------------------------------------------------
 
-  AI::AI( Game &game )
+  AI::AI( const Game &game )
     : max_time(30000), average_time(5000), num_measures(0), max_positions_expanded(150000),
       max_depth(12),
       rate_white(4.5), rate_grey(3.5), rate_black(2.5), rate_current_player_bonus(0.3),
@@ -448,7 +448,7 @@ namespace holtz
     real_average_time = average_time;
   }
 
-  AI_Result AI::get_move( Game &game )
+  AI_Result AI::get_move( const Game &game )
   {
     AI_Result result;
 
@@ -458,7 +458,7 @@ namespace holtz
     if( need_stop_watch() )
       stop_watch.Start();
 
-    while( stop_watch.Time() == 0 ); // check for stop watch to be started
+    //while( stop_watch.Time() == 0 ); // check for stop watch to be started
     aborted = false;
     don_t_abort = true;
     deep_knocking = false;
@@ -605,36 +605,6 @@ namespace holtz
       cur_depth = save_cur_depth;
 
       while_deep_knocking = false;
-#ifndef __WXMSW__
-      /*
-      double r2 = 0;
-      std::list<Player>::iterator player;
-      for( player = game.players.begin(); player != game.players.end(); ++player )
-      {
-	if( player->id == current_player->id )
-	{
-	  if( game.win_condition->did_player_win(game, *player) )
-	  {
-	    r2 = RATE_MAX;
-	    break;
-	  }
-	  else
-	    r2 += rate_player(*current_player);
-	}
-	else
-	{
-	  if( game.win_condition->did_player_win(game, *player) )
-	  {
-	    r2 = -RATE_MAX;
-	    break;
-	  }
-	  else
-	    r2 -= rate_player(*player);
-	}
-      }
-      std::cout << "(" << rating << "/" << r2 << "/" << max_depth_expanded << "), ";
-      */
-#endif
     }
     else
     {
@@ -684,6 +654,7 @@ namespace holtz
     }
     else
     {
+      std::list<Player>::iterator last_player = game.last_player;
       game.next_player();
       if( depth < cur_depth - 1 )
       {
@@ -695,7 +666,7 @@ namespace holtz
       {
 	pos_rating = rate_position( game, (*branch)->position );
       }
-      game.prev_player();
+      game.prev_player( last_player );
     }
 
     // restore recursion parameters
@@ -729,8 +700,7 @@ namespace holtz
   }
 
   double AI::depth_search( Game &game, Position &position, unsigned depth, double max, 
-				 int min_max_vz,
-				 bool knock_out_only )
+			   int min_max_vz, bool knock_out_only )
   {
     // save recursive parameters for expanded()
     this->position = &position;
@@ -883,7 +853,7 @@ namespace holtz
   // AI_Thread
   // ----------------------------------------------------------------------------
 
-  AI_Thread::AI_Thread( wxEvtHandler *handler, Game &game, 
+  AI_Thread::AI_Thread( wxEvtHandler *handler, const Game &game, 
 			long last_average_time, int _num_measures, 
 			bool give_hints_only )
     : AI(game), handler(handler), game(game), give_hints_only(give_hints_only)
@@ -901,7 +871,7 @@ namespace holtz
     }
     else
     {
-      AI_Event event( get_move( game ), EVT_AI_REPORT_MOVE, this ); 
+      AI_Event event( get_move(game), EVT_AI_REPORT_MOVE, this ); 
       handler->AddPendingEvent( event );
     }
 
@@ -970,8 +940,8 @@ namespace holtz
   // ----------------------------------------------------------------------------
 
 
-  AI_Input::AI_Input( Game &game, Game_Window &game_window )
-    : game(game), game_window(game_window), ai_done(false), move_done(false), 
+  AI_Input::AI_Input( Game_Manager &game_manager, Game_UI_Manager *ui_manager )
+    : game_manager(game_manager), ui_manager(ui_manager), ai_done(false), move_done(false), 
       thread(0), thread_active(false), give_hints(false)
   {
     Connect( -1, EVT_AI_REPORT_MOVE, 
@@ -998,6 +968,7 @@ namespace holtz
 
   Player_Input::Player_State AI_Input::determine_move() throw(Exception)
   {
+    const Game &game = game_manager.get_game();
     if( game.current_player->help_mode == Player::show_hint )
       give_hints = true;
     else
@@ -1027,8 +998,14 @@ namespace holtz
     return sequence;
   }
 
+  long AI_Input::get_used_time()
+  {
+    return used_time;
+  }
+
   void AI_Input::determine_hints()
   {
+    const Game &game = game_manager.get_game();
     give_hints = true;
     abort();			// abort possibly running thread
     thread_active = true;
@@ -1053,22 +1030,23 @@ namespace holtz
       assert( event.ai_result.valid );	// assert that a move was found
       ai_done = true;
 
-      game.current_player->total_time  += event.ai_result.used_time;    // increase total time
-      game.current_player->average_time = event.ai_result.average_time; // store average time
-      game.current_player->num_measures = event.ai_result.num_measures; // store average time
+      used_time = event.ai_result.used_time;
       
       sequence = event.ai_result.sequence.clone();
-      if( give_hints )
-	game_window.remove_hint();
-      game_window.do_move_slowly( sequence, this, ANIMATION_DONE );
+      if( ui_manager )
+      {
+	if( give_hints )
+	  ui_manager->remove_hint();
+	ui_manager->do_move_slowly( sequence, this, ANIMATION_DONE );
+      }
     }
   }
 
   void AI_Input::on_report_hint( AI_Event &event )
   {
-    if( thread_active && (event.thread == thread) && give_hints )
+    if( thread_active && (event.thread == thread) && give_hints && ui_manager )
     {
-      game_window.give_hint( event.ai_result );
+      ui_manager->give_hint( event.ai_result );
     }
   }
 
@@ -1083,7 +1061,7 @@ namespace holtz
   void AI_Input::on_animation_done( wxTimerEvent &event )
   {
     move_done = true;
-    game_window.continue_game();
+    game_manager.continue_game();
   }
   
 }

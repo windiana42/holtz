@@ -50,13 +50,12 @@ namespace holtz
   public:
     std::string name;
   };
-
-  class Network_Manager : public wxEvtHandler, public Player_Setup_Manager, 
+  
+  class Network_Manager : public wxEvtHandler, public Game_Setup_Manager, 
 			  public Player_Input, public Player_Output
   {
   public:
-    Network_Manager( Game & );
-    Network_Manager( Game &, Game_Window & );
+    Network_Manager( Game_Manager &, Game_UI_Manager & );
     ~Network_Manager();
 
     // connection commands
@@ -67,20 +66,29 @@ namespace holtz
     void disconnect( wxSocketBase *socket );
     void set_connection_handler( Network_Connection_Handler * );
 
-    // player setup manager interface
-    virtual void set_player_handler( Player_Handler * );
-    virtual void new_game();
-    virtual void stop_game();
-    virtual bool add_player( std::string name, Player::Player_Type, Player::Help_Mode );
-    virtual bool remove_player( int id );
-    virtual bool player_up( int id );
-    virtual bool player_down( int id );
-    virtual bool change_ruleset( Ruleset::Ruleset_Type, Ruleset& );
-    virtual bool ready();		// ready with adding players; game may start
+    virtual Type get_type();
+    virtual void set_display_handler( Game_Setup_Display_Handler * );
+    // board commands
+    virtual Answer_Type ask_change_board( const Game &game );
+    virtual const Game &get_board();
+    virtual const std::list<Player> &get_players();
+    // player commands
+    virtual bool add_player( const Player & );
+    virtual bool remove_player( const Player & );
+    virtual bool player_up( const Player & );
+    virtual bool player_down( const Player & );
+    virtual void ready();      // ready with adding players
+    // game commands
+    virtual Game_State can_start();	// is everyone ready and number of players ok?
+    virtual void start_game(); // call only when can_start() == true
+    virtual Answer_Type ask_new_game(); // request to play new game
+    virtual void new_game();   // force new game (may close connections)
+    virtual void stop_game();  // stop game
 
     // Player_Input functions
     virtual Player_State determine_move() throw(Exception);
     virtual Sequence get_move();
+    virtual long get_used_time();
     // Player_Output functions
     virtual void report_move( const Sequence & );
 
@@ -106,7 +114,7 @@ namespace holtz
 			       msg_illegal_request,
 			       msg_player_added, msg_player_removed,
 			       msg_player_up, msg_player_down, msg_player_change_deny,
-			       msg_ruleset, msg_ruleset_deny,
+			       msg_board, msg_board_deny,
 			       msg_new_game };
 
     void write_string( wxSocketBase& sock, std::string );
@@ -120,14 +128,16 @@ namespace holtz
     void write_move( wxSocketBase& sock, Sequence );
     Sequence read_move( wxSocketBase& sock );
 
-    void write_board( wxSocketBase& sock, Board );
-    Board read_board( wxSocketBase& sock );
+    void write_board_base( wxSocketBase& sock, Board );
+    Board read_board_base( wxSocketBase& sock );
     void write_common_stones( wxSocketBase& sock, Common_Stones );
     Common_Stones read_common_stones( wxSocketBase& sock );
     void write_win_condition( wxSocketBase& sock, Win_Condition * );
     Win_Condition *read_win_condition( wxSocketBase& sock );
-    void write_ruleset( wxSocketBase& sock, Ruleset & );
+    void write_ruleset( wxSocketBase& sock, const Ruleset & );
     Ruleset *read_ruleset( wxSocketBase& sock );
+    void write_board( wxSocketBase& sock, const Game & );
+    Game read_board( wxSocketBase& sock );
 
     void continue_game();
 
@@ -138,16 +148,15 @@ namespace holtz
     void report_players( wxSocketBase &sock );
     void report_ruleset_change();
 
-    Game &game;
-    Game_Window *game_window;
-    bool gui_connected;
+    Game_Manager &game_manager;
+    Game_UI_Manager &ui_manager;
     Sequence sequence;		// determined move sequence
 
     wxSocketServer *server;
     wxSocketClient *client;
 
     Network_Connection_Handler *connection_handler;
-    Player_Handler *player_handler;
+    Game_Setup_Display_Handler *display_handler;
 
     typedef enum Network_Mode{ mode_undefined, mode_server, mode_client, mode_connecting };
     Network_Mode mode;
@@ -164,8 +173,7 @@ namespace holtz
     std::string requested_player_name;	
     Player::Player_Type requested_player_type;	
 
-    Ruleset *ruleset;
-    Ruleset::Ruleset_Type ruleset_type;
+    Game game;
 
     class Client
     {

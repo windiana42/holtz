@@ -3,8 +3,8 @@ SUBDIRS=skins sounds locale help
 bin_PROGRAMS=		holtz
 
 holtz_SOURCES= \
-	holtz.cpp wxholtz.cpp dialogs.cpp network.cpp ai.cpp animations.cpp util.cpp \
-	holtz.hpp wxholtz.hpp dialogs.hpp network.hpp ai.hpp animations.hpp util.hpp
+	holtz.cpp wxholtz.cpp dialogs.cpp manager.cpp network.cpp ai.cpp animations.cpp util.cpp pbm.cpp  \
+	holtz.hpp wxholtz.hpp dialogs.hpp manager.hpp network.hpp ai.hpp animations.hpp util.hpp pbm.hpp 
 
 holtz_CXXFLAGS= \
 	-DDEFAULT_DATA_DIR=\"$(pkgdatadir)/\"
