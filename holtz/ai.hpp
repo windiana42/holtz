@@ -101,10 +101,14 @@ namespace holtz
   {
     Sequence sequence;
     double rating;
-    long average_time;	// in milli seconds
+    int depth;
+    long used_time, average_time;	// in milli seconds
+    int num_measures;			// of average_time
+    bool valid;
 
     AI_Result();
-    AI_Result( Sequence, double rating, long average_time );
+    AI_Result( Sequence, double rating, int depth, 
+	       long used_time, long average_time, int num_measures );
   };
 
   class AI : public Position_Expanded_Handler
@@ -118,13 +122,16 @@ namespace holtz
     double depth_search( Game &, Position &, unsigned depth, double max, int min_max_vz,
 			 bool knock_out_only );
   protected:
-    bool should_stop( bool depth_finished );	// determines whether AI should stop now
+    virtual bool need_stop_watch() { return true; }
+    virtual bool should_stop( bool depth_finished );	// determines whether AI should stop now
+    virtual void report_current_hint( AI_Result ) {}
     // position expanded return false: don't continue
     virtual bool expanded( Game &, std::list<Branch*>::iterator );  
 
     wxStopWatch stop_watch;
     long max_time, average_time, real_average_time;
     int num_measures;
+    unsigned max_positions_expanded, max_depth;
 
     std::list<Player>::iterator current_player;
     unsigned cur_depth;
@@ -137,8 +144,9 @@ namespace holtz
     const double rate_white, rate_gray, rate_black, rate_current_player_bonus;
     unsigned min_depth;
     bool deep_knocking_possible;// activates deep knocking strategy
-  private:
+  protected:
     bool aborted;		// aborted depth because of time
+  private:
     bool don_t_abort;
     bool deep_knocking;		// whether knock_out moves should be done to rate a position
     bool while_deep_knocking;
@@ -153,42 +161,46 @@ namespace holtz
     int min_max_vz; bool knock_out_only;
   };
 
-  class AI_Thread : public wxThread
+  class AI_Thread : public wxThread, public AI
   {
   public:
-    AI_Thread( wxEvtHandler *handler, int id, Game &game );
+    AI_Thread( wxEvtHandler *handler, Game &game, long last_average_time = -1, 
+	       int num_measures = 0, bool give_hints_only = false );
 
     virtual ExitCode Entry();
+    virtual bool need_stop_watch() { return false; }
+    virtual bool should_stop( bool depth_finished );	// determines whether AI should stop now
+    virtual void report_current_hint( AI_Result hint );
   private:
     wxEvtHandler *handler;
-    int id;
     Game &game;
-    AI ai;
+    bool give_hints_only;
   };
 
   BEGIN_DECLARE_EVENT_TYPES()
-    DECLARE_EVENT_TYPE(wxEVT_REPORT_MOVE, wxEVT_USER_FIRST + 1) //**/
+    DECLARE_EVENT_TYPE(EVT_AI_REPORT_MOVE, wxEVT_USER_FIRST + 1) //**/
+    DECLARE_EVENT_TYPE(EVT_AI_REPORT_HINT, wxEVT_USER_FIRST + 2) //**/
+    DECLARE_EVENT_TYPE(EVT_AI_FINISHED,    wxEVT_USER_FIRST + 3) //**/
   END_DECLARE_EVENT_TYPES() //**/
-
-  class Report_Move_Event : public wxEvent
+  
+  class AI_Event : public wxEvent
   {
   public:
-    typedef enum Type{ final_move, current_hint };
+    AI_Event();
+    AI_Event( WXTYPE type, AI_Thread * );
+    AI_Event( AI_Result, WXTYPE type, AI_Thread * );
 
-    Report_Move_Event();
-    Report_Move_Event( int id, AI_Result, Type type = final_move );
-
-    virtual wxEvent *Clone() const { return new Report_Move_Event(*this); }
+    virtual wxEvent *Clone() const { return new AI_Event(*this); }
 
   public:
     AI_Result ai_result;
-    Type type;
+    AI_Thread *thread;
 
   private:
-    DECLARE_DYNAMIC_CLASS(Report_Move_Event) //**/
+    DECLARE_DYNAMIC_CLASS(AI_Event) //**/
   };
-
-  typedef void (wxEvtHandler::*Report_Move_Event_Function) ( Report_Move_Event &event );
+  
+  typedef void (wxEvtHandler::*AI_Event_Function) ( AI_Event &event );
 
   class Game_Window;
 
@@ -196,22 +208,26 @@ namespace holtz
   {
   public:
     AI_Input( Game &, Game_Window & );
+    ~AI_Input();
+
     virtual Player_State determine_move() throw(Exception);
     virtual Sequence get_move();
+    void determine_hints();
+    void abort();
 
-    void on_report_move( Report_Move_Event & );
-    void on_done( wxTimerEvent &event );
+    void on_report_move( AI_Event & );
+    void on_report_hint( AI_Event & );
+    void on_finished( AI_Event & );
+    void on_animation_done( wxTimerEvent &event );
   protected:
     Game &game;
     Game_Window &game_window;
     Sequence sequence;
     bool ai_done, move_done;
-  };
 
-  enum
-  {
-    AI_REPORT_MOVE = 300,
-    AI_CURRENT_HINT
+    AI_Thread *thread;
+    bool thread_active;
+    bool give_hints;
   };
 }
 

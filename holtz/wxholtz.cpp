@@ -37,6 +37,7 @@
 #include "wxholtz.hpp"
 #include "holtz.hpp"
 #include "ai.hpp"
+#include "util.hpp"
 
 #include <wx/zipstrm.h>
 #include <wx/image.h>
@@ -188,6 +189,8 @@ namespace holtz
   // 'Main program' equivalent: the program execution "starts" here
   bool wxHoltz::OnInit()
   {
+    randomize();		// initialize random
+
     global_config = new wxConfig(GetAppName(), _("Holtz"));
     wxConfig::Set(global_config);
 
@@ -787,7 +790,7 @@ namespace holtz
   // ----------------------------------------------------------------------------
   
   Mouse_Handler::Mouse_Handler( Game &game, Game_Window &game_window, Sequence_Generator * &sg )
-    : Generic_Mouse_Input(game), game_window(game_window), sequence_generator_hook(sg)
+    : Generic_Mouse_Input(game), game_window(game_window), sequence_generator_hook(sg), ai(0)
   {
   }
   
@@ -797,11 +800,21 @@ namespace holtz
     sequence_generator_hook = &sequence_generator;
 
     game_window.allow_user_activity();
+    if( game.current_player->help_mode == Player::show_hint )
+    {
+      ai = &game_window.get_ai_handler();
+      ai->determine_hints();
+    }
   }
   void Mouse_Handler::disable_mouse_input() 
   {
     sequence_generator_hook = 0;
 
+    if( game.current_player->help_mode == Player::show_hint )
+    {
+      ai->abort();
+      game_window.remove_hint();
+    }
     game_window.stop_user_activity();
   }
 
@@ -976,11 +989,21 @@ namespace holtz
       dc.DrawBitmap( field_mark2, x, y, true );
     }
 
+    for( position = field_mark_positions.begin();
+	 position != field_mark_positions.end(); ++position )
+    {
+      int &x = position->first;
+      int &y = position->second;
+      dc.DrawBitmap( field_mark, x, y, true );
+    }
+
     if( field_mark_x >= 0 )
       dc.DrawBitmap( field_mark, field_mark_x, field_mark_y, true );
   }
+
   void Game_Window::show_user_information( bool visible, bool do_refresh )
   {
+    field_mark_positions.clear();
     field_mark2_positions.clear();
     if( visible )
     {
@@ -1003,7 +1026,74 @@ namespace holtz
 	  }
 	}
 	break;
-	case Player::show_hint: break;
+	case Player::show_hint:
+	{
+	  if( current_hint.valid )
+	  {
+	    const std::list<holtz::Move*> &moves = current_hint.sequence.get_moves();
+	    std::list<holtz::Move*>::const_iterator move;
+	    for( move = moves.begin(); move != moves.end(); ++move )
+	    {
+	      switch( (*move)->get_type() )
+	      {
+	      case Move::no_move:
+	      case Move::finish_move:
+		break;
+	      case Move::knock_out_move:
+	      {
+		Knock_Out_Move *knock_move = dynamic_cast<Knock_Out_Move *>(*move);
+		field_mark2_positions.push_back( board_panel.get_field_pos( knock_move->from.x, 
+									    knock_move->from.y ) );
+		field_mark2_positions.push_back( board_panel.get_field_pos( knock_move->to.x, 
+									    knock_move->to.y ) );
+	      }
+	      break;
+	      case Move::set_move:
+	      {
+		Set_Move *set_move = dynamic_cast<Set_Move *>(*move);
+		if( !set_move->own_stone )
+		{
+		  int stone_count = game.common_stones.stone_count[ set_move->stone_type ];
+		  if( stone_count > 0 )
+		  {
+		    field_mark2_positions.push_back( stone_panel.get_field_pos( stone_count - 1, 
+										set_move->stone_type ) );
+		  }
+		}
+		else
+		{
+		  std::list<Player_Panel*>::iterator panel;
+		  for( panel = player_panels.begin(); panel != player_panels.end(); ++panel )
+		  {
+		    if( (*panel)->get_id() == game.current_player->id )
+		    {
+		      int stone_count = game.current_player->stones.stone_count[ set_move->stone_type ];
+		      if( stone_count > 0 )
+		      {
+			field_mark2_positions.push_back
+			  ( (*panel)->get_stone_panel().get_field_pos( stone_count - 1, 
+								       set_move->stone_type ) );
+		      }
+		      break;
+		    }
+		  }
+		}
+		field_mark2_positions.push_back( board_panel.get_field_pos( set_move->pos.x, 
+									    set_move->pos.y ) );
+	      }
+	      break;
+	      case Move::remove:
+	      {
+		Remove *remove = dynamic_cast<Remove *>(*move);
+		field_mark_positions.push_back( board_panel.get_field_pos( remove->remove_pos.x, 
+									    remove->remove_pos.y ) );
+	      }
+	      break;
+	      }
+	    }
+	  }
+	}
+	break;
       }
 
       if( sequence_generator )
@@ -1031,6 +1121,18 @@ namespace holtz
     }
     if( do_refresh )
       refresh();
+  }
+
+  void Game_Window::give_hint( AI_Result ai_result )
+  {
+    current_hint = ai_result;
+    show_user_information( true, true );
+  }
+
+  void Game_Window::remove_hint()
+  {
+    current_hint = AI_Result();
+    show_user_information( true, false );
   }
 
   void Game_Window::setup_new_game()

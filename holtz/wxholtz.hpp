@@ -225,6 +225,8 @@ namespace holtz
   private:
     Game_Window &game_window;
     Sequence_Generator* &sequence_generator_hook; // storage position for access by Mouse event handler
+
+    AI_Input *ai;		// for giving hints
   };
 
   class Game_Window : public wxScrolledWindow
@@ -241,6 +243,8 @@ namespace holtz
     void set_mark( int x, int y );
     void draw_mark( wxDC &dc );
     void show_user_information( bool visible = true, bool do_refresh = true );
+    void give_hint( AI_Result ai_result );
+    void remove_hint();
 
     void setup_new_game();
     void setup_network_game();
@@ -288,6 +292,7 @@ namespace holtz
     Game &game;
     Sequence_Generator *sequence_generator; // handles mouse clicks
     Move_Sequence_Animation *move_animation;
+    AI_Result current_hint;	// move sequence recommented by the AI
 
     Player_Setup_Manager *player_setup_manager;
     Network_Clients_Dialog *clients_dialog;      
@@ -295,8 +300,9 @@ namespace holtz
 
     std::map<Field_State_Type,wxBitmap> bitmaps;
     wxBitmap field_mark, field_mark2, background;
-    int field_mark_x, field_mark_y;
-    std::list< std::pair<int,int> > field_mark2_positions;
+    int field_mark_x, field_mark_y; // always changing mark
+    std::list< std::pair<int,int> > field_mark_positions;  // permanent marks
+    std::list< std::pair<int,int> > field_mark2_positions; // also in different color
 
     wxString skin_file, beep_file;
     bool play_sound;
