@@ -1661,7 +1661,10 @@ namespace holtz
       player_setup_manager->new_game();
 
     if( player_dialog )
+    {
+      player_dialog->aborted();
       player_dialog->Destroy();
+    }
 
     player_dialog = new Player_Setup_Dialog( this, *this, *player_setup_manager );
     player_dialog->Center();
@@ -1680,7 +1683,10 @@ namespace holtz
     player_setup_manager = new Standalone_Player_Setup_Manager( *this );
 
     if( player_dialog )
+    {
+      player_dialog->aborted();
       player_dialog->Destroy();
+    }
 
     player_dialog = new Player_Setup_Dialog( this, *this, *player_setup_manager );
     player_dialog->Center();
@@ -1778,7 +1784,10 @@ namespace holtz
       assert( player_setup_manager );
 
       if( player_dialog )
+      {
+	player_dialog->aborted();
 	player_dialog->Destroy();
+      }
 
       player_dialog = new Player_Setup_Dialog( this, *this, *player_setup_manager );
       player_dialog->Center();
@@ -2185,7 +2194,7 @@ namespace holtz
   void Standalone_Player_Setup_Manager::set_player_handler( Player_Handler *handler )
   {
     player_handler = handler;
-    if( handler )
+    if( player_handler )
     {
       // tell handler all players
       std::list<Player>::iterator player;
@@ -2193,8 +2202,12 @@ namespace holtz
       {
 	player_handler->player_added(*player);
       }
+
       // tell handler which ruleset is currently active
-      player_handler->ruleset_changed(ruleset_type);
+      if( ruleset_type == Ruleset::custom_ruleset )
+	player_handler->ruleset_changed( ruleset_type, *ruleset );
+      else
+	player_handler->ruleset_changed( ruleset_type );
     }
   }
   void Standalone_Player_Setup_Manager::new_game()

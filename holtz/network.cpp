@@ -128,7 +128,7 @@ namespace holtz
       client->Notify(TRUE);
       
       client->Connect(host,false);
-      bool success = client->WaitOnConnect(5);	// wait 5 seconds
+      bool success = client->WaitOnConnect(10);	// wait 10 seconds
 
 #ifndef __WXMSW__
       if( !success )
@@ -272,7 +272,7 @@ namespace holtz
   void Network_Manager::set_player_handler( Player_Handler *handler )
   {
     player_handler = handler;
-    if( handler )
+    if( player_handler )
     {
       // tell handler all players
       std::list<Player>::iterator player;

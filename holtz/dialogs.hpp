@@ -129,6 +129,8 @@ namespace holtz
     Player_Setup_Dialog( wxWindow *parent, Game_Window &game_window, 
 			 Player_Setup_Manager &player_setup_manager );
 
+    void aborted();
+
     wxNotebook *notebook;
 
     Player_Setup_Page  *player_page;

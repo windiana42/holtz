@@ -611,6 +611,11 @@ namespace holtz
     sizer->SetSizeHints( this );   // set size hints to honour mininum size     
   }
 
+  void Player_Setup_Dialog::aborted()
+  {
+    player_page->aborted();
+  }
+
   // ============================================================================
   // Display_Setup_Page
   // ============================================================================
