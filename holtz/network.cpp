@@ -17,7 +17,11 @@
 #include "network.hpp"
 
 #include "wxholtz.hpp"
-#include <sstream>
+#ifndef __OLD_GCC__
+  #include <sstream>
+#else
+  #include <strstream>
+#endif
 
 namespace holtz
 {
@@ -1672,6 +1676,7 @@ namespace holtz
     std::cerr << sequence << " ";
 #endif
 
+#ifndef __OLD_GCC__
     std::ostringstream os;
     os << sequence;
 
@@ -1679,6 +1684,15 @@ namespace holtz
 
     write_int( sock, size );
     sock.WriteMsg( os.str().c_str(), size );
+#else
+    char buf[4096];
+    std::ostrstream os(buf,4096);
+    os << sequence;
+
+    unsigned size = os.pcount();
+    write_int( sock, size );
+    sock.WriteMsg( os.str(), size );
+#endif
   }
   Sequence Network_Manager::read_move( wxSocketBase& sock )
   {
@@ -1690,7 +1704,11 @@ namespace holtz
     sock.ReadMsg( buf, size );
     buf[size] = 0;		// terminate string
     std::string str = buf;
+#ifndef __OLD_GCC__
     std::istringstream is(str);
+#else
+    std::istrstream is(str.c_str());
+#endif
 
     Sequence seq;
     is >> seq;
