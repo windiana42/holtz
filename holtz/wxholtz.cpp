@@ -453,7 +453,7 @@ namespace holtz
 			    int x, int y, Sequence_Generator* &sg )
     : game(game), game_window(game_window), bitmap_handler(bitmap_handler), x(x), y(y),
       board_x(10), board_y(10),
-      sequence_generator( sg ), rotate_board(true)
+      sequence_generator( sg ), rotate_board(false)
   {
   }
 
@@ -656,7 +656,7 @@ namespace holtz
 			    Bitmap_Handler &bitmap_handler, 
 			    int x, int y, Sequence_Generator* &sg, int max_stones )
     : stones(stones), game_window(game_window), bitmap_handler(bitmap_handler), x(x), y(y),
-      sequence_generator(sg), max_stones(max_stones)
+      sequence_generator(sg), rotate_stones(false), max_stones(max_stones)
   {
   }
 
@@ -694,8 +694,16 @@ namespace holtz
       int i;
       for( i = 0; i < count; ++i )
       {
-	dc.DrawBitmap( bitmap_handler.normal.field_bitmaps[ Field_State_Type(stone_type) ], 
-		       x_pos, y_pos, true );
+	if( rotate_stones )
+	{
+	  dc.DrawBitmap( bitmap_handler.normal.field_bitmaps[ field_empty ], 
+			 x_pos, y_pos, true );
+	  dc.DrawBitmap( bitmap_handler.rotated.stone_bitmaps[ Stones::Stone_Type(stone_type) ], 
+			 x_pos, y_pos, true );
+	}
+	else
+	  dc.DrawBitmap( bitmap_handler.normal.field_bitmaps[ Field_State_Type(stone_type) ], 
+			 x_pos, y_pos, true );
 
 	x_pos += bitmap_handler.dimensions.field_width;
       }
