@@ -654,7 +654,7 @@ namespace holtz
       ++positions_checked;
 #ifndef __WXMSW__
       if( positions_checked % 10000 == 0 ) 
-	cerr << "AI: positions = " << positions_checked << std::endl;
+	std::cerr << "AI: positions = " << positions_checked << std::endl;
 #endif
     }
     position.rating = rating;
@@ -782,7 +782,7 @@ namespace holtz
 #ifndef __WXMSW__
 	/*
 	if( !knock_out_only )
-	  cerr << "AI: work on " << position.sorted_positions.size() << " positions" << std::endl;
+	  std::cerr << "AI: work on " << position.sorted_positions.size() << " positions" << std::endl;
 	*/
 #endif
 	assert( position.sorted_positions.size() == position.following_positions.size() );
