@@ -231,8 +231,8 @@ namespace holtz
   public:
     Game_Dialog( wxWindow *parent, Game_Manager&, WX_GUI_Manager& );
     ~Game_Dialog();
-    void game_setup();
 
+    virtual void game_setup();
     // board commands
     virtual void set_board( const Game &game );
     virtual bool ask_change_board( const Game &game, wxString who );
@@ -250,9 +250,7 @@ namespace holtz
     virtual void everything_ready();
     virtual void aborted();
     virtual bool ask_new_game( wxString who ); // other player asks for a new game (true: accept)
-    virtual void new_game_accepted();		  // other player accepted to start new game
-    virtual void new_game_denied();		  // other player rejected to play new game
-    virtual void new_game();	// force new game (network connections may be lost)
+    virtual bool ask_undo_move( wxString who ); // other player asks to undo a move (true: accept)
   private:
     void get_data_from_setup_manager();
 
@@ -280,100 +278,6 @@ namespace holtz
     friend class Player_Page;
   };
 
-  // ============================================================================
-  // old Game_Setup_Dialog
-  // ============================================================================
-  /*
-  class Player_Setup_Page : public wxPanel
-  {
-  public:
-    Player_Setup_Page( wxWindow *parent, Game_Setup_Dialog *, Game_Window &game_window, 
-		       Game_Setup_Manager &game_setup_manager );
-    ~Player_Setup_Page();
-
-    void on_ready( wxCommandEvent& event );
-    void on_cancel( wxCommandEvent& event );
-    void on_player_name( wxCommandEvent& event );
-    void on_add_player( wxCommandEvent& event );
-    void on_remove_player( wxCommandEvent& event );
-    void on_player_up( wxCommandEvent& event );
-    void on_player_down( wxCommandEvent& event );
-    void on_change_ruleset( wxCommandEvent& event );
-    void on_close( wxCloseEvent& event );
-    void set_custom_ruleset( Ruleset& );
-
-    // as player handler this dialog has to show results of player manipulations
-    virtual void player_added( const Player & );
-    virtual void player_removed( const Player & );
-    virtual void player_up( const Player & );
-    virtual void player_down( const Player & );
-    virtual void player_change_denied();
-    virtual void ruleset_changed( Ruleset::Ruleset_Type );
-    virtual void ruleset_changed( Ruleset::Ruleset_Type, Ruleset& );
-    virtual void ruleset_change_denied();
-    virtual void aborted();
-
-  private:
-    Game_Setup_Dialog *dialog;
-    Game_Window &game_window;
-    Game_Setup_Manager *game_setup_manager;
-
-    wxTextCtrl *player_name;
-    wxCheckBox *ai;
-    wxListBox *player_list;
-    std::map<int,int> player_id;   // item_number->id
-    std::map<int,int> player_item; // id->item_number
-
-    wxRadioBox *help_choice, *ruleset_choice;
-    int current_ruleset, last_ruleset;
-
-    DECLARE_EVENT_TABLE()
-  };
-
-  class Ruleset_Setup_Page : public wxPanel
-  {
-  public:
-    Ruleset_Setup_Page( wxWindow *parent, Game_Setup_Dialog * );
-    ~Ruleset_Setup_Page();
-
-    Ruleset *get_ruleset();	// get copy of ruleset
-    void set_ruleset( Ruleset * );
-    void restore_ruleset();
-
-    void on_apply  ( wxCommandEvent& event );
-    void on_restore( wxCommandEvent& event );
-    void on_cancel ( wxCommandEvent& event );
-    void on_change_win  ( wxCommandEvent& event );
-    void on_spin_win ( wxCommandEvent& event );
-    void on_change_stones  ( wxCommandEvent& event );
-    void on_spin_stones ( wxCommandEvent& event );
-  private:
-    Game_Setup_Dialog *dialog;
-    Ruleset *ruleset;
-
-    wxRadioBox *board_choice;
-    wxRadioBox *win_choice;
-    wxSpinCtrl *win_white, *win_grey, *win_black, *win_all;
-    wxRadioBox *stones_choice;
-    wxSpinCtrl *stones_white, *stones_grey, *stones_black;
-
-    DECLARE_EVENT_TABLE()
-  };
-
-  class Game_Setup_Dialog : public wxDialog
-  {
-  public:
-    Game_Setup_Dialog( wxWindow *parent, Game_Window &game_window, 
-			 Game_Setup_Manager &game_setup_manager );
-
-    void aborted();
-
-    wxNotebook *notebook;
-
-    Player_Setup_Page  *player_page;
-    Ruleset_Setup_Page *ruleset_page;
-  };
-  */
   // ============================================================================
   // Settings Dialog
   // ============================================================================

@@ -41,7 +41,8 @@ namespace holtz
   // ----------------------------------------------------------------------------
 
   Game_Manager::Game_Manager( Game_UI_Manager *ui_manager )
-    : ui_manager(ui_manager), game_setup_manager(0), game(Standard_Ruleset()), ai(*this, ui_manager)
+    : game_setup_manager(0), ui_manager(ui_manager), game(Standard_Ruleset()), 
+      ai(*this, ui_manager)
   {
   }
 
@@ -112,6 +113,129 @@ namespace holtz
 	  go_on = false;
 	  break;
       }
+    }
+  }
+
+  void Game_Manager::new_game()
+  {
+    if( new_game_requested )
+    {
+      if( ui_manager )
+	ui_manager->report_error(_("Already new game requested"),_("New game"));
+    }
+    else
+    {
+      new_game_requested = true;
+      assert( game_setup_manager );
+      switch( game_setup_manager->ask_new_game() )
+      {
+	case Game_Setup_Manager::accept: new_game_accepted(); break;
+	case Game_Setup_Manager::deny:   new_game_denied(); break;
+	case Game_Setup_Manager::wait_for_answer: break;
+      }
+    }
+  }
+
+  void Game_Manager::force_new_game()
+  {
+    stop_game();
+    assert( game_setup_manager );
+    game_setup_manager->force_new_game();
+  }
+
+  void Game_Manager::new_game_accepted()
+  {
+    if( !new_game_requested )
+    {
+      if( ui_manager )
+	ui_manager->report_error(_("Unrequested new_game accepted?!?"),_("Why new_game"));
+    }
+    else
+    {
+      new_game_requested = false;
+      // setup new game
+      force_new_game();
+    }
+  }
+
+  void Game_Manager::new_game_denied()
+  {
+    if( !new_game_requested )
+    {
+      if( ui_manager )
+	ui_manager->report_error(_("Unrequested new game denied?!?"),_("Why new_game"));
+    }
+    else
+    {
+      new_game_requested = false;
+      wxString msg = _("The idea of starting a new game was rejected. Do you want to start a new game on your own?");
+      if( wxMessageBox( msg, _("New game?"), wxYES | wxNO | wxCANCEL | wxICON_QUESTION ) == wxYES )
+      {
+	force_new_game();
+      }
+    }
+  }
+
+  void Game_Manager::undo_move()
+  {
+    if( undo_requested )
+    {
+      if( ui_manager )
+	ui_manager->report_error(_("Already undo requested"),_("Undo failed"));
+    }
+    else
+    {
+      undo_requested = true;
+      assert( game_setup_manager );
+      switch( game_setup_manager->ask_undo_move() )
+      {
+	case Game_Setup_Manager::accept: undo_accepted(); break;
+	case Game_Setup_Manager::deny:   undo_denied(); break;
+	case Game_Setup_Manager::wait_for_answer: break;
+      }
+    }
+  }
+
+  void Game_Manager::undo_accepted()
+  {
+    if( !undo_requested )
+    {
+      if( ui_manager )
+	ui_manager->report_error(_("Unrequested undo accepted?!?"),_("Why undo"));
+    }
+    else
+    {
+      undo_requested = false;
+      // undo two half moves
+      if( !game.undo_move() )
+      {
+	if( ui_manager )
+	  ui_manager->report_error(_("Undo move failed"),_("Undo failed"));
+      }
+      else
+	if( !game.undo_move() )
+	{
+	  if( ui_manager )
+	    ui_manager->report_error(_("Undo move failed"),_("Undo failed"));
+	}
+
+      if( ui_manager )
+	ui_manager->update_board( game ); // update board display
+    }
+  }
+
+  void Game_Manager::undo_denied()
+  {
+    if( !undo_requested )
+    {
+      if( ui_manager )
+	ui_manager->report_error(_("Unrequested undo denied?!?"),_("Why undo"));
+    }
+    else
+    {
+      undo_requested = false;
+      if( ui_manager )
+	ui_manager->report_information(_("Requested undo was denied"),_("Undo denied"));
     }
   }
 
@@ -305,6 +429,15 @@ namespace holtz
   {
     return accept;
   }
+  Standalone_Game_Setup_Manager::Answer_Type Standalone_Game_Setup_Manager::ask_undo_move()
+  {
+    return accept;
+  }
+  void Standalone_Game_Setup_Manager::force_new_game() // force new game (may close connections)
+  {
+    if( display_handler )	// there should be a display handler that may display a game setup dialog
+      display_handler->game_setup();
+  }  
   void Standalone_Game_Setup_Manager::stop_game()
   {
     game_manager.stop_game();

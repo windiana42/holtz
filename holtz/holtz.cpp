@@ -902,14 +902,13 @@ namespace holtz
       win_condition(ruleset->win_condition),
       coordinate_translator(ruleset->coordinate_translator),
       undo_possible(ruleset->undo_possible),
-      save_game(0),
       ref_counter(new Ref_Counter())
   {
     current_player = players.begin();
   }
 
   Game::Game( const Game &game )
-    : board(game.board), save_game(0)
+    : board(game.board)
   {
     *this = game;		// use operator=
   }
@@ -980,20 +979,11 @@ namespace holtz
     ref_counter 	  = game.ref_counter;
     ++ref_counter->cnt;
 
-    /*
-    if( save_game )
-      delete save_game;
-    save_game		= 0;
-    */
-
     return *this;
   }
 
   Game::~Game()
   {
-    if( save_game )
-      delete save_game;
-
     if( ref_counter->cnt <= 1 )
     {
       delete ruleset;
@@ -1016,9 +1006,6 @@ namespace holtz
 	(players.size() > ruleset->max_players) ) 
       return wrong_number_of_players;
 
-    if( !save_game )
-      save_game = new Game(*this);
-
     do
     {
       Player_Input::Player_State state = current_player->input->determine_move();
@@ -1030,9 +1017,7 @@ namespace holtz
 	  sequence = current_player->input->get_move();
 
 	  // do move
-	  save_game->do_move( sequence );
-	  save_game->copy_player_times( *this ); // rescue player times
-	  *this = *save_game;
+	  do_move( sequence );
 
 	  // calculate average time
 	  long time = current_player->input->get_used_time();
@@ -1072,13 +1057,6 @@ namespace holtz
   //! stop game to allow changing the position with do_move and undo_move
   void Game::stop_game()		
   {
-    if( save_game )
-    {
-      save_game->copy_player_times( *this ); // rescue player times
-      *this = *save_game;
-      delete save_game;
-    }
-    save_game = 0;
   }
 
   Player *Game::get_winner()
@@ -1098,10 +1076,6 @@ namespace holtz
 
   void Game::reset_game()
   {
-    if( save_game )
-      delete save_game;
-    save_game = 0;
-
     board = ruleset->board;
     common_stones = ruleset->common_stones;
     win_condition = ruleset->win_condition;

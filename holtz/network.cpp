@@ -17,6 +17,7 @@
 #include "network.hpp"
 
 #include "wxholtz.hpp"
+#include "util.hpp"
 #ifndef __OLD_GCC__
   #include <sstream>
 #else
@@ -547,10 +548,16 @@ namespace holtz
     return wait_for_answer;
   }
 
-  void Network_Manager::new_game()   // force new game (may close connections)
+  Game_Setup_Manager::Answer_Type Network_Manager::ask_undo_move() // request to play new game
   {
-    if( display_handler )
-      display_handler->new_game();
+    //!!! implement this !!!
+    return deny;
+  }
+  
+  void Network_Manager::force_new_game()   // force new game (may close connections)
+  {
+    if( display_handler )	// there should be a display handler that may display a game setup dialog
+      display_handler->game_setup(); // Attention: this opens a dialog which might destroy this object
   }
 
   void Network_Manager::stop_game()  // stop game
@@ -1320,7 +1327,7 @@ namespace holtz
 	  {
 	    if( display_handler->ask_new_game( host.Hostname() ) )
 	    {
-	      display_handler->new_game(); // Attention: this opens a dialog which might destroy this object
+	      force_new_game(); // Attention: this opens a dialog which might destroy this object
 	    }
 	  }
 	}

@@ -1,5 +1,5 @@
 /*
- * Wxholtz.hpp
+ * wxholtz.hpp
  * 
  * GUI declaration
  * 
@@ -26,25 +26,6 @@
 
 namespace holtz
 {
-  inline std::string wxstr_to_str( const wxString &str )
-  {
-#if wxUSE_UNICODE
-    return str.mb_str( wxConvUTF8 ).data();
-#else
-    return str.c_str();
-#endif
-  }
-
-  inline wxString str_to_wxstr( const std::string &str )
-  {
-#ifdef wxUSE_UNICODE
-    return wxString(str.c_str(), wxConvUTF8);
-#else
-    return str.c_str();
-#endif
-  }
-
-  class Game_Window;
   class WX_GUI_Manager;
 }
 
@@ -53,42 +34,31 @@ namespace holtz
 #include "animations.hpp"
 #include "ai.hpp"
 
-//#include "dialogs.hpp"
 namespace holtz
 {
+//#include "wxmain.hpp"
+  class Game_Window;
+
+//#include "dialogs.hpp"
   // classes defined in dialogs.hpp
   class Game_Dialog;
   class Settings_Dialog;
 }
 
+// ============================================================================
+// declarations
+// ============================================================================
+
+#ifdef __WXMSW__
+#define DRAW_BACKGROUND
+#define DOUBLE_BUFFER
+#else
+#define DRAW_BACKGROUND
+#define DOUBLE_BUFFER
+#endif
+
 namespace holtz
 {
-  // ============================================================================
-  // wx application class
-  // ============================================================================
-
-  class wxHoltz : public wxApp
-  {
-  public:
-    // override base class virtuals
-    // ----------------------------
-    
-    // this one is called on application startup and is a good place for the app
-    // initialization (doing it here and not in the ctor allows to have an error
-    // return: if OnInit() returns false, the application terminates)
-    virtual bool OnInit();
-
-    bool check_config();
-    bool init_help(wxLocale&);
-    wxHelpControllerBase& get_help_controller() { return help_controller; }
-
-    ~wxHoltz();
-
-  private:
-    wxHtmlHelpController help_controller; // HTML help
-    wxConfigBase* global_config; // so that it can be deleted
-  };
-
   // ============================================================================
   // generic classes
   // ============================================================================
@@ -472,139 +442,6 @@ namespace holtz
 #endif
   };
 
-  // ============================================================================
-  // frame or window classes
-  // ============================================================================
-
-  /*! class Game_Window
-   *  window component on which the game is placed
-   */
-
-  class Game_Window : public wxScrolledWindow
-  {
-  public:
-    Game_Window( wxFrame *parent_frame );
-    ~Game_Window();
-    bool on_close();		// return true: really close
-
-    void load_settings();
-
-    void new_game();
-    void settings_dialog();
-
-    void show_status_text( wxString text ); // shows text in status bar
-    void init_scrollbars();
-
-    void OnDraw( wxDC &dc );
-    void on_erase_background( wxEraseEvent &event );
-    void on_mouse_event( wxMouseEvent &event );
-    void refresh();
-    wxDC *get_client_dc();	// must be destroyed
-
-    inline wxFrame &get_frame() { return parent_frame; }
-  private:
-    wxFrame &parent_frame;
-
-    Game_Manager   game_manager;
-    WX_GUI_Manager gui_manager;
-    Game_Dialog    *game_dialog;
-
-    // any class wishing to process wxWindows events must use this macro
-    DECLARE_EVENT_TABLE();
-  };
-
-  // Define a new frame type: this is going to be our main frame
-  class Main_Frame : public wxFrame
-  {
-  public:
-    // ctor(s)
-    Main_Frame( const wxString& title );
-    ~Main_Frame();
-    wxMenuBar* create_menu();
-
-    void save_size_and_position();
-    wxSize restore_size();
-    wxPoint restore_position();
-    void load_settings();
-    
-    // event handlers (these functions should _not_ be virtual)
-    void on_new_game(wxCommandEvent& event);
-    void on_standalone_game(wxCommandEvent& event);
-    void on_network_game(wxCommandEvent& event);
-    void on_quit(wxCommandEvent& event);
-    void on_settings(wxCommandEvent& event);
-    void on_choose_skin(wxCommandEvent& event);
-    void on_choose_beep(wxCommandEvent& event);
-    void on_toggle_sound(wxCommandEvent& event);
-    void on_help_contents(wxCommandEvent& event);
-    void on_help_license(wxCommandEvent& event);
-    void on_about(wxCommandEvent& event);
-    void on_close(wxCloseEvent& event);
-
-  private:
-    Game_Window game_window;
-
-    wxMenu *setting_menu;
-
-    // any class wishing to process wxWindows events must use this macro
-    DECLARE_EVENT_TABLE();
-  };
-
-
-  // ----------------------------------------------------------------------------
-  // constants
-  // ----------------------------------------------------------------------------
-
-  // IDs for the controls and the menu commands
-  enum
-  {
-    // menu items
-    HOLTZ_NEW_GAME = 100,
-    HOLTZ_STANDALONE_GAME,
-    HOLTZ_NETWORK_GAME,
-    HOLTZ_LOAD_GAME,
-    HOLTZ_SETTINGS,
-    HOLTZ_SKIN,
-    HOLTZ_BEEP,
-    HOLTZ_SOUND,
-    HOLTZ_QUIT,
-    HOLTZ_HELP_CONTENTS,
-    HOLTZ_HELP_LICENSE,
-    HOLTZ_ABOUT,
-
-    DIALOG_READY,
-    DIALOG_PLAYER_NAME,
-    DIALOG_ADD_PLAYER,
-    DIALOG_REMOVE_PLAYER,
-    DIALOG_PLAYER_UP,
-    DIALOG_PLAYER_DOWN,
-    DIALOG_DISCONNECT,
-    DIALOG_HELP,
-    DIALOG_RULESET,
-    DIALOG_WIN_CHOICE,
-    DIALOG_WIN_SPIN,
-    DIALOG_STONES_CHOICE,
-    DIALOG_STONES_SPIN,
-    DIALOG_APPLY,
-    DIALOG_RESTORE,
-    DIALOG_SPIN,
-    DIALOG_CHOOSE_DIRECTORY,
-    DIALOG_CHANGE_DIRECTORY,
-    DIALOG_CHOOSE_FILE,
-    DIALOG_CHANGE_FILE,
-    DIALOG_CHOOSE_SKIN_FILE,
-    DIALOG_CHANGE_SKIN_FILE,
-    DIALOG_CHOOSE_BEEP_FILE,
-    DIALOG_CHANGE_BEEP_FILE,
-
-    LISTBOX_DCLICK,
-
-    DIALOG_OK = wxID_OK,	// the names are just for consistence
-    DIALOG_CANCEL = wxID_CANCEL // wxID_OK and wxID_CANCEL have special functions in dialogs
-  };
 }
-
-// declare the wxGetApp() function
-DECLARE_APP(holtz::wxHoltz) //**/
 
 #endif

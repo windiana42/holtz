@@ -18,14 +18,6 @@
 // declarations
 // ============================================================================
 
-#ifdef __WXMSW__
-#define DRAW_BACKGROUND
-#define DOUBLE_BUFFER
-#else
-#define DRAW_BACKGROUND
-#define DOUBLE_BUFFER
-#endif
-
 #ifndef DEFAULT_DATA_DIR
 #define DEFAULT_DATA_DIR "./"
 #endif
@@ -53,12 +45,16 @@
 #include "ai.hpp"
 #include "util.hpp"
 #include "pbm.hpp"
+#include "wxmain.hpp"
 
 #include <wx/zipstrm.h>
 #include <wx/image.h>
 #include <wx/fileconf.h>
 #include <wx/dcmemory.h>
-#include <assert.h>
+#include <wx/filesys.h>
+#include <wx/fs_zip.h>
+#include <wx/html/helpctrl.h>
+#include <wx/cshelp.h>
 /*
 #ifndef __OLD_GCC__
   #include <sstream>
@@ -66,26 +62,18 @@
 */
 #include <fstream>
 #include <list>
+#include <assert.h>
 
 // wx html help
 #if !wxUSE_HTML
 #error "wxHTML is required for the wxWindows HTML help system."
 #endif
-#include <wx/filesys.h>
-#include <wx/fs_zip.h>
-#include <wx/html/helpctrl.h>
-#include <wx/cshelp.h>
 
 namespace holtz
 {
   // ----------------------------------------------------------------------------
   // resources
   // ----------------------------------------------------------------------------
-
-  // the application icon
-#ifndef __WXMSW__
-#include "icon.xpm"
-#endif
 
 #ifdef PURIST_50
   // --------------------
@@ -172,121 +160,9 @@ namespace holtz
 #include "skins/eins/skin.hpp"
 #endif
 
-  // ----------------------------------------------------------------------------
-  // event tables and other macros for wxWindows
-  // ----------------------------------------------------------------------------
-
-  // the event tables connect the wxWindows events with the functions (event
-  // handlers) which process them. It can be also done at run-time, but for the
-  // simple menu events like this the static method is much simpler.
-  BEGIN_EVENT_TABLE(Main_Frame, wxFrame)				//**/
-  EVT_MENU(HOLTZ_NEW_GAME,	  Main_Frame::on_new_game)		//**/
-  EVT_MENU(HOLTZ_SETTINGS,	  Main_Frame::on_settings)		//**/
-  EVT_MENU(HOLTZ_QUIT,		  Main_Frame::on_quit)			//**/
-  EVT_MENU(HOLTZ_HELP_CONTENTS,	  Main_Frame::on_help_contents)		//**/
-  EVT_MENU(HOLTZ_HELP_LICENSE,	  Main_Frame::on_help_license)		//**/
-  EVT_MENU(HOLTZ_ABOUT,		  Main_Frame::on_about)			//**/
-  EVT_CLOSE(Main_Frame::on_close)					//**/
-  END_EVENT_TABLE()							//**/
-
-  BEGIN_EVENT_TABLE(Game_Window, wxScrolledWindow)			//**/
-  EVT_LEFT_DOWN(Game_Window::on_mouse_event)				//**/
-  EVT_RIGHT_DOWN(Game_Window::on_mouse_event)				//**/
-#ifdef DRAW_BACKGROUND
-  EVT_ERASE_BACKGROUND(Game_Window::on_erase_background)		//**/
-#endif
-  END_EVENT_TABLE()							//**/
-
   // ============================================================================
   // implementation
   // ============================================================================
-
-  // ----------------------------------------------------------------------------
-  // the application class
-  // ----------------------------------------------------------------------------
-
-  // 'Main program' equivalent: the program execution "starts" here
-  bool wxHoltz::OnInit()
-  {
-    randomize();		// initialize random
-
-    wxLocale *loc = new wxLocale();
-    loc->Init(wxLANGUAGE_DEFAULT); 
-    loc->AddCatalog(wxT("holtz"));      
-
-    SetAppName(wxT("Holtz"));
-    SetVendorName(wxT("Martin Trautmann"));
-    global_config = new wxConfig(GetAppName());
-    wxConfig::Set(global_config);
-
-    // this will link all image libraries, also the unused ones
-    // wxInitAllImageHandlers(); // make it possible to load PNG images
-    // that's better, we don't use other image formats:
-    wxImage::AddHandler(new wxXPMHandler);
-    wxImage::AddHandler(new wxPNGHandler);
-    // for html help
-    wxHelpControllerHelpProvider* provider = new wxHelpControllerHelpProvider;
-    provider->SetHelpController(&get_help_controller());
-    wxHelpProvider::Set(provider);
-    // for help: zip files
-    wxFileSystem::AddHandler(new wxZipFSHandler);
-    if(!init_help(*loc))
-      wxLogWarning(_("No help file found."));
-
-    check_config(); // asks for configuration if not yet done
-
-    // create the main application window
-    Main_Frame *frame = new Main_Frame( _("Holtz") );
-
-    // and show it (the frames, unlike simple controls, are not shown when
-    // created initially)
-    frame->Show(true);
-
-    SetTopWindow(frame);
-    SetExitOnFrameDelete(true);
-
-    // success: wxApp::OnRun() will be called which will enter the main message
-    // loop and the application will run. If we returned FALSE here, the
-    // application would exit immediately.
-    return TRUE;
-  }
-
-  bool wxHoltz::init_help(wxLocale& loc)
-  {
-	// try to load the HTML help file, in decreasing order:
-	// - help/help_la_co.htb
-	// - help/help_la.htb
-	// - data_dir/help/help_la_co.htb
-	// - data_dir/help/help_la.htb
-	// - help/help_en.htb
-	// - data_dir/help/help_en.htb
-	// where 'la' is the language, and 'co' the country of the currently used locale
-	// if all fails, return false
-	wxString language = loc.GetCanonicalName();
-	if(!get_help_controller().Initialize(wxT("help/help_") + language))
-	  if(language.Len() <= 2 || !get_help_controller().Initialize(wxT("help/help_") + language.Left(2)))
-	    if(!get_help_controller().Initialize(wxString(wxT(DEFAULT_DATA_DIR)) 
-						 + wxT("help/help_") + language))
-	      if(language.Len() <= 2 || !get_help_controller().Initialize(wxString(wxT(DEFAULT_DATA_DIR)) 
-									  + wxT("help/help_") 
-									  + language.Left(2)))
-		if(!get_help_controller().Initialize(wxT("help/help_en")))
-		  if(!get_help_controller().Initialize(wxString(wxT(DEFAULT_DATA_DIR)) 
-						       + wxT("help/help_en")))
-	  	  return false;
-	return true;
-  }
-
-  bool wxHoltz::check_config()
-  {
-    return true;
-  }
-
-  wxHoltz::~wxHoltz()
-  {
-    // doesn't work? seems to be already deleted
-    //delete global_config; // writes things back
-  }
 
   // ----------------------------------------------------------------------------
   // Dimensions
@@ -952,7 +828,10 @@ namespace holtz
   Field_Pos Board_Panel::get_field( int abs_x, int abs_y ) const
   {
     Game &game = gui_manager.get_display_game();
-    int rel_x, rel_y, field_width;
+
+    int half_diff, offset, field_width, row;
+    int rel_x, rel_y;
+
     if( settings.rotate_board )
     {
       // swap x-y coordinates
@@ -964,12 +843,22 @@ namespace holtz
       {
 	board_size_y = bitmap_handler.dimensions.field_height * game.board.get_x_size() 
 	  + bitmap_handler.dimensions.field_height / 2;
+
+	half_diff = (bitmap_handler.dimensions.field_width - 
+		     bitmap_handler.dimensions.field_packed_width) / 2;
+	row = (rel_y - half_diff) / bitmap_handler.dimensions.field_packed_width;
+	offset = (row & 1) ? 0 : bitmap_handler.dimensions.field_height / 2;
 	field_width = bitmap_handler.dimensions.field_height;
       }
       else
       {
 	board_size_y = bitmap_handler.dimensions.field_width * game.board.get_x_size() 
 	  + bitmap_handler.dimensions.field_width / 2;
+
+	half_diff = (bitmap_handler.dimensions.field_height - 
+		     bitmap_handler.dimensions.field_packed_height) / 2;
+	row = (rel_y - half_diff) / bitmap_handler.dimensions.field_packed_height;
+	offset = (row & 1) ? 0 : bitmap_handler.dimensions.field_width / 2;
 	field_width = bitmap_handler.dimensions.field_width;
       }
       rel_x = board_size_y - rel_x - 1;
@@ -978,13 +867,14 @@ namespace holtz
     {
       rel_x = abs_x - x - board_x;
       rel_y = abs_y - y - board_y;
+
+      half_diff = (bitmap_handler.dimensions.field_height - 
+		   bitmap_handler.dimensions.field_packed_height) / 2;
+      row = (rel_y - half_diff) / bitmap_handler.dimensions.field_packed_height;
+      offset = (row & 1) ? 0 : bitmap_handler.dimensions.field_width / 2;
       field_width = bitmap_handler.dimensions.field_width;
     }
     
-    int half_diff = (bitmap_handler.dimensions.field_height - 
-		     bitmap_handler.dimensions.field_packed_height) / 2;
-    int row = (rel_y - half_diff) / bitmap_handler.dimensions.field_packed_height;
-    int offset = (row & 1) ? 0 : bitmap_handler.dimensions.field_width / 2;
     
     if( (rel_x >= offset) && (rel_y >= 0 ) )
     {
@@ -2056,6 +1946,8 @@ namespace holtz
 
   bool WX_GUI_Manager::load_skin( wxString filename )
   {
+    show_user_information(false,false);
+
     wxZipInputStream *input;
     wxImage image;
 
@@ -2152,296 +2044,6 @@ namespace holtz
   {
     game_window.refresh();
   }
-
-  // ----------------------------------------------------------------------------
-  // Game Window
-  // ----------------------------------------------------------------------------
-
-  Game_Window::Game_Window( wxFrame *parent_frame )
-    : wxScrolledWindow( parent_frame ),
-      parent_frame(*parent_frame),
-      gui_manager( game_manager, *this ),
-      game_dialog( new Game_Dialog(this, game_manager, gui_manager) )
-  {
-    game_manager.set_ui_manager( &gui_manager );
-
-    SetBackgroundColour(*wxWHITE);
-  }
-
-  Game_Window::~Game_Window()
-  {
-    game_manager.stop_game();
-    delete game_dialog;
-  }
-  
-  bool Game_Window::on_close()
-  {
-    return true;
-  }
-
-  void Game_Window::load_settings()
-  {
-    gui_manager.load_settings();
-  }
-  
-  void Game_Window::new_game()
-  {
-    game_dialog->game_setup();
-  }
-
-  void Game_Window::settings_dialog()
-  {
-    Settings_Dialog dialog( this, gui_manager );
-    dialog.Center();
-    dialog.ShowModal();
-  }
-
-  void Game_Window::show_status_text( wxString text ) // shows text in status bar
-  {
-    parent_frame.SetStatusText( text );
-  }
-  void Game_Window::init_scrollbars()
-  {
-    SetScrollbars( 10, 10, gui_manager.get_width() / 10 + 1, gui_manager.get_height() / 10 + 1 );
-  }
-    
-  void Game_Window::OnDraw( wxDC &_dc )
-  {
-    // prepare background:
-    int width, width2; 
-    int height, height2;
-    GetVirtualSize(&width,&height); // get size from scrolled window
-    GetSize(&width2,&height2);
-    if( width2  > width  ) width  = width2;
-    if( height2 > height ) height = height2;
-
-#ifdef DOUBLE_BUFFER
-    wxBitmap buffer( width, height );
-    wxMemoryDC mem;
-    mem.SelectObject(buffer);
-    PrepareDC(mem);
-    wxDC *dc = &mem;
-#else
-    wxDC *dc = &_dc;
-    dc->BeginDrawing();
-#endif
-
-#ifdef DRAW_BACKGROUND
-    int bg_width = gui_manager.get_bitmap_handler().background.GetWidth();
-    int bg_height = gui_manager.get_bitmap_handler().background.GetHeight();
-    for( int y = 0; y < height + bg_height; y += bg_height )
-    {
-      for( int x = 0; x < width + bg_width; x += bg_width )
-      {
-	dc->DrawBitmap( gui_manager.get_bitmap_handler().background, x, y );
-      }
-    }
-#endif
-
-    gui_manager.draw( *dc );
-    gui_manager.draw_mark( *dc );
-
-#ifdef DOUBLE_BUFFER
-#ifdef __WXGTK__		// work around for wxGTK which doesn't draw text on MemoryDC
-    // draw text directly on the real device context
-    _dc.BeginDrawing();
-    _dc.Blit(0,0, width, height, dc, 0, 0 );
-    dc = &_dc;			
-#endif
-#endif
-
-    gui_manager.draw_text( *dc );
-
-#ifdef DOUBLE_BUFFER
-#ifndef __WXGTK__
-    // draw buffer on the real device context
-    _dc.BeginDrawing();
-    _dc.Blit(0,0, width, height, dc, 0, 0 );
-    _dc.EndDrawing();
-#else
-    _dc.EndDrawing();
-#endif
-#else
-    dc->EndDrawing();
-#endif
-  }
-  void Game_Window::on_erase_background( wxEraseEvent &event )
-  {
-    // do nothing, just don't erase background...
-  }
-  void Game_Window::on_mouse_event( wxMouseEvent &event )
-  {
-    int cl_x, cl_y;
-    GetViewStart( &cl_x, &cl_y );	// window might be scrolled
-    cl_x = cl_x*10 + event.GetX();
-    cl_y = cl_y*10 + event.GetY();
-
-    if( event.LeftDown() )	// if event is left click
-    {
-      gui_manager.mouse_click_left( cl_x, cl_y );
-    }
-    else
-    {
-      if( event.RightDown() )	// if event is left click
-      {
-	gui_manager.mouse_click_right( cl_x, cl_y );
-      }
-    }
-  }
-  void Game_Window::refresh()
-  {
-    Refresh();
-    Update();
-  }
-  wxDC *Game_Window::get_client_dc()	// must be destroyed
-  {
-    wxDC *dc = new wxClientDC(this);
-    PrepareDC(*dc);
-    return dc;
-  }
-  
-  // ----------------------------------------------------------------------------
-  // main frame
-  // ----------------------------------------------------------------------------
-
-  // frame constructor
-  Main_Frame::Main_Frame( const wxString& title )
-    : wxFrame( /*paRent*/0, /*id*/-1, title, restore_position(), restore_size(), 
-	       wxDEFAULT_FRAME_STYLE | wxHSCROLL | wxVSCROLL ),
-      game_window(this),
-      setting_menu(0)
-  {
-    // set the frame icon
-    SetIcon(wxICON(icon));
-
-    // create the menu
-    SetMenuBar(create_menu());
-
-#if wxUSE_STATUSBAR
-    // create a status bar just for fun (by default with 1 pane only)
-    CreateStatusBar(1);
-    SetStatusText(_("Welcome to Holtz!"));
-#endif // wxUSE_STATUSBAR
-
-    game_window.Show(true);
-  }
-
-  Main_Frame::~Main_Frame()
-  {
-  }
-
-  wxMenuBar* Main_Frame::create_menu()
-  {
-    // create a menu bar
-    wxMenu *menu_file = new wxMenu;
-    menu_file->Append(HOLTZ_NEW_GAME,		_("&New Game...\tCtrl-N"), _("Start a new game"));
-    menu_file->AppendSeparator();
-    menu_file->Append(HOLTZ_QUIT,		_("E&xit\tAlt-X"), _("Quit Holtz"));
-
-    // the "Setting" item should be in the help menu
-    setting_menu = new wxMenu;
-    setting_menu->Append(HOLTZ_SETTINGS, _("Display s&ettings...\tCtrl-E"),  _("Change display settings"));
-
-    // the "About" item should be in the help menu
-    wxMenu *help_menu = new wxMenu;
-	help_menu->Append(HOLTZ_HELP_CONTENTS, _("Contents\tF1"), _("Show help file"));
-	help_menu->Append(HOLTZ_HELP_LICENSE, _("License"), _("Information about the Holtz license"));
-    help_menu->Append(HOLTZ_ABOUT, _("About"), _("Show about dialog"));
-
-    // now append the freshly created menu to the menu bar...
-    wxMenuBar *menu_bar = new wxMenuBar();
-    menu_bar->Append(menu_file,    _("&File"));
-    menu_bar->Append(setting_menu, _("&Settings"));
-    menu_bar->Append(help_menu,    _("&Help"));
-
-    return menu_bar;
-  }
-
-  void Main_Frame::save_size_and_position()
-  {
-    wxPoint pos = GetPosition();
-    wxSize size = GetSize();
-    wxConfigBase* cfg = wxConfig::Get();
-    cfg->Write(wxT("MainXPos"), (long)pos.x);
-    cfg->Write(wxT("MainYPos"), (long)pos.y);
-    cfg->Write(wxT("MainXSize"), (long)size.GetWidth());
-    cfg->Write(wxT("MainYSize"), (long)size.GetHeight());
-    cfg->Flush();
-  }
-
-  wxSize Main_Frame::restore_size()
-  {
-    wxConfigBase* cfg = wxConfig::Get();
-    wxSize size;
-    size.SetWidth(cfg->Read(wxT("MainXSize"), 640));
-    size.SetHeight(cfg->Read(wxT("MainYSize"), 480));
-    return size;
-  }
-
-  wxPoint Main_Frame::restore_position()
-  {
-    wxConfigBase* cfg = wxConfig::Get();
-    wxPoint pos;
-    pos.x = cfg->Read(wxT("MainXPos"), -1); // -1 is the default position
-    pos.y = cfg->Read(wxT("MainYPos"), -1);
-    return pos;
-  }
-
-  void Main_Frame::load_settings()
-  {
-    game_window.load_settings();
-  }
-  
-  // event handlers
-
-  void Main_Frame::on_new_game(wxCommandEvent& WXUNUSED(event))
-  {
-    game_window.new_game();
-  }
-
-  void Main_Frame::on_settings(wxCommandEvent& WXUNUSED(event))
-  {
-    game_window.settings_dialog();
-  }
-
-  void Main_Frame::on_quit(wxCommandEvent& WXUNUSED(event))
-  {
-    // TRUE is to force the frame to close
-    Close(TRUE);
-  }
-
-  void Main_Frame::on_help_contents(wxCommandEvent&)
-  {
-    ::wxGetApp().get_help_controller().DisplayContents();
-  }
-
-  void Main_Frame::on_help_license(wxCommandEvent&)
-  {
-    ::wxGetApp().get_help_controller().DisplaySection(wxT("helplic.htm"));
-  }
-
-  void Main_Frame::on_about(wxCommandEvent& WXUNUSED(event))
-  {
-    wxString msg;
-    msg =  _("Holtz is game about making sacrifices.\n");
-    msg += _("GPLed by Martin Trautmann (2003)\n");
-	msg += _("Based on Zèrtz (r) and (c) by Don & Co NV, 2001.");
-
-    wxMessageBox(msg, _("About Holtz"), wxOK | wxICON_INFORMATION, this);
-  }
-
-  void Main_Frame::on_close(wxCloseEvent& WXUNUSED(event))
-  {
-    save_size_and_position();
-    game_window.on_close();
-    Destroy();
-  }
 }
 
-// Create a new application object: this macro will allow wxWindows to create
-// the application object during program execution (it's better than using a
-// static object for many reasons) and also declares the accessor function
-// wxGetApp() which will return the reference of the right type (i.e. RoboTopApp and
-// not wxApp)
-IMPLEMENT_APP(holtz::wxHoltz)					//**/
 

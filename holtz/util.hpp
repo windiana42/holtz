@@ -24,6 +24,8 @@
 #include <string>
 #include <map>
 
+#include <wx/wx.h>
+
 namespace holtz
 {
   inline int random( int min, int max )
@@ -44,5 +46,23 @@ namespace holtz
 
   std::string long_to_string( long );
   std::pair<long,unsigned /*digits*/> string_to_long( std::string, int base = 10 );
+
+  inline std::string wxstr_to_str( const wxString &str )
+  {
+#if wxUSE_UNICODE
+    return str.mb_str( wxConvUTF8 ).data();
+#else
+    return str.c_str();
+#endif
+  }
+
+  inline wxString str_to_wxstr( const std::string &str )
+  {
+#ifdef wxUSE_UNICODE
+    return wxString(str.c_str(), wxConvUTF8);
+#else
+    return str.c_str();
+#endif
+  }
 }
 #endif
