@@ -1272,6 +1272,14 @@ namespace holtz
   // Game_Dialog
   // ----------------------------------------------------------------------------
 
+  wxSize bounding_size( wxSize size1, wxSize size2 )
+  {
+    wxSize ret;
+    ret.SetWidth ( size1.GetWidth()  > size2.GetWidth()  ? size1.GetWidth()  : size2.GetWidth()  );
+    ret.SetHeight( size1.GetHeight() > size2.GetHeight() ? size1.GetHeight() : size2.GetHeight() );
+    return ret;
+  }
+
   Game_Dialog::Game_Dialog( wxWindow *parent, Game_Manager &game_manager, WX_GUI_Manager &gui_manager )
     : game_manager(game_manager), gui_manager(gui_manager),
       game( Standard_Ruleset() ), game_setup_manager(0),
@@ -1283,6 +1291,12 @@ namespace holtz
       player_page( wizard, *this ),
       dummy( wizard )
   {
+    wxSize size = bounding_size( setup_manager_page.GetBestSize(), board_page.GetBestSize() );
+    size = bounding_size( size, custom_board_page.GetBestSize() );
+    size = bounding_size( size, custom_board_page.GetBestSize() );
+    size = bounding_size( size, load_board_page.GetBestSize() );
+    size = bounding_size( size, player_page.GetBestSize() );
+    wizard->SetPageSize(size);
   }
 
   Game_Dialog::~Game_Dialog()
@@ -1297,14 +1311,6 @@ namespace holtz
     }
   }
 
-  wxSize bounding_size( wxSize size1, wxSize size2 )
-  {
-    wxSize ret;
-    ret.SetWidth ( size1.GetWidth()  > size2.GetWidth()  ? size1.GetWidth()  : size2.GetWidth()  );
-    ret.SetHeight( size1.GetHeight() > size2.GetHeight() ? size1.GetHeight() : size2.GetHeight() );
-    return ret;
-  }
-
   void Game_Dialog::game_setup()
   {
     // init variables
@@ -1312,13 +1318,6 @@ namespace holtz
     // init pages
     setup_manager_page.restore();
     // other pages are initialized after setup_manager change
-
-    wxSize size = bounding_size( setup_manager_page.GetBestSize(), board_page.GetBestSize() );
-    size = bounding_size( size, custom_board_page.GetBestSize() );
-    size = bounding_size( size, custom_board_page.GetBestSize() );
-    size = bounding_size( size, load_board_page.GetBestSize() );
-    size = bounding_size( size, player_page.GetBestSize() );
-    wizard->SetPageSize(size);
 
     if( wizard->RunWizard(&setup_manager_page) )
     {
