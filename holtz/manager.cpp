@@ -42,7 +42,7 @@ namespace holtz
 
   Game_Manager::Game_Manager( Game_UI_Manager *ui_manager )
     : game_setup_manager(0), ui_manager(ui_manager), game(Standard_Ruleset()), 
-      ai(*this, ui_manager)
+      ai(*this, ui_manager), new_game_requested(false), undo_requested(false)
   {
   }
 
