@@ -754,11 +754,11 @@ namespace holtz
 #ifndef __WXMSW__
 	      if( !c.socket )
 	      {
-		std::cerr << std::endl << _("error: unknown client") << std::endl;
+		std::cerr << std::endl << "error: unknown client" << std::endl;
 		clients.erase( &sock ); // erase entry if just added
 	      }
 	      if( c.state != handshake )
-		std::cerr << std::endl << _("error: client not in state handshake") << std::endl;
+		std::cerr << std::endl << "error: client not in state handshake" << std::endl;
 #endif
 	    }
 	  }
@@ -766,9 +766,9 @@ namespace holtz
 	  {
 #ifndef __WXMSW__
 	    if( (state != begin) && (state != is_ready) )
-	      std::cerr << std::endl << _("error: wrong state") << std::endl;
+	      std::cerr << std::endl << "error: wrong state" << std::endl;
 	    if( players.size() < game.get_max_players() )
-	      std::cerr << std::endl << _("error: too many players") << std::endl;
+	      std::cerr << std::endl << "error: too many players" << std::endl;
 #endif
 	    // *****
 	    // deny
@@ -777,7 +777,9 @@ namespace holtz
 	}
 	else
 	{
-	  std::cerr << std::endl << _("error: client can't receive that message type") << std::endl;
+#ifndef __WXMSW__
+	  std::cerr << std::endl << "error: client can't receive that message type" << std::endl;
+#endif
 	}
       }
       break;
@@ -1113,20 +1115,25 @@ namespace holtz
 		    Ruleset new_ruleset = Standard_Ruleset();
 		    wxIPV4address host;
 		    sock.GetPeer(host);
-		    wxString msg = _("Host ") + host.Hostname() + _(" requests to change ruleset to ");
+		    wxString ruleset_name;
 		    switch( new_ruleset_type )
 		    {
-		      case Ruleset::standard_ruleset: msg = msg + _("Standard Rules.\n"); 
+		      case Ruleset::standard_ruleset: 
+			ruleset_name = _("Standard Rules"); 
 			//new_ruleset = Standard_Ruleset();
 			break;
-		      case Ruleset::tournament_ruleset: msg = msg + _("Tournaments Rules.\n"); 
+		      case Ruleset::tournament_ruleset: 
+			ruleset_name = _("Tournaments Rules"); 
 			new_ruleset = Tournament_Ruleset();
 			break;
-		      case Ruleset::custom_ruleset: msg = msg + _("Standard Rules.\n"); 
+		      case Ruleset::custom_ruleset: 
+			ruleset_name = _("Standard Rules"); 
 			//ruleset = read_ruleset( sock );
 			break;
 		    }
-		    msg = msg + _("Allow Change of Ruleset?");
+		    wxString msg;
+		    msg.Printf( _("Host %s requests to change ruleset to %s.\nAllow Change of Ruleset?"), 
+				host.Hostname().c_str(), ruleset_name.c_str() );
 		    if( wxMessageBox( msg, _("Ruleset"), wxYES | wxNO | wxICON_QUESTION ) == wxYES, 
 			game_window )
 		    {

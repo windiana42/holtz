@@ -191,7 +191,13 @@ namespace holtz
   {
     randomize();		// initialize random
 
-    global_config = new wxConfig(GetAppName(), _("Holtz"));
+    wxLocale *loc = new wxLocale();
+    loc->Init(wxLANGUAGE_DEFAULT); 
+    loc->AddCatalog(wxT("holtz"));      
+
+    SetAppName(wxT("Holtz"));
+    SetVendorName(wxT("Martin Trautmann"));
+    global_config = new wxConfig(GetAppName(), wxT("Holtz"));
     wxConfig::Set(global_config);
 
     wxInitAllImageHandlers(); // make it possible to load PNG images
@@ -206,8 +212,6 @@ namespace holtz
     frame->Show(true);
 
     SetTopWindow(frame);
-    SetAppName(_("Holtz"));
-    SetVendorName(wxT("Martin Trautmann"));
     SetExitOnFrameDelete(true);
 
     // success: wxApp::OnRun() will be called which will enter the main message
@@ -229,7 +233,7 @@ namespace holtz
     if( !ok )
     {
       buf = wxFileSelector( _("Choose a skin File"), wxT(""), 
-			    wxT(""), wxT(""), wxT("Skin Files (*.zip)|*.zip"),
+			    wxT(""), wxT(""), _("Skin Files (*.zip)|*.zip"),
 			    wxOPEN );
       if( wxFileExists(buf) )
       {
@@ -663,6 +667,8 @@ namespace holtz
     if( player.host != "" )
       str = str + " (" + player.host + ")";
     wxString wxstr = str_to_wxstr(str);
+    if( player.type == Player::ai )
+      wxstr = _("[AI] ") + wxstr;
 
     dc.SetFont(player_font);
     wxCoord w,h;
@@ -1101,13 +1107,13 @@ namespace holtz
 	switch ( sequence_generator->get_required_move_type() )
 	{
 	  case Move::knock_out_move:
-	    get_frame().SetStatusText(wxT("Please do a knock out move")); // remove old status text message
+	    get_frame().SetStatusText(_("Please do a knock out move")); // remove old status text message
 	    break;
 	  case Move::set_move:
-	    get_frame().SetStatusText(wxT("You should set a stone")); // remove old status text message
+	    get_frame().SetStatusText(_("You should set a stone")); // remove old status text message
 	    break;
 	  case Move::remove:
-	    get_frame().SetStatusText(wxT("Just remove a field")); // remove old status text message
+	    get_frame().SetStatusText(_("Just remove a field")); // remove old status text message
 	    break;
 	  case Move::no_move:
 	  case Move::finish_move:
@@ -1173,8 +1179,8 @@ namespace holtz
 
   void Game_Window::ask_new_game( wxString host )
   {
-    wxString msg = _("New game requested from ") + host + _(".\n") 
-      + _("Do you really want to start a new game?");
+    wxString msg;
+    msg.Printf( _("New game requested from %s.\nDo you really want to start a new game?"), host.c_str() );
     if( wxMessageBox( msg, _("Network Message"), wxYES | wxNO | wxICON_QUESTION ) == wxYES, this )
     {
       setup_new_game();
@@ -1230,7 +1236,7 @@ namespace holtz
 	  }
 	}
 	else
-	  wxMessageBox(_("illegal port"), _("Network Message"), wxOK | wxICON_ERROR, this);
+	  wxMessageBox(_("Illegal port"), _("Network Message"), wxOK | wxICON_ERROR, this);
       }
       else
       {
@@ -1254,7 +1260,7 @@ namespace holtz
 	  }
 	}
 	else
-	  wxMessageBox(_("illegal hostname"), _("Network Message"), wxOK | wxICON_ERROR, this);
+	  wxMessageBox(_("Illegal hostname"), _("Network Message"), wxOK | wxICON_ERROR, this);
       }
     }
     if(ok)
@@ -1332,14 +1338,23 @@ namespace holtz
       switch( state )
       {
 	case Game::finished:
+	{
 	  winner = game.get_winner();
-	  assert( winner != 0 );
 
-	  //refresh();
-	  wxMessageBox( _("And the Winner is: ") + str_to_wxstr(winner->name),
-			_("Winner"), wxOK | wxICON_INFORMATION, this);
+	  wxString msg;
+	  if( winner != 0 )
+	  {
+	    msg.Printf( _("And the Winner is: %s"), str_to_wxstr(winner->name).c_str() );
+	    wxMessageBox( msg, _("Winner"), wxOK | wxICON_INFORMATION, this);
+	  }
+	  else
+	  {
+	    wxMessageBox( _("Nobody won the game!"), _("Players tied"), wxOK | wxICON_INFORMATION, this);
+	  }
+
 	  go_on = false;
-	  break;
+	}
+	break;
 	case Game::wait_for_event:
 	  go_on = false;
 	  break;
@@ -1791,7 +1806,7 @@ namespace holtz
     wxMenu *menu_file = new wxMenu;
     menu_file->Append(HOLTZ_NEW_GAME,		_("&New Game\tCtrl-N"), _("Start a new game"));
     menu_file->Append(HOLTZ_STANDALONE_GAME,	_("Stand&alone Game\tCtrl-A"), 
-		     _("Start a game without network access"));
+						_("Start a game without network access"));
     menu_file->Append(HOLTZ_NETWORK_GAME,	_("Ne&twork Game\tCtrl-T"), _("Start a network game"));
     menu_file->AppendSeparator();
     menu_file->Append(HOLTZ_QUIT,		_("E&xit\tAlt-X"), _("Quit Holtz"));
@@ -1866,7 +1881,7 @@ namespace holtz
   void Main_Frame::on_choose_skin(wxCommandEvent& event)
   {
     wxString filename = wxFileSelector( _("Choose a skin File"), wxT(""), 
-					wxT(""), wxT(""), wxT("Skin Files (*.zip)|*.zip"),
+					wxT(""), wxT(""), _("Skin Files (*.zip)|*.zip"),
 					wxOPEN );
     if( filename )
       game_window.set_skin_file( filename );
@@ -1875,7 +1890,7 @@ namespace holtz
   void Main_Frame::on_choose_beep(wxCommandEvent& event)
   {
     wxString filename = wxFileSelector( _("Choose a beep File"), wxT(""), 
-					wxT(""), wxT(""), wxT("Audio (*.wav)|*.wav"),
+					wxT(""), wxT(""), _("Audio (*.wav)|*.wav"),
 					wxOPEN );
     if( filename )
       game_window.set_beep_file( filename );
@@ -1905,8 +1920,8 @@ namespace holtz
   void Main_Frame::on_about(wxCommandEvent& WXUNUSED(event))
   {
     wxString msg;
-    msg =  _("This is the about dialog of Holtz.\n");
-    msg += _("Sorry, I don't remember the stupid text which is supposed to be here");
+    msg =  _("Holtz is game about making sacrifices\n");
+    msg += _("GPLed by Martin Trautmann (2003)");
 
     wxMessageBox(msg, _("About Holtz"), wxOK | wxICON_INFORMATION, this);
   }
