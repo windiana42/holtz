@@ -1,4 +1,4 @@
-SUBDIRS=skins sounds eins locale help
+SUBDIRS=skins sounds locale help
 
 bin_PROGRAMS=		holtz
 

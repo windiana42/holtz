@@ -1,5 +1,11 @@
 - rotate board
 - PBM support
+- save game, load game
 - customize board (X-Ring-Versions)
 - customize AI
 - zabindex of dialogs
+- connect dialog resizable
+- show ready status in connect dialog
+- show ready status, ai status and help mode for each player
+- store moves played
+- show moves review 
