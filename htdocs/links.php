@@ -20,7 +20,7 @@
 	http://groups.yahoo.com/group/zertz</a>
     </li>
   </ul>
-  <h2> Other Zertz implementations </h2>
+  <h2> Other Z&egrave;rtz implementations </h2>
   <ul>
     <li>
       ZF1: 
