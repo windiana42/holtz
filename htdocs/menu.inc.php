@@ -53,7 +53,7 @@ function StartPage($title, $menuname, $showSidebar = 1) {
   <link rel="stylesheet" href="holtz.css">
   <meta name="author" content="Martin Trautmann, Florian Fischer">
   <meta name="keywords" content="Zertz, zertz, Zèrtz, Z&egrave;ertz, zèrtz, z&egrave;ertz, Holtz, holtz,
-	abstract strategie, Denkspiel, Brettspiel, board game">
+	abstract strategy game, strategy game, abstract game, Denkspiel, Brettspiel, board game">
 </head>
 <body background="bg-wood.jpg">
   <table border=0 cellpadding=2 cellspacing=15 width="100%">
