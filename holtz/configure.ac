@@ -25,4 +25,5 @@ AC_OUTPUT(
 	locale/Makefile
 	locale/de/Makefile
 	locale/de/LC_MESSAGES/Makefile
+	help/Makefile
 	)

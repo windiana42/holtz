@@ -1,6 +1,5 @@
-SUBDIRS=skins sounds eins locale
+SUBDIRS=skins sounds eins locale help
 
-INCLUDES=		`wx-config --cxxflags`
 bin_PROGRAMS=		holtz
 
 holtz_SOURCES= \
@@ -10,6 +9,9 @@ holtz_SOURCES= \
 holtz_LDFLAGS= \
 	`wx-config --libs`
 
+holtz_CXXFLAGS= \
+	`wx-config --cxxflags` -DDEFAULT_DATA_DIR=\"$(pkgdatadir)/\"
+
 EXTRA_DIST=	\
-	Rules.german Rules.english holtz.rc holtz.ico holtz.dsp holtz.dsw icon.xpm
+	Rules.german Rules.english holtz.rc holtz.ico holtz.dsp holtz.dsw icon.xpm holtz.spec 
 

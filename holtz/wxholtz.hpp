@@ -100,13 +100,13 @@ namespace holtz
     virtual bool OnInit();
 
     bool check_config();
-	bool init_help(wxLocale&);
+    bool init_help(wxLocale&);
     wxHelpControllerBase& get_help_controller() { return help_controller; }
 
     ~wxHoltz();
 
   private:
-	wxHtmlHelpController help_controller; // HTML help
+    wxHtmlHelpController help_controller; // HTML help
     wxConfigBase* global_config; // so that it can be deleted
   };
 
