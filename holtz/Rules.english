@@ -1,0 +1,20 @@
+Originally the game is meant for two players on a hexagonal board with 37 fields. 
+Additionally there are 5 white, 7 gray and 9 black stones which might be placed on the fields.
+Alternately each player does a move. There are two types of moves:
+1)
+  - place one stone from the common stones on the board
+  - afterwards you have to remove an empty border field which might be moved away freely, if possible
+2)
+  - knock out a stone by jumping with a stone on the board over an adjacent one on an empty field
+  - you get the knocked out stones
+  - if it is possible you have to go on knocking out stones jumping with the same stone
+
+The goal is to get 3 white, 4 gray, 5 black or two stones of each type.
+
+Additional rules:
+- you have to do knock out moves if possible
+- are there after a move islands of fields totally filled with stones, the island is removed and the player who did the last move gets all the stones.
+
+Tournament Rules:
+- there are 6 white, 8 gray and 10 black stones
+- goal: 4 white, 5 gray, 6 black or 3 stones of each type
