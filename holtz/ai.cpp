@@ -405,11 +405,15 @@ namespace holtz
   // ----------------------------------------------------------------------------
 
   AI_Result::AI_Result()
+    : rating(0), depth(0), used_time(0), average_time(0), num_measures(0), valid(false)
   {
   }
 
-  AI_Result::AI_Result( Sequence sequence, double rating, long average_time )
-    : sequence(sequence), rating(rating), average_time(average_time)
+  AI_Result::AI_Result( Sequence sequence, double rating, int depth, 
+			long used_time, long average_time, int num_measures )
+    : sequence(sequence), rating(rating), depth(depth), 
+      used_time(used_time), average_time(average_time), num_measures(num_measures),
+      valid(true)
   {
   }
 
@@ -418,7 +422,8 @@ namespace holtz
   // ----------------------------------------------------------------------------
 
   AI::AI( Game &game )
-    : max_time(30000), average_time(3000), num_measures(0),
+    : max_time(30000), average_time(3000), num_measures(0), max_positions_expanded(150000),
+      max_depth(12),
       rate_white(4.5), rate_gray(3.5), rate_black(2.5), rate_current_player_bonus(0.3),
       min_depth(2), deep_knocking_possible(true), while_deep_knocking(false),
       field_permutation( game.board )
@@ -432,11 +437,14 @@ namespace holtz
 
   AI_Result AI::get_move( Game &game )
   {
-    Sequence sequence;
+    AI_Result result;
+
     Game save_game(game);
     Position current_position( save_game );
 
-    stop_watch.Start();
+    if( need_stop_watch() )
+      stop_watch.Start();
+
     while( stop_watch.Time() == 0 ); // check for stop watch to be started
     aborted = false;
     don_t_abort = true;
@@ -444,9 +452,9 @@ namespace holtz
     if( deep_knocking_possible )
       deep_knocking = true;
 
-    current_player = game.current_player;
-    unsigned max_depth = 7, depth;
-    max_ratings.resize(max_depth+1);
+    current_player = save_game.current_player;
+    unsigned depth;
+    max_ratings.resize(max_depth+3);
     for( depth = 1; depth <= max_depth; ++depth )
     {
       positions_checked = 0;
@@ -462,15 +470,18 @@ namespace holtz
       max_ratings[0] = RATE_MAX * 2;
       max_ratings[1] = -RATE_MAX * 2;
       depth_search( save_game, current_position, 0, max_ratings[0], -1, false );
-      assert( current_player == game.current_player );
+      assert( current_player == save_game.current_player );
 
       if( aborted )
 	break;
       else
       {
 	// new best move
-	sequence = (*current_position.sorted_positions.begin()->second)->sequence.clone();
+	Sequence &sequence = (*current_position.sorted_positions.begin()->second)->sequence;
 	assert( sequence.check_sequence( save_game ) );
+	result = AI_Result( sequence.clone(), current_position.rating, depth, 
+			    stop_watch.Time(), real_average_time, num_measures );
+	report_current_hint( result );
       }
 
       assert( current_position.sorted_positions.size() != 0 );
@@ -482,7 +493,7 @@ namespace holtz
 		<< "; max_depth = " << max_depth_expanded
 		<< "; expanded = " << expanded_calls
 		<< "; duration = " << stop_watch.Time() / 1000.0 << "s"
-		<< "; current best move = " << sequence << std::endl;
+		<< "; current best move = " << result.sequence << std::endl;
       if( current_position.following_positions.size() > 1 )
       {
 	Branch *second_branch = *(++current_position.sorted_positions.begin())->second;
@@ -523,9 +534,15 @@ namespace holtz
     ++num_measures;
     real_average_time /= num_measures;
 
-    std::cerr << "AI: average_time = " << real_average_time / 1000.0 << "s" << std::endl;
+    result.used_time    = time;
+    result.average_time = real_average_time;
+    result.num_measures = num_measures;
 
-    return AI_Result( sequence, current_position.rating, real_average_time );
+#ifndef __WXMSW__
+    std::cerr << "AI: average_time = " << real_average_time / 1000.0 << "s" << std::endl;
+#endif
+
+    return result;
   }
 
   double AI::rate_player( Player &player )
@@ -550,6 +567,8 @@ namespace holtz
       int save_min_max_vz = min_max_vz; 
 
       cur_depth += 6;		// additional depth
+      if( cur_depth > max_depth )
+	cur_depth = max_depth;
       max_ratings[depth+2] = -(RATE_MAX * 2) * min_max_vz;
       // search for all knock_out moves
       rating = depth_search( game, position, depth+1, max_ratings[depth+1], -min_max_vz, true );
@@ -624,6 +643,8 @@ namespace holtz
   // position expanded return false: don't continue
   bool AI::expanded( Game &game, std::list<Branch*>::iterator branch )  
   {
+    ++expanded_calls;
+	
     // store recursion parameters
     Position *save_position = position;
     unsigned save_depth = depth; 
@@ -674,8 +695,6 @@ namespace holtz
       assert( (max == RATE_MAX * 2) && (min_max_vz == -1) );
     assert( (pos_rating >= -RATE_MAX) && (pos_rating <= RATE_MAX) );
       
-    ++expanded_calls;
-	
     if( (max - pos_rating) * min_max_vz >= 0 )
     {
       assert( depth != 0 );
@@ -797,6 +816,12 @@ namespace holtz
     if( aborted )
       return true;
 
+    if( expanded_calls > max_positions_expanded )
+    {
+      aborted = true;
+      return true;
+    }
+
     long time = stop_watch.Time();
     if( time > max_time )
     {
@@ -804,7 +829,7 @@ namespace holtz
       return true;
     }
 
-    if( time == 0 )
+    if( (time == 0) && need_stop_watch() )
     {
       stop_watch.Start();
 #ifndef __WXMSW__
@@ -837,34 +862,85 @@ namespace holtz
   // AI_Thread
   // ----------------------------------------------------------------------------
 
-  AI_Thread::AI_Thread( wxEvtHandler *handler, int id, Game &game )
-    : handler(handler), id(id), game(game), ai(game)
+  AI_Thread::AI_Thread( wxEvtHandler *handler, Game &game, 
+			long last_average_time, int _num_measures, 
+			bool give_hints_only )
+    : AI(game), handler(handler), game(game), give_hints_only(give_hints_only)
   {
+    if( (average_time >= 0) && (_num_measures > 0) )
+      real_average_time = last_average_time;
+    num_measures = _num_measures;
   }
 
   wxThread::ExitCode AI_Thread::Entry()
   {
-    Report_Move_Event event( id, ai.get_move( game ), Report_Move_Event::final_move ); 
+    if( give_hints_only )
+    {
+      get_move(game);
+    }
+    else
+    {
+      AI_Event event( get_move( game ), EVT_AI_REPORT_MOVE, this ); 
+      handler->AddPendingEvent( event );
+    }
+
+    Sleep(200);			// assure that report move event is received earlier
+
+    AI_Event event( EVT_AI_FINISHED, this ); 
+    handler->AddPendingEvent( event );
+
+    // wait for external delete
+    while( !TestDestroy() )
+    {
+      Sleep(100);
+    }
+
+    return 0;
+  }
+
+  bool AI_Thread::should_stop( bool depth_finished )	// determines whether AI should stop now
+  {
+    if( give_hints_only )
+    {
+      if( expanded_calls > max_positions_expanded )
+	aborted = true;
+      else
+	aborted = TestDestroy();
+      return aborted;
+    }
+    else
+      return AI::should_stop( depth_finished );
+  }
+
+  void AI_Thread::report_current_hint( AI_Result hint )
+  {
+    AI_Event event( hint, EVT_AI_REPORT_HINT, this ); 
 
     handler->AddPendingEvent( event );
-    return 0;
   }
 
   // ----------------------------------------------------------------------------
   // Report_Move_Event
   // ----------------------------------------------------------------------------
 
-  DEFINE_EVENT_TYPE(wxEVT_REPORT_MOVE) //**/
+  DEFINE_EVENT_TYPE(EVT_AI_REPORT_MOVE) //**/
+  DEFINE_EVENT_TYPE(EVT_AI_REPORT_HINT) //**/
+  DEFINE_EVENT_TYPE(EVT_AI_FINISHED)    //**/
 
-  IMPLEMENT_DYNAMIC_CLASS(Report_Move_Event, wxEvent) //**/
+  IMPLEMENT_DYNAMIC_CLASS(AI_Event, wxEvent) //**/
 
-  Report_Move_Event::Report_Move_Event()
-    : wxEvent(-1, wxEVT_REPORT_MOVE)
+  AI_Event::AI_Event()
+    : wxEvent(-1, EVT_AI_REPORT_MOVE)
   {
   }
 
-  Report_Move_Event::Report_Move_Event( int id, AI_Result ai_result, Type type )
-    : wxEvent(id, wxEVT_REPORT_MOVE), ai_result(ai_result), type(type)
+  AI_Event::AI_Event( WXTYPE type, AI_Thread *thread )
+    : wxEvent(-1, type), thread(thread)
+  {
+  }
+
+  AI_Event::AI_Event( AI_Result ai_result, WXTYPE type, AI_Thread *thread )
+    : wxEvent(-1, type), ai_result(ai_result), thread(thread)
   {
   }
 
@@ -874,19 +950,38 @@ namespace holtz
 
 
   AI_Input::AI_Input( Game &game, Game_Window &game_window )
-    : game(game), game_window(game_window), ai_done(false), move_done(false)
+    : game(game), game_window(game_window), ai_done(false), move_done(false), 
+      thread(0), thread_active(false), give_hints(false)
   {
-    Connect( AI_REPORT_MOVE, wxEVT_REPORT_MOVE, 
-	     (wxObjectEventFunction) (wxEventFunction) (Report_Move_Event_Function) 
+    Connect( -1, EVT_AI_REPORT_MOVE, 
+	     (wxObjectEventFunction) (wxEventFunction) (AI_Event_Function) 
 	     &AI_Input::on_report_move );
+
+    Connect( -1, EVT_AI_REPORT_HINT, 
+	     (wxObjectEventFunction) (wxEventFunction) (AI_Event_Function) 
+	     &AI_Input::on_report_hint );
+
+    Connect( -1, EVT_AI_FINISHED, 
+	     (wxObjectEventFunction) (wxEventFunction) (AI_Event_Function) 
+	     &AI_Input::on_finished );
 
     Connect( ANIMATION_DONE, wxEVT_TIMER, 
 	     (wxObjectEventFunction) (wxEventFunction) (wxTimerEventFunction) 
-	     &AI_Input::on_done );
+	     &AI_Input::on_animation_done );
+  }
+
+  AI_Input::~AI_Input()
+  {
+    abort();
   }
 
   Player_Input::Player_State AI_Input::determine_move() throw(Exception)
   {
+    if( game.current_player->help_mode == Player::show_hint )
+      give_hints = true;
+    else
+      give_hints = false;
+
     if( ai_done )
     {
       if( move_done )
@@ -894,7 +989,10 @@ namespace holtz
     }
     else
     {
-      AI_Thread *thread = new AI_Thread( this, AI_REPORT_MOVE, game );
+      abort();			// abort possibly running thread
+      thread_active = true;
+      thread = new AI_Thread( this, game, game.current_player->average_time, 
+			      game.current_player->num_measures );
       thread->Create();
       thread->Run();
     }
@@ -908,15 +1006,60 @@ namespace holtz
     return sequence;
   }
 
-  void AI_Input::on_report_move( Report_Move_Event &event )
+  void AI_Input::determine_hints()
   {
-    sequence = event.ai_result.sequence.clone();
-    ai_done = true;
-
-    game_window.do_move_slowly( sequence, this, ANIMATION_DONE );
+    give_hints = true;
+    abort();			// abort possibly running thread
+    thread_active = true;
+    thread = new AI_Thread( this, game, -1, 0, true );
+    //thread->SetPriority( WXTHREAD_MIN_PRIORITY );
+    thread->Create();
+    thread->Run();
   }
 
-  void AI_Input::on_done( wxTimerEvent &event )
+  void AI_Input::abort()
+  {
+    thread_active = false;
+    if( thread )
+      thread->Delete();
+    thread = 0;
+  }
+
+  void AI_Input::on_report_move( AI_Event &event )
+  {
+    if( thread_active && (event.thread == thread) )
+    {
+      assert( event.ai_result.valid );	// assert that a move was found
+      ai_done = true;
+
+      game.current_player->total_time  += event.ai_result.used_time;    // increase total time
+      game.current_player->average_time = event.ai_result.average_time; // store average time
+      game.current_player->num_measures = event.ai_result.num_measures; // store average time
+      
+      sequence = event.ai_result.sequence.clone();
+      if( give_hints )
+	game_window.remove_hint();
+      game_window.do_move_slowly( sequence, this, ANIMATION_DONE );
+    }
+  }
+
+  void AI_Input::on_report_hint( AI_Event &event )
+  {
+    if( thread_active && (event.thread == thread) && give_hints )
+    {
+      game_window.give_hint( event.ai_result );
+    }
+  }
+
+  void AI_Input::on_finished( AI_Event &event )
+  {
+    if( thread_active && (event.thread == thread) )
+    {
+      abort();
+    }
+  }
+
+  void AI_Input::on_animation_done( wxTimerEvent &event )
   {
     move_done = true;
     game_window.continue_game();

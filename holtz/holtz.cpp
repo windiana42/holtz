@@ -38,6 +38,7 @@ namespace holtz
 		  std::list<Player_Output*> outputs,
 		  std::string host, Player_Type type, Help_Mode help_mode )
     : name(name), id(id), host(host), type(type), help_mode(help_mode), 
+      total_time(0), average_time(-1), num_measures(0), 
       input(input), outputs(outputs), is_active(false)
   {
   }
@@ -1553,6 +1554,11 @@ namespace holtz
 
     if( --ref_counter->cnt == 0 )
     {
+      std::list<Move*>::iterator move;
+      for( move = moves->begin(); move != moves->end(); ++move )
+      {
+	delete *move;
+      }
       delete moves;
       delete ref_counter;
     }

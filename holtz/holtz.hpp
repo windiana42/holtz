@@ -126,6 +126,8 @@ namespace holtz
     std::string host; 
     Player_Type type;
     Help_Mode help_mode;
+    long total_time, average_time;
+    int num_measures;		// of average time
 
     Stones stones;
     Player_Input *input;
