@@ -453,7 +453,7 @@ namespace holtz
 			    int x, int y, Sequence_Generator* &sg )
     : game(game), game_window(game_window), bitmap_handler(bitmap_handler), x(x), y(y),
       board_x(10), board_y(10),
-      sequence_generator( sg ), rotate_board(false)
+      sequence_generator( sg ), rotate_board(true)
   {
   }
 
@@ -461,17 +461,19 @@ namespace holtz
   {
     if( rotate_board )
       return bitmap_handler.dimensions.field_packed_height * (game.board.get_y_size()-1) + 
-	bitmap_handler.dimensions.field_height + board_y; // rotate board
+	bitmap_handler.dimensions.field_height + board_y; // rotated board
     else
-      return bitmap_handler.dimensions.field_width * game.board.get_x_size() + board_x;
+      return bitmap_handler.dimensions.field_width * game.board.get_x_size() + board_x
+	+ bitmap_handler.dimensions.field_width / 2;
   }
   int Board_Panel::get_height() const
   {
     if( rotate_board )
-      return bitmap_handler.dimensions.field_width * game.board.get_x_size() + board_x; // rotate board
+      return bitmap_handler.dimensions.field_width * game.board.get_x_size() + board_x
+	+ bitmap_handler.dimensions.field_width / 2; // rotated board
     else
-      return bitmap_handler.dimensions.field_packed_height * (game.board.get_y_size()-1) + 
-	bitmap_handler.dimensions.field_height + board_y;
+      return bitmap_handler.dimensions.field_packed_height * (game.board.get_y_size()-1)  
+	+ bitmap_handler.dimensions.field_height + board_y;
   }
   void Board_Panel::set_x( int _x )
   {
@@ -487,24 +489,16 @@ namespace holtz
 
   void Board_Panel::draw( wxDC &dc )
   {
-    int offset;
+    Bitmap_Set &bitmap_set = get_bitmap_set();
+
     for( int fy = 0; fy < game.board.get_y_size(); ++fy )
     {
-      if( fy & 1 )		// even row
-	offset = 0;
-      else
-	offset = bitmap_handler.dimensions.field_width / 2;
-
       for( int fx = 0; fx < game.board.get_x_size(); ++fx )
       {
-	if( rotate_board )
-	  dc.DrawBitmap( bitmap_handler.rotated.field_bitmaps[ game.board.field[fx][fy] ], 
-			 x + board_x + fy*bitmap_handler.dimensions.field_packed_height, // rotated board!
-			 y + board_y + fx*bitmap_handler.dimensions.field_width + offset, true );
-	else
-	  dc.DrawBitmap( bitmap_handler.normal.field_bitmaps[ game.board.field[fx][fy] ], 
-			 x + board_x + fx*bitmap_handler.dimensions.field_width + offset, 
-			 y + board_y + fy*bitmap_handler.dimensions.field_packed_height, true );
+	std::pair<int,int> pos = get_field_pos( fx, fy );
+
+	dc.DrawBitmap( bitmap_set.field_bitmaps[ game.board.field[fx][fy] ], 
+		       pos.first,  pos.second, true );
       }
     }
   }
@@ -595,8 +589,13 @@ namespace holtz
     int rel_x, rel_y;
     if( rotate_board )
     {
-      rel_x = abs_y - y - board_y;	// rotate board => flip coordinates
+      // swap x-y coordinates
+      rel_x = abs_y - y - board_y;
       rel_y = abs_x - x - board_x;
+      // invert y-axis => rotated board
+      int board_size_y = bitmap_handler.dimensions.field_width * game.board.get_y_size() 
+	+ bitmap_handler.dimensions.field_width / 2;
+      rel_x = board_size_y - rel_x - 1;
     }
     else
     {
@@ -627,17 +626,29 @@ namespace holtz
   {
     int offset;
 
-    if( row & 1 )		// even row
-      offset = 0;
-    else
-      offset = bitmap_handler.dimensions.field_width / 2;
-
     if( rotate_board )
+    {
+      if( row & 1 )		// even row
+	offset = bitmap_handler.dimensions.field_width / 2;
+      else
+	offset = 0;
+
+      // swap x-y and invert y-axis => rotated board
+      int field_y = y + board_y + offset 
+	+ bitmap_handler.dimensions.field_width * (game.board.get_y_size() - 1 - col);
       return std::pair<int,int>( x + board_x + row*bitmap_handler.dimensions.field_packed_height, 
-				 y + board_y + col*bitmap_handler.dimensions.field_width + offset );
+				 field_y );
+    }
     else
+    {
+      if( row & 1 )		// even row
+	offset = 0;
+      else
+	offset = bitmap_handler.dimensions.field_width / 2;
+
       return std::pair<int,int>( x + board_x + col*bitmap_handler.dimensions.field_width + offset, 
 				 y + board_y + row*bitmap_handler.dimensions.field_packed_height );
+    }
   }
 
   Bitmap_Set &Board_Panel::get_bitmap_set() const
@@ -656,7 +667,7 @@ namespace holtz
 			    Bitmap_Handler &bitmap_handler, 
 			    int x, int y, Sequence_Generator* &sg, int max_stones )
     : stones(stones), game_window(game_window), bitmap_handler(bitmap_handler), x(x), y(y),
-      sequence_generator(sg), rotate_stones(false), max_stones(max_stones)
+      sequence_generator(sg), rotate_stones(true), max_stones(max_stones)
   {
   }
 
