@@ -18,8 +18,11 @@
 // declarations
 // ============================================================================
 
-#define DRAW_BACKGROUND
 #ifdef __WXMSW__
+#define DRAW_BACKGROUND
+#define DOUBLE_BUFFER
+#else
+#define DRAW_BACKGROUND
 #define DOUBLE_BUFFER
 #endif
 
@@ -44,7 +47,9 @@
 #include <wx/fileconf.h>
 #include <wx/dcmemory.h>
 #include <assert.h>
-#include <sstream>
+#ifndef __OLD_GCC__
+  #include <sstream>
+#endif
 #include <list>
 
 // wx html help

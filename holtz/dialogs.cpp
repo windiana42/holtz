@@ -16,7 +16,11 @@
 
 #include "dialogs.hpp"
 
-#include <sstream>
+#ifndef __OLD_GCC__
+  #include <sstream>
+#endif
+
+#include <wx/cshelp.h>
 
 namespace holtz
 {
@@ -440,9 +444,13 @@ namespace holtz
   {
     client_data[static_cast<void*>(socket)] = socket;
     client_item[socket] = client_list->Number();
+    wxString port;
+    port.Printf("%d", host.Service());
+    /*
     std::ostringstream port;
     port << host.Service();
-    client_list->Append( host.Hostname() + wxT('(') + str_to_wxstr(port.str()) + wxT(')'), socket );
+    */
+    client_list->Append( host.Hostname() + wxT('(') + port + wxT(')'), socket );
   }
 
   void Network_Clients_Dialog::closed_connection( wxSocketBase *socket )
