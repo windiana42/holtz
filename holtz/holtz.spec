@@ -2,7 +2,7 @@
 %define  rel     %{?CUSTOM_RELEASE} %{!?CUSTOM_RELEASE:%RELEASE}
 
 Name: holtz
-Version: 1.1.10
+Version: 1.1.11
 Release: %rel
 
 Summary: Holtz is a think game similar sophisticated than chess
@@ -30,7 +30,7 @@ Holtz - the game
 if [ ! -x configure ]; then
 	CFLAGS="$RPM_OPT_FLAGS" CXXFLAGS="$RPM_OPT_FLAGS" ./autogen.sh $ARCH_FLAGS --prefix=%prefix
 fi
-CFLAGS="$RPM_OPT_FLAGS" CXXFLAGS="$RPM_OPT_FLAGS" ./configure $ARCH_FLAGS --prefix=%prefix
+CFLAGS="$RPM_OPT_FLAGS" CXXFLAGS="$RPM_OPT_FLAGS" ./configure --enable-wxstatic $ARCH_FLAGS --prefix=%prefix
 
 if [ -n "$SMP" ]; then
 	make -j$SMP "MAKE=make -j$SMP"
