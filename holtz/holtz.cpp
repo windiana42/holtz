@@ -26,6 +26,37 @@ namespace holtz
     stone_count.clear();
   }
 
+  typedef enum Common_Stones_Type{ standard, tournament, custom };
+
+  Common_Stones::Common_Stones( Common_Stones_Type type )
+    : type(type)
+  {
+  }
+
+  Standard_Common_Stones::Standard_Common_Stones()
+    : Common_Stones( standard )
+  {
+    stone_count[ Stones::white_stone ] = 5;
+    stone_count[ Stones::grey_stone ]  = 7;
+    stone_count[ Stones::black_stone ] = 9;
+  }
+
+  Tournament_Common_Stones::Tournament_Common_Stones()
+    : Common_Stones( tournament )
+  {
+    stone_count[ Stones::white_stone ] =  6;
+    stone_count[ Stones::grey_stone ]  =  8;
+    stone_count[ Stones::black_stone ] = 10;
+  }
+
+  Custom_Common_Stones::Custom_Common_Stones( int white_num, int grey_num, int black_num )
+    : Common_Stones( custom )
+  {
+    stone_count[ Stones::white_stone ] = white_num;
+    stone_count[ Stones::grey_stone ]  = grey_num;
+    stone_count[ Stones::black_stone ] = black_num;
+  }
+
   Player_Input::~Player_Input()
   {
   }
@@ -45,6 +76,10 @@ namespace holtz
   {
   }
 
+  Win_Condition::Win_Condition( Win_Condition_Type type )
+    : type(type)
+  {
+  }
   Win_Condition::~Win_Condition()
   {
   }
@@ -673,15 +708,40 @@ namespace holtz
     return Field_Iterator( pos, this );
   }
 
-  Ruleset::Ruleset( Board board, Win_Condition *win_condition, Coordinate_Translator *coordinate_translator,
+  Ruleset::Ruleset( Ruleset_Type type, Board board, Common_Stones common_stones, 
+		    Win_Condition *win_condition, Coordinate_Translator *coordinate_translator,
 		    bool undo_possible, unsigned min_players, unsigned max_players ) 
-    : board(board), win_condition(win_condition), coordinate_translator(coordinate_translator),
+    : type(type), board(board), common_stones(common_stones), win_condition(win_condition), 
+      coordinate_translator(coordinate_translator),
       undo_possible(undo_possible), min_players(min_players), max_players(max_players)
   {
   }
 
+  Ruleset::Ruleset( const Ruleset &ruleset )
+    : board(ruleset.board), common_stones(ruleset.common_stones),
+      win_condition(ruleset.win_condition->clone()), 
+      coordinate_translator(ruleset.coordinate_translator->clone()),
+      undo_possible(ruleset.undo_possible),
+      min_players(ruleset.min_players), max_players( ruleset.max_players )
+  {
+  }
+
+  Ruleset &Ruleset::operator=( Ruleset &ruleset )
+  {
+    board		  = ruleset.board;
+    common_stones	  = ruleset.common_stones;
+    win_condition	  = ruleset.win_condition->clone();
+    coordinate_translator = ruleset.coordinate_translator->clone();
+    undo_possible	  = ruleset.undo_possible;
+    min_players		  = ruleset.min_players;
+    max_players		  = ruleset.max_players;
+    return *this;
+  }
+
   Ruleset::~Ruleset()
   {
+    delete win_condition;
+    delete coordinate_translator;
   }
 
   Game::Game( const Ruleset &_ruleset )
@@ -814,7 +874,7 @@ namespace holtz
 	  // check if still stones are there
 	  bool common_stones_avail;
 	  if( common_stones.stone_count[ Stones::white_stone ] +
-	      common_stones.stone_count[ Stones::gray_stone ] +
+	      common_stones.stone_count[ Stones::grey_stone ] +
 	      common_stones.stone_count[ Stones::black_stone ] == 0 )
 	    common_stones_avail = false;
 	  else
@@ -840,7 +900,7 @@ namespace holtz
 	      if( !board.is_knock_out_possible() )
 	      {
 		if( current_player->stones.stone_count[ Stones::white_stone ] +
-		    current_player->stones.stone_count[ Stones::gray_stone ] +
+		    current_player->stones.stone_count[ Stones::grey_stone ] +
 		    current_player->stones.stone_count[ Stones::black_stone ] == 0 )
 		{
 		  next_player = true; // player can't move
@@ -1097,7 +1157,7 @@ namespace holtz
     {
       // if there are other common stones
       if( game.common_stones.stone_count[ Stones::white_stone ] +
-	  game.common_stones.stone_count[ Stones::gray_stone ]  +
+	  game.common_stones.stone_count[ Stones::grey_stone ]  +
 	  game.common_stones.stone_count[ Stones::black_stone ] > 0 )
 	return false;
       else						 // there are no common stones
@@ -1646,18 +1706,24 @@ namespace holtz
     }
   }
 
-  bool Standard_Win_Condition::did_player_win( Game &game, Player &player )
+  Generic_Win_Condition::Generic_Win_Condition( int num_white, int num_grey, int num_black, int num_all )
+    : Win_Condition( generic ), num_white(num_white), num_grey(num_grey), num_black(num_black),
+      num_all(num_all)
+  {
+  }
+
+  bool Generic_Win_Condition::did_player_win( Game &game, Player &player )
     const
   {
-    if( player.stones.stone_count[Stones::white_stone] >= 3 )
+    if( player.stones.stone_count[Stones::white_stone] >= num_white )
       return true;
-    if( player.stones.stone_count[Stones::gray_stone]  >= 4 )
+    if( player.stones.stone_count[Stones::grey_stone]  >= num_grey )
       return true;
-    if( player.stones.stone_count[Stones::black_stone] >= 5 )
+    if( player.stones.stone_count[Stones::black_stone] >= num_black )
       return true;
-    if(( player.stones.stone_count[Stones::white_stone] >= 2 ) &&
-       ( player.stones.stone_count[Stones::gray_stone]  >= 2 ) &&
-       ( player.stones.stone_count[Stones::black_stone] >= 2 ))
+    if(( player.stones.stone_count[Stones::white_stone] >= num_all ) &&
+       ( player.stones.stone_count[Stones::grey_stone]  >= num_all ) &&
+       ( player.stones.stone_count[Stones::black_stone] >= num_all ))
       return true;
 
     bool any_field_left = false;
@@ -1672,110 +1738,61 @@ namespace holtz
 	}
       }
 
-    if( !any_field_left )	// player wins, if no field left
+    if( !any_field_left )	// current player wins, if no field left
       return true;
 
     return false;
-  }
+  }  
 
-  bool Tournament_Win_Condition::did_player_win( Game &game, Player &player )
-    const
+  Win_Condition *Generic_Win_Condition::clone()
   {
-    if( player.stones.stone_count[Stones::white_stone] >= 4 )
-      return true;
-    if( player.stones.stone_count[Stones::gray_stone]  >= 5 )
-      return true;
-    if( player.stones.stone_count[Stones::black_stone] >= 6 )
-      return true;
-    if(( player.stones.stone_count[Stones::white_stone] >= 3 ) &&
-       ( player.stones.stone_count[Stones::gray_stone]  >= 3 ) &&
-       ( player.stones.stone_count[Stones::black_stone] >= 3 ))
-      return true;
-
-    bool any_field_left = false;
-    Field_Pos pos;
-    for( pos.x = 0; pos.x < game.board.get_x_size(); ++pos.x )
-      for( pos.y = 0; pos.y < game.board.get_y_size(); ++pos.y )
-      {
-	if( game.board.field[pos.x][pos.y] != field_removed )
-	{
-	  any_field_left = true;
-	  break;
-	}
-      }
-
-    if( !any_field_left )	// player wins, if no field left
-      return true;
-
-    return false;
+    return new Generic_Win_Condition( num_white, num_grey, num_black, num_all );
   }
 
-  Standard_Win_Condition Standard_Ruleset::standard_win_condition;
+  Standard_Win_Condition::Standard_Win_Condition()
+    : Generic_Win_Condition(3,4,5,2)
+  {
+    type = standard;
+  }
+
+  Tournament_Win_Condition::Tournament_Win_Condition()
+    : Generic_Win_Condition(4,5,6,3)
+  {
+    type = tournament;
+  }
 
   Standard_Ruleset::Standard_Ruleset()
-    : Ruleset( Board( (const int*) standard_board, 
+    : Ruleset( standard,
+	       Board( (const int*) standard_board, 
 		      sizeof(standard_board[0]) / sizeof(standard_board[0][0]),
 		      sizeof(standard_board)    / sizeof(standard_board[0]) ),
-	       &standard_win_condition, &standard_coordinate_translator,
-	       true /*undo possible*/, 2, 4 ),
-      standard_coordinate_translator( board )
+	       Standard_Common_Stones(),
+	       new Standard_Win_Condition(), 0 /*coordinate translator init below */,
+	       true /*undo possible*/, 2, 4 )
   {
-    common_stones.stone_count[ Stones::white_stone ] = 5;
-    common_stones.stone_count[ Stones::gray_stone ]  = 7;
-    common_stones.stone_count[ Stones::black_stone ] = 9;
+    coordinate_translator = new Standard_Coordinate_Translator(board);
   }
-
-  Standard_Ruleset::Standard_Ruleset( const Standard_Ruleset &ruleset )
-    : Ruleset( ruleset ), standard_coordinate_translator( board )
-  {
-    coordinate_translator = &standard_coordinate_translator;
-  }
-
-  Standard_Ruleset &Standard_Ruleset::operator=( Standard_Ruleset &ruleset )
-  {
-    Ruleset::operator=( ruleset );
-    coordinate_translator = &standard_coordinate_translator;
-    return *this;
-  }
-
-  Ruleset *Standard_Ruleset::clone() const
-  {
-    return new Standard_Ruleset(*this);
-  }
-
-  Tournament_Win_Condition Tournament_Ruleset::tournament_win_condition;
 
   Tournament_Ruleset::Tournament_Ruleset()
-    : Ruleset( Board( (const int*) standard_board, 
+    : Ruleset( tournament, 
+	       Board( (const int*) standard_board, 
 		      sizeof(standard_board[0]) / sizeof(standard_board[0][0]),
 		      sizeof(standard_board)    / sizeof(standard_board[0]) ),
-	       &tournament_win_condition, &standard_coordinate_translator,
-	       false /*no undo possible*/, 2, 4 ),
-      standard_coordinate_translator( board )      
+	       Tournament_Common_Stones(),
+	       new Tournament_Win_Condition(), 0 /*coordinate translator init below */,
+	       false /*no undo possible*/, 2, 4 )  
   {
-    common_stones.stone_count[ Stones::white_stone ] = 6;
-    common_stones.stone_count[ Stones::gray_stone ]  = 8;
-    common_stones.stone_count[ Stones::black_stone ] = 10;
+    coordinate_translator = new Standard_Coordinate_Translator(board);
   }
 
-  Tournament_Ruleset::Tournament_Ruleset( const Tournament_Ruleset &ruleset )
-    : Ruleset( ruleset ), standard_coordinate_translator( board )
+  Custom_Ruleset::Custom_Ruleset( Board board, Common_Stones common_stones, Win_Condition *win_condition, 
+				  Coordinate_Translator *coordinate_translator, 
+				  bool undo_possible, unsigned min_players, unsigned max_players )
+    : Ruleset( custom, board, common_stones, win_condition, coordinate_translator, undo_possible, 
+	       min_players, max_players )
   {
-    coordinate_translator = &standard_coordinate_translator;
   }
 
-  Tournament_Ruleset &Tournament_Ruleset::operator=( Tournament_Ruleset &ruleset )
-  {
-    Ruleset::operator=( ruleset );
-    coordinate_translator = &standard_coordinate_translator;
-    return *this;
-  }
-
-  Ruleset *Tournament_Ruleset::clone() const
-  {
-    return new Tournament_Ruleset(*this);
-  }
-  
   void No_Output::report_move( const Sequence & )
   {
   }
@@ -2030,7 +2047,7 @@ namespace holtz
       return error_require_knock_out;
 
     if( game.common_stones.stone_count[Stones::white_stone] +
-	game.common_stones.stone_count[Stones::gray_stone]  +
+	game.common_stones.stone_count[Stones::grey_stone]  +
 	game.common_stones.stone_count[Stones::black_stone] > 0 )
       return error_must_pick_common_stone;
 
@@ -2200,7 +2217,7 @@ namespace holtz
     return sequence;
   }
 
-  Standard_Coordinate_Translator::Standard_Coordinate_Translator( Board &board )
+  Standard_Coordinate_Translator::Standard_Coordinate_Translator( const Board &board )
     : orig_board(board)
   {    
   }
@@ -2216,6 +2233,7 @@ namespace holtz
     name += long_to_string( pos.x - first_x + 1 );
     return name;
   }
+
   Field_Pos Standard_Coordinate_Translator::get_field_pos ( std::string name )
   {
     Field_Pos pos;
@@ -2241,6 +2259,11 @@ namespace holtz
       }
     }
     return pos;
+  }
+
+  Coordinate_Translator *Standard_Coordinate_Translator::clone()
+  {
+    return new Standard_Coordinate_Translator( orig_board );
   }
 }
 

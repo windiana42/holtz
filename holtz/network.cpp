@@ -26,8 +26,8 @@
 namespace holtz
 {
   //BEGIN_EVENT_TABLE(Network_Manager, wxEvtHandler)				
-    //EVT_SOCKET(NETWORK_EVENT, Network_Manager::on_network)
-    //EVT_TIMER(ANIMATION_DONE, Network_Manager::on_done)		//**/
+  //EVT_SOCKET(NETWORK_EVENT, Network_Manager::on_network)
+  //EVT_TIMER(ANIMATION_DONE, Network_Manager::on_done)		//**/
   //END_EVENT_TABLE()						//**/
 
   Network_Connection_Handler::~Network_Connection_Handler()
@@ -39,7 +39,7 @@ namespace holtz
       server(0), client(0), connection_handler(0),
       player_handler(0), mode(mode_undefined),
       state(begin), current_id(101), 
-      ruleset(new Standard_Ruleset()), ruleset_type(Ruleset::standard_ruleset),
+      ruleset(new Standard_Ruleset()), ruleset_type(Ruleset::standard),
       max_clients(15), clients_ready(0), clients_player_setup_ack(0),
       max_string_size(60),
       timeout_sequencial_read(700) // 700 milliseconds
@@ -58,7 +58,7 @@ namespace holtz
       server(0), client(0), connection_handler(0), 
       player_handler(0), mode(mode_undefined),
       state(begin), current_id(101), 
-      ruleset(new Standard_Ruleset()), ruleset_type(Ruleset::standard_ruleset),
+      ruleset(new Standard_Ruleset()), ruleset_type(Ruleset::standard),
       max_clients(15), clients_ready(0), clients_player_setup_ack(0),
       max_string_size(60),
       timeout_sequencial_read(700) // 700 milliseconds
@@ -282,7 +282,7 @@ namespace holtz
       }
 
       // tell handler which ruleset is currently active
-      if( ruleset_type == Ruleset::custom_ruleset )
+      if( ruleset_type == Ruleset::custom )
 	player_handler->ruleset_changed( ruleset_type, *ruleset );
       else
 	player_handler->ruleset_changed( ruleset_type );
@@ -494,7 +494,7 @@ namespace holtz
     return false;
   }
 
-  bool Network_Manager::change_ruleset( Ruleset::type type, Ruleset &new_ruleset )
+  bool Network_Manager::change_ruleset( Ruleset::Ruleset_Type type, Ruleset &new_ruleset )
   {
     if( mode == mode_server )
     {
@@ -508,7 +508,7 @@ namespace holtz
     {
       write_message_type( *client, msg_ruleset );
       write_int( *client, type );
-      if( type == Ruleset::custom_ruleset )
+      if( type == Ruleset::custom )
       {
         write_ruleset( *client, new_ruleset );
       }
@@ -1132,15 +1132,15 @@ namespace holtz
       break;
       case msg_ruleset:
       {
-	Ruleset::type new_ruleset_type = static_cast<Ruleset::type>(read_int( sock ));
+	Ruleset::Ruleset_Type new_ruleset_type = static_cast<Ruleset::Ruleset_Type>(read_int( sock ));
 	switch( new_ruleset_type )
 	{
-	  case Ruleset::custom_ruleset:
-	  case Ruleset::standard_ruleset: 
-	  case Ruleset::tournament_ruleset:
+	  case Ruleset::custom:
+	  case Ruleset::standard: 
+	  case Ruleset::tournament:
 	  {
 	    Ruleset *new_ruleset = 0;
-	    if( new_ruleset_type == Ruleset::custom_ruleset )
+	    if( new_ruleset_type == Ruleset::custom )
 	    {
 	      // read custom ruleset in any case
 	      new_ruleset = read_ruleset( sock );
@@ -1158,33 +1158,32 @@ namespace holtz
 		  wxString ruleset_name;
 		  switch( new_ruleset_type )
 		  {
-		    case Ruleset::standard_ruleset: 
+		    case Ruleset::standard: 
 		      ruleset_name = _("Standard Rules"); 
 		      new_ruleset = new Standard_Ruleset();
 		      break;
-		    case Ruleset::tournament_ruleset: 
+		    case Ruleset::tournament: 
 		      ruleset_name = _("Tournaments Rules"); 
 		      new_ruleset = new Tournament_Ruleset();
 		      break;
-		    case Ruleset::custom_ruleset: 
+		    case Ruleset::custom: 
 		      //new_ruleset = read_ruleset( sock ); already read
-		      ruleset_name = _("Custom rules");
+		      ruleset_name = _("custom rules");
 		      switch( new_ruleset->board.board_type )
 		      {
-			case Board::s37_rings: ruleset_name = _("Custom rules on 37 ring board"); break;
-			case Board::s40_rings: ruleset_name = _("Custom rules on 40 ring board"); break;
-			case Board::s44_rings: ruleset_name = _("Custom rules on 44 ring board"); break;
-			case Board::s48_rings: ruleset_name = _("Custom rules on 48 ring board"); break;
-			case Board::s61_rings: ruleset_name = _("Custom rules on 61 ring board"); break;
-			case Board::custom:    ruleset_name = _("Custom rules"); break;
+			case Board::s37_rings: ruleset_name = _("custom rules on a 37 ring board"); break;
+			case Board::s40_rings: ruleset_name = _("custom rules on a 40 ring board"); break;
+			case Board::s44_rings: ruleset_name = _("custom rules on a 44 ring board"); break;
+			case Board::s48_rings: ruleset_name = _("custom rules on a 48 ring board"); break;
+			case Board::s61_rings: ruleset_name = _("custom rules on a 61 ring board"); break;
+			case Board::custom:    ruleset_name = _("custom rules"); break;
 		      }
 		      break;
 		  }
 		  wxString msg;
 		  msg.Printf( _("Host %s requests to change ruleset to %s.\nAllow Change of Ruleset?"), 
 			      host.Hostname().c_str(), ruleset_name.c_str() );
-		  if( wxMessageBox( msg, _("Ruleset"), wxYES | wxNO | wxICON_QUESTION ) == wxYES, 
-		      game_window )
+		  if( wxMessageBox( msg, _("Ruleset"), wxYES | wxNO | wxICON_QUESTION ) == wxYES )
 		  {
 		    change_ruleset( new_ruleset_type, *new_ruleset );
 		  }
@@ -1210,13 +1209,13 @@ namespace holtz
 		delete ruleset;
 		switch( new_ruleset_type )
 		{
-		  case Ruleset::standard_ruleset: 
+		  case Ruleset::standard: 
 		    ruleset = new Standard_Ruleset();
 		    break;
-		  case Ruleset::tournament_ruleset:
+		  case Ruleset::tournament:
 		    ruleset = new Tournament_Ruleset();
 		    break;
-		  case Ruleset::custom_ruleset:
+		  case Ruleset::custom:
 		    ruleset = new_ruleset;
 		    new_ruleset = 0;
 		    break;
@@ -1776,6 +1775,7 @@ namespace holtz
       assert(false);
     }
   }
+
   Board Network_Manager::read_board( wxSocketBase& sock )
   {
     int i = read_int( sock );
@@ -1821,15 +1821,84 @@ namespace holtz
 		  Board::custom );
   }
 
+  void Network_Manager::write_common_stones( wxSocketBase& sock, Common_Stones common_stones )
+  {
+    write_int( sock, int(common_stones.type) );
+    if( common_stones.type == Common_Stones::custom )
+    {
+      write_int( sock, common_stones.stone_count[ Stones::white_stone ] );
+      write_int( sock, common_stones.stone_count[ Stones::grey_stone  ] );
+      write_int( sock, common_stones.stone_count[ Stones::black_stone ] );
+    }
+  }
+
+  Common_Stones Network_Manager::read_common_stones( wxSocketBase& sock )
+  {
+    int type = read_int(sock);
+    switch( Common_Stones::Common_Stones_Type( type ) )
+    {
+      case Common_Stones::standard:   return Standard_Common_Stones();
+      case Common_Stones::tournament: return Tournament_Common_Stones();
+      case Common_Stones::custom:
+      {
+	int num_white = read_int(sock);
+	int num_grey  = read_int(sock);
+	int num_black = read_int(sock);
+	return Custom_Common_Stones( num_white, num_grey, num_black );
+      }
+    }
+    return Custom_Common_Stones( -1, -1, -1 );
+  }
+
+  void Network_Manager::write_win_condition( wxSocketBase& sock, Win_Condition *win_condition )
+  {
+    write_int( sock, int(win_condition->type) );
+    if( win_condition->type == Win_Condition::generic )
+    {
+      Generic_Win_Condition *gwc = dynamic_cast<Generic_Win_Condition*>(win_condition);
+      write_int( sock, gwc->num_white );
+      write_int( sock, gwc->num_grey );
+      write_int( sock, gwc->num_black );
+      write_int( sock, gwc->num_all );
+    }
+  }
+
+  Win_Condition *Network_Manager::read_win_condition( wxSocketBase& sock )
+  {
+    int type = read_int(sock);
+    switch( Win_Condition::Win_Condition_Type( type ) )
+    {
+      case Win_Condition::standard:   return new Standard_Win_Condition(); 
+      case Win_Condition::tournament: return new Tournament_Win_Condition(); 
+      case Win_Condition::generic:
+      {
+	int num_white = read_int(sock);
+	int num_grey  = read_int(sock);
+	int num_black = read_int(sock);
+	int num_all   = read_int(sock);
+	return new Generic_Win_Condition( num_white, num_grey, num_black, num_all ); 
+      }
+      case Win_Condition::full_custom: 
+	break;
+    }
+    return 0;
+  }
+
   void Network_Manager::write_ruleset( wxSocketBase& sock, Ruleset &ruleset )
   {
     write_board( sock, ruleset.board );
+    write_common_stones( sock, ruleset.common_stones );
+    write_win_condition( sock, ruleset.win_condition );
   }
+
   Ruleset *Network_Manager::read_ruleset( wxSocketBase& sock )
   {
-    Ruleset *ruleset = new Standard_Ruleset();
-    ruleset->board = read_board( sock );
-    return ruleset;
+    Board board			 = read_board( sock );
+    Common_Stones common_stones  = read_common_stones( sock );
+    Win_Condition *win_condition = read_win_condition( sock );
+
+    return new Custom_Ruleset( board, common_stones, win_condition, 
+			       new Standard_Coordinate_Translator(board) );
   }
   
   void Network_Manager::continue_game()
@@ -1982,7 +2051,7 @@ namespace holtz
 	{
 	  write_message_type( *c.socket, msg_ruleset );
 	  write_int( *c.socket, ruleset_type );
-	  if( ruleset_type == Ruleset::custom_ruleset )
+	  if( ruleset_type == Ruleset::custom )
 	  {
 	    write_ruleset( *c.socket, *ruleset );
 	  }
@@ -1992,7 +2061,7 @@ namespace holtz
 
     if( player_handler )
     {
-      if( ruleset_type == Ruleset::custom_ruleset )
+      if( ruleset_type == Ruleset::custom )
 	player_handler->ruleset_changed( ruleset_type, *ruleset );
       else
 	player_handler->ruleset_changed( ruleset_type );

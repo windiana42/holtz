@@ -141,7 +141,7 @@ namespace holtz
     unsigned positions_checked;
     unsigned expanded_calls;
 
-    const double rate_white, rate_gray, rate_black, rate_current_player_bonus;
+    const double rate_white, rate_grey, rate_black, rate_current_player_bonus;
     unsigned min_depth;
     bool deep_knocking_possible;// activates deep knocking strategy
   protected:

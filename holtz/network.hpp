@@ -75,7 +75,7 @@ namespace holtz
     virtual bool remove_player( int id );
     virtual bool player_up( int id );
     virtual bool player_down( int id );
-    virtual bool change_ruleset( Ruleset::type, Ruleset& );
+    virtual bool change_ruleset( Ruleset::Ruleset_Type, Ruleset& );
     virtual bool ready();		// ready with adding players; game may start
 
     // Player_Input functions
@@ -119,8 +119,13 @@ namespace holtz
     Player read_player( wxSocketBase& sock );
     void write_move( wxSocketBase& sock, Sequence );
     Sequence read_move( wxSocketBase& sock );
+
     void write_board( wxSocketBase& sock, Board );
     Board read_board( wxSocketBase& sock );
+    void write_common_stones( wxSocketBase& sock, Common_Stones );
+    Common_Stones read_common_stones( wxSocketBase& sock );
+    void write_win_condition( wxSocketBase& sock, Win_Condition * );
+    Win_Condition *read_win_condition( wxSocketBase& sock );
     void write_ruleset( wxSocketBase& sock, Ruleset & );
     Ruleset *read_ruleset( wxSocketBase& sock );
 
@@ -160,7 +165,7 @@ namespace holtz
     Player::Player_Type requested_player_type;	
 
     Ruleset *ruleset;
-    Ruleset::type ruleset_type;
+    Ruleset::Ruleset_Type ruleset_type;
 
     class Client
     {

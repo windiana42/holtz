@@ -16,10 +16,6 @@
 
 #include "dialogs.hpp"
 
-#ifndef __OLD_GCC__
-  #include <sstream>
-#endif
-
 #include <wx/cshelp.h>
 
 namespace holtz
@@ -36,7 +32,8 @@ namespace holtz
       current_ruleset(0), last_ruleset(0)
   {
     // create the child controls
-    player_name = new wxTextCtrl( this, DIALOG_PLAYER_NAME, _("Player 1"), wxDefaultPosition, wxDefaultSize, wxTE_PROCESS_ENTER );
+    player_name = new wxTextCtrl( this, DIALOG_PLAYER_NAME, _("Player 1"), wxDefaultPosition, 
+				  wxDefaultSize, wxTE_PROCESS_ENTER );
     ai = new wxCheckBox( this, -1, _("AI") );
     player_list = new wxListBox( this, LISTBOX_DCLICK, wxDefaultPosition, 
 				  wxSize(200,150), 0, 0, wxLB_SINGLE );
@@ -137,13 +134,13 @@ namespace holtz
 
   void Player_Setup_Page::on_close( wxCloseEvent& event )
   {
-	wxCommandEvent dummy;
-	on_cancel(dummy);
+    wxCommandEvent dummy;
+    on_cancel(dummy);
   }	
 
   void Player_Setup_Page::on_player_name( wxCommandEvent& event )
   {
-	on_add_player(event);
+    on_add_player(event);
   }
 
   void Player_Setup_Page::on_add_player( wxCommandEvent& WXUNUSED(event) )
@@ -237,7 +234,7 @@ namespace holtz
       {
 	case 0: 
 	  new_ruleset = new Standard_Ruleset();
-	  if( !player_setup_manager->change_ruleset( Ruleset::standard_ruleset, *new_ruleset ) )
+	  if( !player_setup_manager->change_ruleset( Ruleset::standard, *new_ruleset ) )
 	  {
 	    if( current_ruleset != ruleset_choice->GetSelection() )
 	      ruleset_choice->SetSelection(current_ruleset);
@@ -247,7 +244,7 @@ namespace holtz
 	  break;
 	case 1: 
 	  new_ruleset = new Tournament_Ruleset();
-	  if( !player_setup_manager->change_ruleset( Ruleset::tournament_ruleset, *new_ruleset ) )
+	  if( !player_setup_manager->change_ruleset( Ruleset::tournament, *new_ruleset ) )
 	  {
 	    if( current_ruleset != ruleset_choice->GetSelection() )
 	      ruleset_choice->SetSelection(current_ruleset);
@@ -274,7 +271,7 @@ namespace holtz
 
   void Player_Setup_Page::set_custom_ruleset( Ruleset &ruleset )
   {
-    if( !player_setup_manager->change_ruleset( Ruleset::custom_ruleset, ruleset ) )
+    if( !player_setup_manager->change_ruleset( Ruleset::custom, ruleset ) )
     {
       wxMessageBox(_("Could not change Ruleset!"), _("Ruleset"), wxOK | wxICON_INFORMATION, this);
     }
@@ -383,18 +380,18 @@ namespace holtz
     wxMessageBox( _("Change for this player denied!"), _("Denied"), wxOK | wxICON_INFORMATION, this);
   }
 
-  void Player_Setup_Page::ruleset_changed( Ruleset::type type )
+  void Player_Setup_Page::ruleset_changed( Ruleset::Ruleset_Type type )
   {
     int new_type = 0;
     switch( type )
     {
-      case Ruleset::standard_ruleset:
+      case Ruleset::standard:
 	new_type = 0;
 	break;
-      case Ruleset::tournament_ruleset:
+      case Ruleset::tournament:
 	new_type = 1;
 	break;
-      case Ruleset::custom_ruleset:
+      case Ruleset::custom:
 	new_type = 2;
 	break;
     }
@@ -404,20 +401,20 @@ namespace holtz
     }
   }
 
-  void Player_Setup_Page::ruleset_changed( Ruleset::type type, Ruleset &ruleset )
+  void Player_Setup_Page::ruleset_changed( Ruleset::Ruleset_Type type, Ruleset &ruleset )
   {
     int new_type = 0;
     switch( type )
     {
-      case Ruleset::standard_ruleset:
+      case Ruleset::standard:
 	new_type = 0;
 	break;
-      case Ruleset::tournament_ruleset:
+      case Ruleset::tournament:
 	new_type = 1;
 	break;
-      case Ruleset::custom_ruleset:
+      case Ruleset::custom:
 	new_type = 2;
-	dialog->ruleset_page->set_ruleset(&ruleset);
+	dialog->ruleset_page->set_ruleset(&ruleset); // shouldn't be done at once
 	break;
     }
     if( new_type != ruleset_choice->GetSelection() )
@@ -441,17 +438,17 @@ namespace holtz
     Show(false);
   }
 
-  BEGIN_EVENT_TABLE(Player_Setup_Page, wxPanel)				//**/
-  EVT_BUTTON(DIALOG_READY,	   Player_Setup_Page::on_ready)		//**/
-  EVT_BUTTON(DIALOG_CANCEL, 	   Player_Setup_Page::on_cancel)	//**/
-  EVT_BUTTON(DIALOG_ADD_PLAYER,    Player_Setup_Page::on_add_player)	//**/
-  EVT_BUTTON(DIALOG_REMOVE_PLAYER, Player_Setup_Page::on_remove_player)	//**/
-  EVT_BUTTON(DIALOG_PLAYER_UP,	   Player_Setup_Page::on_player_up)	//**/
-  EVT_BUTTON(DIALOG_PLAYER_DOWN,   Player_Setup_Page::on_player_down)	//**/
-  EVT_RADIOBOX(DIALOG_RULESET,	   Player_Setup_Page::on_change_ruleset)//**/
-  EVT_TEXT_ENTER(DIALOG_PLAYER_NAME,	Player_Setup_Page::on_player_name)//**/
-  EVT_CLOSE(Player_Setup_Page::on_close) //**/
-  END_EVENT_TABLE()							//**/
+  BEGIN_EVENT_TABLE(Player_Setup_Page, wxPanel)					//**/
+  EVT_BUTTON(DIALOG_READY,		Player_Setup_Page::on_ready)		//**/
+  EVT_BUTTON(DIALOG_CANCEL, 	   	Player_Setup_Page::on_cancel)		//**/
+  EVT_BUTTON(DIALOG_ADD_PLAYER,    	Player_Setup_Page::on_add_player)	//**/
+  EVT_BUTTON(DIALOG_REMOVE_PLAYER, 	Player_Setup_Page::on_remove_player)	//**/
+  EVT_BUTTON(DIALOG_PLAYER_UP,	   	Player_Setup_Page::on_player_up)	//**/
+  EVT_BUTTON(DIALOG_PLAYER_DOWN,   	Player_Setup_Page::on_player_down)	//**/
+  EVT_RADIOBOX(DIALOG_RULESET,	   	Player_Setup_Page::on_change_ruleset)	//**/
+  EVT_TEXT_ENTER(DIALOG_PLAYER_NAME,	Player_Setup_Page::on_player_name)	//**/
+  EVT_CLOSE(Player_Setup_Page::on_close) 					//**/
+  END_EVENT_TABLE()								//**/
 
   // ============================================================================
   // Ruleset_Setup_Page
@@ -464,7 +461,6 @@ namespace holtz
 
     wxBoxSizer *top_sizer = new wxBoxSizer( wxVERTICAL );
 
-    // update choice names with correct translation
     wxString board_choices[5];
     board_choices[0] = wxString(_("37 Rings (default)"));
     board_choices[1] = wxString(_("40 Rings"));
@@ -474,11 +470,70 @@ namespace holtz
     //board_choices[5] = wxString(_("custom"));
     board_choice = new wxRadioBox( this, -1, _("Choose Board"), wxDefaultPosition,
 				   wxDefaultSize, 
-				   5, board_choices, 3, wxRA_SPECIFY_COLS );
+				   5, board_choices, 2, wxRA_SPECIFY_ROWS );
     top_sizer->Add( board_choice, 0, wxALIGN_CENTER | wxALL, 10  );
 
-    wxPanel *panel = new wxPanel( this, -1 );
-    top_sizer->Add( panel, 0, wxEXPAND );
+    
+    wxBoxSizer *win_condition_sizer = new wxBoxSizer( wxHORIZONTAL );
+    wxString win_choices[3];
+    win_choices[0] = wxString(_("Standard"));
+    win_choices[1] = wxString(_("Tournament"));
+    win_choices[2] = wxString(_("Custom"));
+    win_choice = new wxRadioBox( this, DIALOG_WIN_CHOICE, _("Win condition"), wxDefaultPosition,
+				 wxDefaultSize, 
+				 3, win_choices, 1, wxRA_SPECIFY_COLS );
+    win_condition_sizer->Add( win_choice, 0,  wxALL, 10 );
+    wxBoxSizer *win_custom_sizer = new wxBoxSizer( wxVERTICAL );
+    wxBoxSizer *win_white_sizer  = new wxBoxSizer( wxHORIZONTAL );
+    wxBoxSizer *win_grey_sizer   = new wxBoxSizer( wxHORIZONTAL );
+    wxBoxSizer *win_black_sizer  = new wxBoxSizer( wxHORIZONTAL );
+    wxBoxSizer *win_all_sizer    = new wxBoxSizer( wxHORIZONTAL );
+    win_white_sizer->Add( new wxStaticText(this, -1, _("White marbles")), 0,  wxALL, 5 );
+    win_grey_sizer ->Add( new wxStaticText(this, -1, _("Grey marbles")),  0,  wxALL, 5 );
+    win_black_sizer->Add( new wxStaticText(this, -1, _("Black marbles")), 0,  wxALL, 5 );
+    win_all_sizer  ->Add( new wxStaticText(this, -1, _("Each colour")),   0,  wxALL, 5 );
+    win_white = new wxSpinCtrl(this, DIALOG_WIN_SPIN, wxT("3")); win_white->SetRange(1,99);
+    win_grey  = new wxSpinCtrl(this, DIALOG_WIN_SPIN, wxT("4")); win_grey ->SetRange(1,99);
+    win_black = new wxSpinCtrl(this, DIALOG_WIN_SPIN, wxT("5")); win_black->SetRange(1,99);
+    win_all   = new wxSpinCtrl(this, DIALOG_WIN_SPIN, wxT("2")); win_all  ->SetRange(1,99);
+    win_white_sizer->Add( win_white, 0,  wxALL, 5 );
+    win_grey_sizer ->Add( win_grey,  0,  wxALL, 5 );
+    win_black_sizer->Add( win_black, 0,  wxALL, 5 );
+    win_all_sizer  ->Add( win_all,   0,  wxALL, 5 );
+    win_custom_sizer->Add( win_white_sizer );
+    win_custom_sizer->Add( win_grey_sizer );
+    win_custom_sizer->Add( win_black_sizer );
+    win_custom_sizer->Add( win_all_sizer );
+    win_condition_sizer->Add( win_custom_sizer );
+    top_sizer->Add( win_condition_sizer );
+
+    wxBoxSizer *common_stones_sizer = new wxBoxSizer( wxHORIZONTAL );
+    wxString stones_choices[3];
+    stones_choices[0] = wxString(_("Standard"));
+    stones_choices[1] = wxString(_("Tournament"));
+    stones_choices[2] = wxString(_("Custom"));
+    stones_choice = new wxRadioBox( this, DIALOG_STONES_CHOICE, _("Common marbles"), wxDefaultPosition,
+				    wxDefaultSize, 
+				    3, stones_choices, 1, wxRA_SPECIFY_COLS );
+    common_stones_sizer->Add( stones_choice, 0,  wxALL, 10 );
+    wxBoxSizer *stones_custom_sizer = new wxBoxSizer( wxVERTICAL );
+    wxBoxSizer *stones_white_sizer  = new wxBoxSizer( wxHORIZONTAL );
+    wxBoxSizer *stones_grey_sizer   = new wxBoxSizer( wxHORIZONTAL );
+    wxBoxSizer *stones_black_sizer  = new wxBoxSizer( wxHORIZONTAL );
+    stones_white_sizer->Add( new wxStaticText(this, -1, _("White marbles")), 0,  wxALL, 5 );
+    stones_grey_sizer ->Add( new wxStaticText(this, -1, _("Grey marbles")),  0,  wxALL, 5 );
+    stones_black_sizer->Add( new wxStaticText(this, -1, _("Black marbles")), 0,  wxALL, 5 );
+    stones_white = new wxSpinCtrl(this, DIALOG_STONES_SPIN, wxT("5")); stones_white->SetRange(0,99);
+    stones_grey  = new wxSpinCtrl(this, DIALOG_STONES_SPIN, wxT("7")); stones_grey ->SetRange(0,99);
+    stones_black = new wxSpinCtrl(this, DIALOG_STONES_SPIN, wxT("9")); stones_black->SetRange(0,99);
+    stones_white_sizer->Add( stones_white, 0,  wxALL, 5 );
+    stones_grey_sizer ->Add( stones_grey,  0,  wxALL, 5 );
+    stones_black_sizer->Add( stones_black, 0,  wxALL, 5 );
+    stones_custom_sizer->Add( stones_white_sizer );
+    stones_custom_sizer->Add( stones_grey_sizer );
+    stones_custom_sizer->Add( stones_black_sizer );
+    common_stones_sizer->Add( stones_custom_sizer );
+    top_sizer->Add( common_stones_sizer );
 
     wxBoxSizer *button_sizer = new wxBoxSizer( wxHORIZONTAL );
     button_sizer->Add( new wxButton(this, DIALOG_APPLY,   _("Apply"),   wxDefaultPosition), 0, wxALL, 10 );
@@ -506,6 +561,7 @@ namespace holtz
 
   void Ruleset_Setup_Page::restore_ruleset()
   {
+    wxCommandEvent dummy;
     switch( ruleset->board.board_type )
     {
       case Board::s37_rings: board_choice->SetSelection(0); break;
@@ -513,12 +569,42 @@ namespace holtz
       case Board::s44_rings: board_choice->SetSelection(2); break;
       case Board::s48_rings: board_choice->SetSelection(3); break;
       case Board::s61_rings: board_choice->SetSelection(4); break;
-      case Board::custom:    /* board_choice->SetSelection(-1); // this isn't allowed and won't work anywway (look @ wxwin sourcecode) */ break;
+      case Board::custom:    /* board_choice->SetSelection(5); // shouldn't happen */ break;
+    }
+    switch( ruleset->win_condition->type )
+    {
+      case Win_Condition::standard:    win_choice->SetSelection(0); on_change_win(dummy); break;
+      case Win_Condition::tournament:  win_choice->SetSelection(1); on_change_win(dummy); break;
+      case Win_Condition::generic:     
+      {
+	win_choice->SetSelection(2);
+	Generic_Win_Condition *wc = dynamic_cast<Generic_Win_Condition*>( ruleset->win_condition );
+	win_white->SetValue( wc->num_white );
+	win_grey ->SetValue( wc->num_grey );
+	win_black->SetValue( wc->num_black );
+	win_all  ->SetValue( wc->num_all );
+      }
+      break;
+      case Win_Condition::full_custom: /*win_choice->SetSelection(3); // shouldn't happen */ break;
+    }
+    switch( ruleset->common_stones.type )
+    {
+      case Common_Stones::standard:   stones_choice->SetSelection(0); on_change_stones(dummy); break;
+      case Common_Stones::tournament: stones_choice->SetSelection(1); on_change_stones(dummy); break;
+      case Common_Stones::custom:
+      {
+	stones_choice->SetSelection(2);
+	stones_white->SetValue( ruleset->common_stones.stone_count[ Stones::white_stone ] );
+	stones_grey ->SetValue( ruleset->common_stones.stone_count[ Stones::grey_stone  ] );
+	stones_black->SetValue( ruleset->common_stones.stone_count[ Stones::black_stone ] );
+      }
+      break;
     }
   }
 
   void Ruleset_Setup_Page::on_apply  ( wxCommandEvent& event )
   {
+    ruleset->type = Ruleset::custom;
     switch( board_choice->GetSelection() )
     {
       case 0:
@@ -554,6 +640,35 @@ namespace holtz
       case -1:
 	break;
     }
+    switch( win_choice->GetSelection() )
+    {
+      case 0:
+	ruleset->set_win_condition( new Standard_Win_Condition() );
+	break;
+      case 1:
+	ruleset->set_win_condition( new Tournament_Win_Condition() );
+	break;
+      case 2:
+	ruleset->set_win_condition( new Generic_Win_Condition( win_white->GetValue(), 
+							       win_grey ->GetValue(), 
+							       win_black->GetValue(), 
+							       win_all  ->GetValue() ) );
+	break;
+    }
+    switch( stones_choice->GetSelection() )
+    {
+      case 0:
+	ruleset->common_stones = Standard_Common_Stones();
+	break;
+      case 1:
+	ruleset->common_stones = Tournament_Common_Stones();
+	break;
+      case 2:
+	ruleset->common_stones = Custom_Common_Stones( stones_white->GetValue(), 
+						       stones_grey ->GetValue(),
+						       stones_black->GetValue() );
+	break;
+    }
     dialog->player_page->set_custom_ruleset( *ruleset );
     dialog->notebook->SetSelection(0);
   }
@@ -568,15 +683,80 @@ namespace holtz
     dialog->Show( false );
   }
 
+  void Ruleset_Setup_Page::on_change_win  ( wxCommandEvent& event )
+  {
+    switch( win_choice->GetSelection() )
+    {
+      case 0:
+      {
+	Standard_Win_Condition standard;
+	win_white->SetValue( standard.num_white );
+	win_grey ->SetValue( standard.num_grey );
+	win_black->SetValue( standard.num_black );
+	win_all  ->SetValue( standard.num_all );
+      }
+      break;
+      case 1:
+      {
+	Tournament_Win_Condition tournament;
+	win_white->SetValue( tournament.num_white );
+	win_grey ->SetValue( tournament.num_grey );
+	win_black->SetValue( tournament.num_black );
+	win_all  ->SetValue( tournament.num_all );
+      }
+      break;
+      case 2:
+	break;
+    }
+  }
+
+  void Ruleset_Setup_Page::on_spin_win ( wxCommandEvent& event )
+  {
+    win_choice->SetSelection(2);
+  }
+
+  void Ruleset_Setup_Page::on_change_stones  ( wxCommandEvent& event )
+  {
+    switch( stones_choice->GetSelection() )
+    {
+      case 0:
+      {
+	Standard_Common_Stones common_stones;
+	stones_white->SetValue( common_stones.stone_count[ Stones::white_stone ] );
+	stones_grey ->SetValue( common_stones.stone_count[ Stones::grey_stone  ] );
+	stones_black->SetValue( common_stones.stone_count[ Stones::black_stone ] );
+      }
+      break;
+      case 1:
+      {
+	Tournament_Common_Stones common_stones;
+	stones_white->SetValue( common_stones.stone_count[ Stones::white_stone ] );
+	stones_grey ->SetValue( common_stones.stone_count[ Stones::grey_stone  ] );
+	stones_black->SetValue( common_stones.stone_count[ Stones::black_stone ] );
+      }
+      break;
+      case 2:
+	break;
+    }
+  }
+  void Ruleset_Setup_Page::on_spin_stones ( wxCommandEvent& event )
+  {
+    stones_choice->SetSelection(2);
+  }
+
   Ruleset_Setup_Page::~Ruleset_Setup_Page()
   {
     delete ruleset;
   }
-
+  
   BEGIN_EVENT_TABLE(Ruleset_Setup_Page, wxPanel)			//**/
-  EVT_BUTTON(DIALOG_APPLY,	   Ruleset_Setup_Page::on_apply)	//**/
-  EVT_BUTTON(DIALOG_RESTORE,	   Ruleset_Setup_Page::on_restore)	//**/
-  EVT_BUTTON(DIALOG_CANCEL,	   Ruleset_Setup_Page::on_cancel)	//**/
+  EVT_BUTTON(DIALOG_APPLY,	   	Ruleset_Setup_Page::on_apply)	//**/
+  EVT_BUTTON(DIALOG_RESTORE,	   	Ruleset_Setup_Page::on_restore)	//**/
+  EVT_BUTTON(DIALOG_CANCEL,	   	Ruleset_Setup_Page::on_cancel)	//**/
+  EVT_RADIOBOX(DIALOG_WIN_CHOICE,  	Ruleset_Setup_Page::on_change_win)	//**/
+  EVT_SPINCTRL(DIALOG_WIN_SPIN,	   	Ruleset_Setup_Page::on_spin_win)	//**/
+  EVT_RADIOBOX(DIALOG_STONES_CHOICE,	Ruleset_Setup_Page::on_change_stones)	//**/
+  EVT_SPINCTRL(DIALOG_STONES_SPIN,	Ruleset_Setup_Page::on_spin_stones)	//**/
   END_EVENT_TABLE()							//**/
 
   // ============================================================================
@@ -598,7 +778,7 @@ namespace holtz
 
     // Add panel as notebook page
     ruleset_page = new Ruleset_Setup_Page( notebook, this ); 
-    // player_page might use rulset_page during construction !!!
+    // player_page might use ruleset_page during construction !!!
     player_page  = new Player_Setup_Page( notebook, this, game_window,player_setup_manager );
     ruleset_page->set_ruleset( game_window.get_game().ruleset );
 
@@ -622,26 +802,33 @@ namespace holtz
 
   Display_Setup_Page::Display_Setup_Page( wxWindow *parent, Settings_Dialog *dialog, 
 					  Game_Window &game_window )
-    : wxPanel( parent, -1 ), dialog(dialog), game_window(game_window)
+    : wxPanel( parent, -1 ), dialog(dialog), game_window(game_window),
+      game_settings( game_window.game_settings )
   {
-    board_settings        = game_window.board_settings;
-    player_settings       = game_window.player_settings;
-    common_stone_settings = game_window.common_stone_settings;
-    player_stone_settings = game_window.player_stone_settings;
-
     wxBoxSizer *top_sizer = new wxBoxSizer( wxVERTICAL );
 
-    // update choice names with correct translation
     wxString orientation_choices[2];
     orientation_choices[0] = wxString(_("Horizontal"));
     orientation_choices[1] = wxString(_("Vertical"));
-    //orientation_choices[4] = wxString(_("custom")); // FF: what is a custom orientation? 
-    orientation_choice = new wxRadioBox( this, -1, _("Board Orientation"), wxDefaultPosition,
-					 wxDefaultSize, 2, orientation_choices, 2, wxRA_SPECIFY_COLS );
+    orientation_choice = new wxRadioBox( this, -1, _("Board orientation"), wxDefaultPosition,
+					 wxDefaultSize, 2, orientation_choices, 1, wxRA_SPECIFY_ROWS );
     top_sizer->Add( orientation_choice, 0, wxEXPAND | wxALL, 10  );
 
     show_coordinates = new wxCheckBox( this, -1, _("Show field coordinates") );
     top_sizer->Add( show_coordinates, 0, wxALL, 10 );
+
+    wxString arrangement_choices[2];
+    arrangement_choices[0] = wxString(_("Board and common stones left"));
+    arrangement_choices[1] = wxString(_("Board left all stones right"));
+    arrangement_choice = new wxRadioBox( this, -1, _("Panels arrangement"), wxDefaultPosition,
+					 wxDefaultSize, 2, arrangement_choices, 1, wxRA_SPECIFY_COLS );
+    top_sizer->Add( arrangement_choice, 0, wxEXPAND | wxALL, 10  );
+
+    multiple_common_stones = new wxCheckBox( this, -1, _("Display all common stones individually") );
+    top_sizer->Add( multiple_common_stones, 0, wxALL, 10 );
+
+    multiple_player_stones = new wxCheckBox( this, -1, _("Display all player stones individually") );
+    top_sizer->Add( multiple_player_stones, 0, wxALL, 10 );
 
     wxBoxSizer *button_sizer = new wxBoxSizer( wxHORIZONTAL );
     button_sizer->Add( new wxButton(this, DIALOG_OK,      _("OK"),      wxDefaultPosition), 0, wxALL, 10 );
@@ -655,13 +842,12 @@ namespace holtz
     top_sizer->Add( button_sizer );
 
     // set help texts
-	orientation_choice->SetHelpText(_("Select the orientation in which the board is displayed on-screen."));
-	show_coordinates->SetHelpText(_("If checked, the field coordinates (a1...g4) will be displayed next to the board. This can be useful for discussing the game."));
-	FindWindow(DIALOG_OK)->SetHelpText(_("Accepts the changes made in this dialog and returns to the game."));
-	FindWindow(DIALOG_APPLY)->SetHelpText(_("Accepts the changes made in this dialog and leaves the dialog opened."));
-	FindWindow(DIALOG_RESTORE)->SetHelpText(_("Reverts the changes made in this dialog (since the last 'Apply') and leaves it opened."));
-	FindWindow(DIALOG_CANCEL)->SetHelpText(_("Closes the dialog without accepting the changes."));
-
+    orientation_choice->SetHelpText(_("Select the orientation in which the board is displayed on-screen."));
+    show_coordinates->SetHelpText(_("If checked, the field coordinates (a1...g4) will be displayed next to the board. This can be useful for discussing the game."));
+    FindWindow(DIALOG_OK)->SetHelpText(_("Accepts the changes made in this dialog and returns to the game."));
+    FindWindow(DIALOG_APPLY)->SetHelpText(_("Accepts the changes made in this dialog and leaves the dialog opened."));
+    FindWindow(DIALOG_RESTORE)->SetHelpText(_("Reverts the changes made in this dialog (since the last 'Apply') and leaves it opened."));
+    FindWindow(DIALOG_CANCEL)->SetHelpText(_("Closes the dialog without accepting the changes."));
 
     SetAutoLayout( true );
     SetSizer( top_sizer );
@@ -675,8 +861,15 @@ namespace holtz
 
   void Display_Setup_Page::restore_settings()
   {
-    orientation_choice->SetSelection( board_settings.rotate_board ? 1 : 0 );
-    show_coordinates->SetValue( board_settings.show_coordinates );
+    orientation_choice->SetSelection( game_settings.board_settings.rotate_board ? 1 : 0 );
+    show_coordinates->SetValue( game_settings.board_settings.show_coordinates );
+    switch( game_settings.arrangement )
+    {
+      case Game_Panel::Settings::arrange_standard:     arrangement_choice->SetSelection(0); break;
+      case Game_Panel::Settings::arrange_stones_right: arrangement_choice->SetSelection(1); break;
+    }
+    multiple_common_stones->SetValue( game_settings.common_stone_settings.multiple_stones );
+    multiple_player_stones->SetValue( game_settings.player_settings.stone_settings.multiple_stones );
   }
 
   void Display_Setup_Page::on_ok     ( wxCommandEvent& event )
@@ -688,15 +881,19 @@ namespace holtz
 
   void Display_Setup_Page::on_apply  ( wxCommandEvent& )
   {
-    board_settings.rotate_board         = orientation_choice->GetSelection() == 0 ? false : true;
-    common_stone_settings.rotate_stones = board_settings.rotate_board;
-    player_stone_settings.rotate_stones = board_settings.rotate_board;
-    board_settings.show_coordinates = show_coordinates->GetValue();
+    game_settings.board_settings.rotate_board = orientation_choice->GetSelection() == 0 ? false : true;
+    game_settings.common_stone_settings.rotate_stones          = game_settings.board_settings.rotate_board;
+    game_settings.player_settings.stone_settings.rotate_stones = game_settings.board_settings.rotate_board;
+    game_settings.board_settings.show_coordinates              = show_coordinates->GetValue();
+    switch( arrangement_choice->GetSelection() )
+    {
+      case 0: game_settings.arrangement = Game_Panel::Settings::arrange_standard; break;
+      case 1: game_settings.arrangement = Game_Panel::Settings::arrange_stones_right; break;
+    }
+    game_settings.common_stone_settings.multiple_stones		 = multiple_common_stones->GetValue();
+    game_settings.player_settings.stone_settings.multiple_stones = multiple_player_stones->GetValue();
 
-    game_window.board_settings        = board_settings;
-    game_window.player_settings       = player_settings;
-    game_window.common_stone_settings = common_stone_settings;
-    game_window.player_stone_settings = player_stone_settings;
+    game_window.game_settings = game_settings;
 
     game_window.calc_dimensions();
     game_window.refresh();
