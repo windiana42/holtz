@@ -21,8 +21,7 @@ print "endpos: $endpos <br>\n";
 $data = substr($fcontents, $pos, $endpos - $pos);
 print $data;
 print "</table>";
-print "Note: If you download any source version, you have to download
-	<a href="http://wxwindows.org">wxWindows</a> first";
+print "Note: If you download any source version, you have to download <a href="http://wxwindows.org">wxWindows</a> first";
 ?>
 <!--
 <h2>Not yet implemented</h2>
