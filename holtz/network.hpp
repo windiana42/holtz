@@ -119,6 +119,10 @@ namespace holtz
     Player read_player( wxSocketBase& sock );
     void write_move( wxSocketBase& sock, Sequence );
     Sequence read_move( wxSocketBase& sock );
+    void write_board( wxSocketBase& sock, Board );
+    Board read_board( wxSocketBase& sock );
+    void write_ruleset( wxSocketBase& sock, Ruleset & );
+    Ruleset *read_ruleset( wxSocketBase& sock );
 
     void continue_game();
 
@@ -140,7 +144,7 @@ namespace holtz
     Network_Connection_Handler *connection_handler;
     Player_Handler *player_handler;
 
-    typedef enum Network_Mode{ mode_undefined, mode_server, mode_client };
+    typedef enum Network_Mode{ mode_undefined, mode_server, mode_client, mode_connecting };
     Network_Mode mode;
 
     typedef enum Protocol_State{ begin, handshake, request_player, is_ready, players_ready, game_started,

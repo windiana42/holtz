@@ -8,6 +8,7 @@ holtz_SOURCES= \
 
 holtz_CXXFLAGS= \
 	-DDEFAULT_DATA_DIR=\"$(pkgdatadir)/\"
+#	-DDEFAULT_DATA_DIR=wxT\(\"$(pkgdatadir)/\"\)
 
 EXTRA_DIST=	\
 	Rules.german Rules.english holtz.rc holtz.ico holtz.dsp holtz.dsw icon.xpm holtz.spec 

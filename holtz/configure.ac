@@ -36,9 +36,9 @@ fi
 
 if test "$wxstatic_Enabled" = "yes" ; then
   export LIBS="$LIBS `wx-config $GTKVER --static --libs`";
-  export CXXFLAGS="$CXXFLAGS `wx-config --static --cxxflags`"
+  export CXXFLAGS="$CXXFLAGS `wx-config $GTKVER --static --cxxflags`"
 else
-  export LIBS="$LIBS `wx-config --libs`";
+  export LIBS="$LIBS `wx-config $GTKVER --libs`";
   export CXXFLAGS="$CXXFLAGS `wx-config $GTKVER --cxxflags`"
 fi
 

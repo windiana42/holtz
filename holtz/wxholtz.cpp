@@ -925,7 +925,7 @@ namespace holtz
       rel_x = abs_y - y - board_y;
       rel_y = abs_x - x - board_x;
       // invert y-axis => rotated board
-      int board_size_y = bitmap_handler.dimensions.field_width * game.board.get_y_size() 
+      int board_size_y = bitmap_handler.dimensions.field_width * game.board.get_x_size() 
 	+ bitmap_handler.dimensions.field_width / 2;
       rel_x = board_size_y - rel_x - 1;
     }
