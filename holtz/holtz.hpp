@@ -148,7 +148,7 @@ namespace holtz
   class Common_Stones : public Stones
   {
   public:
-    typedef enum Common_Stones_Type{ standard, tournament, custom };
+    typedef enum Common_Stones_Type{ standard=0, tournament, custom };
 
     Common_Stones( Common_Stones_Type );
     Common_Stones_Type type;
@@ -175,7 +175,7 @@ namespace holtz
   class Player_Input
   {
   public:
-    typedef enum Player_State{ finished, wait_for_event, request_undo,
+    typedef enum Player_State{ finished=0, wait_for_event, request_undo,
 			       interruption_possible };
 
     virtual Player_State determine_move() throw(Exception) = 0;
@@ -199,8 +199,8 @@ namespace holtz
   class Player
   {
   public:
-    typedef enum Player_Type{ unknown, user, ai };
-    typedef enum Help_Mode{ no_help, show_possible_moves, show_hint };
+    typedef enum Player_Type{ unknown=0, user, ai };
+    typedef enum Help_Mode{ no_help=0, show_possible_moves, show_hint };
 
     Player( std::string name="", int id=-1, Player_Input *in=0, std::list<Player_Output*> out=no_output,
 	    std::string host="", Player_Type type=unknown, Help_Mode help_mode = no_help );
@@ -281,7 +281,7 @@ namespace holtz
   class Board
   {
   public:
-    typedef enum Board_Type{ s37_rings, s40_rings, s44_rings, s48_rings, s61_rings, custom };
+    typedef enum Board_Type{ s37_rings=0, s40_rings, s44_rings, s48_rings, s61_rings, custom };
 
     Board( const int *field_array, int width, int height, Board_Type type = custom );
     // field must be rectangular array!
@@ -324,7 +324,7 @@ namespace holtz
   class Move
   {
   public:
-    typedef enum Move_Type { no_move, knock_out_move, set_move, remove, finish_move };
+    typedef enum Move_Type { no_move=0, knock_out_move, set_move, remove, finish_move };
 
     virtual Move_Type get_type() const = 0;
     virtual void do_move( Game & ) = 0;
@@ -509,7 +509,7 @@ namespace holtz
   class Win_Condition
   {
   public:
-    typedef enum Win_Condition_Type{ standard, tournament, generic, full_custom };
+    typedef enum Win_Condition_Type{ standard=0, tournament, generic, full_custom };
 
     Win_Condition( Win_Condition_Type type = full_custom );
     virtual ~Win_Condition();
@@ -534,7 +534,7 @@ namespace holtz
   class Ruleset
   {
   public:
-    typedef enum Ruleset_Type { standard, tournament, custom };
+    typedef enum Ruleset_Type { standard=0, tournament, custom };
     Ruleset( const Ruleset & );
     Ruleset &operator=( Ruleset & );
     virtual ~Ruleset();
@@ -567,7 +567,7 @@ namespace holtz
   class Game
   {
   public:
-    typedef enum Game_State{ finished, wait_for_event, next_players_turn, interruption_possible, 
+    typedef enum Game_State{ finished=0, wait_for_event, next_players_turn, interruption_possible, 
 			     wrong_number_of_players };
 
     Game( const Ruleset & );
