@@ -16,6 +16,12 @@
 
 #include "util.hpp"
 
+#ifndef __OLD_GCC__
+  #include <sstream>
+#else
+  #include <strstream>
+#endif
+
 namespace holtz
 {
   void randomize()
@@ -47,5 +53,30 @@ namespace holtz
 	break;
     }
     return i;
+  }
+
+  std::string long_to_string( long l )
+  {
+    std::string str;
+#ifndef __OLD_GCC__
+    std::ostringstream os;
+    os << l;
+    str = os.str();
+#else
+    char buf[4096];
+    std::ostrstream os(buf,4096);
+    os << l;
+    str = os.str();
+#endif
+    return str;
+  }
+
+  std::pair<long,unsigned /*digits*/> string_to_long( std::string str, int base )
+  {
+    const char *start = str.c_str();
+    char *end;
+    long num = strtol( start, &end, base );
+
+    return std::pair<long,unsigned /*digits*/>( num, end - start );
   }
 }

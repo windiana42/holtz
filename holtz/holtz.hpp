@@ -48,6 +48,9 @@ namespace holtz
   class AI_Input;
   class Sequence_Generator;
   class Generic_Mouse_Input;
+  class Coordinate_Translator;
+  class Standard_Coordinate_Translator;
+  class Move_Translator;
   
   typedef enum Field_State_Type{ field_removed=-1, field_empty=0, 
 				 field_white=1, field_gray=2, field_black=3 };
@@ -70,15 +73,45 @@ namespace holtz
       { -1,  0,  0,  0,  0,  0, -1 },
       {   -1,  0,  0,  0,  0, -1, -1 } };
 
+  const int board_40[][7] =
+    { {   -1,  0,  0,  0,  0, -1, -1 },
+      { -1,  0,  0,  0,  0,  0, -1 },
+      {    0,  0,  0,  0,  0,  0, -1 },
+      {  0,  0,  0,  0,  0,  0,  0 },
+      {    0,  0,  0,  0,  0,  0, -1 },
+      { -1,  0,  0,  0,  0,  0, -1 },
+      {   -1,  0,  0,  0,  0, -1, -1 },
+      { -1, -1,  0,  0,  0, -1, -1 } };
+
   const int board_44[][8] =
-    { { -1, -1,  0,  0,  0,  0, -1, -1 },
-      {   -1,  0,  0,  0,  0,  0, -1, -1 },
+    { {   -1,  0,  0,  0,  0,  0, -1, -1 },
       { -1,  0,  0,  0,  0,  0,  0, -1 },
       {    0,  0,  0,  0,  0,  0,  0, -1 },
-      {  0,  0,  0,  0,  0,  0,  0,  -1 },
-      {    0,  0,  0,  0,  0,  0, -1, -1 },
-      { -1,  0,  0,  0,  0,  0, -1, -1 },
-      {   -1,  0,  0,  0,  0, -1, -1, -1 } };
+      {  0,  0,  0,  0,  0,  0,  0,  0 },
+      {    0,  0,  0,  0,  0,  0,  0, -1 },
+      { -1,  0,  0,  0,  0,  0,  0, -1 },
+      {   -1,  0,  0,  0,  0,  0, -1, -1 } };
+
+  const int board_48[][8] =
+    { {   -1,  0,  0,  0,  0,  0, -1, -1 },
+      { -1,  0,  0,  0,  0,  0,  0, -1 },
+      {    0,  0,  0,  0,  0,  0,  0, -1 },
+      {  0,  0,  0,  0,  0,  0,  0,  0 },
+      {    0,  0,  0,  0,  0,  0,  0, -1 },
+      { -1,  0,  0,  0,  0,  0,  0, -1 },
+      {   -1,  0,  0,  0,  0,  0, -1, -1 },
+      { -1, -1,  0,  0,  0,  0, -1, -1 } };
+
+  const int board_61[][9] =
+    { {   -1, -1,  0,  0,  0,  0,  0, -1, -1 },
+      { -1, -1,  0,  0,  0,  0,  0,  0, -1 },
+      {   -1,  0,  0,  0,  0,  0,  0,  0, -1 },
+      { -1,  0,  0,  0,  0,  0,  0,  0,  0 },
+      {    0,  0,  0,  0,  0,  0,  0,  0,  0 },
+      { -1,  0,  0,  0,  0,  0,  0,  0,  0 },
+      {   -1,  0,  0,  0,  0,  0,  0,  0, -1 },
+      { -1, -1,  0,  0,  0,  0,  0,  0, -1 },
+      {   -1, -1,  0,  0,  0,  0,  0, -1, -1 } };
 }
 
 namespace holtz
@@ -104,7 +137,7 @@ namespace holtz
   class Stones
   {
   public:
-    typedef enum Stone_Type{ white_stone=1, gray_stone=2, black_stone=3 };
+    typedef enum Stone_Type{ invalid_stone=0, white_stone=1, gray_stone=2, black_stone=3 };
     std::map<Stone_Type, int> stone_count;
 
     void remove_stones();
@@ -217,9 +250,13 @@ namespace holtz
   class Board
   {
   public:
-    Board( const int *field_array, int width, int height );
+    typedef enum Board_Type{ s37_rings, s40_rings, s44_rings, s48_rings, s61_rings, custom };
+
+    Board( const int *field_array, int width, int height, Board_Type type = custom );
     // field must be rectangular array!
-    Board( const std::vector< std::vector<Field_State_Type> > fields );
+    Board( const std::vector< std::vector<Field_State_Type> > fields, Board_Type type = custom );
+
+    Board_Type board_type;
 
     inline int get_stone_type_number( Field_State_Type state )
     { return state; }
@@ -257,20 +294,28 @@ namespace holtz
   {
   public:
     typedef enum type { standard_ruleset, tournament_ruleset, custom_ruleset };
+    virtual ~Ruleset();
+    virtual Ruleset *clone() const = 0;
 
     inline unsigned get_min_players() const { return min_players; }
     inline unsigned get_max_players() const { return max_players; }
-  protected:
-    Ruleset( Board, Win_Condition *, bool undo_possible, unsigned min_players, unsigned max_players );
+    inline Coordinate_Translator *get_coordinate_translator() const { return coordinate_translator; }
 
+  public:			// semi public
+    Ruleset( Board, Win_Condition *, Coordinate_Translator *, bool undo_possible, 
+	     unsigned min_players, unsigned max_players );
 
     Board board;
     Stones common_stones;
     Win_Condition *win_condition;
+    Coordinate_Translator *coordinate_translator;
     bool undo_possible;
     unsigned min_players, max_players;
 
     friend class Game;
+  private:
+    //Ruleset( Ruleset& );
+    //Ruleset &operator=( Ruleset & );
   };
 
   class Game
@@ -305,11 +350,12 @@ namespace holtz
 
     std::list<Player>::iterator current_player;
 
+    Ruleset *ruleset;
     Board board;
     Stones common_stones;
     Win_Condition *win_condition;
+    Coordinate_Translator *coordinate_translator;
     bool undo_possible;
-    Ruleset *ruleset;
 
     Game *save_game;		// shadows the game to avoid corruption by input handlers
 
@@ -342,7 +388,7 @@ namespace holtz
     virtual std::ostream &output( std::ostream & ) const = 0;
     virtual std::istream &input( std::istream & ) = 0;
 
-    virtual Move *clone() = 0;
+    virtual Move *clone() const = 0;
 
     virtual ~Move();
   };
@@ -360,7 +406,7 @@ namespace holtz
     virtual std::ostream &output( std::ostream & ) const;
     virtual std::istream &input( std::istream & );
 
-    virtual Move *clone();
+    virtual Move *clone() const;
 
     Knock_Out_Move();
     Knock_Out_Move( Field_Pos from, Field_Pos over, Field_Pos to );
@@ -383,7 +429,7 @@ namespace holtz
     virtual std::ostream &output( std::ostream & ) const;
     virtual std::istream &input( std::istream & );
 
-    virtual Move *clone();
+    virtual Move *clone() const;
 
     Set_Move();
     Set_Move( Field_Pos pos, Stones::Stone_Type stone_type );
@@ -407,7 +453,7 @@ namespace holtz
     virtual std::ostream &output( std::ostream & ) const;
     virtual std::istream &input( std::istream & );
 
-    virtual Move *clone();
+    virtual Move *clone() const;
 
     Remove();
     Remove( Field_Pos remove_pos );
@@ -429,7 +475,7 @@ namespace holtz
     virtual std::ostream &output( std::ostream & ) const;
     virtual std::istream &input( std::istream & );
 
-    virtual Move *clone();
+    virtual Move *clone() const;
 
     Finish_Move();
   //private:
@@ -456,7 +502,7 @@ namespace holtz
     void undo_last_move( Game & );	// calls undo for last move and removes it
     void clear();
 
-    Sequence clone();		// to store sequences, they must be cloned
+    Sequence clone() const;		// to store sequences, they must be cloned
 
     inline const std::list<Move*> &get_moves() const { return *moves; }
     inline bool is_empty() { return moves->empty(); }
@@ -470,6 +516,31 @@ namespace holtz
   { return s.output(os); }
   inline std::istream &operator>>( std::istream &is, Sequence &s )
   { return s.input(is); }
+
+  class Coordinate_Translator
+  {
+  public:
+    virtual std::string get_field_name( Field_Pos pos ) = 0;
+    virtual Field_Pos   get_field_pos ( std::string name ) = 0;
+  };
+
+  class Standard_Coordinate_Translator : public Coordinate_Translator
+  {
+  public:
+    Standard_Coordinate_Translator( Board &original_board );
+
+    virtual std::string get_field_name( Field_Pos pos );
+    virtual Field_Pos   get_field_pos ( std::string name );
+  private:
+    Board &orig_board;
+  };
+
+  class Move_Translator
+  {
+  public:
+    virtual std::string encode( Sequence ) = 0;
+    virtual Sequence    decode( std::string ) = 0;
+  };
   
   class Standard_Win_Condition : public Win_Condition
   {
@@ -487,16 +558,26 @@ namespace holtz
   {
   public:
     Standard_Ruleset();
+    Standard_Ruleset( const Standard_Ruleset & );
+    Standard_Ruleset &operator=( Standard_Ruleset & );
+
+    virtual Ruleset *clone() const;
   private:
     static Standard_Win_Condition standard_win_condition;
+    Standard_Coordinate_Translator standard_coordinate_translator;
   };
 
   class Tournament_Ruleset : public Ruleset
   {
   public:
     Tournament_Ruleset();
+    Tournament_Ruleset( const Tournament_Ruleset & );
+    Tournament_Ruleset &operator=( Tournament_Ruleset & );
+
+    virtual Ruleset *clone() const;
   private:
     static Tournament_Win_Condition tournament_win_condition;
+    Standard_Coordinate_Translator standard_coordinate_translator;
   };
   
   class No_Output : public Player_Output

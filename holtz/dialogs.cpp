@@ -24,20 +24,18 @@
 
 namespace holtz
 {
-  Player_Setup_Dialog::Player_Setup_Dialog( wxWindow *parent, Game_Window &game_window, 
-					    Player_Setup_Manager &player_setup_manager )
-    : wxDialog(),
-      game_window(game_window),
+  // ============================================================================
+  // Player_Setup_Page
+  // ============================================================================
+
+  Player_Setup_Page::Player_Setup_Page( wxWindow *parent, Player_Setup_Dialog *dialog, 
+					Game_Window &game_window, 
+					Player_Setup_Manager &player_setup_manager )
+    : wxPanel(parent, -1), dialog(dialog), game_window(game_window),
       player_setup_manager(&player_setup_manager),
       current_ruleset(0), last_ruleset(0)
   {
-	// create the dialog
-#ifdef __WXMSW__ // this has to be done before the dialog is created, ...
-	SetExtraStyle(wxDIALOG_EX_CONTEXTHELP);
-#endif // ... hence the two-step construction (Create() below) is necessary.
-	wxDialog::Create(parent,-1,wxString(_("Player setup")));
-
-	// create the child controls
+    // create the child controls
     player_name = new wxTextCtrl( this, -1, _("Player 1") );
     ai = new wxCheckBox( this, -1, _("AI") );
     player_list = new wxListBox( this, LISTBOX_DCLICK, wxDefaultPosition, 
@@ -81,36 +79,35 @@ namespace holtz
     player_list_sizer->Add( player_list_buttons_sizer, 0, wxALIGN_CENTER );
     top_sizer->Add( player_list_sizer, 0, wxALIGN_CENTER );
 
-    top_sizer->Add( ruleset_choice, 0, wxALIGN_CENTER );
+    top_sizer->Add( ruleset_choice, 0, wxALIGN_CENTER | wxALL, 10 );
 
     wxBoxSizer *button_sizer  = new wxBoxSizer( wxHORIZONTAL );
     button_sizer->Add( new wxButton(this, DIALOG_READY,  _("Ready"), wxDefaultPosition) , 0, wxALL, 10 );
     button_sizer->Add( new wxButton(this, DIALOG_CANCEL, _("Cancel"), wxDefaultPosition) , 0, wxALL, 10 );
     top_sizer->Add( button_sizer, 0, wxALIGN_CENTER );
-      
-	// set help texts
+    // set help texts
 #ifndef __WXMSW__
     button_sizer->Add(new wxContextHelpButton(this), 0, wxALIGN_CENTER | wxALL, 10);
 #endif
-	player_name->SetHelpText(_("Type the new player's name here."));
-	player_list->SetHelpText(_("Shows all players which will be part of the new game."));
-	help_choice->SetHelpText(_("Select what kind of help you want for the new player."));
-	ruleset_choice->SetHelpText(_("Select the ruleset for the new game."));
-	add_button->SetHelpText(_("Add the new player to the game."));
-	ai->SetHelpText(_("Check this box if the new player should be computer-controlled, uncheck if it is a human player."));
-	FindWindow(DIALOG_PLAYER_UP)->SetHelpText(_("Move the currently selected player upwards. (The upmost player begins the game.)"));
-	FindWindow(DIALOG_PLAYER_DOWN)->SetHelpText(_("Move the currently selected player downwards. (The upmost player begins the game.)"));
-	FindWindow(DIALOG_REMOVE_PLAYER)->SetHelpText(_("Remove the currently selected player from the new game."));
-	FindWindow(DIALOG_READY)->SetHelpText(_("Click this button as soon as you are happy with the settings. \nNetwork games start when all players have clicked 'Ready'."));
+    player_name->SetHelpText(_("Type the new player's name here."));
+    player_list->SetHelpText(_("Shows all players which will be part of the new game."));
+    help_choice->SetHelpText(_("Select what kind of help you want for the new player."));
+    ruleset_choice->SetHelpText(_("Select the ruleset for the new game."));
+    add_button->SetHelpText(_("Add the new player to the game."));
+    ai->SetHelpText(_("Check this box if the new player should be computer-controlled, uncheck if it is a human player."));
+    FindWindow(DIALOG_PLAYER_UP)->SetHelpText(_("Move the currently selected player upwards. (The upmost player begins the game.)"));
+    FindWindow(DIALOG_PLAYER_DOWN)->SetHelpText(_("Move the currently selected player downwards. (The upmost player begins the game.)"));
+    FindWindow(DIALOG_REMOVE_PLAYER)->SetHelpText(_("Remove the currently selected player from the new game."));
+    FindWindow(DIALOG_READY)->SetHelpText(_("Click this button as soon as you are happy with the settings. \nNetwork games start when all players have clicked 'Ready'."));
 
     // set sizer
     SetAutoLayout( true );     // tell dialog to use sizer
     SetSizer( top_sizer );      // actually set the sizer
-    top_sizer->Fit( this );            // set size to minimum size as calculated by the sizer
-    top_sizer->SetSizeHints( this );   // set size hints to honour mininum size     
+    //top_sizer->Fit( this );            // set size to minimum size as calculated by the sizer
+    //top_sizer->SetSizeHints( this );   // set size hints to honour mininum size     
   }
 
-  Player_Setup_Dialog::~Player_Setup_Dialog()
+  Player_Setup_Page::~Player_Setup_Page()
   {
     if( player_setup_manager )
     {
@@ -118,7 +115,7 @@ namespace holtz
     }
   }
 
-  void Player_Setup_Dialog::on_ready( wxCommandEvent& WXUNUSED(event) )
+  void Player_Setup_Page::on_ready( wxCommandEvent& WXUNUSED(event) )
   {
     if( player_setup_manager )
     {
@@ -127,17 +124,17 @@ namespace holtz
 	game_window.get_frame().SetStatusText(_("Game will start when all players are ready"));
 	player_setup_manager->set_player_handler(0);
 	player_setup_manager = 0;
-	Show(false);
+	dialog->Show(false);
       }
     }
   }
 
-  void Player_Setup_Dialog::on_cancel( wxCommandEvent& WXUNUSED(event) )
+  void Player_Setup_Page::on_cancel( wxCommandEvent& WXUNUSED(event) )
   {
-    Show(false);
+    dialog->Show(false);
   }
 
-  void Player_Setup_Dialog::on_add_player( wxCommandEvent& WXUNUSED(event) )
+  void Player_Setup_Page::on_add_player( wxCommandEvent& WXUNUSED(event) )
   {
     if( player_setup_manager )
     {
@@ -172,7 +169,7 @@ namespace holtz
     }
   }
 
-  void Player_Setup_Dialog::on_remove_player( wxCommandEvent& WXUNUSED(event) )
+  void Player_Setup_Page::on_remove_player( wxCommandEvent& WXUNUSED(event) )
   {
     if( player_setup_manager )
     {
@@ -188,7 +185,7 @@ namespace holtz
     }
   }
     
-  void Player_Setup_Dialog::on_player_up( wxCommandEvent& WXUNUSED(event) )
+  void Player_Setup_Page::on_player_up( wxCommandEvent& WXUNUSED(event) )
   {
     if( player_setup_manager )
     {
@@ -204,7 +201,7 @@ namespace holtz
     }
   }
 
-  void Player_Setup_Dialog::on_player_down( wxCommandEvent& WXUNUSED(event) )
+  void Player_Setup_Page::on_player_down( wxCommandEvent& WXUNUSED(event) )
   {
     if( player_setup_manager )
     {
@@ -219,33 +216,38 @@ namespace holtz
       }
     }
   }
-  void Player_Setup_Dialog::on_change_ruleset( wxCommandEvent& event )
+  void Player_Setup_Page::on_change_ruleset( wxCommandEvent& event )
   {
     if( player_setup_manager )
     {
+      Ruleset *new_ruleset;
       switch( ruleset_choice->GetSelection() )
       {
 	case 0: 
-	  if( !player_setup_manager->change_ruleset( Ruleset::standard_ruleset, Standard_Ruleset() ) )
+	  new_ruleset = new Standard_Ruleset();
+	  if( !player_setup_manager->change_ruleset( Ruleset::standard_ruleset, *new_ruleset ) )
 	  {
 	    if( current_ruleset != ruleset_choice->GetSelection() )
 	      ruleset_choice->SetSelection(current_ruleset);
 	    wxMessageBox(_("Could not change Ruleset!"), _("Ruleset"), wxOK | wxICON_INFORMATION, this);
 	  }
+	  delete new_ruleset;
 	  break;
 	case 1: 
-	  if( !player_setup_manager->change_ruleset( Ruleset::tournament_ruleset, Tournament_Ruleset() ) )
+	  new_ruleset = new Tournament_Ruleset();
+	  if( !player_setup_manager->change_ruleset( Ruleset::tournament_ruleset, *new_ruleset ) )
 	  {
 	    if( current_ruleset != ruleset_choice->GetSelection() )
 	      ruleset_choice->SetSelection(current_ruleset);
 	    wxMessageBox(_("Could not change Ruleset!"), _("Ruleset"), wxOK | wxICON_INFORMATION, this);
 	  }
+	  delete new_ruleset;
 	  break;
 	case 2: 
 	  if( current_ruleset != ruleset_choice->GetSelection() )
 	    ruleset_choice->SetSelection(current_ruleset);
-	  wxMessageBox(_("Cannot compose a custom ruleset yet!"), 
-		       _("Custom Ruleset"), wxOK | wxICON_INFORMATION, this);
+
+	  dialog->notebook->SetSelection(1);
 	  break;
 	case -1:
 	  break;
@@ -258,7 +260,24 @@ namespace holtz
     }
   }
 
-  void Player_Setup_Dialog::player_added( const Player &player )
+  void Player_Setup_Page::set_custom_ruleset( Ruleset &ruleset )
+  {
+    if( !player_setup_manager->change_ruleset( Ruleset::custom_ruleset, ruleset ) )
+    {
+      wxMessageBox(_("Could not change Ruleset!"), _("Ruleset"), wxOK | wxICON_INFORMATION, this);
+    }
+    else
+      ruleset_choice->SetSelection(2);
+
+
+    if( ruleset_choice->GetSelection() != -1 )
+    {
+      last_ruleset = current_ruleset;
+      current_ruleset = ruleset_choice->GetSelection();
+    }
+  }
+
+  void Player_Setup_Page::player_added( const Player &player )
   {
     // setup lookup tables
     int item = player_list->Number();
@@ -279,7 +298,7 @@ namespace holtz
     player_name->SetSelection( 0, player_name->GetLastPosition() );
   }
 
-  void Player_Setup_Dialog::player_removed( const Player &player )
+  void Player_Setup_Page::player_removed( const Player &player )
   {
     int item = player_item[player.id];
     player_list->Delete( item );
@@ -300,7 +319,7 @@ namespace holtz
     }
   }
 
-  void Player_Setup_Dialog::player_up( const Player &player )
+  void Player_Setup_Page::player_up( const Player &player )
   {
     int item = player_item[player.id];
 
@@ -324,7 +343,7 @@ namespace holtz
     }
   }
 
-  void Player_Setup_Dialog::player_down( const Player &player )
+  void Player_Setup_Page::player_down( const Player &player )
   {
     int item = player_item[player.id];
     if( item < player_list->Number() - 1 )
@@ -347,12 +366,12 @@ namespace holtz
     }
   }
 
-  void Player_Setup_Dialog::player_change_denied()
+  void Player_Setup_Page::player_change_denied()
   {
     wxMessageBox( _("Change for this player denied!"), _("Denied"), wxOK | wxICON_INFORMATION, this);
   }
 
-  void Player_Setup_Dialog::ruleset_changed( Ruleset::type type )
+  void Player_Setup_Page::ruleset_changed( Ruleset::type type )
   {
     int new_type = 0;
     switch( type )
@@ -373,14 +392,36 @@ namespace holtz
     }
   }
 
-  void Player_Setup_Dialog::ruleset_change_denied()
+  void Player_Setup_Page::ruleset_changed( Ruleset::type type, Ruleset &ruleset )
+  {
+    int new_type = 0;
+    switch( type )
+    {
+      case Ruleset::standard_ruleset:
+	new_type = 0;
+	break;
+      case Ruleset::tournament_ruleset:
+	new_type = 1;
+	break;
+      case Ruleset::custom_ruleset:
+	new_type = 2;
+	dialog->ruleset_page->set_ruleset(&ruleset);
+	break;
+    }
+    if( new_type != ruleset_choice->GetSelection() )
+    {
+      ruleset_choice->SetSelection(new_type);
+    }
+  }
+
+  void Player_Setup_Page::ruleset_change_denied()
   {
     current_ruleset = last_ruleset;
     ruleset_choice->SetSelection( last_ruleset );
     wxMessageBox( _("Change of ruleset denied!"), _("Ruleset denied"), wxOK | wxICON_INFORMATION, this);
   }
 
-  void Player_Setup_Dialog::aborted()
+  void Player_Setup_Page::aborted()
   {
     if( player_setup_manager )
       player_setup_manager->set_player_handler(0);
@@ -388,15 +429,288 @@ namespace holtz
     Show(false);
   }
 
-  BEGIN_EVENT_TABLE(Player_Setup_Dialog, wxDialog)				//**/
-  EVT_BUTTON(DIALOG_READY,	   Player_Setup_Dialog::on_ready)		//**/
-  EVT_BUTTON(DIALOG_CANCEL, 	   Player_Setup_Dialog::on_cancel)		//**/
-  EVT_BUTTON(DIALOG_ADD_PLAYER,    Player_Setup_Dialog::on_add_player)		//**/
-  EVT_BUTTON(DIALOG_REMOVE_PLAYER, Player_Setup_Dialog::on_remove_player)	//**/
-  EVT_BUTTON(DIALOG_PLAYER_UP,	   Player_Setup_Dialog::on_player_up)		//**/
-  EVT_BUTTON(DIALOG_PLAYER_DOWN,   Player_Setup_Dialog::on_player_down)		//**/
-  EVT_RADIOBOX(DIALOG_RULESET,	   Player_Setup_Dialog::on_change_ruleset)	//**/
-  END_EVENT_TABLE()								//**/
+  BEGIN_EVENT_TABLE(Player_Setup_Page, wxPanel)				//**/
+  EVT_BUTTON(DIALOG_READY,	   Player_Setup_Page::on_ready)		//**/
+  EVT_BUTTON(DIALOG_CANCEL, 	   Player_Setup_Page::on_cancel)	//**/
+  EVT_BUTTON(DIALOG_ADD_PLAYER,    Player_Setup_Page::on_add_player)	//**/
+  EVT_BUTTON(DIALOG_REMOVE_PLAYER, Player_Setup_Page::on_remove_player)	//**/
+  EVT_BUTTON(DIALOG_PLAYER_UP,	   Player_Setup_Page::on_player_up)	//**/
+  EVT_BUTTON(DIALOG_PLAYER_DOWN,   Player_Setup_Page::on_player_down)	//**/
+  EVT_RADIOBOX(DIALOG_RULESET,	   Player_Setup_Page::on_change_ruleset)//**/
+  END_EVENT_TABLE()							//**/
+
+  // ============================================================================
+  // Ruleset_Setup_Page
+  // ============================================================================
+
+  Ruleset_Setup_Page::Ruleset_Setup_Page( wxWindow *parent, Player_Setup_Dialog *dialog )
+    : wxPanel( parent, -1 ), dialog(dialog)
+  {
+    ruleset = new Standard_Ruleset();
+
+    wxBoxSizer *top_sizer = new wxBoxSizer( wxVERTICAL );
+
+    // update choice names with correct translation
+    wxString board_choices[5];
+    board_choices[0] = wxString(_("37 Rings (default)"));
+    board_choices[1] = wxString(_("40 Rings"));
+    board_choices[2] = wxString(_("44 Rings"));
+    board_choices[3] = wxString(_("48 Rings"));
+    board_choices[4] = wxString(_("61 Rings"));
+    //board_choices[5] = wxString(_("custom"));
+    board_choice = new wxRadioBox( this, -1, _("Choose Board"), wxDefaultPosition,
+				   wxDefaultSize, 
+				   5, board_choices, 3, wxRA_SPECIFY_COLS );
+    top_sizer->Add( board_choice, 0, wxALIGN_CENTER | wxALL, 10  );
+
+    wxPanel *panel = new wxPanel( this, -1 );
+    top_sizer->Add( panel, 0, wxEXPAND );
+
+    wxBoxSizer *button_sizer = new wxBoxSizer( wxHORIZONTAL );
+    button_sizer->Add( new wxButton(this, DIALOG_APPLY,   _("Apply"),   wxDefaultPosition), 0, wxALL, 10 );
+    button_sizer->Add( new wxButton(this, DIALOG_RESTORE, _("Restore"), wxDefaultPosition), 0, wxALL, 10 );
+    button_sizer->Add( new wxButton(this, DIALOG_CANCEL,  _("Cancel"),  wxDefaultPosition), 0, wxALL, 10 );
+    top_sizer->Add( button_sizer );
+
+    SetAutoLayout( true );
+    SetSizer( top_sizer );
+
+    restore_ruleset();
+  }
+
+  Ruleset *Ruleset_Setup_Page::get_ruleset()	// get copy of ruleset
+  {
+    return ruleset->clone();
+  }
+
+  void Ruleset_Setup_Page::set_ruleset( Ruleset *new_ruleset )
+  {
+    delete ruleset;
+    ruleset = new_ruleset->clone();
+    restore_ruleset();
+  }
+
+  void Ruleset_Setup_Page::restore_ruleset()
+  {
+    switch( ruleset->board.board_type )
+    {
+      case Board::s37_rings: board_choice->SetSelection(0); break;
+      case Board::s40_rings: board_choice->SetSelection(1); break;
+      case Board::s44_rings: board_choice->SetSelection(2); break;
+      case Board::s48_rings: board_choice->SetSelection(3); break;
+      case Board::s61_rings: board_choice->SetSelection(4); break;
+      case Board::custom:    board_choice->SetSelection(-1); break;
+    }
+  }
+
+  void Ruleset_Setup_Page::on_apply  ( wxCommandEvent& event )
+  {
+    switch( board_choice->GetSelection() )
+    {
+      case 0:
+	ruleset->board = Board( (const int*) board_37, 
+				sizeof(board_37[0]) / sizeof(board_37[0][0]),
+				sizeof(board_37)    / sizeof(board_37[0]),
+				Board::s37_rings );
+	break;
+      case 1:
+	ruleset->board = Board( (const int*) board_40, 
+				sizeof(board_40[0]) / sizeof(board_40[0][0]),
+				sizeof(board_40)    / sizeof(board_40[0]),
+				Board::s40_rings );
+	break;
+      case 2:
+	ruleset->board = Board( (const int*) board_44, 
+				sizeof(board_44[0]) / sizeof(board_44[0][0]),
+				sizeof(board_44)    / sizeof(board_44[0]),
+				Board::s44_rings );
+	break;
+      case 3:
+	ruleset->board = Board( (const int*) board_48, 
+				sizeof(board_48[0]) / sizeof(board_48[0][0]),
+				sizeof(board_48)    / sizeof(board_48[0]),
+				Board::s48_rings );
+	break;
+      case 4:
+	ruleset->board = Board( (const int*) board_61, 
+				sizeof(board_61[0]) / sizeof(board_61[0][0]),
+				sizeof(board_61)    / sizeof(board_61[0]),
+				Board::s61_rings );
+	break;
+      case -1:
+	break;
+    }
+    dialog->player_page->set_custom_ruleset( *ruleset );
+    dialog->notebook->SetSelection(0);
+  }
+
+  void Ruleset_Setup_Page::on_restore( wxCommandEvent& event )
+  {
+    restore_ruleset();
+  }
+
+  void Ruleset_Setup_Page::on_cancel ( wxCommandEvent& event )
+  {
+    dialog->Show( false );
+  }
+
+  Ruleset_Setup_Page::~Ruleset_Setup_Page()
+  {
+    delete ruleset;
+  }
+
+  BEGIN_EVENT_TABLE(Ruleset_Setup_Page, wxPanel)			//**/
+  EVT_BUTTON(DIALOG_APPLY,	   Ruleset_Setup_Page::on_apply)	//**/
+  EVT_BUTTON(DIALOG_RESTORE,	   Ruleset_Setup_Page::on_restore)	//**/
+  EVT_BUTTON(DIALOG_CANCEL,	   Ruleset_Setup_Page::on_cancel)	//**/
+  END_EVENT_TABLE()							//**/
+
+  // ============================================================================
+  // Player_Setup_Dialog
+  // ============================================================================
+
+  Player_Setup_Dialog::Player_Setup_Dialog( wxWindow *parent, Game_Window &game_window, 
+					    Player_Setup_Manager &player_setup_manager )
+    : wxDialog()
+  {
+    // create the dialog
+#ifdef __WXMSW__ // this has to be done before the dialog is created, ...
+    SetExtraStyle(wxDIALOG_EX_CONTEXTHELP);
+#endif // ... hence the two-step construction (Create() below) is necessary.
+    wxDialog::Create(parent,-1,wxString(_("Game setup")));
+
+    notebook = new wxNotebook( this, -1 );
+    wxNotebookSizer *sizer = new wxNotebookSizer( notebook );
+
+    // Add panel as notebook page
+    player_page = new Player_Setup_Page( notebook, this, game_window,player_setup_manager );
+    ruleset_page  = new Ruleset_Setup_Page( notebook, this );
+    ruleset_page->set_ruleset( game_window.get_game().ruleset );
+
+    notebook->AddPage( player_page, _("Players") );
+    notebook->AddPage( ruleset_page, _("Ruleset") );
+
+    SetAutoLayout( true );     // tell dialog to use sizer
+    SetSizer(sizer);
+    sizer->Fit( this );            // set size to minimum size as calculated by the sizer
+    sizer->SetSizeHints( this );   // set size hints to honour mininum size     
+  }
+
+  // ============================================================================
+  // Display_Setup_Page
+  // ============================================================================
+
+  Display_Setup_Page::Display_Setup_Page( wxWindow *parent, Settings_Dialog *dialog, 
+					  Game_Window &game_window )
+    : wxPanel( parent, -1 ), dialog(dialog), game_window(game_window)
+  {
+    board_settings        = game_window.board_settings;
+    player_settings       = game_window.player_settings;
+    common_stone_settings = game_window.common_stone_settings;
+    player_stone_settings = game_window.player_stone_settings;
+
+    wxBoxSizer *top_sizer = new wxBoxSizer( wxVERTICAL );
+
+    // update choice names with correct translation
+    wxString orientation_choices[2];
+    orientation_choices[0] = wxString(_("horizontal"));
+    orientation_choices[1] = wxString(_("vertical"));
+    //orientation_choices[4] = wxString(_("custom"));
+    orientation_choice = new wxRadioBox( this, -1, _("Choose Board Orientation"), wxDefaultPosition,
+					 wxDefaultSize, 2, orientation_choices, 2, wxRA_SPECIFY_COLS );
+    top_sizer->Add( orientation_choice, 0, wxALIGN_CENTER | wxALL, 10  );
+
+    show_coordinates = new wxCheckBox( this, -1, _("show field coordinates") );
+    top_sizer->Add( show_coordinates, 0, wxALL, 10 );
+
+    wxBoxSizer *button_sizer = new wxBoxSizer( wxHORIZONTAL );
+    button_sizer->Add( new wxButton(this, DIALOG_OK,      _("Ok"),      wxDefaultPosition), 0, wxALL, 10 );
+    button_sizer->Add( new wxButton(this, DIALOG_APPLY,   _("Apply"),   wxDefaultPosition), 0, wxALL, 10 );
+    button_sizer->Add( new wxButton(this, DIALOG_RESTORE, _("Restore"), wxDefaultPosition), 0, wxALL, 10 );
+    button_sizer->Add( new wxButton(this, DIALOG_CANCEL,  _("Cancel"),  wxDefaultPosition), 0, wxALL, 10 );
+    top_sizer->Add( button_sizer );
+
+    SetAutoLayout( true );
+    SetSizer( top_sizer );
+
+    restore_settings();
+  }
+
+  Display_Setup_Page::~Display_Setup_Page()
+  {
+  }
+
+  void Display_Setup_Page::restore_settings()
+  {
+    orientation_choice->SetSelection( board_settings.rotate_board ? 1 : 0 );
+    show_coordinates->SetValue( board_settings.show_coordinates );
+  }
+
+  void Display_Setup_Page::on_ok     ( wxCommandEvent& event )
+  {
+    on_apply( event );
+
+    dialog->Show(false);
+  }
+
+  void Display_Setup_Page::on_apply  ( wxCommandEvent& )
+  {
+    board_settings.rotate_board         = orientation_choice->GetSelection() == 0 ? false : true;
+    common_stone_settings.rotate_stones = board_settings.rotate_board;
+    player_stone_settings.rotate_stones = board_settings.rotate_board;
+    board_settings.show_coordinates = show_coordinates->GetValue();
+
+    game_window.board_settings        = board_settings;
+    game_window.player_settings       = player_settings;
+    game_window.common_stone_settings = common_stone_settings;
+    game_window.player_stone_settings = player_stone_settings;
+
+    game_window.calc_dimensions();
+    game_window.refresh();
+  }
+
+  void Display_Setup_Page::on_restore( wxCommandEvent& )
+  {
+  }
+
+  void Display_Setup_Page::on_cancel ( wxCommandEvent& )
+  {
+    dialog->Show(false);
+  }
+
+  BEGIN_EVENT_TABLE(Display_Setup_Page, wxPanel)			//**/
+  EVT_BUTTON(DIALOG_OK,   	   Display_Setup_Page::on_ok)   	//**/
+  EVT_BUTTON(DIALOG_APPLY,	   Display_Setup_Page::on_apply)	//**/
+  EVT_BUTTON(DIALOG_RESTORE,	   Display_Setup_Page::on_restore)	//**/
+  EVT_BUTTON(DIALOG_CANCEL,	   Display_Setup_Page::on_cancel)	//**/
+  END_EVENT_TABLE()							//**/
+
+  Settings_Dialog::Settings_Dialog( wxWindow *parent, Game_Window &game_window )
+    : wxDialog()
+  {
+    // create the dialog
+#ifdef __WXMSW__ // this has to be done before the dialog is created, ...
+    SetExtraStyle(wxDIALOG_EX_CONTEXTHELP);
+#endif // ... hence the two-step construction (Create() below) is necessary.
+    wxDialog::Create(parent,-1,wxString(_("Settings")));
+
+    notebook = new wxNotebook( this, -1 );
+    wxNotebookSizer *sizer = new wxNotebookSizer( notebook );
+
+    // Add panel as notebook page
+    display_page = new Display_Setup_Page( notebook, this, game_window );
+
+    notebook->AddPage( display_page, _("Players") );
+
+    SetAutoLayout( true );     // tell dialog to use sizer
+    SetSizer(sizer);
+    sizer->Fit( this );            // set size to minimum size as calculated by the sizer
+    sizer->SetSizeHints( this );   // set size hints to honour mininum size     
+  }
+
+  // ============================================================================
+  // Network_Clients_Dialog
+  // ============================================================================
 
   Network_Clients_Dialog::Network_Clients_Dialog( wxWindow *parent, Network_Manager &network_manager )
     : wxDialog(),
@@ -419,23 +733,23 @@ namespace holtz
     top_sizer->Add(client_list, 0, wxALL, 10);
 
     wxBoxSizer* button_sizer = new wxBoxSizer(wxHORIZONTAL);
-	top_sizer->Add(button_sizer, 0, wxALL, 0);
+    top_sizer->Add(button_sizer, 0, wxALL, 0);
 
-	button_sizer->Add( new wxButton( this, DIALOG_DISCONNECT, _("Disconnect All") ), 0, wxALL, 10 );
+    button_sizer->Add( new wxButton( this, DIALOG_DISCONNECT, _("Disconnect All") ), 0, wxALL, 10 );
 
-	// set help texts
+    // set help texts
 #ifndef __WXMSW__
     button_sizer->Add(new wxContextHelpButton(this), 0, wxALIGN_CENTER | wxALL, 10);
 #endif
-	client_list->SetHelpText(_("Lists all connected client computers. Double-click one of the clients to throw him out of the game."));
-	FindWindow(DIALOG_DISCONNECT)->SetHelpText(_("Disconnect all client computers from the game."));
+    client_list->SetHelpText(_("Lists all connected client computers. Double-click one of the clients to throw him out of the game."));
+    FindWindow(DIALOG_DISCONNECT)->SetHelpText(_("Disconnect all client computers from the game."));
     
     // set sizer
     SetAutoLayout( true );     // tell dialog to use sizer
     SetSizer( top_sizer );      // actually set the sizer
     top_sizer->Fit( this );            // set size to minimum size as calculated by the sizer
     top_sizer->SetSizeHints( this );   // set size hints to honour mininum size     
-}
+  }
 
   Network_Clients_Dialog::~Network_Clients_Dialog()
   {
@@ -492,6 +806,10 @@ namespace holtz
   EVT_BUTTON(DIALOG_DISCONNECT, Network_Clients_Dialog::on_disconnect)	//**/
   EVT_LISTBOX_DCLICK(LISTBOX_DCLICK, Network_Clients_Dialog::on_dclick)	//**/
   END_EVENT_TABLE()							//**/
+
+  // ============================================================================
+  // Network_Connection_Dialog
+  // ============================================================================
 
   Network_Connection_Dialog::Network_Connection_Dialog( wxWindow *parent )
     : wxDialog()

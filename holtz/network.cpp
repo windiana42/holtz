@@ -39,7 +39,7 @@ namespace holtz
       server(0), client(0), connection_handler(0),
       player_handler(0), mode(mode_undefined),
       state(begin), current_id(101), 
-      ruleset(Standard_Ruleset()), ruleset_type(Ruleset::standard_ruleset),
+      ruleset(new Standard_Ruleset()), ruleset_type(Ruleset::standard_ruleset),
       max_clients(15), clients_ready(0), clients_player_setup_ack(0),
       max_string_size(60),
       timeout_sequencial_read(700) // 700 milliseconds
@@ -58,7 +58,7 @@ namespace holtz
       server(0), client(0), connection_handler(0), 
       player_handler(0), mode(mode_undefined),
       state(begin), current_id(101), 
-      ruleset(Standard_Ruleset()), ruleset_type(Ruleset::standard_ruleset),
+      ruleset(new Standard_Ruleset()), ruleset_type(Ruleset::standard_ruleset),
       max_clients(15), clients_ready(0), clients_player_setup_ack(0),
       max_string_size(60),
       timeout_sequencial_read(700) // 700 milliseconds
@@ -78,6 +78,7 @@ namespace holtz
       player_handler->aborted();
 
     close_connection();
+    delete ruleset;
   }
   
   bool Network_Manager::setup_server( wxIPV4address port ) throw(Network_Exception)
@@ -471,12 +472,13 @@ namespace holtz
     return false;
   }
 
-  bool Network_Manager::change_ruleset( Ruleset::type type, Ruleset new_ruleset )
+  bool Network_Manager::change_ruleset( Ruleset::type type, Ruleset &new_ruleset )
   {
     if( mode == mode_server )
     {
       ruleset_type = type;
-      ruleset = new_ruleset;
+      delete ruleset;
+      ruleset = new_ruleset.clone();
       report_ruleset_change();
       return true;
     }
@@ -1043,7 +1045,7 @@ namespace holtz
 	    }
 
 	    if( gui_connected )
-	      game_window->new_game( players, ruleset );
+	      game_window->new_game( players, *ruleset );
 	    else
 	      game.players = players;
 
@@ -1116,7 +1118,7 @@ namespace holtz
 		  Client &c = clients[&sock];
 		  if( c.socket )	// is it a connected client?
 		  {
-		    Ruleset new_ruleset = Standard_Ruleset();
+		    Ruleset *new_ruleset;
 		    wxIPV4address host;
 		    sock.GetPeer(host);
 		    wxString ruleset_name;
@@ -1124,15 +1126,16 @@ namespace holtz
 		    {
 		      case Ruleset::standard_ruleset: 
 			ruleset_name = _("Standard Rules"); 
-			//new_ruleset = Standard_Ruleset();
+			new_ruleset = new Standard_Ruleset();
 			break;
 		      case Ruleset::tournament_ruleset: 
 			ruleset_name = _("Tournaments Rules"); 
-			new_ruleset = Tournament_Ruleset();
+			new_ruleset = new Tournament_Ruleset();
 			break;
 		      case Ruleset::custom_ruleset: 
 			ruleset_name = _("Standard Rules"); 
 			//ruleset = read_ruleset( sock );
+			new_ruleset = new Standard_Ruleset();
 			break;
 		    }
 		    wxString msg;
@@ -1141,7 +1144,7 @@ namespace holtz
 		    if( wxMessageBox( msg, _("Ruleset"), wxYES | wxNO | wxICON_QUESTION ) == wxYES, 
 			game_window )
 		    {
-		      change_ruleset( new_ruleset_type, new_ruleset );
+		      change_ruleset( new_ruleset_type, *new_ruleset );
 		    }
 		    else
 		    {
@@ -1161,17 +1164,18 @@ namespace holtz
 		if( (state == begin) || (state == handshake) || (state == request_player) )
 		{
 		  ruleset_type = new_ruleset_type;
+		  delete ruleset;
 		  switch( new_ruleset_type )
 		  {
 		    case Ruleset::standard_ruleset: 
-		      ruleset = Standard_Ruleset();
+		      ruleset = new Standard_Ruleset();
 		      break;
 		    case Ruleset::tournament_ruleset:
-		      ruleset = Tournament_Ruleset();
+		      ruleset = new Tournament_Ruleset();
 		      break;
 		    case Ruleset::custom_ruleset:
 		      //ruleset = read_ruleset( sock );
-		      ruleset = Standard_Ruleset();
+		      ruleset = new Standard_Ruleset();
 		      break;
 		  }
 		  report_ruleset_change();
@@ -1482,7 +1486,7 @@ namespace holtz
 
 	    // insert players in game
 	    if( gui_connected )
-	      game_window->new_game( players, ruleset );
+	      game_window->new_game( players, *ruleset );
 	    else
 	      game.players = players;
 

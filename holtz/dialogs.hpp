@@ -17,15 +17,8 @@
 #include <wx/wx.h>
 #include <wx/spinctrl.h>
 
-#ifndef __HOLTZ_DIALOG__
-#define __HOLTZ_DIALOG__
-
-namespace holtz
-{
-  class Network_Clients_Dialog;
-  class Player_Setup_Dialog;
-  class Network_Connection_Dialog;
-}
+#ifndef __WXHOLTZ_DIALOG__
+#define __WXHOLTZ_DIALOG__
 
 #include "network.hpp"
 #include "wxholtz.hpp"
@@ -33,6 +26,10 @@ namespace holtz
 
 namespace holtz
 {
+  // ============================================================================
+  // Network_Clients_Dialog
+  // ============================================================================
+
   class Network_Clients_Dialog : public wxDialog, Network_Connection_Handler
   {
   public:
@@ -54,12 +51,16 @@ namespace holtz
     DECLARE_EVENT_TABLE();
   };
 
-  class Player_Setup_Dialog : public wxDialog, Player_Handler
+  // ============================================================================
+  // Player_Setup_Dialog
+  // ============================================================================
+
+  class Player_Setup_Page : public wxPanel, public Player_Handler
   {
   public:
-    Player_Setup_Dialog( wxWindow *parent, Game_Window &game_window, 
-			 Player_Setup_Manager &player_setup_manager );
-    ~Player_Setup_Dialog();
+    Player_Setup_Page( wxWindow *parent, Player_Setup_Dialog *, Game_Window &game_window, 
+		       Player_Setup_Manager &player_setup_manager );
+    ~Player_Setup_Page();
 
     void on_ready( wxCommandEvent& event );
     void on_cancel( wxCommandEvent& event );
@@ -68,11 +69,7 @@ namespace holtz
     void on_player_up( wxCommandEvent& event );
     void on_player_down( wxCommandEvent& event );
     void on_change_ruleset( wxCommandEvent& event );
-    /*
-    void on_standard_ruleset( wxCommandEvent& event );
-    void on_tournament_ruleset( wxCommandEvent& event );
-    void on_custom_ruleset( wxCommandEvent& event );
-    */
+    void set_custom_ruleset( Ruleset& );
 
     // as player handler this dialog has to show results of player manipulations
     virtual void player_added( const Player & );
@@ -81,10 +78,12 @@ namespace holtz
     virtual void player_down( const Player & );
     virtual void player_change_denied();
     virtual void ruleset_changed( Ruleset::type );
+    virtual void ruleset_changed( Ruleset::type, Ruleset& );
     virtual void ruleset_change_denied();
     virtual void aborted();
 
   private:
+    Player_Setup_Dialog *dialog;
     Game_Window &game_window;
     Player_Setup_Manager *player_setup_manager;
 
@@ -99,6 +98,84 @@ namespace holtz
 
     DECLARE_EVENT_TABLE()
   };
+
+  class Ruleset_Setup_Page : public wxPanel
+  {
+  public:
+    Ruleset_Setup_Page( wxWindow *parent, Player_Setup_Dialog * );
+    ~Ruleset_Setup_Page();
+
+    Ruleset *get_ruleset();	// get copy of ruleset
+    void set_ruleset( Ruleset * );
+    void restore_ruleset();
+
+    void on_apply  ( wxCommandEvent& event );
+    void on_restore( wxCommandEvent& event );
+    void on_cancel ( wxCommandEvent& event );
+  private:
+    Player_Setup_Dialog *dialog;
+    Ruleset *ruleset;
+
+    wxRadioBox *board_choice;
+
+    DECLARE_EVENT_TABLE()
+  };
+
+  class Player_Setup_Dialog : public wxDialog
+  {
+  public:
+    Player_Setup_Dialog( wxWindow *parent, Game_Window &game_window, 
+			 Player_Setup_Manager &player_setup_manager );
+
+    wxNotebook *notebook;
+
+    Player_Setup_Page  *player_page;
+    Ruleset_Setup_Page *ruleset_page;
+  };
+
+  // ============================================================================
+  // Settings Dialog
+  // ============================================================================
+
+  class Display_Setup_Page : public wxPanel
+  {
+  public:
+    Display_Setup_Page( wxWindow *parent, Settings_Dialog *, Game_Window & );
+    ~Display_Setup_Page();
+
+    void restore_settings();
+
+    void on_ok     ( wxCommandEvent& event );
+    void on_apply  ( wxCommandEvent& event );
+    void on_restore( wxCommandEvent& event );
+    void on_cancel ( wxCommandEvent& event );
+  private:
+    Settings_Dialog *dialog;
+    Game_Window &game_window;
+    
+    Board_Panel::Settings board_settings;
+    Player_Panel::Settings player_settings;
+    Stone_Panel::Settings common_stone_settings, player_stone_settings;
+
+    wxRadioBox *orientation_choice;
+    wxCheckBox *show_coordinates;
+
+    DECLARE_EVENT_TABLE()
+  };
+
+  class Settings_Dialog : public wxDialog
+  {
+  public:
+    Settings_Dialog( wxWindow *parent, Game_Window &game_window );
+
+    wxNotebook *notebook;
+
+    Display_Setup_Page *display_page;
+  };
+
+  // ============================================================================
+  // Network_Connection_Dialog
+  // ============================================================================
 
   class Network_Connection_Dialog : public wxDialog // modal dialog
   {
