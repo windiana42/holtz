@@ -273,10 +273,14 @@ namespace holtz
 	wxString language = loc.GetCanonicalName();
 	if(!get_help_controller().Initialize(wxT("help/help_") + language))
 	  if(language.Len() <= 2 || !get_help_controller().Initialize(wxT("help/help_") + language.Left(2)))
-	    if(!get_help_controller().Initialize(wxString(DEFAULT_DATA_DIR) + wxT("help/help_") + language))
-	      if(language.Len() <= 2 || !get_help_controller().Initialize(wxString(DEFAULT_DATA_DIR) + wxT("help/help_") + language.Left(2)))
+	    if(!get_help_controller().Initialize(wxString(wxT(DEFAULT_DATA_DIR)) 
+						 + wxT("help/help_") + language))
+	      if(language.Len() <= 2 || !get_help_controller().Initialize(wxString(wxT(DEFAULT_DATA_DIR)) 
+									  + wxT("help/help_") 
+									  + language.Left(2)))
 		if(!get_help_controller().Initialize(wxT("help/help_en")))
-		  if(!get_help_controller().Initialize(wxString(DEFAULT_DATA_DIR) + wxT("help/help_en")))
+		  if(!get_help_controller().Initialize(wxString(wxT(DEFAULT_DATA_DIR)) 
+						       + wxT("help/help_en")))
 	  	  return false;
 	return true;
   }
@@ -293,7 +297,7 @@ namespace holtz
     }
     if( !ok )
     {
-      buf = DEFAULT_SKIN_FILE;
+      buf = wxT(DEFAULT_SKIN_FILE);
       if( wxFileExists(buf) )
       {
 	cfg->Write( wxT("skin_file"), buf);
@@ -321,7 +325,7 @@ namespace holtz
     }
     if( !ok )
     {
-      buf = DEFAULT_BEEP_FILE;
+      buf = wxT(DEFAULT_BEEP_FILE);
       if( wxFileExists(buf) )
       {
 	cfg->Write( wxT("beep_file"), buf);
