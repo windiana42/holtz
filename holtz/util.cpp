@@ -22,6 +22,8 @@
   #include <strstream>
 #endif
 
+#include <ctype.h>
+
 namespace holtz
 {
   void randomize()
@@ -78,5 +80,92 @@ namespace holtz
     long num = strtol( start, &end, base );
 
     return std::pair<long,unsigned /*digits*/>( num, end - start );
+  }
+}
+namespace std
+{
+  // returns an escaped string for transmission over streams
+  string escape( const string str )
+  {
+    string ret = str;
+
+    bool escape = false;
+    if( ret[0] == '\"' )
+      escape = true;
+    else
+    {
+      for( int i=0; i<ret.size(); ++i )
+	if( isspace( ret[i] ) )
+	{
+	  escape = true;
+	  break;
+	}
+    }
+
+    if( escape )
+    {
+      replace( ret, "\\", "\\\\" );
+      replace( ret, "\"", "\\\"" );
+      ret = '\"' + ret + '\"';
+    }
+
+    return ret + ' ';
+  }
+
+  Escaped_String::Escaped_String( string &str )
+    : str(str)
+  {
+  }
+  istream &operator>>( istream &is, Escaped_String estr )
+  {
+    string &dest = estr.str;
+
+    char c;
+
+    is >> c;
+    if( c == '"' )
+    {
+      dest = "";
+      while(is)
+      {
+	is.get(c);
+	if( c == '"' ) 
+	  break;
+	if( c == '\\' )
+	  is.get(c);
+	dest += c;
+      }
+    }
+    else
+    {
+      is.putback(c);
+      static_cast<istringstream&>(is) >> dest;
+    }
+    return is;
+  }
+  
+  escape_istream::escape_istream( istream &is ) : is(is)
+  {
+  }
+
+  escape_ostream::escape_ostream( ostream &os ) : os(os)
+  {
+  }
+
+  // replace pattern with <replace> in str and return number of occurances
+  int replace( string &str, string pattern, string replace, 
+	       string::size_type from=0, string::size_type to=string::npos )
+  {
+    int replaces = 0;
+    string::size_type pos,last_pos=from;
+    for(;;)
+    {
+      pos = str.find(pattern, last_pos);
+      if( (pos == string::npos) || ((to != string::npos) && (pos >= to)) ) break;
+      str.replace( pos, pattern.size(), replace );
+      last_pos = pos + replace.size();
+      replaces++;
+    }
+    return replaces;
   }
 }

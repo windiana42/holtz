@@ -720,7 +720,7 @@ namespace holtz
 	{
 	  std::ifstream is( max->second.c_str() );
 	  num_moves = load_pbm_file( is, game_dialog.game, current_move );
-	  if( num_moves < 0 ) return false;
+	  if( num_moves <= 0 ) return false;
 	  current_move += num_moves;
 	}
 #ifndef __WXMSW__

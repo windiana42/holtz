@@ -39,7 +39,8 @@ namespace holtz
   PBM_Content scan_pbm_file( std::istream &is );
 
   // loads a PBM message from mail and returns the number of half moves it loaded into the game
-  int load_pbm_file( std::istream &is, Game &game, int from = 1, int to = -1 );
+  // movenumber 0 is a virtual move that initializes the game
+  int load_pbm_file( std::istream &is, Game &game, int from = 0, int to = -1 );
 }
 
 #endif

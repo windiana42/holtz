@@ -285,6 +285,7 @@ namespace holtz
       return -1;
     }
 
+    int num_moves_read = 0;
     if( from == 0 )		// if this is the first call of load_game setup a new game
     {
       Ruleset *ruleset = new Tournament_Ruleset();
@@ -292,6 +293,8 @@ namespace holtz
       ruleset->max_players = 2;	// exact 2 players
       game.reset_game( *ruleset );
       delete ruleset;
+      ++num_moves_read;		// initializing game counts as move "0"
+      ++from;			// start from real move "1"
     }
 
     is >> str;
@@ -320,8 +323,7 @@ namespace holtz
 
     Standard_Move_Translator move_translator( game.ruleset->coordinate_translator, &game.board );
 
-    int num_moves_read = 0;
-    for( int current_move_num = ((from==0)?1:from); (current_move_num < to) || (to < 0); ++current_move_num )
+    for( int current_move_num = from; (current_move_num < to) || (to < 0); ++current_move_num )
     {
       int move_num;
       Sequence sequence;
