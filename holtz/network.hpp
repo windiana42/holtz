@@ -75,7 +75,7 @@ namespace holtz
     virtual bool remove_player( int id );
     virtual bool player_up( int id );
     virtual bool player_down( int id );
-    virtual bool change_ruleset( Ruleset::type, Ruleset );
+    virtual bool change_ruleset( Ruleset::type, Ruleset& );
     virtual bool ready();		// ready with adding players; game may start
 
     // Player_Input functions
@@ -155,7 +155,7 @@ namespace holtz
     std::string requested_player_name;	
     Player::Player_Type requested_player_type;	
 
-    Ruleset ruleset;
+    Ruleset *ruleset;
     Ruleset::type ruleset_type;
 
     class Client

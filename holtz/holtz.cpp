@@ -17,6 +17,8 @@
 #include "holtz.hpp"
 #include <assert.h>
 
+#include "util.hpp"
+
 namespace holtz
 {
   void Stones::remove_stones()
@@ -373,7 +375,8 @@ namespace holtz
     return board->field[ current_pos.x ][ current_pos.y ];
   }
 
-  Board::Board( const int *field_array, int width, int height )
+  Board::Board( const int *field_array, int width, int height, Board_Type board_type )
+    : board_type( board_type )
   {
     field.resize( width );
     for( int x = 0; x < width; ++x )
@@ -386,8 +389,8 @@ namespace holtz
     }
   }
 
-  Board::Board( const std::vector< std::vector<Field_State_Type> > field )
-    : field(field)
+  Board::Board( const std::vector< std::vector<Field_State_Type> > field, Board_Type board_type )
+    : board_type(board_type), field(field)
   {
   }
 
@@ -670,19 +673,24 @@ namespace holtz
     return Field_Iterator( pos, this );
   }
 
-  Ruleset::Ruleset( Board board, Win_Condition *win_condition, bool undo_possible, 
-		    unsigned min_players, unsigned max_players ) 
-    : board(board), win_condition(win_condition), undo_possible(undo_possible), 
-      min_players(min_players), max_players(max_players)
+  Ruleset::Ruleset( Board board, Win_Condition *win_condition, Coordinate_Translator *coordinate_translator,
+		    bool undo_possible, unsigned min_players, unsigned max_players ) 
+    : board(board), win_condition(win_condition), coordinate_translator(coordinate_translator),
+      undo_possible(undo_possible), min_players(min_players), max_players(max_players)
   {
   }
 
-  Game::Game( const Ruleset &ruleset )
-    : board(ruleset.board), 
-      common_stones(ruleset.common_stones), 
-      win_condition(ruleset.win_condition),
-      undo_possible(ruleset.undo_possible),
-      ruleset(new Ruleset(ruleset)), 
+  Ruleset::~Ruleset()
+  {
+  }
+
+  Game::Game( const Ruleset &_ruleset )
+    : ruleset(_ruleset.clone()), 
+      board(ruleset->board), 
+      common_stones(ruleset->common_stones), 
+      win_condition(ruleset->win_condition),
+      coordinate_translator(ruleset->coordinate_translator),
+      undo_possible(ruleset->undo_possible),
       save_game(0),
       ref_counter(new Ref_Counter())
   {
@@ -726,12 +734,13 @@ namespace holtz
       }
     }
     
-    board		= game.board;
-    common_stones 	= game.common_stones;
-    win_condition 	= game.win_condition;
-    undo_possible 	= game.undo_possible;
-    ruleset 		= game.ruleset;
-    ref_counter 	= game.ref_counter;
+    board		  = game.board;
+    common_stones 	  = game.common_stones;
+    win_condition 	  = game.win_condition;
+    coordinate_translator = game.coordinate_translator;
+    undo_possible 	  = game.undo_possible;
+    ruleset 		  = game.ruleset;
+    ref_counter 	  = game.ref_counter;
     ++ref_counter->cnt;
 
     /*
@@ -881,6 +890,7 @@ namespace holtz
     board = ruleset->board;
     common_stones = ruleset->common_stones;
     win_condition = ruleset->win_condition;
+    coordinate_translator = ruleset->coordinate_translator;
     undo_possible = ruleset->undo_possible;
 
     // remove stones of all players
@@ -903,7 +913,7 @@ namespace holtz
       ref_counter = new Ref_Counter();
     }
 
-    this->ruleset = new Ruleset(ruleset);
+    this->ruleset = ruleset.clone();
     reset_game();
   }
 
@@ -1033,7 +1043,7 @@ namespace holtz
     return is;
   }
 
-  Move *Knock_Out_Move::clone()
+  Move *Knock_Out_Move::clone() const
   {
     return new Knock_Out_Move(*this);
   }
@@ -1125,7 +1135,7 @@ namespace holtz
     return is;
   }
   
-  Move *Set_Move::clone()
+  Move *Set_Move::clone() const
   {
     return new Set_Move(*this);
   }
@@ -1189,7 +1199,7 @@ namespace holtz
     return is;
   }
   
-  Move *Remove::clone()
+  Move *Remove::clone() const
   {
     return new Remove(*this);
   }
@@ -1420,7 +1430,7 @@ namespace holtz
     return is;
   }
   
-  Move *Finish_Move::clone()
+  Move *Finish_Move::clone() const
   {
     return new Finish_Move(*this);
   }
@@ -1571,7 +1581,7 @@ namespace holtz
   }
 
   //! to store sequences, they must be cloned
-  Sequence Sequence::clone()
+  Sequence Sequence::clone() const
   {
     Sequence ret;
     std::list<Move*>::iterator i;
@@ -1706,11 +1716,31 @@ namespace holtz
     : Ruleset( Board( (const int*) standard_board, 
 		      sizeof(standard_board[0]) / sizeof(standard_board[0][0]),
 		      sizeof(standard_board)    / sizeof(standard_board[0]) ),
-	       &standard_win_condition, true /*undo possible*/, 2, 4 )
+	       &standard_win_condition, &standard_coordinate_translator,
+	       true /*undo possible*/, 2, 4 ),
+      standard_coordinate_translator( board )
   {
     common_stones.stone_count[ Stones::white_stone ] = 5;
     common_stones.stone_count[ Stones::gray_stone ]  = 7;
     common_stones.stone_count[ Stones::black_stone ] = 9;
+  }
+
+  Standard_Ruleset::Standard_Ruleset( const Standard_Ruleset &ruleset )
+    : Ruleset( ruleset ), standard_coordinate_translator( board )
+  {
+    coordinate_translator = &standard_coordinate_translator;
+  }
+
+  Standard_Ruleset &Standard_Ruleset::operator=( Standard_Ruleset &ruleset )
+  {
+    Ruleset::operator=( ruleset );
+    coordinate_translator = &standard_coordinate_translator;
+    return *this;
+  }
+
+  Ruleset *Standard_Ruleset::clone() const
+  {
+    return new Standard_Ruleset(*this);
   }
 
   Tournament_Win_Condition Tournament_Ruleset::tournament_win_condition;
@@ -1719,11 +1749,31 @@ namespace holtz
     : Ruleset( Board( (const int*) standard_board, 
 		      sizeof(standard_board[0]) / sizeof(standard_board[0][0]),
 		      sizeof(standard_board)    / sizeof(standard_board[0]) ),
-	       &tournament_win_condition, false /*no undo possible*/, 2, 4 )
+	       &tournament_win_condition, &standard_coordinate_translator,
+	       false /*no undo possible*/, 2, 4 ),
+      standard_coordinate_translator( board )      
   {
     common_stones.stone_count[ Stones::white_stone ] = 6;
     common_stones.stone_count[ Stones::gray_stone ]  = 8;
     common_stones.stone_count[ Stones::black_stone ] = 10;
+  }
+
+  Tournament_Ruleset::Tournament_Ruleset( const Tournament_Ruleset &ruleset )
+    : Ruleset( ruleset ), standard_coordinate_translator( board )
+  {
+    coordinate_translator = &standard_coordinate_translator;
+  }
+
+  Tournament_Ruleset &Tournament_Ruleset::operator=( Tournament_Ruleset &ruleset )
+  {
+    Ruleset::operator=( ruleset );
+    coordinate_translator = &standard_coordinate_translator;
+    return *this;
+  }
+
+  Ruleset *Tournament_Ruleset::clone() const
+  {
+    return new Tournament_Ruleset(*this);
   }
   
   void No_Output::report_move( const Sequence & )
@@ -2148,6 +2198,49 @@ namespace holtz
     Sequence sequence = sequence_generator.get_sequence();
     sequence_generator.reset();
     return sequence;
+  }
+
+  Standard_Coordinate_Translator::Standard_Coordinate_Translator( Board &board )
+    : orig_board(board)
+  {    
+  }
+  std::string Standard_Coordinate_Translator::get_field_name( Field_Pos pos )
+  {
+    std::string name;
+    int first_x;
+    for( first_x = 0; first_x < orig_board.get_x_size(); ++first_x )
+      if( !Board::is_removed(orig_board.field[first_x][pos.y]) )
+	break;
+
+    name += 'a' + pos.y;
+    name += long_to_string( pos.x - first_x + 1 );
+    return name;
+  }
+  Field_Pos Standard_Coordinate_Translator::get_field_pos ( std::string name )
+  {
+    Field_Pos pos;
+    int first_x;
+    for( first_x = 0; first_x < orig_board.get_x_size(); ++first_x )
+      if( !Board::is_removed(orig_board.field[first_x][pos.y]) )
+	break;
+
+    if( name.size() > 1 )
+    {
+      if( (name[0] >= 'a') && (name[0] <= 'z') )
+      {
+	std::string num_string = name.substr(1);
+	std::pair<long,unsigned/*digits*/> num = string_to_long( num_string );
+	if( num.second == num_string.size() )
+	{
+	  if( num.first > 0 )
+	  {
+	    pos.x = name[0] - 'a';
+	    pos.y = num.first - 1;
+	  }
+	}
+      }
+    }
+    return pos;
   }
 }
 

@@ -21,6 +21,9 @@
 #include <time.h>
 #include <assert.h>
 
+#include <string>
+#include <map>
+
 namespace holtz
 {
   inline int random( int min, int max )
@@ -38,5 +41,8 @@ namespace holtz
   void randomize();
 
   unsigned next_prime( unsigned start );
+
+  std::string long_to_string( long );
+  std::pair<long,unsigned /*digits*/> string_to_long( std::string, int base = 10 );
 }
 #endif

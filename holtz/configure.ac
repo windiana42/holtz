@@ -23,12 +23,23 @@ AC_ARG_ENABLE(wxstatic,AC_HELP_STRING([--enable-wxstatic=VAL],
 	 VAL=no: Link WX as shared library]),
 	[wxstatic_Enabled="$enableval"])
 
+AC_ARG_ENABLE(gtk1,AC_HELP_STRING([--enable-gtk1=VAL],
+	[VAL=yes: call wx-config --gtk1 ...; 
+	 VAL=no: use default wxGTK Version]),
+	[gtk1_Enabled="$enableval"])
+
+GTKVER=
+
+if test "$gtk1_Enabled" = "yes"; then
+  GTKVER=--gtk1
+fi
+
 if test "$wxstatic_Enabled" = "yes" ; then
-  export LIBS="$LIBS `wx-config --static --libs`";
+  export LIBS="$LIBS `wx-config $GTKVER --static --libs`";
   export CXXFLAGS="$CXXFLAGS `wx-config --static --cxxflags`"
 else
   export LIBS="$LIBS `wx-config --libs`";
-  export CXXFLAGS="$CXXFLAGS `wx-config --cxxflags`"
+  export CXXFLAGS="$CXXFLAGS `wx-config $GTKVER --cxxflags`"
 fi
 
 AC_OUTPUT(

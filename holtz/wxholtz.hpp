@@ -38,6 +38,7 @@ namespace holtz
     virtual void player_down( const Player & ) = 0;
     virtual void player_change_denied() = 0;
     virtual void ruleset_changed( Ruleset::type ) = 0;
+    virtual void ruleset_changed( Ruleset::type, Ruleset& ) = 0;
     virtual void ruleset_change_denied() = 0;
     virtual void aborted() = 0;
 
@@ -56,7 +57,7 @@ namespace holtz
     virtual bool remove_player( int id ) = 0;
     virtual bool player_up( int id ) = 0;
     virtual bool player_down( int id ) = 0;
-    virtual bool change_ruleset( Ruleset::type, Ruleset ) = 0;
+    virtual bool change_ruleset( Ruleset::type, Ruleset& ) = 0;
     virtual bool ready() = 0;		// ready with adding players; game may start
 
     virtual ~Player_Setup_Manager();
@@ -81,13 +82,26 @@ namespace holtz
   }
 }
 
+//#include "dialogs.hpp"
+namespace holtz
+{
+  // dialogs.hpp offers:
+  class Network_Clients_Dialog;
+  class Player_Setup_Dialog;
+  class Settings_Dialog;
+  class Network_Connection_Dialog;
+}
+
 #include "network.hpp"
-#include "dialogs.hpp"
 #include "animations.hpp"
 #include "ai.hpp"
 
 namespace holtz
 {
+  // ============================================================================
+  // wx application class
+  // ============================================================================
+
   class wxHoltz : public wxApp
   {
   public:
@@ -110,10 +124,14 @@ namespace holtz
     wxConfigBase* global_config; // so that it can be deleted
   };
 
+  // ============================================================================
+  // generic classes
+  // ============================================================================
+
   struct Dimensions
   {
-    int field_width, field_height, field_packed_height;
-    int caption_height, stone_offset;
+    int field_x, field_y, field_width, field_height, field_packed_height;
+    int caption_height, stone_offset, board_x_offset, board_y_offset;
     int board_stones_spacing, player_player_spacing, stones_player_spacing;
 
     Dimensions();
@@ -128,6 +146,7 @@ namespace holtz
     std::map<Field_State_Type,wxBitmap> field_bitmaps;
     std::map<Stones::Stone_Type,wxBitmap> stone_bitmaps;
   };
+
   class Bitmap_Handler
   {
   public:
@@ -142,19 +161,95 @@ namespace holtz
     void setup_rotated_bitmaps();
   };
 
-  class Board_Panel 
+  class Basic_Panel
   {
   public:
-    Board_Panel( Game &, Game_Window &, Bitmap_Handler &,
-		 int x, int y, Sequence_Generator* & );
+    Basic_Panel();
+    virtual ~Basic_Panel();
 
-    int get_width() const;
-    int get_height() const;
-    void set_x( int x );
-    void set_y( int y );
-    inline int get_x() const { return x; }
-    inline int get_y() const { return y; }
-    void place_child_windows();
+    inline int get_x() const { assert(x>=0); return x; }
+    inline int get_y() const { assert(y>=0); return y; }
+    inline void set_x( int _x ) { x = _x; }
+    inline void set_y( int _y ) { y = _y; }
+    inline int get_width() const { assert(width>=0); return width; }
+    inline int get_height() const { assert(height>=0); return height; }
+
+    inline bool is_in( int _x, int _y ) const { return (_x>=x)&&(_y>=y)&&(_x<x+width)&&(_y<y+height); }
+
+    virtual void draw( wxDC &dc ) {}
+    virtual void draw_text( wxDC &dc ) {}
+    virtual void on_click( int /*x*/, int /*y*/ ) {}
+    virtual void calc_dimensions() = 0;
+  protected:
+    int x,y;
+    int width, height;
+  };
+
+  class Spacer : public Basic_Panel
+  {
+  public:
+    Spacer( int width, int height );
+    virtual void calc_dimensions() {}
+  };
+  
+  class Horizontal_Sizer : public Basic_Panel
+  {
+  public:
+    typedef enum Align_Type { top, bottom, middle };
+    Horizontal_Sizer( Align_Type align = top );
+
+    void add( Basic_Panel *, bool destroy_on_remove = false );
+    void erase( Basic_Panel * );
+    void clear();
+
+    virtual void draw( wxDC &dc );
+    virtual void draw_text( wxDC &dc );
+    virtual void on_click( int x, int y );
+    virtual void calc_dimensions();
+  private:
+    std::list< std::pair<Basic_Panel*,bool /*destroy*/> > elements;
+    Align_Type align;
+  };
+  
+  class Vertical_Sizer : public Basic_Panel
+  {
+  public:
+    typedef enum Align_Type { left, right, center };
+    Vertical_Sizer( Align_Type align = left );
+
+    void add( Basic_Panel *, bool destroy_on_remove = false );
+    void erase( Basic_Panel * );
+    void clear();
+
+    virtual void draw( wxDC &dc );
+    virtual void draw_text( wxDC &dc );
+    virtual void on_click( int x, int y );
+    virtual void calc_dimensions();
+  private:
+    std::list< std::pair<Basic_Panel*,bool /*destroy*/> > elements;
+    Align_Type align;
+  };
+
+  // ============================================================================
+  // panel classes
+  // ============================================================================
+
+  class Board_Panel : public Basic_Panel
+  {
+  public:
+    struct Settings
+    {
+      bool rotate_board;	// display board rotated
+      bool show_coordinates;
+      wxFont coord_font;
+      static wxFont default_font;
+      Settings( bool rotate_board = true, bool show_coordinates = true, 
+		wxFont coord_font = default_font );
+    };
+
+    Board_Panel( Game &, Game_Window &, Bitmap_Handler &, Sequence_Generator* &, Settings &settings );
+
+    void calc_dimensions();
 
     void draw( wxDC &dc );
     void draw_text( wxDC &dc );
@@ -168,62 +263,60 @@ namespace holtz
     Game_Window &game_window;
 
     Bitmap_Handler &bitmap_handler;
-    int x, y, board_x, board_y;
+    int board_x, board_y;
     Sequence_Generator* &sequence_generator;
 
-    bool rotate_board;		// display board rotated
+    Settings &settings;
   };
 
-  class Stone_Panel
+  class Stone_Panel : public Basic_Panel
   {
   public:
-    Stone_Panel( Stones &, Game_Window &, Bitmap_Handler &,
-		 int x, int y, Sequence_Generator* &, int max_stones = 10 );
+    struct Settings
+    {
+      bool rotate_stones;	// when board is rotated
+      bool multiple_stones;	// false: display count on stone
+      bool horizontal;
+      int max_stones;		// for multiple stones
+      Settings( bool rotate_stones=true, bool multiple_stones=true, bool horizontal=true, 
+		int max_stones=10 );
+    };
 
-    int get_width() const;
-    int get_height() const;
-    void set_x( int x );
-    void set_y( int y );
-    inline int get_x() const { return x; }
-    inline int get_y() const { return y; }
-    void place_child_windows();
+    Stone_Panel( Stones &, Game_Window &, Bitmap_Handler &, Sequence_Generator* &, Settings &settings );
+
+    void calc_dimensions();
 
     void draw( wxDC &dc );
-    void draw_text( wxDC &dc );
 
     void on_click( long x, long y );
     std::pair<int,int> get_field_pos( int stone_num, Stones::Stone_Type type ) const;
+    std::pair<int,int> get_field_pos( std::pair<Stones::Stone_Type,int> ) const;
+    std::pair<Stones::Stone_Type,int> get_stone( int x, int y ) const;
   private:
     Stones &stones;
     Game_Window &game_window;
 
     Bitmap_Handler &bitmap_handler;
-    int x,y;
     Sequence_Generator* &sequence_generator;
 
-    bool rotate_stones;
-
-    int max_stones;
+    Settings &settings;
   };
 
-  class Player_Panel 
+  class Player_Panel : public Vertical_Sizer
   {
   public:
-    Player_Panel( Player &, Game_Window &, Bitmap_Handler &,
-		  int x, int y, Sequence_Generator* & );
+    struct Settings
+    {
+      wxFont player_font;
+      static wxFont default_font;
+      Settings( wxFont player_font = wxFont(20,wxDECORATIVE,wxNORMAL,wxNORMAL) );
+    };
 
-    int get_width() const;
-    int get_height() const;
-    void set_x( int x );
-    void set_y( int y );
-    inline int get_x() const { return x; }
-    inline int get_y() const { return y; }
-    void place_child_windows();
+    Player_Panel( Player &, Game_Window &, Bitmap_Handler &, Sequence_Generator* &, 
+		  Stone_Panel::Settings &stone_settings, Player_Panel::Settings &settings );
 
-    void draw( wxDC &dc );
-    void draw_text( wxDC &dc );
+    virtual void on_click( int x, int y );
 
-    void on_click( long x, long y );
     inline const Stone_Panel &get_stone_panel() const { return stone_panel; }
     inline int get_id() const { return player.id; }
   private:
@@ -231,15 +324,30 @@ namespace holtz
     Game_Window &game_window;
 
     wxFont player_font;
-    //wxStaticText *caption_text;
 
     Bitmap_Handler &bitmap_handler;
-    int x,y;
     Sequence_Generator* &sequence_generator;
 
     Stone_Panel stone_panel;
+    Settings &settings;
+
+    class Header_Panel : public Basic_Panel
+    {
+    public:
+      Header_Panel( Player &player, Player_Panel::Settings& );
+      void draw_text( wxDC &dc );
+      void calc_dimensions();
+    private:
+      Player &player;
+      Settings &settings;
+    };
+    Header_Panel header_panel;
   };
   
+  // ============================================================================
+  // frame or window classes
+  // ============================================================================
+
   class Mouse_Handler : public Generic_Mouse_Input
   {
   public:
@@ -254,16 +362,12 @@ namespace holtz
     AI_Input *ai;		// for giving hints
   };
 
-  class Game_Window : public wxScrolledWindow
+  class Game_Window : public wxScrolledWindow, public Horizontal_Sizer
   {
   public:
     Game_Window( wxFrame *parent_frame, Game & );
     ~Game_Window();
     void on_close();
-
-    int get_width() const;
-    int get_height() const;
-    void place_child_windows();
 
     void set_mark( int x, int y );
     void draw_mark( wxDC &dc );
@@ -297,6 +401,7 @@ namespace holtz
     inline bool is_play_sound() { return play_sound; }
     void beep();
 
+    inline Game &get_game() { return game; }
     inline wxFrame &get_frame() { return parent_frame; }
     inline AI_Input &get_ai_handler() { return ai; }
     inline Mouse_Handler &get_mouse_handler() { return mouse_handler; }
@@ -308,10 +413,17 @@ namespace holtz
   private:
     wxFrame &parent_frame;
     Bitmap_Handler bitmap_handler;
+    wxFont default_font;
 
+    Board_Panel::Settings board_settings;
     Board_Panel board_panel;
+    Player_Panel::Settings player_settings;
     std::list<Player_Panel*> player_panels;
+    Vertical_Sizer player_panel_sizer;
+    Stone_Panel::Settings player_stone_settings, common_stone_settings;
     Stone_Panel stone_panel;
+    friend class Display_Setup_Page;	// dialogs.hpp
+
     Mouse_Handler mouse_handler;
     AI_Input ai; // artificial inteligence handler for players
 
@@ -352,7 +464,7 @@ namespace holtz
     virtual bool remove_player( int id );
     virtual bool player_up( int id );
     virtual bool player_down( int id );
-    virtual bool change_ruleset( Ruleset::type, Ruleset );
+    virtual bool change_ruleset( Ruleset::type, Ruleset & );
     virtual bool ready();		// ready with adding players; game may start
   private:
     Game_Window &game_window;
@@ -362,7 +474,7 @@ namespace holtz
     std::list<Player> players;
     std::map<int,std::list<Player>::iterator> id_player; // Table id->player
 
-    Ruleset ruleset;
+    Ruleset *ruleset;
     Ruleset::type ruleset_type;
   };
 
@@ -386,16 +498,17 @@ namespace holtz
     void on_client(wxCommandEvent& event);
     void on_network_game(wxCommandEvent& event);
     void on_quit(wxCommandEvent& event);
+    void on_settings(wxCommandEvent& event);
     void on_choose_skin(wxCommandEvent& event);
     void on_choose_beep(wxCommandEvent& event);
     void on_toggle_sound(wxCommandEvent& event);
-	void on_help_contents(wxCommandEvent& event);
-	void on_help_license(wxCommandEvent& event);
+    void on_help_contents(wxCommandEvent& event);
+    void on_help_license(wxCommandEvent& event);
     void on_about(wxCommandEvent& event);
     void on_close(wxCloseEvent& event);
 
   private:
-    Ruleset ruleset;
+    Ruleset *ruleset;
     Game game;
     Game_Window game_window;
 
@@ -417,12 +530,13 @@ namespace holtz
     HOLTZ_NEW_GAME = 100,
     HOLTZ_STANDALONE_GAME,
     HOLTZ_NETWORK_GAME,
+    HOLTZ_SETTINGS,
     HOLTZ_SKIN,
     HOLTZ_BEEP,
     HOLTZ_SOUND,
     HOLTZ_QUIT,
-	HOLTZ_HELP_CONTENTS,
-	HOLTZ_HELP_LICENSE,
+    HOLTZ_HELP_CONTENTS,
+    HOLTZ_HELP_LICENSE,
     HOLTZ_ABOUT,
 
     DIALOG_OK,
@@ -435,6 +549,8 @@ namespace holtz
     DIALOG_DISCONNECT,
     DIALOG_HELP,
     DIALOG_RULESET,
+    DIALOG_APPLY,
+    DIALOG_RESTORE,
 
     LISTBOX_DCLICK
 
