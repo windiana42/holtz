@@ -140,7 +140,7 @@ namespace holtz
       delete *i;
   }
 
-  bool Position::add_knock_out_moves( Game &game, Sequence &sequence, 
+  bool Position::add_knock_out_moves( Game &game, Move_Sequence &sequence, 
 				      Field_Iterator from, Field_Iterator over, Field_Iterator to )
   {
     bool ret = true;
@@ -197,7 +197,7 @@ namespace holtz
 				Field_Permutation &field_permutation, bool expand_first )
   {
     bool ret = true;
-    Sequence sequence;
+    Move_Sequence sequence;
 
     Move *move = new Set_Move( to.get_pos(), type );
     assert( move->check_move( game ) );
@@ -267,7 +267,7 @@ namespace holtz
   void Position::calc_following_positions( Game &game, Field_Permutation &field_permutation, 
 					   std::vector<Stones::Stone_Type> &stone_types )
   {
-    Sequence current_sequence;
+    Move_Sequence current_sequence;
     following_positions.clear();
     sorted_positions.clear();
     
@@ -382,7 +382,7 @@ namespace holtz
 		  break;
 	      
 		int type = (start + i) % 3;
-		if( game.current_player->stones.stone_count[ stone_types[type] ] > 0 )
+		if( game.get_current_player().stones.stone_count[ stone_types[type] ] > 0 )
 		  go_on = add_set_moves( game, p1, stone_types[type], field_permutation,
 					 expand_first );
 	      }
@@ -408,7 +408,7 @@ namespace holtz
   // Branch
   // ----------------------------------------------------------------------------
 
-  Branch::Branch( Sequence sequence, Position position )
+  Branch::Branch( Move_Sequence sequence, Position position )
     : sequence(sequence), position(position)
   {
   }
@@ -422,7 +422,7 @@ namespace holtz
   {
   }
 
-  AI_Result::AI_Result( Sequence sequence, double rating, int depth, 
+  AI_Result::AI_Result( Move_Sequence sequence, double rating, int depth, 
 			long used_time, long average_time, int num_measures )
     : sequence(sequence), rating(rating), depth(depth), 
       used_time(used_time), average_time(average_time), num_measures(num_measures),
@@ -490,7 +490,7 @@ namespace holtz
       else
       {
 	// new best move
-	Sequence &sequence = (*current_position.sorted_positions.begin()->second)->sequence;
+	Move_Sequence &sequence = (*current_position.sorted_positions.begin()->second)->sequence;
 	assert( sequence.check_sequence( save_game ) );
 	result = AI_Result( sequence.clone(), current_position.rating, depth, 
 			    stop_watch.Time(), real_average_time, num_measures );
@@ -595,7 +595,7 @@ namespace holtz
       rating = depth_search( game, position, depth+1, max_ratings[depth+1], -min_max_vz, true );
 
       if( (rating != RATE_MAX) && (rating != -RATE_MAX) )
-	if( current_player->id == game.current_player->id )
+	if( current_player->id == game.get_current_player().id )
 	  rating -= rate_current_player_bonus; // all other positions on this level "get the bonus"
 
       // restore recursion parameters
@@ -608,7 +608,7 @@ namespace holtz
     }
     else
     {
-      std::list<Player>::iterator player;
+      std::vector<Player>::iterator player;
       for( player = game.players.begin(); player != game.players.end(); ++player )
       {
 	assert( !game.win_condition->did_player_win(game, *player) );
@@ -647,15 +647,15 @@ namespace holtz
     // test if expanded move caused player to win:
     if( game.win_condition->did_player_win( game, *game.current_player ) )
     {
-      if( game.current_player->id == current_player->id )
+      if( game.get_current_player().id == current_player->id )
 	pos_rating = RATE_MAX;
       else
 	pos_rating = -RATE_MAX;
     }
     else
     {
-      std::list<Player>::iterator last_player = game.last_player;
-      game.next_player();
+      int prev_player_index = game.prev_player_index;
+      game.choose_next_player();
       if( depth < cur_depth - 1 )
       {
 	max_ratings[depth+2] = -(RATE_MAX * 2) * min_max_vz;
@@ -666,7 +666,7 @@ namespace holtz
       {
 	pos_rating = rate_position( game, (*branch)->position );
       }
-      game.prev_player( last_player );
+      game.choose_prev_player( prev_player_index );
     }
 
     // restore recursion parameters
@@ -716,7 +716,7 @@ namespace holtz
     {
       position.rating = rate_position( game, position );
       if( (position.rating != RATE_MAX) && (position.rating != -RATE_MAX) )
-	if( current_player->id == game.current_player->id )
+	if( current_player->id == game.get_current_player().id )
 	  position.rating += rate_current_player_bonus;
     }
     else
@@ -921,18 +921,21 @@ namespace holtz
   IMPLEMENT_DYNAMIC_CLASS(AI_Event, wxEvent) //**/
 
   AI_Event::AI_Event()
-    : wxEvent(-1, EVT_AI_REPORT_MOVE)
+    : wxEvent(-1)
   {
+    SetEventType(EVT_AI_REPORT_MOVE);
   }
 
   AI_Event::AI_Event( WXTYPE type, AI_Thread *thread )
-    : wxEvent(-1, type), thread(thread)
+    : wxEvent(-1), thread(thread)
   {
+    SetEventType(type);
   }
 
   AI_Event::AI_Event( AI_Result ai_result, WXTYPE type, AI_Thread *thread )
-    : wxEvent(-1, type), ai_result(ai_result), thread(thread)
+    : wxEvent(-1), ai_result(ai_result), thread(thread)
   {
+    SetEventType(type);
   }
 
   // ----------------------------------------------------------------------------
@@ -969,7 +972,7 @@ namespace holtz
   Player_Input::Player_State AI_Input::determine_move() throw(Exception)
   {
     const Game &game = game_manager.get_game();
-    if( game.current_player->help_mode == Player::show_hint )
+    if( game.get_current_player().help_mode == Player::show_hint )
       give_hints = true;
     else
       give_hints = false;
@@ -983,15 +986,15 @@ namespace holtz
     {
       abort();			// abort possibly running thread
       thread_active = true;
-      thread = new AI_Thread( this, game, game.current_player->average_time, 
-			      game.current_player->num_measures );
+      thread = new AI_Thread( this, game, game.get_current_player().average_time, 
+			      game.get_current_player().num_measures );
       thread->Create();
       thread->Run();
     }
     return Player_Input::wait_for_event;
   }
 
-  Sequence AI_Input::get_move()
+  Move_Sequence AI_Input::get_move()
   {
     ai_done = false;
     move_done = false;

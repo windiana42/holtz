@@ -128,6 +128,10 @@ SOURCE=.\util.cpp
 
 SOURCE=.\wxholtz.cpp
 # End Source File
+# Begin Source File
+
+SOURCE=.\wxmain.cpp
+# End Source File
 # End Group
 # Begin Group "Header"
 
@@ -167,6 +171,10 @@ SOURCE=.\util.hpp
 # Begin Source File
 
 SOURCE=.\wxholtz.hpp
+# End Source File
+# Begin Source File
+
+SOURCE=.\wxmain.hpp
 # End Source File
 # End Group
 # Begin Group "Ressourcen"

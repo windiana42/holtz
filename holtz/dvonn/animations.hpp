@@ -14,21 +14,21 @@
  * 
  */
 
-#ifndef __HOLTZ_ANIMATIONS__
-#define __HOLTZ_ANIMATIONS__
+#ifndef __DVONN_ANIMATIONS__
+#define __DVONN_ANIMATIONS__
 
-namespace holtz
+namespace dvonn
 {
   class Bitmap_Move_Animation;
   class Move_Sequence_Animation;
 }
 
-#include "wxholtz.hpp"
-#include "holtz.hpp"
+#include "wxdvonn.hpp"
+#include "dvonn.hpp"
 
 #include <vector>
 
-namespace holtz
+namespace dvonn
 {
   /*! class Bitmap_Move_Animation
    *  moves a bitmap continuously over the screen

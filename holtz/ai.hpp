@@ -80,7 +80,7 @@ namespace holtz
     typedef std::pair<double,std::list<Branch*>::iterator> sorted_positions_element_type;
   private:
     // return false: don't continue
-    bool add_knock_out_moves( Game &game, Sequence &sequence, 
+    bool add_knock_out_moves( Game &game, Move_Sequence &sequence, 
 			      Field_Iterator from, Field_Iterator over, Field_Iterator to );
 
     bool add_set_moves( Game &game, Field_Iterator to, Stones::Stone_Type type,
@@ -92,14 +92,14 @@ namespace holtz
 
   struct Branch
   {
-    Sequence sequence;
+    Move_Sequence sequence;
     Position position;
-    Branch( Sequence, Position );
+    Branch( Move_Sequence, Position );
   };
 
   struct AI_Result
   {
-    Sequence sequence;
+    Move_Sequence sequence;
     double rating;
     int depth;
     long used_time, average_time;	// in milli seconds
@@ -107,7 +107,7 @@ namespace holtz
     bool valid;
 
     AI_Result();
-    AI_Result( Sequence, double rating, int depth, 
+    AI_Result( Move_Sequence, double rating, int depth, 
 	       long used_time, long average_time, int num_measures );
   };
 
@@ -133,7 +133,7 @@ namespace holtz
     int num_measures;
     unsigned max_positions_expanded, max_depth;
 
-    std::list<Player>::iterator current_player;
+    std::vector<Player>::iterator current_player;
     unsigned cur_depth;
 
     std::vector<double> max_ratings; // for min-max strategy
@@ -213,7 +213,7 @@ namespace holtz
     inline void set_ui_manager( Game_UI_Manager *ui ) { ui_manager = ui; }
 
     virtual Player_State determine_move() throw(Exception);
-    virtual Sequence get_move();
+    virtual Move_Sequence get_move();
     virtual long get_used_time();
     void determine_hints();
     void abort();
@@ -226,7 +226,7 @@ namespace holtz
     Game_Manager    &game_manager;
     Game_UI_Manager *ui_manager;
 
-    Sequence sequence;
+    Move_Sequence sequence;
     bool ai_done, move_done;
     long used_time;
 

@@ -15,4 +15,6 @@ board_stones_spacing=30
 player_player_spacing=10
 stones_player_spacing=10
 # rotate symmetric bitmaps may be arranged on a rotated hexagonal structure without rotating the bitmap
-rotate_symmetric=false
+rotation_symmetric=false
+# if board is rotated rotate background as well
+rotate_background=false

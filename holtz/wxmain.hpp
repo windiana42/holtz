@@ -88,6 +88,7 @@ namespace holtz
     wxDC *get_client_dc();	// must be destroyed
 
     inline wxFrame &get_frame() { return parent_frame; }
+    inline WX_GUI_Manager &get_gui_manager() { return gui_manager; }
   private:
     wxFrame &parent_frame;
 
@@ -123,6 +124,7 @@ namespace holtz
     void on_about(wxCommandEvent& event);
     void on_close(wxCloseEvent& event);
 
+    inline Game_Window &get_game_window() { return game_window; }
   private:
     Game_Window game_window;
 
@@ -174,6 +176,9 @@ namespace holtz
     DIALOG_CHANGE_SKIN_FILE,
     DIALOG_CHOOSE_BEEP_FILE,
     DIALOG_CHANGE_BEEP_FILE,
+    DIALOG_CHOOSE_PLAYER_FONT,
+    DIALOG_CHOOSE_COORD_FONT,
+    DIALOG_CHOOSE_STONE_FONT,
 
     LISTBOX_DCLICK,
 

@@ -27,6 +27,7 @@
 #include "util.hpp"
 
 #include <wx/wx.h>
+#include <wx/image.h>
 #include <wx/html/helpctrl.h> // use HTML help
 #include <wx/cshelp.h>
 #include <wx/zipstrm.h>
@@ -201,7 +202,23 @@ namespace holtz
 
   void Game_Window::undo_move()
   {
-    game_manager.undo_move();
+    const Game &game = game_manager.get_game();
+    if( !game.variant_tree.is_first() )
+    {
+      const Variant *variant = game.variant_tree.get_current_variant();
+
+      int num_undo = 1;
+      while( (variant->prev != game.variant_tree.get_root_variant()) &&
+	     ( (game.get_player(variant->current_player_index)->origin==Player::remote) ||
+	       (game.get_player(variant->current_player_index)->type==Player::ai) ||
+	       (variant->prev->possible_variants==1) ) )
+      {
+	variant = variant->prev;
+	num_undo++;
+      }
+
+      game_manager.undo_moves(num_undo);
+    }
   }
 
   void Game_Window::settings_dialog()
@@ -242,13 +259,14 @@ namespace holtz
 #endif
 
 #ifdef DRAW_BACKGROUND
-    int bg_width = gui_manager.get_bitmap_handler().background.GetWidth();
-    int bg_height = gui_manager.get_bitmap_handler().background.GetHeight();
+    const wxBitmap &background = gui_manager.get_game_panel().get_background();
+    int bg_width = background.GetWidth();
+    int bg_height = background.GetHeight();
     for( int y = 0; y < height + bg_height; y += bg_height )
     {
       for( int x = 0; x < width + bg_width; x += bg_width )
       {
-	dc->DrawBitmap( gui_manager.get_bitmap_handler().background, x, y );
+	dc->DrawBitmap( background, x, y );
       }
     }
 #endif
@@ -448,9 +466,9 @@ namespace holtz
   void Main_Frame::on_about(wxCommandEvent& WXUNUSED(event))
   {
     wxString msg;
-    msg =  _("Holtz is game about making sacrifices.\n");
+    msg =  _("Holtz is a game about making sacrifices.\n");
     msg += _("GPLed by Martin Trautmann (2003)\n");
-	msg += _("Based on Zèrtz (r) and (c) by Don & Co NV, 2001.");
+    msg += _("Based on Zèrtz (r) and (c) by Don & Co NV, 2001.");
 
     wxMessageBox(msg, _("About Holtz"), wxOK | wxICON_INFORMATION, this);
   }

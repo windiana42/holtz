@@ -62,14 +62,12 @@ namespace holtz
     std::string str;
 #ifndef __OLD_GCC__
     std::ostringstream os;
-    os << l;
-    str = os.str();
 #else
     char buf[4096];
     std::ostrstream os(buf,4096);
+#endif
     os << l;
     str = os.str();
-#endif
     return str;
   }
 
@@ -81,16 +79,51 @@ namespace holtz
 
     return std::pair<long,unsigned /*digits*/>( num, end - start );
   }
+
+  std::string double_to_string( double number, int post_point_digits, int assert_max_pre_point_digits )
+  {
+    std::string str;
+#ifndef __OLD_GCC__
+    std::ostringstream os;
+#else
+    char buf[4096];
+    std::ostrstream os(buf,4096);
+#endif
+    if( post_point_digits >= 0 )
+    {
+      int pre_point_digits=0, compare=1;
+      while( compare < number )
+      {
+	compare *= 10; 
+	++pre_point_digits;
+      }
+      if( assert_max_pre_point_digits >= 0 )
+	assert( pre_point_digits <= assert_max_pre_point_digits );
+
+      os.precision(post_point_digits + pre_point_digits);
+    }
+    os << number;
+    str = os.str();
+    return str;
+  }
+
 }
 namespace std
 {
+#ifdef __OLD_GCC__
+  istringstream::istringstream( std::string str )
+    : istrstream((this->str=str).c_str(), str.size())
+  {
+  }
+#endif
+
   // returns an escaped string for transmission over streams
   string escape( const string str )
   {
     string ret = str;
 
     bool escape = false;
-    if( ret[0] == '\"' )
+    if( (ret.size() == 0) || (ret[0] == '\"') )
       escape = true;
     else
     {
@@ -113,11 +146,12 @@ namespace std
   }
 
   Escaped_String::Escaped_String( string &str )
-    : str(str)
+    : str(str), error(false)
   {
   }
   istream &operator>>( istream &is, Escaped_String estr )
   {
+    bool ok = false;
     string &dest = estr.str;
 
     char c;
@@ -126,11 +160,14 @@ namespace std
     if( c == '"' )
     {
       dest = "";
-      while(is)
+      while(is.good())
       {
 	is.get(c);
 	if( c == '"' ) 
+	{
+	  ok = true;
 	  break;
+	}
 	if( c == '\\' )
 	  is.get(c);
 	dest += c;
@@ -141,10 +178,14 @@ namespace std
       is.putback(c);
       static_cast<istringstream&>(is) >> dest;
     }
+
+    if( !ok ) 
+      estr.set_error();
+
     return is;
   }
   
-  escape_istream::escape_istream( istream &is ) : is(is)
+  escape_istream::escape_istream( istream &is ) : is(is), error(false)
   {
   }
 
@@ -154,7 +195,7 @@ namespace std
 
   // replace pattern with <replace> in str and return number of occurances
   int replace( string &str, string pattern, string replace, 
-	       string::size_type from=0, string::size_type to=string::npos )
+	       string::size_type from, string::size_type to )
   {
     int replaces = 0;
     string::size_type pos,last_pos=from;
