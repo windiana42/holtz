@@ -174,6 +174,7 @@ namespace holtz
   EVT_MENU(HOLTZ_SOUND,		  Main_Frame::on_toggle_sound)		//**/
   EVT_MENU(HOLTZ_QUIT,		  Main_Frame::on_quit)			//**/
   EVT_MENU(HOLTZ_HELP_CONTENTS,	  Main_Frame::on_help_contents)		//**/
+  EVT_MENU(HOLTZ_HELP_LICENSE,	  Main_Frame::on_help_license)		//**/
   EVT_MENU(HOLTZ_ABOUT,		  Main_Frame::on_about)			//**/
   EVT_CLOSE(Main_Frame::on_close)					//**/
   END_EVENT_TABLE()							//**/
@@ -1865,6 +1866,7 @@ namespace holtz
     // the "About" item should be in the help menu
     wxMenu *help_menu = new wxMenu;
 	help_menu->Append(HOLTZ_HELP_CONTENTS, _("Contents\tF1"), _("Show help file"));
+	help_menu->Append(HOLTZ_HELP_LICENSE, _("License"), _("Information about the Holtz license"));
     help_menu->Append(HOLTZ_ABOUT, _("About"), _("Show about dialog"));
 
     // now append the freshly created menu to the menu bar...
@@ -1965,6 +1967,11 @@ namespace holtz
   void Main_Frame::on_help_contents(wxCommandEvent&)
   {
 	::wxGetApp().get_help_controller().DisplayContents();
+  }
+
+  void Main_Frame::on_help_license(wxCommandEvent&)
+  {
+	::wxGetApp().get_help_controller().DisplaySection(wxT("helplic.htm"));
   }
 
   void Main_Frame::on_about(wxCommandEvent& WXUNUSED(event))

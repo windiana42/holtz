@@ -370,6 +370,7 @@ namespace holtz
     void on_choose_beep(wxCommandEvent& event);
     void on_toggle_sound(wxCommandEvent& event);
 	void on_help_contents(wxCommandEvent& event);
+	void on_help_license(wxCommandEvent& event);
     void on_about(wxCommandEvent& event);
     void on_close(wxCloseEvent& event);
 
@@ -401,6 +402,7 @@ namespace holtz
     HOLTZ_SOUND,
     HOLTZ_QUIT,
 	HOLTZ_HELP_CONTENTS,
+	HOLTZ_HELP_LICENSE,
     HOLTZ_ABOUT,
 
     DIALOG_OK,

@@ -88,11 +88,6 @@ namespace holtz
     button_sizer->Add( new wxButton(this, DIALOG_CANCEL, _("Cancel"), wxDefaultPosition) , 0, wxALL, 10 );
     top_sizer->Add( button_sizer, 0, wxALIGN_CENTER );
       
-    SetAutoLayout( true );     // tell dialog to use sizer
-    SetSizer( top_sizer );      // actually set the sizer
-    top_sizer->Fit( this );            // set size to minimum size as calculated by the sizer
-    top_sizer->SetSizeHints( this );   // set size hints to honour mininum size     
-
 	// set help texts
 #ifndef __WXMSW__
     button_sizer->Add(new wxContextHelpButton(this), 0, wxALIGN_CENTER | wxALL, 10);
@@ -107,6 +102,12 @@ namespace holtz
 	FindWindow(DIALOG_PLAYER_DOWN)->SetHelpText(_("Move the currently selected player downwards. (The upmost player begins the game.)"));
 	FindWindow(DIALOG_REMOVE_PLAYER)->SetHelpText(_("Remove the currently selected player from the new game."));
 	FindWindow(DIALOG_READY)->SetHelpText(_("Click this button as soon as you are happy with the settings. \nNetwork games start when all players have clicked 'Ready'."));
+
+    // set sizer
+    SetAutoLayout( true );     // tell dialog to use sizer
+    SetSizer( top_sizer );      // actually set the sizer
+    top_sizer->Fit( this );            // set size to minimum size as calculated by the sizer
+    top_sizer->SetSizeHints( this );   // set size hints to honour mininum size     
   }
 
   Player_Setup_Dialog::~Player_Setup_Dialog()
@@ -421,11 +422,6 @@ namespace holtz
 	top_sizer->Add(button_sizer, 0, wxALL, 0);
 
 	button_sizer->Add( new wxButton( this, DIALOG_DISCONNECT, _("Disconnect All") ), 0, wxALL, 10 );
-    
-    SetAutoLayout( true );     // tell dialog to use sizer
-    SetSizer( top_sizer );      // actually set the sizer
-    top_sizer->Fit( this );            // set size to minimum size as calculated by the sizer
-    top_sizer->SetSizeHints( this );   // set size hints to honour mininum size     
 
 	// set help texts
 #ifndef __WXMSW__
@@ -433,6 +429,12 @@ namespace holtz
 #endif
 	client_list->SetHelpText(_("Lists all connected client computers. Double-click one of the clients to throw him out of the game."));
 	FindWindow(DIALOG_DISCONNECT)->SetHelpText(_("Disconnect all client computers from the game."));
+    
+    // set sizer
+    SetAutoLayout( true );     // tell dialog to use sizer
+    SetSizer( top_sizer );      // actually set the sizer
+    top_sizer->Fit( this );            // set size to minimum size as calculated by the sizer
+    top_sizer->SetSizeHints( this );   // set size hints to honour mininum size     
 }
 
   Network_Clients_Dialog::~Network_Clients_Dialog()
@@ -445,7 +447,7 @@ namespace holtz
     client_data[static_cast<void*>(socket)] = socket;
     client_item[socket] = client_list->Number();
     wxString port;
-    port.Printf("%d", host.Service());
+    port.Printf(wxT("%d"), host.Service());
     /*
     std::ostringstream port;
     port << host.Service();
@@ -521,11 +523,6 @@ namespace holtz
     button_sizer->Add( ok_button , 0, wxALL, 10 );
     button_sizer->Add( new wxButton(this, DIALOG_CANCEL, _("Cancel"), wxDefaultPosition) , 0, wxALL, 10 );
     top_sizer->Add( button_sizer, 0, wxALIGN_CENTER );
-      
-    SetAutoLayout( true );     // tell dialog to use sizer
-    SetSizer( top_sizer );      // actually set the sizer
-    top_sizer->Fit( this );            // set size to minimum size as calculated by the sizer
-    top_sizer->SetSizeHints( this );   // set size hints to honour mininum size     
 
 	// set help texts
 #ifndef __WXMSW__
@@ -536,6 +533,12 @@ namespace holtz
 	hostname->SetHelpText(_("Enter the IP address or hostname of the computer you want to connect to. (If you are setting up a server, this field has no meaning.)"));
 	port->SetHelpText(_("Enter the port number of your (or the other person's) server. You can usually leave this unchanged."));
 	FindWindow(DIALOG_OK)->SetHelpText(_("Start up the network connection using the given options."));
+    
+    // set sizer
+    SetAutoLayout( true );     // tell dialog to use sizer
+    SetSizer( top_sizer );      // actually set the sizer
+    top_sizer->Fit( this );            // set size to minimum size as calculated by the sizer
+    top_sizer->SetSizeHints( this );   // set size hints to honour mininum size     
   }
 
   BEGIN_EVENT_TABLE(Network_Connection_Dialog, wxDialog)		//**/
