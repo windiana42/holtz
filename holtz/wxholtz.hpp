@@ -201,6 +201,8 @@ namespace holtz
     int x,y;
     Sequence_Generator* &sequence_generator;
 
+    bool rotate_stones;
+
     int max_stones;
   };
 
