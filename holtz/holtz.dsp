@@ -8,12 +8,12 @@ CFG=Holtz - Win32 Debug
 !MESSAGE Dies ist kein gültiges Makefile. Zum Erstellen dieses Projekts mit NMAKE
 !MESSAGE verwenden Sie den Befehl "Makefile exportieren" und führen Sie den Befehl
 !MESSAGE 
-!MESSAGE NMAKE /f "Holtz.mak".
+!MESSAGE NMAKE /f "holtz.mak".
 !MESSAGE 
 !MESSAGE Sie können beim Ausführen von NMAKE eine Konfiguration angeben
 !MESSAGE durch Definieren des Makros CFG in der Befehlszeile. Zum Beispiel:
 !MESSAGE 
-!MESSAGE NMAKE /f "Holtz.mak" CFG="Holtz - Win32 Debug"
+!MESSAGE NMAKE /f "holtz.mak" CFG="Holtz - Win32 Debug"
 !MESSAGE 
 !MESSAGE Für die Konfiguration stehen zur Auswahl:
 !MESSAGE 
@@ -38,8 +38,8 @@ RSC=rc.exe
 # PROP BASE Target_Dir ""
 # PROP Use_MFC 0
 # PROP Use_Debug_Libraries 0
-# PROP Output_Dir "../build/Release"
-# PROP Intermediate_Dir "../build/Release"
+# PROP Output_Dir "Release"
+# PROP Intermediate_Dir "Release"
 # PROP Ignore_Export_Lib 0
 # PROP Target_Dir ""
 # ADD BASE CPP /nologo /W3 /GX /O2 /D "WIN32" /D "NDEBUG" /D "_WINDOWS" /YX /FD /c
@@ -65,12 +65,12 @@ LINK32=link.exe
 # PROP BASE Target_Dir ""
 # PROP Use_MFC 0
 # PROP Use_Debug_Libraries 1
-# PROP Output_Dir "../build/Debug"
-# PROP Intermediate_Dir "../build/Debug"
+# PROP Output_Dir "Debug"
+# PROP Intermediate_Dir "Debug"
 # PROP Ignore_Export_Lib 0
 # PROP Target_Dir ""
 # ADD BASE CPP /nologo /W3 /Gm /GX /Zi /Od /D "WIN32" /D "_DEBUG" /D "_WINDOWS" /YX /FD /c
-# ADD CPP /nologo /MDd /w /W0 /GR /GX /Zi /Od /I "$(WXWIN)\include" /I "$(WXWIN)\contrib/include" /I "$(WXWIN)\lib\mswud" /D "_DEBUG" /D DEBUG=1 /D "__WXDEBUG__" /D "WIN32" /D "_WINDOWS" /D "__WINDOWS__" /D "__WXMSW__" /D "__WIN95__" /D "__WIN32__" /D WINVER=0x0400 /D "STRICT" /D wxUSE_UNICODE=1 /FR /YX /FD /c
+# ADD CPP /nologo /MDd /w /W0 /GR /GX /Zi /Od /I "$(WXWIN)\include" /I "$(WXWIN)\contrib/include" /I "$(WXWIN)\lib\mswud" /D "_DEBUG" /D DEBUG=1 /D "__WXDEBUG__" /D "WIN32" /D "_WINDOWS" /D "__WINDOWS__" /D "__WXMSW__" /D "__WIN95__" /D "__WIN32__" /D WINVER=0x0400 /D "STRICT" /FR /YX /FD /c
 # ADD BASE MTL /nologo /D "_DEBUG" /mktyplib203 /o /win32 "NUL"
 # ADD MTL /nologo /D "_DEBUG" /mktyplib203 /o /win32 "NUL"
 # ADD BASE RSC /l 0x809 /d "_DEBUG"
@@ -80,7 +80,7 @@ BSC32=bscmake.exe
 # ADD BSC32 /nologo
 LINK32=link.exe
 # ADD BASE LINK32 kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib wsock32.lib winmm.lib /nologo /subsystem:windows /debug /machine:I386 /pdbtype:sept
-# ADD LINK32 msvcrtd.lib kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib comctl32.lib rpcrt4.lib wsock32.lib winmm.lib wxmswud.lib pngd.lib zlibd.lib jpegd.lib tiffd.lib /nologo /subsystem:windows /profile /debug /machine:I386 /nodefaultlib:"kernel32.lib" /nodefaultlib:"advapi32.lib" /nodefaultlib:"user32.lib" /nodefaultlib:"gdi32.lib" /nodefaultlib:"shell32.lib" /nodefaultlib:"comdlg32.lib" /nodefaultlib:"version.lib" /nodefaultlib:"mpr.lib" /nodefaultlib:"rasapi32.lib" /nodefaultlib:"winmm.lib" /nodefaultlib:"winspool.lib" /nodefaultlib:"vfw32.lib" /nodefaultlib:"secur32.lib" /nodefaultlib:"oleacc.lib" /nodefaultlib:"oledlg.lib" /nodefaultlib:"sensapi.lib" /nodefaultlib:"libcd.lib" /nodefaultlib:"libcid.lib" /nodefaultlib:"msvcrt.lib" /libpath:"$(WXWIN)\lib" /libpath:"$(WXWIN)\contrib/lib"
+# ADD LINK32 msvcrtd.lib kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib comctl32.lib rpcrt4.lib wsock32.lib winmm.lib wxmswd.lib pngd.lib zlibd.lib jpegd.lib tiffd.lib /nologo /subsystem:windows /profile /debug /machine:I386 /nodefaultlib:"kernel32.lib" /nodefaultlib:"advapi32.lib" /nodefaultlib:"user32.lib" /nodefaultlib:"gdi32.lib" /nodefaultlib:"shell32.lib" /nodefaultlib:"comdlg32.lib" /nodefaultlib:"version.lib" /nodefaultlib:"mpr.lib" /nodefaultlib:"rasapi32.lib" /nodefaultlib:"winmm.lib" /nodefaultlib:"winspool.lib" /nodefaultlib:"vfw32.lib" /nodefaultlib:"secur32.lib" /nodefaultlib:"oleacc.lib" /nodefaultlib:"oledlg.lib" /nodefaultlib:"sensapi.lib" /nodefaultlib:"libcd.lib" /nodefaultlib:"libcid.lib" /nodefaultlib:"msvcrt.lib" /libpath:"$(WXWIN)\lib" /libpath:"$(WXWIN)\contrib/lib"
 # SUBTRACT LINK32 /nodefaultlib
 
 !ENDIF 
@@ -110,7 +110,15 @@ SOURCE=.\Holtz.cpp
 # End Source File
 # Begin Source File
 
+SOURCE=.\manager.cpp
+# End Source File
+# Begin Source File
+
 SOURCE=.\network.cpp
+# End Source File
+# Begin Source File
+
+SOURCE=.\pbm.cpp
 # End Source File
 # Begin Source File
 
@@ -142,7 +150,15 @@ SOURCE=.\holtz.hpp
 # End Source File
 # Begin Source File
 
+SOURCE=.\manager.hpp
+# End Source File
+# Begin Source File
+
 SOURCE=.\network.hpp
+# End Source File
+# Begin Source File
+
+SOURCE=.\pbm.hpp
 # End Source File
 # Begin Source File
 
