@@ -21,7 +21,8 @@ print "endpos: $endpos <br>\n";
 $data = substr($fcontents, $pos, $endpos - $pos);
 print $data;
 print "</table>";
-print "<small><i>Downloads are stolen from the project page by a PHP script</i></small><br>";
+print "Note: If you download any source version, you have to download
+	<a href="http://wxwindows.org">wxWindows</a> first";
 ?>
 <!--
 <h2>Not yet implemented</h2>
