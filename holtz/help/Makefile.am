@@ -1,2 +1,2 @@
 helpdir = $(pkgdatadir)/help
-dist_help_DATA = *.zip
+help_DATA = *.zip
