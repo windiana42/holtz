@@ -17,6 +17,7 @@
 #include <wx/wx.h>
 #include <wx/config.h>
 #include <wx/wave.h>
+#include <wx/html/helpctrl.h> // use HTML help
 
 #ifndef __WXHOLTZ__
 #define __WXHOLTZ__
@@ -99,10 +100,13 @@ namespace holtz
     virtual bool OnInit();
 
     bool check_config();
+	bool init_help(wxLocale&);
+    wxHelpControllerBase& get_help_controller() { return help_controller; }
 
     ~wxHoltz();
 
   private:
+	wxHtmlHelpController help_controller; // HTML help
     wxConfigBase* global_config; // so that it can be deleted
   };
 
@@ -365,6 +369,7 @@ namespace holtz
     void on_choose_skin(wxCommandEvent& event);
     void on_choose_beep(wxCommandEvent& event);
     void on_toggle_sound(wxCommandEvent& event);
+	void on_help_contents(wxCommandEvent& event);
     void on_about(wxCommandEvent& event);
     void on_close(wxCloseEvent& event);
 
@@ -379,8 +384,6 @@ namespace holtz
     DECLARE_EVENT_TABLE();
   };
 
-  // declare the wxGetApp() function
-  DECLARE_APP(wxHoltz) //**/
 
   // ----------------------------------------------------------------------------
   // constants
@@ -397,6 +400,7 @@ namespace holtz
     HOLTZ_BEEP,
     HOLTZ_SOUND,
     HOLTZ_QUIT,
+	HOLTZ_HELP_CONTENTS,
     HOLTZ_ABOUT,
 
     DIALOG_OK,
@@ -414,4 +418,8 @@ namespace holtz
 
   };
 }
+
+// declare the wxGetApp() function
+DECLARE_APP(holtz::wxHoltz) //**/
+
 #endif

@@ -204,7 +204,7 @@ namespace holtz
 
   class Game_Window;
 
-  class AI_Input : public Player_Input, public wxEvtHandler
+  class AI_Input : public wxEvtHandler, public Player_Input
   {
   public:
     AI_Input( Game &, Game_Window & );

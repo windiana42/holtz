@@ -47,6 +47,16 @@
 #include <sstream>
 #include <list>
 
+// wx html help
+#if !wxUSE_HTML
+#error "wxHTML is required for the wxWindows HTML help system."
+#endif
+#include <wx/filesys.h>
+#include <wx/fs_zip.h>
+#include <wx/html/helpctrl.h>
+#include <wx/cshelp.h>
+
+
 namespace holtz
 {
   // ----------------------------------------------------------------------------
@@ -158,6 +168,7 @@ namespace holtz
   EVT_MENU(HOLTZ_BEEP,		  Main_Frame::on_choose_beep)		//**/
   EVT_MENU(HOLTZ_SOUND,		  Main_Frame::on_toggle_sound)		//**/
   EVT_MENU(HOLTZ_QUIT,		  Main_Frame::on_quit)			//**/
+  EVT_MENU(HOLTZ_HELP_CONTENTS,	  Main_Frame::on_help_contents)		//**/
   EVT_MENU(HOLTZ_ABOUT,		  Main_Frame::on_about)			//**/
   EVT_CLOSE(Main_Frame::on_close)					//**/
   END_EVENT_TABLE()							//**/
@@ -200,7 +211,19 @@ namespace holtz
     global_config = new wxConfig(GetAppName(), wxT("Holtz"));
     wxConfig::Set(global_config);
 
-    wxInitAllImageHandlers(); // make it possible to load PNG images
+    // this will link all image libraries, also the unused ones
+	// wxInitAllImageHandlers(); // make it possible to load PNG images
+	// that's better, we don't use other image formats:
+    wxImage::AddHandler(new wxXPMHandler);
+    wxImage::AddHandler(new wxPNGHandler);
+    // for html help
+    wxHelpControllerHelpProvider* provider = new wxHelpControllerHelpProvider;
+    provider->SetHelpController(&get_help_controller());
+    wxHelpProvider::Set(provider);
+	// for help: zip files
+    wxFileSystem::AddHandler(new wxZipFSHandler);
+	if(!init_help(*loc))
+		wxLogWarning(_("No help file found."));
 
     check_config(); // asks for configuration if not yet done
 
@@ -218,6 +241,22 @@ namespace holtz
     // loop and the application will run. If we returned FALSE here, the
     // application would exit immediately.
     return TRUE;
+  }
+
+  bool wxHoltz::init_help(wxLocale& loc)
+  {
+	// try to load the HTML help file, in decreasing order:
+	// - help_la_co.htb
+	// - help_la.htb
+	// - help_en.htb
+	// where 'la' is the language, and 'co' the country of the currently used locale
+	// if all fails, return false
+	wxString language = loc.GetCanonicalName();
+	if(!get_help_controller().Initialize(wxT("help_") + language))
+	  if(language.Len() <= 2 || !get_help_controller().Initialize(wxT("help_") + language.Left(2)))
+		if(!get_help_controller().Initialize(wxT("help_en")))
+	  	  return false;
+	return true;
   }
 
   bool wxHoltz::check_config()
@@ -1820,13 +1859,14 @@ namespace holtz
 
     // the "About" item should be in the help menu
     wxMenu *help_menu = new wxMenu;
+	help_menu->Append(HOLTZ_HELP_CONTENTS, _("Contents\tF1"), _("Show help file"));
     help_menu->Append(HOLTZ_ABOUT, _("About"), _("Show about dialog"));
 
     // now append the freshly created menu to the menu bar...
     wxMenuBar *menu_bar = new wxMenuBar();
     menu_bar->Append(menu_file,    _("&File"));
     menu_bar->Append(setting_menu, _("&Settings"));
-    menu_bar->Append(help_menu,    _("&About"));
+    menu_bar->Append(help_menu,    _("&Help"));
 
     return menu_bar;
   }
@@ -1915,6 +1955,11 @@ namespace holtz
   {
     // TRUE is to force the frame to close
     Close(TRUE);
+  }
+
+  void Main_Frame::on_help_contents(wxCommandEvent&)
+  {
+	::wxGetApp().get_help_controller().DisplayContents();
   }
 
   void Main_Frame::on_about(wxCommandEvent& WXUNUSED(event))

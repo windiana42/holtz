@@ -1,0 +1,29 @@
+[OPTIONS]
+Compiled file=help.chm
+Contents file=help.hhc
+Default Window=helpHelp
+Default topic=help.htm
+Display compile progress=No
+Full-text search=Yes
+Index file=help.hhk
+Language=0x407 Deutsch (Deutschland)
+Title=Holtz Help
+
+[WINDOWS]
+helpHelp=,"help.hhc","help.hhk","help.htm",,,,,,0x2420,,0x380e,,,,,0,,,0
+
+
+[FILES]
+help.htm
+helpintr.htm
+helprsum.htm
+helprdet.htm
+helpover.htm
+helpref.htm
+helprule.htm
+helpab.htm
+helpteam.htm
+helplic.htm
+
+[INFOTYPES]
+
