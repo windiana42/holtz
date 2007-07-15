@@ -185,16 +185,72 @@ namespace zertz
     }
     else
     {
-      undo_requested = true;
-      assert( game_setup_manager );
-      switch( game_setup_manager->ask_undo_move() )
+      // determine number of moves to undo
+      const Game &game = get_game();
+      if( !game.variant_tree.is_first() )
       {
-	case Game_Setup_Manager::accept: undo_accepted(); break;
-	case Game_Setup_Manager::deny:   undo_denied(); break;
-	case Game_Setup_Manager::wait_for_answer: break;
+	const Variant *variant = game.variant_tree.get_current_variant();
+
+	int num_undo = 1;
+	while( (variant->prev != game.variant_tree.get_root_variant()) &&
+	       ( (game.get_player(variant->current_player_index)->origin==Player::remote) ||
+		 (game.get_player(variant->current_player_index)->type==Player::ai) ||
+		 (variant->prev->possible_variants==1) ) )
+	{
+	  variant = variant->prev;
+	  num_undo++;
+	}
+
+	// ask for undo
+	undo_requested = true;
+	num_undo_moves = num_undo;
+	assert( game_setup_manager );
+	switch( game_setup_manager->ask_undo_moves(num_undo) )
+	{
+	  case Game_Setup_Manager::accept: undo_accepted(); break;
+	  case Game_Setup_Manager::deny:   undo_denied(); break;
+	  case Game_Setup_Manager::wait_for_answer: break;
+	}
       }
     }
   }
+
+  // performs undo animation, calls continues_game and deletes itself
+  class Undo_Animation : wxEvtHandler
+  {
+  public:
+    Undo_Animation( Game_Manager &game_manager, int n )
+      : game_manager(game_manager), n(n)
+    {
+      // connect event functions
+      Connect( -1, wxEVT_TIMER, 
+	       (wxObjectEventFunction) (wxEventFunction) (wxTimerEventFunction) 
+	       &Undo_Animation::on_done );
+    }
+
+    void step()
+    {
+      if( n <= 0 )
+      {
+	game_manager.get_ui_manager()->update_board( game_manager.get_game() );
+	game_manager.continue_game();
+	delete this;
+      }
+      else
+      {
+	--n;
+	game_manager.get_ui_manager()->undo_move_slowly(this);
+      }
+    }
+
+    void on_done( wxTimerEvent &event ) // current animation done
+    {
+      step();
+    }    
+  private:
+    Game_Manager &game_manager;
+    int n;
+  };
 
   void Game_Manager::undo_accepted()
   {
@@ -206,21 +262,35 @@ namespace zertz
     else
     {
       undo_requested = false;
-      // undo two half moves
-      if( !game.undo_move() )
+
+      if( ui_manager )
+	ui_manager->stop_user_activity(); // disable user input 
+      // !!! also for non mouse players!!!
+
+      bool error = false;
+      for( int i=0; i<num_undo_moves; ++i )
       {
-	if( ui_manager )
+	if( !game.undo_move() )
+	{
+	  error = true;
+	  num_undo_moves = i;		// reduce number of undo moves
+	  if( ui_manager )
+	    ui_manager->report_error(_("Undo move failed"),_("Undo failed"));
+	  break;
+	}
+      }
+      /*
+      if( ui_manager )
+	ui_manager->update_board( game ); // update board display
+      */
+      if( ui_manager )
+      {
+	(new Undo_Animation(*this, num_undo_moves))->step();
+	if( error )
 	  ui_manager->report_error(_("Undo move failed"),_("Undo failed"));
       }
       else
-	if( !game.undo_move() )
-	{
-	  if( ui_manager )
-	    ui_manager->report_error(_("Undo move failed"),_("Undo failed"));
-	}
-
-      if( ui_manager )
-	ui_manager->update_board( game ); // update board display
+	continue_game();
     }
   }
 
@@ -381,7 +451,7 @@ namespace zertz
     id_player[player_iterator2->id] = player_iterator2;
 
     if( display_handler )
-      display_handler->player_up(*player_iterator);
+      display_handler->player_up(*player_iterator2);
 
     return true;
   }
@@ -401,7 +471,7 @@ namespace zertz
     id_player[player_iterator2->id] = player_iterator2;
 
     if( display_handler )
-      display_handler->player_up(*player_iterator);
+      display_handler->player_down(*player_iterator2);
 
     return true;
   }
@@ -429,13 +499,15 @@ namespace zertz
   {
     return accept;
   }
-  Standalone_Game_Setup_Manager::Answer_Type Standalone_Game_Setup_Manager::ask_undo_move()
+  Standalone_Game_Setup_Manager::Answer_Type Standalone_Game_Setup_Manager::ask_undo_moves(int /*n*/)
   {
     return accept;
   }
   void Standalone_Game_Setup_Manager::force_new_game() // force new game (may close connections)
   {
-    if( display_handler )	// there should be a display handler that may display a game setup dialog
+    if( display_handler )	// there should be a display handler
+				// that may display a game setup
+				// dialog
       display_handler->game_setup();
   }  
   void Standalone_Game_Setup_Manager::stop_game()

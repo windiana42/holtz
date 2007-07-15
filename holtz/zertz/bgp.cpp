@@ -25,8 +25,9 @@
 #include <sstream>
 #endif
 
-namespace holtz
+namespace zertz
 {
+  using namespace holtz;
   namespace BGP
   {
     // ============================================================================

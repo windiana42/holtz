@@ -1,5 +1,5 @@
 *BUGS:
-- for any reason reading skin.ini files with 3 lines crashes...
+- for any reason reading skin.ini files with 2 underscores in one name crashes...
 
 - better network protocol
 - better AI (looking for sente moves first, rate situations better)
@@ -12,5 +12,5 @@
 - connect dialog resizable
 - show ready status in connect dialog
 - show ready status, ai status and help mode for each player
-- store moves played (situation tree)
+- show moves played (position tree)
 - show moves review 

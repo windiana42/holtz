@@ -5,9 +5,8 @@ bin_PROGRAMS=		holtz
 holtz_SOURCES= \
 	util.cpp util.hpp \
 	wxmain.cpp wxmain.hpp \
-	wxholtz.cpp wxholtz.hpp
-#network.cpp network.hpp
-# bgp.cpp  bgp.hpp
+	wxholtz.cpp wxholtz.hpp \
+	line_net.cpp line_net.hpp
 
 holtz_LDADD = dvonn/libdvonn.a zertz/libzertz.a
 

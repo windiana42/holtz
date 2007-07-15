@@ -78,6 +78,9 @@ namespace zertz
     virtual bool TransferDataFromWindow();
     wxWizardPage *get_last_board_page() const;
 
+    void on_continue_game_choice  ( wxCommandEvent& event );
+    void on_new_game_choice	  ( wxCommandEvent& event );
+
     void restore();		// display stored game state
   private:
     Game_Dialog &game_dialog;
@@ -268,6 +271,7 @@ namespace zertz
     Load_Board_Page     load_board_page;
     Player_Page		player_page;
     wxWizardPageSimple  dummy;
+    wxSize best_size;
 
     friend class Setup_Manager_Page;
     friend class Board_Page;

@@ -298,6 +298,16 @@ namespace dvonn
     return true;
   }
 
+  void Board_Page::on_new_game_choice	   ( wxCommandEvent& /*event*/ )
+  {
+    new_game->SetValue(true);
+  }
+
+  void Board_Page::on_continue_game_choice ( wxCommandEvent& /*event*/ )
+  {
+    continue_game->SetValue(true);
+  }
+
   void Board_Page::restore()	// display stored game state
   {
     changes = true;		// take first setting as change
@@ -330,7 +340,9 @@ namespace dvonn
 
   BEGIN_EVENT_TABLE(Board_Page, wxWizardPage)				
     // EVT_TEXT_ENTER(DIALOG_BOARD,	Board_Page::on_player_name)	//**/
-  END_EVENT_TABLE()								//**/
+    EVT_RADIOBOX(DIALOG_NEW_GAME_CHOICE, Board_Page::on_new_game_choice)	   //**/
+    EVT_RADIOBOX(DIALOG_CONTINUE_GAME_CHOICE, Board_Page::on_continue_game_choice) //**/
+  END_EVENT_TABLE()								   //**/
 
   // ----------------------------------------------------------------------------
   // Custom_Board_Setup_Panel
@@ -1676,22 +1688,24 @@ namespace dvonn
       game_settings( gui_manager.get_game_settings() )
   {
     wxBoxSizer *top_sizer = new wxBoxSizer( wxVERTICAL );
-
+    /*
     wxString orientation_choices[2];
     orientation_choices[0] = wxString(_("Horizontal"));
     orientation_choices[1] = wxString(_("Vertical"));
     orientation_choice = new wxRadioBox( this, -1, _("Board orientation"), wxDefaultPosition,
-					 wxDefaultSize, 2, orientation_choices, 1, wxRA_SPECIFY_ROWS );
+					 wxDefaultSize, 2, orientation_choices, 1, 
+					 wxRA_SPECIFY_ROWS );
     top_sizer->Add( orientation_choice, 0, wxEXPAND | wxALL, 10  );
-
+    */
     show_coordinates = new wxCheckBox( this, -1, _("Show field coordinates") );
     top_sizer->Add( show_coordinates, 0, wxALL, 10 );
-
+    /*
     wxString arrangement_choices[2];
     arrangement_choices[0] = wxString(_("Board and common stones left"));
     arrangement_choices[1] = wxString(_("Board left all stones right"));
     arrangement_choice = new wxRadioBox( this, -1, _("Panels arrangement"), wxDefaultPosition,
-					 wxDefaultSize, 2, arrangement_choices, 1, wxRA_SPECIFY_COLS );
+					 wxDefaultSize, 2, arrangement_choices, 1, 
+					 wxRA_SPECIFY_COLS );
     top_sizer->Add( arrangement_choice, 0, wxEXPAND | wxALL, 10  );
 
     multiple_common_stones = new wxCheckBox( this, -1, _("Display all common stones individually") );
@@ -1699,9 +1713,9 @@ namespace dvonn
 
     multiple_player_stones = new wxCheckBox( this, -1, _("Display all player stones individually") );
     top_sizer->Add( multiple_player_stones, 0, wxALL, 10 );
-
+    */
     // set help texts
-    orientation_choice->SetHelpText(_("Select the orientation in which the board is displayed on-screen."));
+    //orientation_choice->SetHelpText(_("Select the orientation in which the board is displayed on-screen."));
     show_coordinates->SetHelpText(_("If checked, the field coordinates (a1...g4) will be displayed next to the board. This can be useful for discussing the game."));
 
     SetAutoLayout( true );
@@ -1770,8 +1784,9 @@ namespace dvonn
 
   void Display_Setup_Page::restore_settings()
   {
-    orientation_choice->SetSelection( dialog->game_settings.board_settings.rotate_board ? 1 : 0 );
+    //orientation_choice->SetSelection( dialog->game_settings.board_settings.rotate_board ? 1 : 0 );
     show_coordinates->SetValue( dialog->game_settings.board_settings.show_coordinates );
+    /*
     switch( dialog->game_settings.arrangement )
     {
       case Game_Panel::Settings::arrange_standard:     arrangement_choice->SetSelection(0); break;
@@ -1779,18 +1794,22 @@ namespace dvonn
     }
     multiple_common_stones->SetValue( dialog->game_settings.common_stone_settings.multiple_stones );
     //multiple_player_stones->SetValue( dialog->game_settings.player_settings.stone_settings.multiple_stones );
+    */
   }
 
   void Display_Setup_Page::apply()
   {
+    /*
     dialog->game_settings.board_settings.rotate_board 
       = orientation_choice->GetSelection() == 0 ? false : true;
     dialog->game_settings.common_stone_settings.rotate_stones          
       = dialog->game_settings.board_settings.rotate_board;
+    */
     //dialog->game_settings.player_settings.stone_settings.rotate_stones 
     //  = dialog->game_settings.board_settings.rotate_board;
     dialog->game_settings.board_settings.show_coordinates              
       = show_coordinates->GetValue();
+    /*
     switch( arrangement_choice->GetSelection() )
     {
       case 0: dialog->game_settings.arrangement = Game_Panel::Settings::arrange_standard; break;
@@ -1800,6 +1819,7 @@ namespace dvonn
       = multiple_common_stones->GetValue();
     //dialog->game_settings.player_settings.stone_settings.multiple_stones 
     //  = multiple_player_stones->GetValue();
+    */
   }
 
   BEGIN_EVENT_TABLE(Display_Setup_Page, wxPanel)			
@@ -2090,11 +2110,15 @@ namespace dvonn
     top_sizer->Add( notebook_sizer, 0, wxEXPAND );
 
     wxBoxSizer *button_sizer = new wxBoxSizer( wxHORIZONTAL );
-    button_sizer->Add( new wxButton(this, DIALOG_OK,      _("OK"),      wxDefaultPosition), 0, wxALL, 10 );
+    button_sizer->Add( new wxButton(this, DIALOG_OK,      _("OK"),      wxDefaultPosition), 
+		       0, wxALL, 10 );
     SetDefaultItem(FindWindow(DIALOG_OK));
-    button_sizer->Add( new wxButton(this, DIALOG_APPLY,   _("Apply"),   wxDefaultPosition), 0, wxALL, 10 );
-    button_sizer->Add( new wxButton(this, DIALOG_RESTORE, _("Restore"), wxDefaultPosition), 0, wxALL, 10 );
-    button_sizer->Add( new wxButton(this, DIALOG_CANCEL,  _("Cancel"),  wxDefaultPosition), 0, wxALL, 10 );
+    button_sizer->Add( new wxButton(this, DIALOG_APPLY,   _("Apply"),   wxDefaultPosition), 
+		       0, wxALL, 10 );
+    button_sizer->Add( new wxButton(this, DIALOG_RESTORE, _("Restore"), wxDefaultPosition), 
+		       0, wxALL, 10 );
+    button_sizer->Add( new wxButton(this, DIALOG_CANCEL,  _("Cancel"),  wxDefaultPosition), 
+		       0, wxALL, 10 );
 #ifndef __WXMSW__
     button_sizer->Add(new wxContextHelpButton(this), 0, wxALIGN_CENTER | wxALL, 10);
 #endif

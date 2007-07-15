@@ -26,7 +26,7 @@
 #define DEFAULT_DATA_DIR "./"
 #endif
 #ifndef DEFAULT_SKIN_FILE
-#define DEFAULT_SKIN_FILE DEFAULT_DATA_DIR "skins/hex70.zip"
+#define DEFAULT_SKIN_FILE DEFAULT_DATA_DIR "skins/dvonn50.zip"
 #endif
 #ifndef DEFAULT_BEEP_FILE
 #define DEFAULT_BEEP_FILE DEFAULT_DATA_DIR "sounds/beep.wav"
@@ -368,7 +368,7 @@ namespace dvonn
 
     Mouse_Handler mouse_handler;
 
-#if wxUSE_WAVE
+#if wxUSE_SOUND
     wxSound sound_beep;
 #endif
   };

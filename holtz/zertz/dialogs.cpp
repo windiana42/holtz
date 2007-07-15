@@ -93,7 +93,8 @@ namespace zertz
 	  if( changed_setup_manager ) // is setup_manager created in this dialog run
 	    delete game_dialog.game_setup_manager;
 	  
-	  game_dialog.game_setup_manager = new Standalone_Game_Setup_Manager( game_dialog.game_manager );
+	  game_dialog.game_setup_manager 
+	    = new Standalone_Game_Setup_Manager( game_dialog.game_manager );
 	  changed_setup_manager = true;
 	}
 	else if( network_server->GetValue() )
@@ -143,7 +144,8 @@ namespace zertz
 	    }
 	    else
 	    {
-	      wxMessageBox(_("Connection to Server failed"), _("Network Message"), wxOK | wxICON_ERROR,this);
+	      wxMessageBox(_("Connection to Server failed"), _("Network Message"), 
+			   wxOK | wxICON_ERROR,this);
 	      return false;
 	    }
 	  }
@@ -202,14 +204,17 @@ namespace zertz
     new_game_choices[1] = wxString(_("Tournament Rules"));
     new_game_choices[2] = wxString(_("Custom"));
     new_game_choices[3] = wxString(_("Rules of last game"));
-    new_game_choice = new wxRadioBox( this, -1, _("Rules for new game"), wxDefaultPosition,
+    new_game_choice = new wxRadioBox( this, DIALOG_NEW_GAME_CHOICE, 
+				      _("Rules for new game"), wxDefaultPosition,
 				      wxDefaultSize, 4, new_game_choices, 2, wxRA_SPECIFY_COLS );
 
     wxString continue_game_choices[2];
     continue_game_choices[0] = wxString(_("Continue last game"));
     continue_game_choices[1] = wxString(_("Load game"));
-    continue_game_choice = new wxRadioBox( this, -1, _("Which game to continue"), wxDefaultPosition,
-					   wxDefaultSize, 2, continue_game_choices, 1, wxRA_SPECIFY_COLS );
+    continue_game_choice = new wxRadioBox( this, DIALOG_CONTINUE_GAME_CHOICE, 
+					   _("Which game to continue"), wxDefaultPosition,
+					   wxDefaultSize, 2, continue_game_choices, 1, 
+					   wxRA_SPECIFY_COLS );
 
     wxBoxSizer *top_sizer = new wxBoxSizer( wxVERTICAL );
     top_sizer->Add( new_game, 0, wxALL, 10 );
@@ -287,6 +292,16 @@ namespace zertz
     return true;
   }
 
+  void Board_Page::on_new_game_choice	   ( wxCommandEvent& /*event*/ )
+  {
+    new_game->SetValue(true);
+  }
+
+  void Board_Page::on_continue_game_choice ( wxCommandEvent& /*event*/ )
+  {
+    continue_game->SetValue(true);
+  }
+
   void Board_Page::restore()	// display stored game state
   {
     changes = true;		// take first setting as change
@@ -312,8 +327,10 @@ namespace zertz
   }
 
   BEGIN_EVENT_TABLE(Board_Page, wxWizardPage)				
-    // EVT_TEXT_ENTER(DIALOG_BOARD,	Board_Page::on_player_name)	//**/
-  END_EVENT_TABLE()								//**/
+    // EVT_TEXT_ENTER(DIALOG_BOARD,	Board_Page::on_player_name)		   //**/
+    EVT_RADIOBOX(DIALOG_NEW_GAME_CHOICE, Board_Page::on_new_game_choice)	   //**/
+    EVT_RADIOBOX(DIALOG_CONTINUE_GAME_CHOICE, Board_Page::on_continue_game_choice) //**/
+  END_EVENT_TABLE()								   //**/
 
   // ----------------------------------------------------------------------------
   // Custom_Board_Setup_Panel
@@ -1099,6 +1116,7 @@ namespace zertz
       item_player[item1] = player0;
 
       player_list->SetSelection(item1);
+      player_list->Refresh();
     }
   }
 
@@ -1123,6 +1141,7 @@ namespace zertz
       item_player[item1] = player0;
 
       player_list->SetSelection(item1);
+      player_list->Refresh();
     }
   }
 
@@ -1294,7 +1313,8 @@ namespace zertz
     return ret;
   }
 
-  Game_Dialog::Game_Dialog( wxWindow *parent, Game_Manager &game_manager, WX_GUI_Manager &gui_manager )
+  Game_Dialog::Game_Dialog( wxWindow *parent, Game_Manager &game_manager, 
+			    WX_GUI_Manager &gui_manager )
     : game_manager(game_manager), gui_manager(gui_manager),
       game( Standard_Ruleset() ), game_setup_manager(0),
       wizard( new wxWizard( &gui_manager.get_game_window(), -1, _("Setup game") ) ),
@@ -1305,12 +1325,12 @@ namespace zertz
       player_page( wizard, *this ),
       dummy( wizard )
   {
-    wxSize size = bounding_size( setup_manager_page.GetBestSize(), board_page.GetBestSize() );
-    size = bounding_size( size, custom_board_page.GetBestSize() );
-    size = bounding_size( size, custom_board_page.GetBestSize() );
-    size = bounding_size( size, load_board_page.GetBestSize() );
-    size = bounding_size( size, player_page.GetBestSize() );
-    wizard->SetPageSize(size);
+    best_size = bounding_size( setup_manager_page.GetBestSize(), board_page.GetBestSize() );
+    best_size = bounding_size( best_size, custom_board_page.GetBestSize() );
+    best_size = bounding_size( best_size, custom_board_page.GetBestSize() );
+    best_size = bounding_size( best_size, load_board_page.GetBestSize() );
+    best_size = bounding_size( best_size, player_page.GetBestSize() );
+    wizard->SetPageSize(best_size);
   }
 
   Game_Dialog::~Game_Dialog()
@@ -1333,6 +1353,7 @@ namespace zertz
     setup_manager_page.restore();
     // other pages are initialized after setup_manager change
 
+    //wizard->SetPageSize(best_size); doesn't help
     if( wizard->RunWizard(&setup_manager_page) )
     {
       if( setup_manager_page.changed_setup_manager )

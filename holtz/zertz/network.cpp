@@ -548,7 +548,7 @@ namespace zertz
     return wait_for_answer;
   }
 
-  Game_Setup_Manager::Answer_Type Network_Manager::ask_undo_move() // request to play new game
+  Game_Setup_Manager::Answer_Type Network_Manager::ask_undo_moves(int n) // request to play new game
   {
     //!!! implement this !!!
     return deny;

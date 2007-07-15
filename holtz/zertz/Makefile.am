@@ -6,5 +6,5 @@ libzertz_a_SOURCES = \
 	ai.hpp ai.cpp animations.hpp animations.cpp \
 	dialogs.hpp dialogs.cpp manager.hpp manager.cpp \
 	pbm.hpp pbm.cpp \
-	network.hpp network.cpp
+	network.hpp network.cpp bgp.hpp bgp.cpp
 

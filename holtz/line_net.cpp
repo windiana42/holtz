@@ -32,7 +32,7 @@ namespace holtz
   // ----------------------------------------------------------------------------
 
   Line_Network::Line_Network( wxSocketBase *socket, Line_Network_Handler *handler, bool auto_flush )
-    : line_handler(handler), socket(socket), connection_state(none), 
+    : connection_state(none), line_handler(handler), socket(socket),  
       destroyed(false), auto_flush(auto_flush)
   {
     Connect( -1, wxEVT_SOCKET, 
