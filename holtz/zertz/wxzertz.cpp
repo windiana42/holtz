@@ -1,0 +1,1838 @@
+/*
+ * wxzertz.cpp
+ * 
+ * GUI implementation
+ * 
+ * Copyright (c) 2003 by Martin Trautmann (martintrautmann@gmx.de) 
+ * 
+ * This file may be distributed and/or modified under the terms of the 
+ * GNU General Public License version 2 as published by the Free Software 
+ * Foundation. 
+ * 
+ * This file is provided AS IS with NO WARRANTY OF ANY KIND, INCLUDING THE
+ * WARRANTY OF DESIGN, MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
+ * 
+ */
+
+// ============================================================================
+// declarations
+// ============================================================================
+
+// compiled in picture set
+//#define PURIST_50
+//#define HEX_50
+#define HEX_70
+//#define HEX_100
+//#define EINS
+
+// ----------------------------------------------------------------------------
+// headers
+// ----------------------------------------------------------------------------
+
+#include "wxzertz.hpp"
+#include "zertz.hpp"
+#include "dialogs.hpp"
+#include "ai.hpp"
+#include "util.hpp"
+#include "pbm.hpp"
+#include "wxmain.hpp"
+
+#include <wx/zipstrm.h>
+#include <wx/image.h>
+#include <wx/fileconf.h>
+#include <wx/dcmemory.h>
+#include <wx/filesys.h>
+#include <wx/fs_zip.h>
+#include <wx/html/helpctrl.h>
+#include <wx/cshelp.h>
+/*
+#ifndef __OLD_GCC__
+  #include <sstream>
+#endif
+*/
+#include <fstream>
+#include <list>
+#include <assert.h>
+
+// wx html help
+#if !wxUSE_HTML
+#error "wxHTML is required for the wxWindows HTML help system."
+#endif
+
+namespace zertz
+{
+  using namespace holtz; 
+
+  // ----------------------------------------------------------------------------
+  // resources
+  // ----------------------------------------------------------------------------
+
+#ifdef PURIST_50
+  // --------------------
+  // purist pictures 50px
+
+  // field pictures
+#include "skins/purist/field_removed.xpm"
+#include "skins/purist/field_empty.xpm"
+#include "skins/purist/stone_white.xpm"
+#include "skins/purist/stone_grey.xpm"
+#include "skins/purist/stone_black.xpm"
+#include "skins/purist/click_mark.xpm"
+#include "skins/purist/field_mark.xpm"
+#include "skins/purist/stone_mark.xpm"
+#include "skins/purist/background.xpm"
+  // field dimensions
+#include "skins/purist/skin.hpp"
+#endif
+
+#ifdef HEX_50
+  // -----------------------
+  // hexagonal pictures 50px
+
+  // field pictures
+#include "skins/hex50/field_removed.xpm"
+#include "skins/hex50/field_empty.xpm"
+#include "skins/hex50/stone_white.xpm"
+#include "skins/hex50/stone_grey.xpm"
+#include "skins/hex50/stone_black.xpm"
+#include "skins/hex50/click_mark.xpm"
+#include "skins/hex50/field_mark.xpm"
+#include "skins/hex50/stone_mark.xpm"
+#include "skins/hex50/background.xpm"
+  // field dimensions
+#include "skins/hex50/skin.hpp"
+#endif
+
+#ifdef HEX_70
+  // -----------------------
+  // hexagonal pictures 70px
+
+  // field pictures
+#include "skins/hex70/field_removed.xpm"
+#include "skins/hex70/field_empty.xpm"
+#include "skins/hex70/stone_white.xpm"
+#include "skins/hex70/stone_grey.xpm"
+#include "skins/hex70/stone_black.xpm"
+#include "skins/hex70/click_mark.xpm"
+#include "skins/hex70/field_mark.xpm"
+#include "skins/hex70/stone_mark.xpm"
+#include "skins/hex70/background.xpm"
+  // field dimensions
+#include "skins/hex70/skin.hpp"
+#endif
+
+#ifdef HEX_100
+  // -----------------------
+  // hexagonal pictures 100px
+
+  // field pictures
+#include "skins/hex100/field_removed.xpm"
+#include "skins/hex100/field_empty.xpm"
+#include "skins/hex100/stone_white.xpm"
+#include "skins/hex100/stone_grey.xpm"
+#include "skins/hex100/stone_black.xpm"
+#include "skins/hex100/click_mark.xpm"
+#include "skins/hex100/field_mark.xpm"
+#include "skins/hex100/stone_mark.xpm"
+#include "skins/hex100/background.xpm"
+  // field dimensions
+#include "skins/hex100/skin.hpp"
+#endif
+
+#ifdef EINS
+  // -----------------------
+  // hexagonal pictures 100px
+
+  // field pictures
+#include "skins/eins/field_removed.xpm"
+#include "skins/eins/field_empty.xpm"
+#include "skins/eins/stone_white.xpm"
+#include "skins/eins/stone_grey.xpm"
+#include "skins/eins/stone_black.xpm"
+#include "skins/eins/click_mark.xpm"
+#include "skins/eins/field_mark.xpm"
+#include "skins/eins/stone_mark.xpm"
+#include "skins/eins/background.xpm"
+  // field dimensions
+#include "skins/eins/skin.hpp"
+#endif
+
+  // ============================================================================
+  // implementation
+  // ============================================================================
+
+  // ----------------------------------------------------------------------------
+  // Bitmap_Handler
+  // ----------------------------------------------------------------------------
+
+  void Bitmap_Handler::setup_field_stone_bitmaps()
+  {
+    std::map<Stones::Stone_Type,wxBitmap>::iterator stone_bitmap;
+    std::pair<Field_State_Type,wxBitmap> field_pair;
+    for( stone_bitmap =  normal.stone_bitmaps.begin();
+	 stone_bitmap != normal.stone_bitmaps.end(); ++stone_bitmap )
+    {
+      const Stones::Stone_Type &stone_type = stone_bitmap->first;
+
+      wxImage field_stone_image (normal.field_bitmaps[field_empty].ConvertToImage());
+      wxImage stone_image (stone_bitmap->second.ConvertToImage());
+      unsigned char *field_stone_data = field_stone_image.GetData();
+      unsigned char *stone_data       = stone_image.GetData();
+      unsigned char mask_colour[3];
+      mask_colour[0] = stone_image.GetMaskRed();
+      mask_colour[1] = stone_image.GetMaskGreen();
+      mask_colour[2] = stone_image.GetMaskBlue();
+      int min_width = field_stone_image.GetWidth() < stone_image.GetWidth() ? 
+	field_stone_image.GetWidth() : stone_image.GetWidth();
+      int min_height = field_stone_image.GetHeight() < stone_image.GetHeight() ? 
+	field_stone_image.GetHeight() : stone_image.GetHeight();
+
+      for( int x = 0; x < min_width; ++x )
+        for( int y = 0; y < min_height; ++y )
+	{
+	  bool masked = true;
+	  for( int c = 0; c < 3; ++c )
+	  {
+	    if( mask_colour[c] != stone_data[(x+y*stone_image.GetWidth())*3 + c] )
+	    {
+	      masked = false;
+	      break;
+	    }
+	  }
+	  if( !masked )
+	  {
+	    for( int c = 0; c < 3; ++c )
+	    {
+	      field_stone_data[(x+y*field_stone_image.GetWidth())*3 + c] = 
+		stone_data[(x+y*stone_image.GetWidth())*3 + c];
+	    }
+	  }
+	}
+      Field_State_Type field_type = Field_State_Type(stone_type);
+      assert( Board::is_stone( field_type ) );
+      normal.field_bitmaps[field_type] = wxBitmap(field_stone_image);
+
+      field_stone_image.Destroy();
+      stone_image.Destroy();
+    }
+  }
+
+  void Bitmap_Handler::setup_rotated_bitmaps()
+  {
+    if( !dimensions.rotation_symmetric )
+    {
+      // rotate field_bitmaps
+      rotated.field_bitmaps.clear();
+      std::map<Field_State_Type,wxBitmap>::iterator field_bitmap;
+      for( field_bitmap =  normal.field_bitmaps.begin();
+	   field_bitmap != normal.field_bitmaps.end(); ++field_bitmap )
+      {
+	wxBitmap &normal_bitmap = field_bitmap->second;
+	const Field_State_Type &type = field_bitmap->first;
+	wxImage normal_image = normal_bitmap.ConvertToImage().Rotate90( false/*counter clockwise*/ );
+	rotated.field_bitmaps.insert
+	  (std::pair<Field_State_Type,wxBitmap>(type, wxBitmap(normal_image)));
+      }
+
+      // rotate stone_bitmaps
+      rotated.stone_bitmaps.clear();
+      std::map<Stones::Stone_Type,wxBitmap>::iterator stone_bitmap;
+      for( stone_bitmap =  normal.stone_bitmaps.begin();
+	   stone_bitmap != normal.stone_bitmaps.end(); ++stone_bitmap )
+      {
+	wxBitmap &normal_bitmap = stone_bitmap->second;
+	const Stones::Stone_Type &type = stone_bitmap->first;
+	wxImage normal_image = normal_bitmap.ConvertToImage().Rotate90( false/*counter clockwise*/ );
+	rotated.stone_bitmaps.insert
+	  (std::pair<Stones::Stone_Type,wxBitmap>(type, wxBitmap(normal_image)));
+      }
+
+      // rotate marks
+      rotated.click_mark 
+	= wxBitmap(normal.click_mark.ConvertToImage().Rotate90(false/*counter clockwise*/));
+      rotated.field_mark 
+	= wxBitmap(normal.field_mark.ConvertToImage().Rotate90(false/*counter clockwise*/));
+      rotated.stone_mark 
+	= wxBitmap(normal.stone_mark.ConvertToImage().Rotate90(false/*counter clockwise*/));
+      rotated.background 
+	= wxBitmap(normal.background.ConvertToImage().Rotate90(false/*counter clockwise*/));
+    }
+  }
+  
+  // ----------------------------------------------------------------------------
+  // Board_Panel
+  // ----------------------------------------------------------------------------
+
+  Board_Panel::Settings::Settings( bool rotate_board, bool show_coordinates, wxFont coord_font )
+    : rotate_board(rotate_board), show_coordinates(show_coordinates), coord_font(coord_font)
+  {
+    if( coord_font == wxNullFont )
+    {
+      this->coord_font = wxFont(16,wxDEFAULT,wxNORMAL,wxBOLD);
+    }
+  }
+
+  Board_Panel::Board_Panel( Settings &settings, Game_Manager &game_manager, 
+			    WX_GUI_Manager &gui_manager, Sequence_Generator* &sg )
+    : settings(settings), game_manager(game_manager), gui_manager(gui_manager), 
+      bitmap_handler(gui_manager.get_bitmap_handler()), 
+      board_x(bitmap_handler.dimensions.board_x_offset), 
+      board_y(bitmap_handler.dimensions.board_y_offset),
+      sequence_generator( sg )     
+  {
+    if( settings.show_coordinates )
+    {
+      if( settings.rotate_board )
+      {
+	if( bitmap_handler.dimensions.rotation_symmetric )
+	  board_y += bitmap_handler.dimensions.field_width;
+	else
+	  board_y += bitmap_handler.dimensions.field_height;
+      }
+      else
+	board_x += bitmap_handler.dimensions.field_width;
+    }
+  }
+
+  void Board_Panel::calc_dimensions()
+  {
+    Game &game = gui_manager.get_display_game();
+    board_x = bitmap_handler.dimensions.board_x_offset;
+    board_y = bitmap_handler.dimensions.board_y_offset;
+    if( settings.show_coordinates )
+    {
+      if( settings.rotate_board )
+      {
+	if( bitmap_handler.dimensions.rotation_symmetric )
+	  board_y += bitmap_handler.dimensions.field_width;
+	else
+	  board_y += bitmap_handler.dimensions.field_height;
+      }
+      else
+	board_x += bitmap_handler.dimensions.field_width;
+    }
+
+    if( settings.rotate_board )
+    {
+      if( bitmap_handler.dimensions.rotation_symmetric )
+      {
+	width = bitmap_handler.dimensions.field_packed_width * (game.board.get_y_size()-1) + 
+	  bitmap_handler.dimensions.field_width + board_x; 
+	height = bitmap_handler.dimensions.field_height * game.board.get_x_size() +
+	  bitmap_handler.dimensions.field_height / 2 + board_y; 
+	
+	if( settings.show_coordinates )
+	  height += bitmap_handler.dimensions.field_height;
+      }
+      else
+      {
+	width = bitmap_handler.dimensions.field_packed_height * (game.board.get_y_size()-1) + 
+	  bitmap_handler.dimensions.field_height + board_x; 
+	height = bitmap_handler.dimensions.field_width * game.board.get_x_size() +
+	  bitmap_handler.dimensions.field_width / 2 + board_y; 
+	
+	if( settings.show_coordinates )
+	  height += bitmap_handler.dimensions.field_width;
+      }
+    }
+    else
+    {
+      width = bitmap_handler.dimensions.field_width * game.board.get_x_size() + board_x
+	+ bitmap_handler.dimensions.field_width / 2;
+      height = bitmap_handler.dimensions.field_packed_height * (game.board.get_y_size()-1)  
+	+ bitmap_handler.dimensions.field_height + board_y;
+
+      if( settings.show_coordinates )
+	width += bitmap_handler.dimensions.field_width;
+    }
+  }
+
+  void Board_Panel::draw( wxDC &dc ) const
+  {
+    Game &game = gui_manager.get_display_game();
+    Bitmap_Set &bitmap_set = get_bitmap_set();
+
+    for( int fy = 0; fy < game.board.get_y_size(); ++fy )
+    {
+      for( int fx = 0; fx < game.board.get_x_size(); ++fx )
+      {
+	std::pair<int,int> pos = get_field_pos( fx, fy );
+
+	dc.DrawBitmap( bitmap_set.field_bitmaps[ game.board.field[fx][fy] ], 
+		       pos.first,  pos.second, true );
+      }
+    }
+  }
+  void Board_Panel::draw_text( wxDC &dc ) const 
+  {
+    if( settings.show_coordinates )
+    {
+      Game &game = gui_manager.get_display_game();
+      dc.SetTextForeground(*wxBLACK/*settings.coordinate_font_colour*/);
+      dc.SetFont( settings.coord_font );
+      for( int fy = 0; fy < game.board.get_y_size(); ++fy )
+      {
+	for( int fx = 0; fx < game.board.get_x_size(); ++fx )
+	{
+	  if( !Board::is_removed(game.board.field[fx][fy]) )
+	  {
+	    Field_Pos pos;
+	    pos.x = fx;
+	    pos.y = fy;
+	    std::string coord_name = game.ruleset->get_coordinate_translator()->get_field_name( pos );
+	    wxCoord w,h;
+	    dc.GetTextExtent( str_to_wxstr(coord_name), &w, &h );
+	    std::pair<int,int> field = get_field_pos( fx, fy );
+	    int coord_x, coord_y;
+	    if( settings.rotate_board )
+	    {
+	      if( bitmap_handler.dimensions.rotation_symmetric )
+	      {
+		coord_x = field.first  + (bitmap_handler.dimensions.field_width      - w) / 2 +
+		  bitmap_handler.dimensions.field_x;
+		coord_y = field.second + (bitmap_handler.dimensions.field_height * 3 - h) / 2 +
+		  bitmap_handler.dimensions.field_y;
+	      }
+	      else
+	      {
+		coord_x = field.first  + (bitmap_handler.dimensions.field_height    - w) / 2 +
+		  bitmap_handler.dimensions.field_y;
+		coord_y = field.second + (bitmap_handler.dimensions.field_width * 3 - h) / 2 +
+		  bitmap_handler.dimensions.field_x;
+	      }
+	    }
+	    else
+	    {
+	      coord_x = field.first  - (bitmap_handler.dimensions.field_width  + w) / 2 +
+		bitmap_handler.dimensions.field_x;
+	      coord_y = field.second + (bitmap_handler.dimensions.field_height - h) / 2 +
+		bitmap_handler.dimensions.field_y;
+	    }
+	    dc.DrawText( str_to_wxstr(coord_name), coord_x, coord_y  );
+	    break;
+	  }
+	}      
+	for( int fx2 = game.board.get_x_size() - 1; fx2 >= 0; --fx2 )
+	{
+	  if( !Board::is_removed(game.board.field[fx2][fy]) )
+	  {
+	    Field_Pos pos;
+	    pos.x = fx2;
+	    pos.y = fy;
+	    std::string coord_name = game.ruleset->get_coordinate_translator()->get_field_name( pos );
+	    wxCoord w,h;
+	    dc.GetTextExtent( str_to_wxstr(coord_name), &w, &h );
+	    std::pair<int,int> field = get_field_pos( fx2, fy );
+	    int coord_x, coord_y;
+	    if( settings.rotate_board )
+	    {
+	      if( bitmap_handler.dimensions.rotation_symmetric )
+	      {
+		coord_x = field.first  + (bitmap_handler.dimensions.field_width  - w) / 2 +
+		  bitmap_handler.dimensions.field_x;
+		coord_y = field.second - (bitmap_handler.dimensions.field_height + h) / 2 +
+		  bitmap_handler.dimensions.field_y;
+	      }
+	      else
+	      {
+		coord_x = field.first  + (bitmap_handler.dimensions.field_height - w) / 2 +
+		  bitmap_handler.dimensions.field_y;
+		coord_y = field.second - (bitmap_handler.dimensions.field_width  + h) / 2 +
+		  bitmap_handler.dimensions.field_x;
+	      }
+	    }
+	    else
+	    {
+	      coord_x = field.first  + (bitmap_handler.dimensions.field_width * 3  - w) / 2 +
+		bitmap_handler.dimensions.field_x;
+	      coord_y = field.second + (bitmap_handler.dimensions.field_height     - h) / 2 +
+		bitmap_handler.dimensions.field_y;
+	    }
+	    dc.DrawText( str_to_wxstr(coord_name), coord_x, coord_y  );
+	    break;
+	  }
+	}
+      }
+    }
+  }
+
+  void Board_Panel::on_click( int click_x, int click_y ) const
+  {
+    if( sequence_generator )
+    {
+      wxString msg;
+
+      Field_Pos pos = get_field( click_x, click_y );
+      if( pos.x >= 0 )		// valid position
+      {
+	Sequence_Generator::Sequence_State state;
+	state = sequence_generator->add_click( pos );
+	
+	switch( state )
+	{
+	  case Sequence_Generator::finished:
+	    gui_manager.set_mark(-1,-1);
+	    sequence_generator = 0;
+	    game_manager.continue_game();
+	    break;
+	  case Sequence_Generator::hold_white:
+	  case Sequence_Generator::hold_grey:
+	  case Sequence_Generator::hold_black:
+	    {
+	      std::pair<int,int> coord = get_field_pos( pos.x, pos.y );
+	      gui_manager.set_mark( coord.first, coord.second );
+	      gui_manager.show_user_information( true );
+	    }
+	  break;
+	  case Sequence_Generator::another_click:
+	    gui_manager.set_mark(-1,-1);
+	    gui_manager.show_user_information( true );
+	    break;
+	  case Sequence_Generator::fatal_error:
+	    msg.Printf( _("Fatal Error!") );
+	    gui_manager.report_error( msg, _("Click Error") );
+	    break;
+	  case Sequence_Generator::error_require_knock_out:
+	    gui_manager.show_status_text(_("You must do the knock out move!"));
+	    break;
+	  case Sequence_Generator::error_require_set:
+	    gui_manager.show_status_text(_("You have to set a stone!"));
+	    break;
+	  case Sequence_Generator::error_require_remove:
+	    gui_manager.show_status_text(_("You have to remove an empty border field!"));
+	    break;
+	  case Sequence_Generator::error_can_t_remove:
+	    gui_manager.show_status_text(_("Field can't be removed without moving another stone!"));
+	    break;
+	  case Sequence_Generator::error_can_t_move_here:
+	    gui_manager.show_status_text(_("You can't move to that field!"));
+	    break;
+	  case Sequence_Generator::error_can_t_set_here:
+	    gui_manager.show_status_text(_("Please set the stone on an empty field!"));
+	    break;
+	  case Sequence_Generator::error_must_pick_common_stone:
+	    gui_manager.show_status_text(_("You must pick a common stone!"));
+	    break;
+	  case Sequence_Generator::error_wrong_player:
+	    gui_manager.show_status_text(_("Its not the turn of that player!"));
+	    break;
+	  case Sequence_Generator::error_impossible_yet:
+	    gui_manager.show_status_text(_("You can't do that at the moment!"));
+	    break;
+	  case Sequence_Generator::error_must_knock_out_with_same_stone:
+	    gui_manager.show_status_text(_("You must knock out once more with the same stone!"));
+	    break;
+	    /*
+	      default:
+	      msg.Printf( _("Click impossible: %d"), state );
+	  
+	      wxMessageBox( msg, _("Click"), wxOK | wxICON_INFORMATION, 0 );
+	    */
+	}
+      }
+    }
+  }
+
+  Field_Pos Board_Panel::get_field( int abs_x, int abs_y ) const
+  {
+    Game &game = gui_manager.get_display_game();
+
+    int half_diff, offset, field_width, row;
+    int rel_x, rel_y;
+
+    if( settings.rotate_board )
+    {
+      // swap x-y coordinates
+      rel_x = abs_y - y - board_y;
+      rel_y = abs_x - x - board_x;
+      // invert y-axis => rotated board
+      int board_size_y;
+      if( bitmap_handler.dimensions.rotation_symmetric )
+      {
+	board_size_y = bitmap_handler.dimensions.field_height * game.board.get_x_size() 
+	  + bitmap_handler.dimensions.field_height / 2;
+
+	half_diff = (bitmap_handler.dimensions.field_width - 
+		     bitmap_handler.dimensions.field_packed_width) / 2;
+	row = (rel_y - half_diff) / bitmap_handler.dimensions.field_packed_width;
+	offset = (row & 1) ? 0 : bitmap_handler.dimensions.field_height / 2;
+	field_width = bitmap_handler.dimensions.field_height;
+      }
+      else
+      {
+	board_size_y = bitmap_handler.dimensions.field_width * game.board.get_x_size() 
+	  + bitmap_handler.dimensions.field_width / 2;
+
+	half_diff = (bitmap_handler.dimensions.field_height - 
+		     bitmap_handler.dimensions.field_packed_height) / 2;
+	row = (rel_y - half_diff) / bitmap_handler.dimensions.field_packed_height;
+	offset = (row & 1) ? 0 : bitmap_handler.dimensions.field_width / 2;
+	field_width = bitmap_handler.dimensions.field_width;
+      }
+      rel_x = board_size_y - rel_x - 1;
+    }
+    else
+    {
+      rel_x = abs_x - x - board_x;
+      rel_y = abs_y - y - board_y;
+
+      half_diff = (bitmap_handler.dimensions.field_height - 
+		   bitmap_handler.dimensions.field_packed_height) / 2;
+      row = (rel_y - half_diff) / bitmap_handler.dimensions.field_packed_height;
+      offset = (row & 1) ? 0 : bitmap_handler.dimensions.field_width / 2;
+      field_width = bitmap_handler.dimensions.field_width;
+    }
+    
+    
+    if( (rel_x >= offset) && (rel_y >= 0 ) )
+    {
+      int col = (rel_x - offset) / field_width;
+      
+      if( (col >= 0) && (row >= 0) && 
+	  (col < game.board.get_x_size()) && 
+	  (row < game.board.get_y_size()) )
+      {
+	return Field_Pos(col,row);
+      }
+    }
+    return Field_Pos();
+  }
+
+  std::pair<int,int> Board_Panel::get_field_pos( int col, int row ) const
+  {
+    Game &game = gui_manager.get_display_game();
+    int offset;
+
+    if( settings.rotate_board )
+    {
+      if( bitmap_handler.dimensions.rotation_symmetric )
+      {
+	if( row & 1 )		// even row
+	  offset = bitmap_handler.dimensions.field_height / 2;
+	else
+	  offset = 0;
+	int anf_x = x + board_x - bitmap_handler.dimensions.field_x;
+	int anf_y = y + board_y - bitmap_handler.dimensions.field_y + offset;
+
+	// swap x-y and invert y-axis => rotated board
+	int field_y = anf_y
+	  + bitmap_handler.dimensions.field_height * (game.board.get_x_size() - 1 - col);
+	int field_x = anf_x + row*bitmap_handler.dimensions.field_packed_width;
+	return std::pair<int,int>( field_x, field_y );
+      }
+      else
+      {
+	if( row & 1 )		// even row
+	  offset = bitmap_handler.dimensions.field_width / 2;
+	else
+	  offset = 0;
+	int anf_x = x + board_x - bitmap_handler.dimensions.field_y;
+	int anf_y = y + board_y - bitmap_handler.dimensions.field_x + offset;
+
+	// swap x-y and invert y-axis => rotated board
+	int field_y = anf_y
+	  + bitmap_handler.dimensions.field_width * (game.board.get_x_size() - 1 - col);
+	int field_x = anf_x + row*bitmap_handler.dimensions.field_packed_height;
+	return std::pair<int,int>( field_x, field_y );
+      }
+    }
+    else
+    {
+      if( row & 1 )		// even row
+	offset = 0;
+      else
+	offset = bitmap_handler.dimensions.field_width / 2;
+      int anf_x = x + board_x - bitmap_handler.dimensions.field_x + offset;
+      int anf_y = y + board_y - bitmap_handler.dimensions.field_y;
+
+      return std::pair<int,int>( anf_x + col*bitmap_handler.dimensions.field_width, 
+				 anf_y + row*bitmap_handler.dimensions.field_packed_height );
+    }
+  }
+
+  Bitmap_Set &Board_Panel::get_bitmap_set() const
+  {
+    if( settings.rotate_board && !bitmap_handler.dimensions.rotation_symmetric )
+      return bitmap_handler.rotated;
+    else
+      return bitmap_handler.normal;
+  }
+
+  // ----------------------------------------------------------------------------
+  // Stone Panel
+  // ----------------------------------------------------------------------------
+
+  Stone_Panel::Settings::Settings( bool rotate_stones, bool multiple_stones, bool horizontal, 
+				   int max_stones, wxFont stone_font )
+    : rotate_stones(rotate_stones), multiple_stones(multiple_stones), horizontal(horizontal), 
+      max_stones(max_stones), stone_font(stone_font)
+  {
+    if( stone_font == wxNullFont )
+    {
+      this->stone_font = wxFont(16,wxDEFAULT,wxNORMAL,wxBOLD);
+    }
+  }
+
+  Stone_Panel::Stone_Panel( Settings &settings, Stones &stones, Game_Manager &game_manager, 
+			    WX_GUI_Manager &gui_manager,
+			    Sequence_Generator* &sg )
+    : settings(settings), stones(stones), 
+      game_manager(game_manager), gui_manager(gui_manager), 
+      bitmap_handler(gui_manager.get_bitmap_handler()), 
+      sequence_generator(sg)
+  {
+  }
+
+  void Stone_Panel::calc_dimensions()
+  {
+    if( settings.multiple_stones )
+    {
+      width  = bitmap_handler.dimensions.field_width * settings.max_stones;
+      height = 3 * bitmap_handler.dimensions.field_height;
+    }
+    else
+    {
+      width  = 3 * bitmap_handler.dimensions.field_width;
+      height = bitmap_handler.dimensions.field_height;
+    }
+  }
+  
+  void Stone_Panel::draw( wxDC &dc ) const
+  {
+    int stone_type;
+    int y_pos = y, x_pos = x;
+    for( stone_type = Stones::white_stone; stone_type <= Stones::black_stone; ++stone_type )
+    {
+      if( settings.multiple_stones )
+      {
+	int count = stones.stone_count[ Stones::Stone_Type(stone_type) ];
+	if( count > settings.max_stones ) count = settings.max_stones;
+	
+	x_pos = x;
+	int i;
+	for( i = 0; i < count; ++i )
+	{
+	  if( settings.rotate_stones && !bitmap_handler.dimensions.rotation_symmetric )
+	  {
+	    dc.DrawBitmap( bitmap_handler.normal.field_bitmaps[ field_empty ], 
+			   x_pos, y_pos, true );
+	    dc.DrawBitmap( bitmap_handler.rotated.stone_bitmaps[ Stones::Stone_Type(stone_type) ], 
+			   x_pos, y_pos, true );
+	  }
+	  else
+	    dc.DrawBitmap( bitmap_handler.normal.field_bitmaps[ Field_State_Type(stone_type) ], 
+			   x_pos, y_pos, true );
+	  
+	  x_pos += bitmap_handler.dimensions.field_width;
+	}
+	for( ; i < settings.max_stones; ++i )
+	{
+	  dc.DrawBitmap( bitmap_handler.normal.field_bitmaps[ field_removed ], x_pos, y_pos, true );
+	  x_pos += bitmap_handler.dimensions.field_width;
+	}
+      
+	y_pos += bitmap_handler.dimensions.field_height;
+      }
+      else			// display only one stone and write count as text on it
+      {
+	if( settings.rotate_stones && !bitmap_handler.dimensions.rotation_symmetric )
+	{
+	  dc.DrawBitmap( bitmap_handler.normal.field_bitmaps[ field_empty ], 
+			 x_pos, y_pos, true );
+	  dc.DrawBitmap( bitmap_handler.rotated.stone_bitmaps[ Stones::Stone_Type(stone_type) ], 
+			 x_pos, y_pos, true );
+	}
+	else
+	  dc.DrawBitmap( bitmap_handler.normal.field_bitmaps[ Field_State_Type(stone_type) ], 
+			 x_pos, y_pos, true );
+
+	x_pos += bitmap_handler.dimensions.field_width;
+      }
+    }
+  }
+
+  void Stone_Panel::draw_text( wxDC &dc ) const
+  {
+    if( !settings.multiple_stones ) // display only one stone and write count as text on it
+    {
+      int stone_type;
+      int y_pos = y, x_pos = x;
+      for( stone_type = Stones::white_stone; stone_type <= Stones::black_stone; ++stone_type )
+      {
+	int count = stones.stone_count[ Stones::Stone_Type(stone_type) ];
+
+	wxString str;
+	str.Printf(wxT("%d"), count);
+
+	dc.SetTextForeground(*wxRED/*settings.stone_font_colour*/);
+	dc.SetFont( settings.stone_font );
+	wxCoord w,h;
+	dc.GetTextExtent(str,&w,&h);
+
+	dc.DrawText( str, 
+		     x_pos + (bitmap_handler.dimensions.field_width  - w) / 2 +
+		     bitmap_handler.dimensions.field_x, 
+		     y_pos + (bitmap_handler.dimensions.field_height - h) / 2 +
+		     bitmap_handler.dimensions.field_y );
+
+	x_pos += bitmap_handler.dimensions.field_width;
+      }
+    }
+  }
+  
+  void Stone_Panel::on_click( int click_x, int click_y ) const
+  {
+    wxString msg;
+    if( sequence_generator )
+    {
+      std::pair<Stones::Stone_Type,int> clicked_stone = get_stone( click_x, click_y );
+      Stones::Stone_Type &type = clicked_stone.first;
+      int &col = clicked_stone.second;
+
+      if( type != Stones::invalid_stone )
+      {
+	if( col < stones.stone_count[type] )
+	{
+	  Sequence_Generator::Sequence_State state;
+	  state = sequence_generator->add_click_common_stone( type );
+	  
+	  switch( state )
+	  {
+	    case Sequence_Generator::finished:
+	      gui_manager.set_mark(-1,-1);
+	      sequence_generator = 0;
+	      game_manager.continue_game();
+	      break;
+	    case Sequence_Generator::hold_white:
+	    case Sequence_Generator::hold_grey:
+	    case Sequence_Generator::hold_black:
+	    {
+	      std::pair<int,int> coord = get_field_pos( col, type );
+	      gui_manager.set_mark( coord.first, coord.second );
+	      gui_manager.show_user_information( true );
+	    }
+	    break;
+	    case Sequence_Generator::another_click:
+	      gui_manager.set_mark(-1,-1);
+	      gui_manager.show_user_information( true );
+	      break;
+	    case Sequence_Generator::fatal_error:
+	      msg.Printf( _("Fatal Error!") );
+	      gui_manager.report_error( msg, _("Click Error") );
+	      break;
+	    case Sequence_Generator::error_require_knock_out:
+	      gui_manager.show_status_text(_("You must do the knock out move!"));
+	      break;
+	    case Sequence_Generator::error_require_set:
+	      gui_manager.show_status_text(_("You have to set a stone!"));
+	      break;
+	    case Sequence_Generator::error_require_remove:
+	      gui_manager.show_status_text(_("You have to remove an empty border field!"));
+	      break;
+	    case Sequence_Generator::error_can_t_remove:
+	      gui_manager.show_status_text(_("Field can't be removed without moving another stone!"));
+	      break;
+	    case Sequence_Generator::error_can_t_move_here:
+	      gui_manager.show_status_text(_("You can't move to that field!"));
+	      break;
+	    case Sequence_Generator::error_can_t_set_here:
+	      gui_manager.show_status_text(_("Please set the stone on an empty field!"));
+	      break;
+	    case Sequence_Generator::error_must_pick_common_stone:
+	      gui_manager.show_status_text(_("You must pick a common stone!"));
+	      break;
+	    case Sequence_Generator::error_wrong_player:
+	      gui_manager.show_status_text(_("Its not the turn of that player!"));
+	      break;
+	    case Sequence_Generator::error_impossible_yet:
+	      gui_manager.show_status_text(_("You can't do that at the moment!"));
+	      break;
+	    case Sequence_Generator::error_must_knock_out_with_same_stone:
+	      gui_manager.show_status_text(_("You must knock out once more with the same stone!"));
+	      break;
+	      /*
+		default:
+		msg.Printf( _("Click impossible") );
+	    
+		wxMessageBox(msg, _("Click"), wxOK | wxICON_INFORMATION, 0);
+	      */
+	  }
+	}
+      }
+    }
+  }
+
+  std::pair<int,int> Stone_Panel::get_field_pos( int col, Stones::Stone_Type type ) const
+  {
+    if( settings.multiple_stones )
+      return std::pair<int,int>( x + col * bitmap_handler.dimensions.field_width, 
+				 y + (int(type) - 1) * bitmap_handler.dimensions.field_height );
+    else
+      return std::pair<int,int>( x + (int(type) - 1) * bitmap_handler.dimensions.field_width, y );
+  }
+
+  std::pair<int,int> Stone_Panel::get_field_pos( std::pair<Stones::Stone_Type,int> stone ) const
+  {
+    return get_field_pos( stone.second, stone.first );
+  }
+
+  std::pair<Stones::Stone_Type,int> Stone_Panel::get_stone( int cl_x, int cl_y ) const
+  {
+    if( !is_in(cl_x,cl_y) )
+      return std::pair<Stones::Stone_Type,int>(Stones::invalid_stone,-1);
+
+    if( settings.multiple_stones )
+    {
+      int row = (cl_y - y) / bitmap_handler.dimensions.field_height;
+      int col = (cl_x - x) / bitmap_handler.dimensions.field_width;
+
+      if( (row < 0) || (row > 2) || (col < 0) || (col >= settings.max_stones) )
+	return std::pair<Stones::Stone_Type,int>(Stones::invalid_stone,-1);
+
+      return std::pair<Stones::Stone_Type,int>( Stones::Stone_Type(row + 1), col );
+    }
+    else
+    {
+      int type_num = (cl_x - x) / bitmap_handler.dimensions.field_width;
+      return std::pair<Stones::Stone_Type,int>( Stones::Stone_Type(type_num + 1), 0 );
+    }
+  }
+
+  // ----------------------------------------------------------------------------
+  // Player Panel
+  // ----------------------------------------------------------------------------
+
+  Player_Panel::Settings::Settings( const zertz::Stone_Panel::Settings &stone_settings,
+				    wxFont player_font )
+    : stone_settings(stone_settings), player_font( player_font )
+  {
+    if( player_font == wxNullFont )
+    {
+      this->player_font = wxFont(18,wxDEFAULT,wxNORMAL,wxBOLD);
+    }
+  }
+				   
+  
+  Player_Panel::Player_Panel( Settings &settings, Player &player, Game_Manager &game_manager,
+			      WX_GUI_Manager &gui_manager, Sequence_Generator* &sg )
+    : settings(settings), player(player), 
+      game_manager(game_manager), gui_manager(gui_manager), 
+      bitmap_handler(gui_manager.get_bitmap_handler()), 
+      sequence_generator(sg), 
+      stone_panel( settings.stone_settings, player.stones, game_manager, gui_manager, sg ),
+      header_panel( settings, player )
+  {
+    add( &header_panel );
+    Horizontal_Sizer *stone_sizer = new Horizontal_Sizer();
+    stone_sizer->add( new Spacer(bitmap_handler.dimensions.stone_offset,0), true /*deleted by sizer*/ );
+    stone_sizer->add( &stone_panel );
+    add( stone_sizer, true /*deleted by sizer*/ );
+  }
+
+  void Player_Panel::on_click( int cl_x, int cl_y ) const
+  {
+    wxString msg;
+    if( sequence_generator )
+    {
+      std::pair<Stones::Stone_Type,int> clicked_stone = stone_panel.get_stone( cl_x, cl_y );
+      if( clicked_stone.first != Stones::invalid_stone )
+      {
+	Stones::Stone_Type type = clicked_stone.first;
+
+	if( clicked_stone.second < player.stones.stone_count[type] )
+	{
+	  Sequence_Generator::Sequence_State state;
+	  state = sequence_generator->add_click_player_stone( player.id, type );
+
+	  switch( state )
+	  {
+	    case Sequence_Generator::finished:
+	      gui_manager.set_mark(-1,-1);
+	      sequence_generator = 0;
+	      game_manager.continue_game();
+	      break;
+	    case Sequence_Generator::hold_white:
+	    case Sequence_Generator::hold_grey:
+	    case Sequence_Generator::hold_black:
+	    {
+	      std::pair<int,int> field = stone_panel.get_field_pos( clicked_stone );
+	      gui_manager.set_mark( field.first, field.second );
+	      gui_manager.show_user_information( true );
+	    }
+	    break;
+	    case Sequence_Generator::another_click:
+	      gui_manager.set_mark(-1,-1);
+	      gui_manager.show_user_information( true );
+	      break;
+	    case Sequence_Generator::fatal_error:
+	      msg.Printf( _("Fatal Error!") );
+	      gui_manager.report_error( msg, _("Click Error") );
+	      break;
+	    case Sequence_Generator::error_require_knock_out:
+	      gui_manager.show_status_text(_("You must do the knock out move!"));
+	      break;
+	    case Sequence_Generator::error_require_set:
+	      gui_manager.show_status_text(_("You have to set a stone!"));
+	      break;
+	    case Sequence_Generator::error_require_remove:
+	      gui_manager.show_status_text(_("You have to remove an empty border field!"));
+	      break;
+	    case Sequence_Generator::error_can_t_remove:
+	      gui_manager.show_status_text(_("Field can't be removed without moving another stone!"));
+	      break;
+	    case Sequence_Generator::error_can_t_move_here:
+	      gui_manager.show_status_text(_("You can't move to that field!"));
+	      break;
+	    case Sequence_Generator::error_can_t_set_here:
+	      gui_manager.show_status_text(_("Please set the stone on an empty field!"));
+	      break;
+	    case Sequence_Generator::error_must_pick_common_stone:
+	      gui_manager.show_status_text(_("You must pick a common stone!"));
+	      break;
+	    case Sequence_Generator::error_wrong_player:
+	      gui_manager.show_status_text(_("Its not the turn of that player!"));
+	      break;
+	    case Sequence_Generator::error_impossible_yet:
+	      gui_manager.show_status_text(_("You can't do that at the moment!"));
+	      break;
+	    case Sequence_Generator::error_must_knock_out_with_same_stone:
+	      gui_manager.show_status_text(_("You must knock out once more with the same stone!"));
+	      break;
+	      /*
+		default:
+		msg.Printf( _("Click impossible") );
+	    
+		wxMessageBox(msg, _("Click"), wxOK | wxICON_INFORMATION, 0);
+	      */
+	  }
+	}
+      }
+    }
+  }
+
+  Player_Panel::Header_Panel::Header_Panel( Player_Panel::Settings &settings, Player &player )
+    : settings(settings), player(player)
+  {
+  }
+
+  void Player_Panel::Header_Panel::draw_text( wxDC &dc ) const
+  {
+    std::string str = player.name;
+    if( player.host != "" )
+      str = str + " (" + player.host + ")";
+    wxString wxstr = str_to_wxstr(str);
+    if( player.type == Player::ai )
+      wxstr = _("[AI] ") + wxstr;
+
+    dc.SetTextForeground(*wxBLACK/*settings.player_font_colour*/);
+    dc.SetFont( settings.player_font );
+    wxCoord w,h;
+    dc.GetTextExtent(wxstr,&w,&h);
+
+    //dc.SetBackgroundMode(wxSOLID);
+    dc.SetPen( *wxTRANSPARENT_PEN );
+    if( player.is_active )
+    {
+      //dc.SetTextBackground(*wxRED);
+      //caption_text->SetBackgroundColour(*wxRED);
+
+      dc.SetBrush( *wxRED_BRUSH );
+      dc.DrawRectangle( x, y, w, h );
+    }
+    else
+    {
+      //dc.SetTextBackground(gui_manager.get_background_colour());
+      //caption_text->SetBackgroundColour(gui_manager.get_background_colour());
+#ifndef DRAW_BACKGROUND
+      dc.SetBrush( wxBrush(gui_manager.get_background_colour(), wxSOLID) );
+      dc.DrawRectangle( x, y, w, h );
+#endif
+    }
+    dc.DrawText( wxstr, x, y );
+  }
+
+  void Player_Panel::Header_Panel::calc_dimensions()
+  {
+    std::string str = player.name;
+    if( player.host != "" )
+      str = str + " (" + player.host + ")";
+    wxString wxstr = str_to_wxstr(str);
+    if( player.type == Player::ai )
+      wxstr = _("[AI] ") + wxstr;
+
+    wxFrame frame(0,-1,str_to_wxstr(""));
+    wxClientDC dc(&frame);
+    //wxScreenDC dc;
+    dc.SetFont( settings.player_font );
+    wxCoord w,h;
+    dc.GetTextExtent(wxstr,&w,&h);
+    dc.DrawText( wxstr, 0, 0 );
+
+    width  = w;
+    height = h;
+  }
+
+  // ----------------------------------------------------------------------------
+  // Mouse Handler
+  // ----------------------------------------------------------------------------
+  
+  Mouse_Handler::Mouse_Handler( Game_Manager &game_manager, WX_GUI_Manager &gui_manager,
+				Sequence_Generator * &sg )
+    : Generic_Mouse_Input(gui_manager.get_display_game()), 
+      game_manager(game_manager), gui_manager(gui_manager), 
+      sequence_generator_hook(sg), ai(0)
+  {
+  }
+  
+  void Mouse_Handler::init_mouse_input() 
+  {
+    Game &game = gui_manager.get_display_game();
+    sequence_generator.reset();
+    sequence_generator_hook = &sequence_generator;
+
+    stop_watch.Start();
+    gui_manager.allow_user_activity();
+    if( game.current_player->help_mode == Player::show_hint )
+    {
+      ai = game_manager.get_hint_ai();
+      ai->determine_hints();
+    }
+  }
+  void Mouse_Handler::disable_mouse_input() 
+  {
+    Game &game = gui_manager.get_display_game();
+    if( sequence_generator_hook )
+      sequence_generator_hook->reset();
+    sequence_generator_hook = 0;
+
+    used_time = stop_watch.Time();
+    if( game.current_player->help_mode == Player::show_hint )
+    {
+      ai->abort();
+      gui_manager.remove_hint();
+    }
+
+    gui_manager.show_user_information(false,false);
+  }
+  long Mouse_Handler::get_used_time()
+  {
+    return used_time;
+  }
+
+  // ----------------------------------------------------------------------------
+  // Game Panel
+  // ----------------------------------------------------------------------------
+
+  Game_Panel::Settings::Settings( const Board_Panel::Settings &board_settings, 
+				  const Player_Panel::Settings &player_settings,
+				  const Stone_Panel::Settings &common_stone_settings,
+				  Arrangement_Type arrangement,
+				  wxString skin_file, wxString beep_file, bool play_sound )
+    : board_settings(board_settings), player_settings(player_settings), 
+      common_stone_settings(common_stone_settings ), arrangement(arrangement ),
+      skin_file(skin_file), beep_file(beep_file), play_sound(play_sound)
+  {
+  }
+
+  Game_Panel::Game_Panel( Settings &settings, Game_Manager &game_manager, 
+			  WX_GUI_Manager &gui_manager, Sequence_Generator* &sequence_generator )
+    : settings(settings), game_manager(game_manager), gui_manager(gui_manager),
+      bitmap_handler(gui_manager.get_bitmap_handler()), 
+      sequence_generator(sequence_generator),
+      board_panel( settings.board_settings, game_manager, gui_manager, sequence_generator ),
+      stone_panel( settings.common_stone_settings, gui_manager.get_display_game().common_stones, 
+		   game_manager, gui_manager,sequence_generator ),
+      display_game(game_manager.get_game())
+  {
+    //rearrange_panels();		// will be done with calc_dimensions
+  }
+
+  Game_Panel::~Game_Panel()
+  {
+    if( player_panels.size() )
+    {
+      std::list<Player_Panel*>::iterator panel;
+      for( panel = player_panels.begin(); panel != player_panels.end(); ++panel )
+      {
+	delete *panel;
+      }
+      player_panels.clear();
+    }
+  }
+
+  void Game_Panel::calc_dimensions()
+  {
+    rearrange_panels();
+    Horizontal_Sizer::calc_dimensions();
+  }
+
+  void Game_Panel::on_right_click( int, int ) const
+  {
+    if( sequence_generator )
+    {
+      Sequence_Generator::Sequence_State state;
+      state = sequence_generator->undo_click();
+	
+      switch( state )
+      {
+	case Sequence_Generator::hold_white:
+	case Sequence_Generator::hold_grey:
+	case Sequence_Generator::hold_black:
+	{
+	  Field_Pos pos = sequence_generator->get_selected_pos();
+	  std::pair<int,int> coord = board_panel.get_field_pos( pos.x, pos.y );
+	  gui_manager.set_mark( coord.first, coord.second );
+	  gui_manager.show_user_information( true );
+	}
+	break;
+	case Sequence_Generator::another_click:
+	  gui_manager.set_mark(-1,-1);
+	  gui_manager.show_user_information( true );
+	  break;
+	default:
+	  assert(false);	// shouldn't be returned by undo_click()
+      }
+    }
+  }
+
+  void Game_Panel::rearrange_panels()
+  {
+    clear();
+    switch( settings.arrangement )
+    {
+      case Settings::arrange_standard:
+      {
+	Vertical_Sizer *vertical = new Vertical_Sizer();
+	vertical->add( &board_panel );
+	vertical->add( new Spacer( 0, bitmap_handler.dimensions.board_stones_spacing ), 
+		       true /*destroy on remove*/ );
+	vertical->add( &stone_panel );
+	add( vertical, true /* destroy on remove */ );
+	add( new Spacer( bitmap_handler.dimensions.stones_player_spacing, 0 ), true );
+	add( &player_panel_sizer );						     
+      }
+      break;
+      case Settings::arrange_stones_right:
+      {
+	add( &board_panel );
+	Vertical_Sizer *vertical = new Vertical_Sizer();
+	vertical->add( &stone_panel );
+	vertical->add( new Spacer( 0, bitmap_handler.dimensions.stones_player_spacing ), true );
+	vertical->add( &player_panel_sizer );						     
+	add( new Spacer( bitmap_handler.dimensions.board_stones_spacing, 0 ), true );
+	add( vertical, true /* destroy on remove */ );
+      }
+      break;
+    }
+  }
+
+  void Game_Panel::remove_players()
+  {
+    player_panel_sizer.clear();
+    if( player_panels.size() )
+    {
+      std::list<Player_Panel*>::iterator panel;
+      for( panel = player_panels.begin(); panel != player_panels.end(); ++panel )
+      {
+	delete *panel;
+      }
+      player_panels.clear();
+    }
+  }
+  void Game_Panel::add_player( Player &player )
+  {
+    bool first = player_panels.empty();
+    Player_Panel *player_panel = new Player_Panel( settings.player_settings, player, game_manager, 
+						   gui_manager, sequence_generator );
+    player_panels.push_back( player_panel );
+    
+    if( !first ) 
+      player_panel_sizer.add( new Spacer(0,bitmap_handler.dimensions.player_player_spacing), true );
+    player_panel_sizer.add( player_panel );
+  }
+
+  const Player_Panel *Game_Panel::get_player_panel( int id ) const
+  {
+    std::list<Player_Panel*>::const_iterator i;
+    for( i = player_panels.begin(); i != player_panels.end(); ++i )
+    {
+      if( (*i)->get_id() == id )
+	return *i;
+    }
+    return 0;
+  }
+
+  const wxBitmap &Game_Panel::get_background() const
+  {
+    if( bitmap_handler.dimensions.rotate_background )
+      return get_board_panel().get_bitmap_set().background;
+    else
+      return bitmap_handler.normal.background;
+  }
+
+  // ----------------------------------------------------------------------------
+  // WX_GUI_Manager
+  // ----------------------------------------------------------------------------
+
+  WX_GUI_Manager::WX_GUI_Manager( Game_Manager& game_manager, Game_Window &game_window )
+    : Game_UI_Manager( game_manager.get_game() ),
+      game_manager(game_manager), game_window(game_window),
+      game_settings( Board_Panel::Settings(),
+		     Player_Panel::Settings(Stone_Panel::Settings()),
+		     Stone_Panel::Settings() ),
+      game_panel( game_settings, game_manager, *this, sequence_generator ), 
+      sequence_generator(0),
+      click_mark_x(-1), 
+      move_animation( new Move_Sequence_Animation(*this,game_window) ),
+      mouse_handler( game_manager, *this, sequence_generator )
+  {
+    load_settings();
+
+    add( &game_panel );
+
+    x = 0; y = 0;
+    calc_dimensions();
+  }
+
+  WX_GUI_Manager::~WX_GUI_Manager()
+  {
+    delete move_animation;
+  }
+
+  void WX_GUI_Manager::calc_dimensions()
+  {
+    Horizontal_Sizer::calc_dimensions();
+    game_window.init_scrollbars();
+  }
+
+  void WX_GUI_Manager::setup_game_display() // setup all windows to display game
+  {
+    game_panel.remove_players();
+    std::vector<Player>::iterator i;
+    for( i = get_display_game().players.begin(); i != get_display_game().players.end(); ++i )
+    {
+      game_panel.add_player( *i );
+    }
+    calc_dimensions();
+  }
+
+  void WX_GUI_Manager::set_board( const Game &new_game )
+  {
+    display_game = new_game;
+    refresh();
+  }
+
+  void WX_GUI_Manager::update_board( const Game &new_game )
+  {
+    set_board( new_game );
+  }
+
+  void WX_GUI_Manager::report_winner( Player *player )
+  {
+    if( player )
+    {
+      wxString msg;
+      msg.Printf( _("And the winner is: %s"), str_to_wxstr(player->name).c_str() );
+      report_information( msg, _("Winner") );
+    }
+    else
+    {
+      report_information( _("It seems that nobody could win the game."), _("Winner") );
+    }
+  }
+
+  void WX_GUI_Manager::report_error( wxString msg, wxString caption )
+  {
+    wxMessageBox( msg, caption, wxOK | wxICON_ERROR, &game_window );
+  }
+
+  void WX_GUI_Manager::report_information( wxString msg, wxString caption )
+  {
+    wxMessageBox( msg, caption, wxOK | wxICON_INFORMATION, &game_window );
+  }
+
+  void WX_GUI_Manager::reset()
+  {
+    set_mark( -1, -1 );
+    show_status_text( wxT("") );
+  }
+  
+  void WX_GUI_Manager::show_user_information( bool visible, bool do_refresh )
+  {
+    Game &game = get_display_game();
+    stone_mark_positions.clear();
+    field_mark_positions.clear();
+    if( visible )
+    {
+      switch( game.current_player->help_mode )
+      {
+	case Player::no_help: break;
+	case Player::show_possible_moves: 
+	{
+	  if( sequence_generator )
+	  {
+	    if( sequence_generator->get_required_move_type() != Move::set_move )
+	    {
+	      std::list<Field_Pos> clicks = sequence_generator->get_possible_clicks();
+	      std::list<Field_Pos>::iterator click;
+	      for( click = clicks.begin(); click != clicks.end(); ++click )
+	      {
+		if( sequence_generator->get_required_move_type() == Move::remove )
+		  field_mark_positions.push_back
+		    ( game_panel.get_board_panel().get_field_pos( click->x, click->y ) );
+		else
+		  stone_mark_positions.push_back
+		    ( game_panel.get_board_panel().get_field_pos( click->x, click->y ) );
+	      }
+	    }
+	  }
+	}
+	break;
+	case Player::show_hint:
+	{
+	  if( current_hint.valid )
+	  {
+	    const std::list<zertz::Move*> &moves = current_hint.sequence.get_moves();
+	    std::list<zertz::Move*>::const_iterator move;
+	    for( move = moves.begin(); move != moves.end(); ++move )
+	    {
+	      switch( (*move)->get_type() )
+	      {
+		case Move::no_move:
+		case Move::finish_move:
+		  break;
+		case Move::knock_out_move:
+		  {
+		    Knock_Out_Move *knock_move = dynamic_cast<Knock_Out_Move *>(*move);
+		    stone_mark_positions.push_back
+		      ( game_panel.get_board_panel().get_field_pos( knock_move->from.x, 
+								    knock_move->from.y ) );
+		    stone_mark_positions.push_back
+		      ( game_panel.get_board_panel().get_field_pos( knock_move->to.x, 
+								    knock_move->to.y ) );
+		  }
+		break;
+		case Move::set_move:
+		  {
+		    Set_Move *set_move = dynamic_cast<Set_Move *>(*move);
+		    if( !set_move->own_stone )
+		    {
+		      int stone_count = game.common_stones.stone_count[ set_move->stone_type ];
+		      if( stone_count > 0 )
+		      {
+			stone_mark_positions.push_back
+			  ( game_panel.get_stone_panel().get_field_pos( 0, set_move->stone_type ) );
+		      }
+		    }
+		    else
+		    {
+		      std::list<Player_Panel*>::const_iterator panel;
+		      for( panel = game_panel.get_player_panels().begin(); 
+			   panel != game_panel.get_player_panels().end(); ++panel )
+		      {
+			if( (*panel)->get_id() == game.current_player->id )
+			{
+			  int stone_count = game.current_player->stones.stone_count[ set_move->stone_type ];
+			  if( stone_count > 0 )
+			  {
+			    stone_mark_positions.push_back
+			      ( (*panel)->get_stone_panel().get_field_pos( 0, set_move->stone_type ) );
+			  }
+			  break;
+			}
+		      }
+		    }
+		    stone_mark_positions.push_back
+		      ( game_panel.get_board_panel().get_field_pos( set_move->pos.x, set_move->pos.y ) );
+		  }
+		break;
+		case Move::remove:
+		  {
+		    Remove *remove = dynamic_cast<Remove *>(*move);
+		    field_mark_positions.push_back
+		      ( game_panel.get_board_panel().get_field_pos( remove->remove_pos.x,
+								    remove->remove_pos.y ) );
+		  }
+		break;
+	      }
+	    }
+	  }
+	}
+	break;
+      }
+
+      if( sequence_generator )
+      {
+	switch ( sequence_generator->get_required_move_type() )
+	{
+	  case Move::knock_out_move:
+	    show_status_text(_("Please do a knock out move")); // remove old status text message
+	    break;
+	  case Move::set_move:
+	    show_status_text(_("You should set a stone")); // remove old status text message
+	    break;
+	  case Move::remove:
+	    show_status_text(_("Just remove a field")); // remove old status text message
+	    break;
+	  case Move::no_move:
+	  case Move::finish_move:
+	    break;
+	}
+      }
+    }
+    else
+    {
+      show_status_text(wxT("")); // remove old status text message
+    }
+    if( do_refresh )
+      refresh();
+  }
+
+  void WX_GUI_Manager::give_hint( AI_Result ai_result )
+  {
+    current_hint = ai_result;
+    show_user_information( true, true );
+  }
+
+  void WX_GUI_Manager::remove_hint()
+  {
+    current_hint = AI_Result();
+    show_user_information( true, false );
+  }
+
+  void WX_GUI_Manager::set_mark( int x, int y )
+  {
+    click_mark_x = x;
+    click_mark_y = y;
+
+    wxClientDC dc(&game_window);
+    dc.BeginDrawing();
+    game_window.PrepareDC(dc);
+    draw_mark(dc);
+    dc.EndDrawing();
+  }
+
+  void WX_GUI_Manager::draw_mark( wxDC &dc )
+  {
+    std::list< std::pair<int,int> >::iterator position;
+    for( position = stone_mark_positions.begin();
+	 position != stone_mark_positions.end(); ++position )
+    {
+      int &x = position->first;
+      int &y = position->second;
+      dc.DrawBitmap( get_game_panel().get_board_panel().get_bitmap_set().stone_mark, x, y, true );
+    }
+
+    for( position = field_mark_positions.begin();
+	 position != field_mark_positions.end(); ++position )
+    {
+      int &x = position->first;
+      int &y = position->second;
+      dc.DrawBitmap( get_game_panel().get_board_panel().get_bitmap_set().field_mark, x, y, true );
+    }
+
+    if( click_mark_x >= 0 )
+      dc.DrawBitmap( get_game_panel().get_board_panel().get_bitmap_set().click_mark, 
+		     click_mark_x, click_mark_y, true );
+  }
+
+  void WX_GUI_Manager::allow_user_activity()
+  {
+    show_user_information( true );
+    beep();			// tell user that his activity is recommended
+  }
+  void WX_GUI_Manager::stop_user_activity()
+  {
+    show_user_information( false, false );
+    mouse_handler.disable_mouse_input();
+  }
+
+  void WX_GUI_Manager::do_move_slowly( Move_Sequence sequence, wxEvtHandler *done_handler, 
+				       int event_id  ) // show user how move is done
+  {
+    Game &game = get_display_game();
+    assert( sequence.check_sequence( game ) );
+    bool ret = move_animation->start( sequence, game, done_handler, event_id );
+
+    if( !ret && done_handler )
+    {
+      wxTimerEvent event( event_id );
+      done_handler->ProcessEvent( event );
+    }
+  }
+
+  void WX_GUI_Manager::undo_move_slowly( wxEvtHandler *done_handler, 
+					 int event_id  ) // show user how move is done
+  {
+    Game &game = get_display_game();
+    bool ret;
+
+    if( game.variant_tree.is_first() )
+      ret = false;
+    else
+    {
+      Move_Sequence sequence = game.variant_tree.get_current_variant()->move_sequence;
+
+      ret = move_animation->start_undo( sequence, game, done_handler, event_id );
+    }
+
+    if( !ret && done_handler )
+    {
+      wxTimerEvent event( event_id );
+      done_handler->ProcessEvent( event );
+    }
+  }
+
+  void WX_GUI_Manager::show_status_text( wxString text ) // shows text in status bar
+  {
+    game_window.show_status_text( text );
+  }
+
+  void WX_GUI_Manager::beep()
+  {
+#if wxUSE_WAVE
+    if( game_settings.play_sound )
+      sound_beep.Play();
+#endif
+  }
+
+  Player_Input *WX_GUI_Manager::get_user_input()
+  {
+    return &mouse_handler;
+  }
+
+  void WX_GUI_Manager::load_settings()
+  {
+    bool ok = false;
+    wxConfigBase* cfg = wxConfig::Get();
+    wxString buf;
+    /*
+    if( cfg->Read( wxT("skin_file"), &buf) )
+    {
+      if( wxFileExists(buf) )
+      {
+	if( load_skin( buf ) )
+	{
+	  game_settings.skin_file = buf;
+	  ok = true;
+	}
+      }
+    }
+    if( !ok )
+    {
+      buf = wxT(DEFAULT_SKIN_FILE);
+      if( wxFileExists(buf) )
+      {
+	if( load_skin( buf ) )
+	{
+	  cfg->Write( wxT("skin_file"), buf);
+	  cfg->Flush();
+	  game_settings.skin_file = buf;
+	  ok = true;
+	}
+      }
+    }
+    if( !ok )
+    {
+      buf = wxFileSelector( _("Choose a skin File"), wxT(""), 
+			    wxT(""), wxT(""), _("Skin Files (*.zip)|*.zip"),
+			    wxOPEN );
+      if( wxFileExists(buf) )
+      {
+	if( load_skin( buf ) )
+	{
+	  cfg->Write( wxT("skin_file"), buf);
+	  cfg->Flush();
+	  game_settings.skin_file = buf;
+	  ok = true;
+	}
+      }
+    }
+    */
+    if( !ok )
+    {
+      bitmap_handler.normal.field_bitmaps[field_removed]	= wxBitmap(field_removed_xpm);
+      bitmap_handler.normal.field_bitmaps[field_empty]		= wxBitmap(field_empty_xpm);
+      bitmap_handler.normal.stone_bitmaps[Stones::white_stone]	= wxBitmap(stone_white_xpm);
+      bitmap_handler.normal.stone_bitmaps[Stones::grey_stone]	= wxBitmap(stone_grey_xpm);
+      bitmap_handler.normal.stone_bitmaps[Stones::black_stone]	= wxBitmap(stone_black_xpm);
+      bitmap_handler.normal.click_mark				= wxBitmap(click_mark_xpm);
+      bitmap_handler.normal.field_mark				= wxBitmap(field_mark_xpm);
+      bitmap_handler.normal.stone_mark				= wxBitmap(stone_mark_xpm);
+      bitmap_handler.normal.background				= wxBitmap(background_xpm);
+      bitmap_handler.dimensions = Dimensions( field_empty_xpm );
+
+      bitmap_handler.setup_field_stone_bitmaps();
+      bitmap_handler.setup_rotated_bitmaps();
+    }
+
+    ok = false;
+    if( cfg->Read( wxT("beep_file"), &buf) )
+    {
+      if( wxFileExists(buf) )
+      {
+	if( load_beep(buf) )
+	{
+	  game_settings.beep_file = buf;
+	  ok = true;
+	}
+      }
+    }
+    if( !ok )
+    {
+      buf = wxT(DEFAULT_BEEP_FILE);
+      if( wxFileExists(buf) )
+      {
+	if( load_beep(buf) )
+	{
+	  cfg->Write( wxT("beep_file"), buf);
+	  cfg->Flush();
+	  game_settings.beep_file = buf;
+	  ok = true;
+	}
+      }
+    }
+    if( !ok )
+    {
+      if( load_beep(buf) )
+      {
+	cfg->Write( wxT("beep_file"), buf );
+	cfg->Flush();
+	game_settings.beep_file = buf;
+	ok = true;
+      }
+    }
+    if( !ok )		// disable sound if there is no valid sound file
+    {
+      game_settings.play_sound = false;
+      cfg->Write( wxT("play_sound"), false );
+      cfg->Flush();
+    }
+    else
+    {
+      bool play_sound;
+      if( cfg->Read( wxT("play_sound"), &play_sound ) )
+      {
+	game_settings.play_sound = play_sound;
+      }
+      else
+      {
+	game_settings.play_sound = true;
+	cfg->Write( wxT("play_sound"), true );
+	cfg->Flush();
+      }
+    }
+  }
+
+  void WX_GUI_Manager::save_settings()
+  {
+    wxConfigBase* cfg = wxConfig::Get();
+    cfg->Write( wxT("skin_file"),  game_settings.skin_file );
+    cfg->Write( wxT("beep_file"),  game_settings.beep_file );
+    cfg->Write( wxT("play_sound"), game_settings.play_sound );
+    cfg->Flush();
+  }
+
+  bool WX_GUI_Manager::load_skin( wxString filename )
+  {
+    show_user_information(false,false);
+
+    wxZipInputStream *input;
+    wxImage image;
+
+    input = new wxZipInputStream( filename, wxT("field_removed.png") );
+    if( input->Eof() ) { delete input; return false; }
+    image.LoadFile( *input, wxBITMAP_TYPE_PNG );
+    bitmap_handler.normal.field_bitmaps[field_removed] = wxBitmap(image);
+    delete input;
+    input = new wxZipInputStream( filename, wxT("field_empty.png") );
+    if( input->Eof() ) { delete input; return false; }
+    image.LoadFile( *input, wxBITMAP_TYPE_PNG );
+    bitmap_handler.normal.field_bitmaps[field_empty] = wxBitmap(image);
+    delete input;
+    input = new wxZipInputStream( filename, wxT("stone_white.png") );
+    if( input->Eof() ) { delete input; return false; }
+    image.LoadFile( *input, wxBITMAP_TYPE_PNG );
+    bitmap_handler.normal.stone_bitmaps[Stones::white_stone] = wxBitmap(image);
+    delete input;
+    input = new wxZipInputStream( filename, wxT("stone_grey.png") );
+    if( input->Eof() ) { delete input; return false; }
+    image.LoadFile( *input, wxBITMAP_TYPE_PNG );
+    bitmap_handler.normal.stone_bitmaps[Stones::grey_stone] = wxBitmap(image);
+    delete input;
+    input = new wxZipInputStream( filename, wxT("stone_black.png") );
+    if( input->Eof() ) { delete input; return false; }
+    image.LoadFile( *input, wxBITMAP_TYPE_PNG );
+    bitmap_handler.normal.stone_bitmaps[Stones::black_stone] = wxBitmap(image);
+    delete input;
+
+    input = new wxZipInputStream( filename, wxT("click_mark.png") );
+    if( input->Eof() ) { delete input; return false; }
+    image.LoadFile( *input, wxBITMAP_TYPE_PNG );
+    bitmap_handler.normal.click_mark = wxBitmap(image);
+    delete input;
+    input = new wxZipInputStream( filename, wxT("field_mark.png") );
+    if( input->Eof() ) { delete input; return false; }
+    image.LoadFile( *input, wxBITMAP_TYPE_PNG );
+    bitmap_handler.normal.field_mark = wxBitmap(image);
+    delete input;
+    input = new wxZipInputStream( filename, wxT("stone_mark.png") );
+    if( input->Eof() ) { delete input; return false; }
+    image.LoadFile( *input, wxBITMAP_TYPE_PNG );
+    bitmap_handler.normal.stone_mark = wxBitmap(image);
+    delete input;
+
+    input = new wxZipInputStream( filename, wxT("background.png") );
+    if( input->Eof() ) { delete input; return false; }
+    image.LoadFile( *input, wxBITMAP_TYPE_PNG );
+    bitmap_handler.normal.background = wxBitmap(image);
+    delete input;
+
+    input = new wxZipInputStream( filename, wxT("skin.ini") );
+    //if( input->Eof() ) { delete input; return false; } // ini file might be empty
+    wxFileConfig config( *input );
+    bitmap_handler.dimensions = Dimensions( config, bitmap_handler.normal.field_bitmaps[field_empty] );
+    delete input;
+
+    bitmap_handler.setup_field_stone_bitmaps();
+    bitmap_handler.setup_rotated_bitmaps();
+
+    calc_dimensions();
+    
+    return true;
+  }
+
+  bool WX_GUI_Manager::load_beep( wxString filename )
+  {
+    if( wxFile::Exists( filename ) )
+    {
+#if wxUSE_WAVE
+      if( sound_beep.Create(filename) )
+      {
+	sound_beep.Play();
+	return true;
+      }
+#endif
+    }
+    return false;
+  }
+
+  void WX_GUI_Manager::mouse_click_left( int x, int y )
+  {
+    show_status_text(wxT("")); // remove old status text message
+    on_click( x, y );
+  }
+
+  void WX_GUI_Manager::mouse_click_right( int x, int y )
+  {
+    show_status_text(wxT("")); // remove old status text message
+    on_right_click( x, y );
+  }
+  
+  void WX_GUI_Manager::refresh()
+  {
+    game_window.refresh();
+  }
+}
+
+

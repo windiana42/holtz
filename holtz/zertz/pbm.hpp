@@ -14,14 +14,14 @@
  * 
  */
 
-#ifndef __HOLTZ_PBM__
-#define __HOLTZ_PBM__
+#ifndef __ZERTZ_PBM__
+#define __ZERTZ_PBM__
 
 #include <iostream>
 
-#include "holtz.hpp"
+#include "zertz.hpp"
 
-namespace holtz
+namespace zertz
 {
   struct PBM_Content
   {

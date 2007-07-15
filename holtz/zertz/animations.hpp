@@ -14,22 +14,30 @@
  * 
  */
 
-#ifndef __HOLTZ_ANIMATIONS__
-#define __HOLTZ_ANIMATIONS__
+#ifndef __ZERTZ_ANIMATIONS__
+#define __ZERTZ_ANIMATIONS__
 
-namespace holtz
+namespace holtz 
+{
+//#include "wxmain.hpp"
+  class Game_Window;
+}
+
+namespace zertz
 {
   class Bitmap_Move_Animation;
   class Move_Sequence_Animation;
 }
 
-#include "wxholtz.hpp"
-#include "holtz.hpp"
+#include "wxzertz.hpp"
+#include "zertz.hpp"
 
 #include <vector>
 
-namespace holtz
+namespace zertz
 {
+  using namespace holtz;
+
   /*! class Bitmap_Move_Animation
    *  moves a bitmap continuously over the screen
    */

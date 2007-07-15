@@ -1,5 +1,5 @@
 /*
- * holtz.cpp
+ * zertz.cpp
  * 
  * Game implementation
  * 
@@ -14,7 +14,7 @@
  * 
  */
 
-#include "holtz.hpp"
+#include "zertz.hpp"
 #include <assert.h>
 
 #include "util.hpp"
@@ -22,7 +22,7 @@
 #include <ctype.h>
 #include <sys/types.h>
 
-namespace holtz
+namespace zertz
 {
   // ----------------------------------------------------------------------------
   // Stones
@@ -1105,7 +1105,8 @@ namespace holtz
 	  // calculate average time
 	  long time = current_player->input->get_used_time();
 	  current_player->total_time += time;
-	  current_player->average_time = current_player->average_time * current_player->num_measures + time;
+	  current_player->average_time 
+	    = current_player->average_time * current_player->num_measures + time;
 	  ++current_player->num_measures;
 	  current_player->average_time /= current_player->num_measures;
 
@@ -3354,7 +3355,7 @@ namespace holtz
 	break;
 
     name += 'a' + pos.y;
-    name += long_to_string( pos.x - first_x + 1 );
+    name += holtz::long_to_string( pos.x - first_x + 1 );
     return name;
   }
 
@@ -3367,7 +3368,7 @@ namespace holtz
       if( (name[0] >= 'a') && (name[0] <= 'z') )
       {
 	std::string num_string = name.substr(1);
-	std::pair<long,unsigned/*digits*/> num = string_to_long( num_string );
+	std::pair<long,unsigned/*digits*/> num = holtz::string_to_long( num_string );
 	if( num.second == num_string.size() )
 	{
 	  if( num.first > 0 )

@@ -18,10 +18,10 @@
 #include <wx/config.h>
 #include <wx/socket.h>
 
-#ifndef __HOLTZ_NETZWORK__
-#define __HOLTZ_NETZWORK__
+#ifndef __ZERTZ_NETZWORK__
+#define __ZERTZ_NETZWORK__
 
-namespace holtz
+namespace zertz
 {
   class Network_Exception;
   class Network_Manager;
@@ -34,16 +34,18 @@ namespace holtz
 
     virtual ~Network_Connection_Handler();
   };
+}
 
-
-  // wxholtz.hpp:
+namespace holtz
+{
+  // wxzertz.hpp:
   class Game_Window;
 }
 
-#include "holtz.hpp"
-#include "wxholtz.hpp"
+#include "zertz.hpp"
+#include "wxzertz.hpp"
 
-namespace holtz
+namespace zertz
 {
   class Network_Exception : public Exception
   {
@@ -71,7 +73,7 @@ namespace holtz
     // board commands
     virtual Answer_Type ask_change_board( const Game &game );
     virtual const Game &get_board();
-    virtual const std::vector<Player> &get_players();
+    virtual const std::list<Player> &get_players();
     // player commands
     virtual bool add_player( const Player & );
     virtual bool remove_player( const Player & );
@@ -82,8 +84,8 @@ namespace holtz
     virtual Game_State can_start();	// is everyone ready and number of players ok?
     virtual void start_game(); // call only when can_start() == true
     virtual Answer_Type ask_new_game(); // request to play new game
-    virtual Answer_Type ask_undo_moves( int n = 2 ); // request to undo a move
-    virtual void new_game(); // force new game (may close connections)
+    virtual Answer_Type ask_undo_move(); // request to undo a move
+    virtual void force_new_game(); // force new game (may close connections)
     virtual void stop_game();  // stop game
 
     // Player_Input functions
@@ -166,11 +168,11 @@ namespace holtz
 				 accept_move, wait_for_move, move_received, game_stop };
     Protocol_State state;
 
-    std::vector<Player> players;
-    std::map<int,std::vector<Player>::iterator> id_player; // Table id->player
+    std::list<Player> players;
+    std::map<int,std::list<Player>::iterator> id_player; // Table id->player
     int current_id;
-    std::vector<Player> own_players; // only players added by this host
-    std::map<int,std::vector<Player>::iterator> id_own_player; // Table id->own_player
+    std::list<Player> own_players; // only players added by this host
+    std::map<int,std::list<Player>::iterator> id_own_player; // Table id->own_player
     std::string requested_player_name;	
     Player::Player_Type requested_player_type;	
 
@@ -182,7 +184,7 @@ namespace holtz
       Client();
 
       wxSocketBase *socket;
-      std::list<std::vector<Player>::iterator> players;
+      std::list<std::list<Player>::iterator> players;
 
       Protocol_State state;
     };

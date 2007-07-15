@@ -16,7 +16,7 @@
 
 #include "network.hpp"
 
-#include "wxholtz.hpp"
+#include "wxzertz.hpp"
 #include "util.hpp"
 #ifndef __OLD_GCC__
   #include <sstream>
@@ -24,7 +24,7 @@
   #include <strstream>
 #endif
 
-namespace holtz
+namespace zertz
 {
   //BEGIN_EVENT_TABLE(Network_Manager, wxEvtHandler)				
   //EVT_SOCKET(NETWORK_EVENT, Network_Manager::on_network)
@@ -225,7 +225,7 @@ namespace holtz
 	write_message_type( *c.socket, msg_abort_game );
 
 	// erase pointers to client objects
-	std::list<std::vector<Player>::iterator>::iterator player;
+	std::list<std::list<Player>::iterator>::iterator player;
 	for( player = c.players.begin(); player != c.players.end(); ++player )
 	{
 	  report_player_removed( &**player );
@@ -265,7 +265,7 @@ namespace holtz
     if( display_handler )
     {
       // tell handler all players
-      std::vector<Player>::iterator player;
+      std::list<Player>::iterator player;
       for( player = players.begin(); player != players.end(); ++player )
       {
 	display_handler->player_added(*player);
@@ -300,7 +300,7 @@ namespace holtz
     return game;
   }
 
-  const std::vector<Player> &Network_Manager::get_players()
+  const std::list<Player> &Network_Manager::get_players()
   {
     return players;
   }
@@ -319,7 +319,7 @@ namespace holtz
 	  
 	  int id = current_id; ++current_id;
 	  
-	  std::vector<Player>::iterator p = players.insert(players.end(), player);
+	  std::list<Player>::iterator p = players.insert(players.end(), player);
 	  p->id = id;
 	  p->outputs.clear();
 	  p->outputs.push_back( this );
@@ -360,7 +360,7 @@ namespace holtz
       {
 	if( id_player.find(player.id) != id_player.end() )
 	{
-	  std::vector<Player>::iterator player_it = id_player[player.id];
+	  std::list<Player>::iterator player_it = id_player[player.id];
 	  report_player_removed( &*player_it );
 	  
 	  players.erase(player_it);
@@ -370,7 +370,7 @@ namespace holtz
 	  // erase player from list of players hosted by this player
 	  if( client )
 	  {
-	    std::list<std::vector<Player>::iterator>::iterator client_player;
+	    std::list<std::list<Player>::iterator>::iterator client_player;
 	    for( client_player = client->players.begin();
 		 client_player != client->players.end(); ++client_player )
 	    {
@@ -406,8 +406,8 @@ namespace holtz
 	{
 	  if( id_player[ player.id ] != players.begin() ) 
 	  {
-	    std::vector<Player>::iterator player1 = id_player[player.id];
-	    std::vector<Player>::iterator player2 = player1; --player2;
+	    std::list<Player>::iterator player1 = id_player[player.id];
+	    std::list<Player>::iterator player2 = player1; --player2;
 	    
 	    report_player_up( &*player1 );
 
@@ -440,12 +440,10 @@ namespace holtz
       {
 	if( id_player.find(player.id) != id_player.end() )
 	{
-	  std::vector<Player>::iterator last_player = players.end();
-	  --last_player;
-	  if( id_player[ player.id ] != last_player ) 
+	  if( id_player[ player.id ] != --players.end() ) 
 	  {
-	    std::vector<Player>::iterator player1 = id_player[player.id];
-	    std::vector<Player>::iterator player2 = player1; ++player2;
+	    std::list<Player>::iterator player1 = id_player[player.id];
+	    std::list<Player>::iterator player2 = player1; ++player2;
 	    
 	    report_player_down( &*player1 );
 
@@ -550,13 +548,13 @@ namespace holtz
     return wait_for_answer;
   }
 
-  Game_Setup_Manager::Answer_Type Network_Manager::ask_undo_moves( int n ) // request to play new game
+  Game_Setup_Manager::Answer_Type Network_Manager::ask_undo_move() // request to play new game
   {
     //!!! implement this !!!
     return deny;
   }
   
-  void Network_Manager::new_game()   // force new game (may close connections)
+  void Network_Manager::force_new_game()   // force new game (may close connections)
   {
     if( display_handler )	// there should be a display handler that may display a game setup dialog
       display_handler->game_setup(); // Attention: this opens a dialog which might destroy this object
@@ -574,10 +572,6 @@ namespace holtz
     {
       return finished;
     }
-#ifndef __WXMSW__
-    if( state != game_started )
-      std::cerr << "Wrong state: " << state << std::endl;
-#endif
     assert( state == game_started );
     state = accept_move;
     sequence.clear();
@@ -803,9 +797,8 @@ namespace holtz
 	      }
 
 	      Player player( name, current_id, this, Player::no_output, host, type );
-	      player.origin = Player::remote;
 
-	      std::vector<Player>::iterator p = players.insert(players.end(), player);
+	      std::list<Player>::iterator p = players.insert(players.end(), player);
 	      c.players.push_back( p );
 	      id_player[current_id] = p;
 	      id_client[current_id] = &c;
@@ -865,9 +858,8 @@ namespace holtz
 	    int id = read_int( sock );
 	    Player player( requested_player_name, id, 0, Player::no_output,
 			   "", requested_player_type );
-	    player.origin = Player::local;
 
-	    std::vector<Player>::iterator p = own_players.insert(own_players.end(), player);
+	    std::list<Player>::iterator p = own_players.insert(own_players.end(), player);
 	    id_own_player[id] = p;
 
 	    // report that player was accepted
@@ -930,10 +922,9 @@ namespace holtz
 	      wxIPV4address adr;
 	      sock.GetPeer( adr );      
 	      player.host = wxstr_to_str(adr.Hostname());
-	      player.origin = Player::remote;
 	    }
 	  
-	    std::vector<Player>::iterator p = players.insert(players.end(), player);
+	    std::list<Player>::iterator p = players.insert(players.end(), player);
 	    id_player[ player.id ] = p;
 
 	    report_player_added( &*p );
@@ -996,8 +987,8 @@ namespace holtz
 	{
 	  if( (state == begin) || (state == handshake) || (state == request_player) || (state == is_ready) )
 	  {
-	    std::vector<Player>::iterator player = id_player[id];
-	    std::vector<Player>::iterator player2 = player; --player2;
+	    std::list<Player>::iterator player = id_player[id];
+	    std::list<Player>::iterator player2 = player; --player2;
 	    
 	    report_player_up( &*player );
 
@@ -1034,8 +1025,8 @@ namespace holtz
 	  if( (state == begin) || (state == handshake) || (state == request_player) || 
 	      (state == is_ready) )
 	  {
-	    std::vector<Player>::iterator player = id_player[id];
-	    std::vector<Player>::iterator player2 = player; ++player2;
+	    std::list<Player>::iterator player = id_player[id];
+	    std::list<Player>::iterator player2 = player; ++player2;
 	    
 	    report_player_down( &*player );
 
@@ -1336,7 +1327,7 @@ namespace holtz
 	  {
 	    if( display_handler->ask_new_game( host.Hostname() ) )
 	    {
-	      new_game(); // Attention: this opens a dialog which might destroy this object
+	      force_new_game(); // Attention: this opens a dialog which might destroy this object
 	    }
 	  }
 	}
@@ -1375,7 +1366,7 @@ namespace holtz
 	  {
 	    Client &c = client->second;
 	    // remove players of host
-	    std::list<std::vector<Player>::iterator>::iterator player;
+	    std::list<std::list<Player>::iterator>::iterator player;
 	    for( player = c.players.begin(); player != c.players.end(); ++player )
 	    {
 	      players.erase(*player);
@@ -1397,7 +1388,7 @@ namespace holtz
 	  {
 	    Client &c = client->second;
 	    // remove players of host
-	    std::list<std::vector<Player>::iterator>::iterator player;
+	    std::list<std::list<Player>::iterator>::iterator player;
 	    for( player = c.players.begin(); player != c.players.end(); ++player )
 	    {
 	      players.erase(*player); // should replace player with ai
@@ -1481,7 +1472,7 @@ namespace holtz
 		assert( c.state == is_ready );
 		
 		write_int( *c.socket, players.size() );
-		std::vector<Player>::iterator player;
+		std::list<Player>::iterator player;
 		for( player = players.begin(); player != players.end(); ++player )
 		{
 		  write_player( *c.socket, *player );
@@ -1683,15 +1674,13 @@ namespace holtz
   
   void Network_Manager::write_move( wxSocketBase& sock, Move_Sequence sequence )
   {
-    std::escape_ostream esc_cerr(std::cerr);
 #ifndef __WXMSW__
-    esc_cerr << sequence;
+    std::cerr << sequence << " ";
 #endif
 
 #ifndef __OLD_GCC__
     std::ostringstream os;
-    std::escape_ostream eos(os);
-    eos << sequence;
+    os << sequence;
 
     unsigned size = os.str().size();
 
@@ -1700,8 +1689,7 @@ namespace holtz
 #else
     char buf[4096];
     std::ostrstream os(buf,4096);
-    std::escape_ostream eos(os);
-    eos << sequence;
+    os << sequence;
 
     unsigned size = os.pcount();
     write_int( sock, size );
@@ -1723,14 +1711,12 @@ namespace holtz
 #else
     std::istrstream is(str.c_str());
 #endif
-    std::escape_istream eis(is);
 
     Move_Sequence seq;
-    eis >> seq;
+    is >> seq;
 
 #ifndef __WXMSW__
-    std::escape_ostream esc_cerr(std::cerr);
-    esc_cerr << seq;
+    std::cerr << seq << " ";
 #endif
 
     return seq;
@@ -1980,7 +1966,7 @@ namespace holtz
   {
     if( mode == mode_server )
     {
-      std::vector<Player>::iterator player;
+      std::list<Player>::iterator player;
       for( player = players.begin(); player != players.end(); ++player )
       {
 	write_message_type( sock, msg_player_added );

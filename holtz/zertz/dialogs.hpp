@@ -14,20 +14,20 @@
  * 
  */
 
-#ifndef __WXHOLTZ_DIALOG__
-#define __WXHOLTZ_DIALOG__
+#ifndef __WXZERTZ_DIALOG__
+#define __WXZERTZ_DIALOG__
 
 #define DEFAULT_PORT 6211
 
-namespace holtz
+namespace zertz
 {
   class Game_Dialog;
   class Settings_Dialog;
 }
 
 #include "network.hpp"
-#include "holtz.hpp"
-#include "wxholtz.hpp"
+#include "zertz.hpp"
+#include "wxzertz.hpp"
 #include "pbm.hpp"
 
 #include <wx/wx.h>
@@ -37,7 +37,7 @@ namespace holtz
 #include <map>
 #include <string>
 
-namespace holtz
+namespace zertz
 {
   // ============================================================================
   // Game_Dialog
@@ -97,9 +97,9 @@ namespace holtz
     ~Custom_Board_Setup_Panel();
 
     void on_change_win  ( wxCommandEvent& event );
-    void on_spin_win ( wxCommandEvent& event );
+    void on_spin_win ( wxSpinEvent& event );
     void on_change_stones  ( wxCommandEvent& event );
-    void on_spin_stones ( wxCommandEvent& event );
+    void on_spin_stones ( wxSpinEvent& event );
 
     void restore();
     Game get_board();		// get board according to chosen settings
@@ -258,7 +258,7 @@ namespace holtz
     WX_GUI_Manager &gui_manager;
 
     Game game;
-    std::vector<Player> players;
+    std::list<Player> players;
     Game_Setup_Manager *game_setup_manager;
 
     wxWizard		*wizard;

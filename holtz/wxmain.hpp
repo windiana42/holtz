@@ -19,21 +19,21 @@
 #ifndef __WXHOLTZ_MAIN__
 #define __WXHOLTZ_MAIN__
 
-#include "holtz.hpp"
-
 namespace holtz
 {
   class Game_Window;
 }
 
-#include "manager.hpp"
-#include "dialogs.hpp"
+#include "zertz/manager.hpp"
+#include "zertz/dialogs.hpp"
+#include "dvonn/manager.hpp"
+#include "dvonn/dialogs.hpp"
 
 namespace holtz
 {
-  // ============================================================================
+  // ==========================================================================
   // wx application class
-  // ============================================================================
+  // ==========================================================================
 
   class wxHoltz : public wxApp
   {
@@ -68,19 +68,26 @@ namespace holtz
   class Game_Window : public wxScrolledWindow
   {
   public:
+    enum Game_Type { NO_GAME, ZERTZ, DVONN };
+
     Game_Window( wxFrame *parent_frame );
     ~Game_Window();
     bool on_close();		// return true: really close
 
     void load_settings();
 
-    void new_game();
+    void init_zertz();
+    void init_dvonn();
+
+    void new_zertz_game();
+    void new_dvonn_game();
     void undo_move();
     void settings_dialog();
 
     void show_status_text( wxString text ); // shows text in status bar
     void init_scrollbars();
 
+    const wxBitmap &get_background_bitmap();
     void OnDraw( wxDC &dc );
     void on_erase_background( wxEraseEvent &event );
     void on_mouse_event( wxMouseEvent &event );
@@ -88,13 +95,23 @@ namespace holtz
     wxDC *get_client_dc();	// must be destroyed
 
     inline wxFrame &get_frame() { return parent_frame; }
-    inline WX_GUI_Manager &get_gui_manager() { return gui_manager; }
+    Game_Type get_active_game() { return active_game; }
+    inline zertz::WX_GUI_Manager &get_zertz_gui_manager() 
+    { assert(active_game==ZERTZ); return *zertz_gui_manager; }
+    inline dvonn::WX_GUI_Manager &get_dvonn_gui_manager() 
+    { assert(active_game==DVONN); return *dvonn_gui_manager; }
   private:
     wxFrame &parent_frame;
 
-    Game_Manager   game_manager;
-    WX_GUI_Manager gui_manager;
-    Game_Dialog    game_dialog;
+    Game_Type active_game;
+
+    zertz::Game_Manager   *zertz_game_manager;
+    zertz::WX_GUI_Manager *zertz_gui_manager;
+    zertz::Game_Dialog    *zertz_game_dialog;
+
+    dvonn::Game_Manager   *dvonn_game_manager;
+    dvonn::WX_GUI_Manager *dvonn_gui_manager;
+    dvonn::Game_Dialog    *dvonn_game_dialog;
 
     // any class wishing to process wxWindows events must use this macro
     DECLARE_EVENT_TABLE();
@@ -115,7 +132,8 @@ namespace holtz
     void load_settings();
     
     // event handlers (these functions should _not_ be virtual)
-    void on_new_game(wxCommandEvent& event);
+    void on_new_zertz_game(wxCommandEvent& event);
+    void on_new_dvonn_game(wxCommandEvent& event);
     void on_undo_move(wxCommandEvent& event);
     void on_quit(wxCommandEvent& event);
     void on_settings(wxCommandEvent& event);
@@ -145,6 +163,8 @@ namespace holtz
   {
     // menu items
     HOLTZ_NEW_GAME = 100,
+    HOLTZ_NEW_ZERTZ_GAME,
+    HOLTZ_NEW_DVONN_GAME,
     HOLTZ_SETTINGS,
     HOLTZ_UNDO,
     HOLTZ_QUIT,
@@ -168,6 +188,10 @@ namespace holtz
     DIALOG_APPLY,
     DIALOG_RESTORE,
     DIALOG_SPIN,
+    DIALOG_CHOOSE_PBM_DIRECTORY,
+    DIALOG_CHANGE_PBM_DIRECTORY,
+    DIALOG_CHOOSE_LG_DIRECTORY,
+    DIALOG_CHANGE_LG_DIRECTORY,
     DIALOG_CHOOSE_DIRECTORY,
     DIALOG_CHANGE_DIRECTORY,
     DIALOG_CHOOSE_FILE,

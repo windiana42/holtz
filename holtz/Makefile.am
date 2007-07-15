@@ -1,12 +1,15 @@
-SUBDIRS=skins sounds locale help
+SUBDIRS=skins sounds locale help zertz dvonn
 
 bin_PROGRAMS=		holtz
 
 holtz_SOURCES= \
-	holtz.cpp wxholtz.cpp dialogs.cpp manager.cpp network.cpp ai.cpp animations.cpp util.cpp pbm.cpp  \
-	holtz.hpp wxholtz.hpp dialogs.hpp manager.hpp network.hpp ai.hpp animations.hpp util.hpp pbm.hpp  \
-	wxmain.cpp bgp.cpp \
-	wxmain.hpp bgp.hpp
+	util.cpp util.hpp \
+	wxmain.cpp wxmain.hpp \
+	wxholtz.cpp wxholtz.hpp
+#network.cpp network.hpp
+# bgp.cpp  bgp.hpp
+
+holtz_LDADD = dvonn/libdvonn.a zertz/libzertz.a
 
 holtz_CXXFLAGS= \
 	-DDEFAULT_DATA_DIR=\"$(pkgdatadir)/\"

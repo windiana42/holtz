@@ -17,14 +17,14 @@
 #include "ai.hpp"
 
 #include "util.hpp"
-#include "wxholtz.hpp"
+#include "wxdvonn.hpp"
 #include "animations.hpp"
 
 #include <assert.h>
 
 #define RATE_MAX	1e13
 
-namespace holtz
+namespace dvonn
 {
   // ----------------------------------------------------------------------------
   // Position_Expanded_Handler

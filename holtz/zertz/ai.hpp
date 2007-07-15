@@ -14,17 +14,17 @@
  * 
  */
 
-#ifndef __HOLTZ_AI__
-#define __HOLTZ_AI__
+#ifndef __ZERTZ_AI__
+#define __ZERTZ_AI__
 
-#include "holtz.hpp"
+#include "zertz.hpp"
 
 #include <wx/event.h>
 #include <wx/timer.h>
 
 #include <map>
 
-namespace holtz
+namespace zertz
 {
   struct Branch;
 
