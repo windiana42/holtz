@@ -24,6 +24,8 @@
 
 namespace dvonn
 {
+  using namespace holtz;
+
   // ----------------------------------------------------------------------------
   // Stones
   // ----------------------------------------------------------------------------
@@ -856,9 +858,9 @@ namespace dvonn
 	p1.set_pos( pos );
 	assert( !p1->empty() );
 	if( p1->back() == field_white )
-	  ++ret[Stones::white_stone];
+	  ret[Stones::white_stone] += p1->size();
 	else if( p1->back() == field_black )
-	  ++ret[Stones::black_stone];
+	  ret[Stones::black_stone] += p1->size();
       }
     }    
     return ret;

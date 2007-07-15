@@ -19,11 +19,11 @@
 // ============================================================================
 
 // compiled in picture set
-//#define PURIST_50
+#define PURIST_50
 //#define HEX_50
 //#define HEX_70
 //#define HEX_100
-#define EINS
+//#define EINS
 
 // ----------------------------------------------------------------------------
 // headers
@@ -60,6 +60,8 @@
 
 namespace dvonn
 {
+  using namespace holtz;
+
   // ----------------------------------------------------------------------------
   // resources
   // ----------------------------------------------------------------------------
@@ -69,17 +71,17 @@ namespace dvonn
   // purist pictures 50px
 
   // field pictures
-#include "skins/purist/field_removed.xpm"
-#include "skins/purist/field_empty.xpm"
-#include "skins/purist/stone_white.xpm"
-#include "skins/purist/stone_grey.xpm"
-#include "skins/purist/stone_black.xpm"
-#include "skins/purist/click_mark.xpm"
-#include "skins/purist/field_mark.xpm"
-#include "skins/purist/stone_mark.xpm"
-#include "skins/purist/background.xpm"
+#include "skins/purist50/field_removed.xpm"
+#include "skins/purist50/field_empty.xpm"
+#include "skins/purist50/stone_white.xpm"
+#include "skins/purist50/stone_grey.xpm"
+#include "skins/purist50/stone_black.xpm"
+#include "skins/purist50/click_mark.xpm"
+#include "skins/purist50/field_mark.xpm"
+#include "skins/purist50/stone_mark.xpm"
+#include "skins/purist50/background.xpm"
   // field dimensions
-#include "skins/purist/skin.hpp"
+#include "skins/purist50/skin.hpp"
 #endif
 
 #ifdef HEX_50
@@ -159,72 +161,6 @@ namespace dvonn
   // ============================================================================
 
   // ----------------------------------------------------------------------------
-  // Dimensions
-  // ----------------------------------------------------------------------------
-
-  //!!! implement that
-  Dimensions::Dimensions()
-    : field_x(0), field_y(0), field_width(51), field_height(51), 
-      field_packed_width(44), field_packed_height(44),
-      stack_shift_x(0), stack_shift_y(4),
-      caption_height(30), stone_offset(20), board_x_offset(10), board_y_offset(10),
-      board_stones_spacing(30), player_player_spacing(10), 
-      stones_player_spacing(10), rotation_symmetric(false), 
-      rotate_background(false)
-  {
-  }
-
-  //!!! implement that
-  Dimensions::Dimensions( char **field_xpm )
-    : field_x(0), field_y(0), stack_shift_x(0), stack_shift_y(3),      
-      caption_height(30), stone_offset(20),
-      board_x_offset(10), board_y_offset(10),
-      board_stones_spacing(30), player_player_spacing(10), 
-      stones_player_spacing(10), rotation_symmetric(false), 
-      rotate_background(false)
-  {
-    wxBitmap bitmap(field_xpm);
-    field_width  = bitmap.GetWidth();
-    field_height = bitmap.GetHeight();
-    field_packed_height = int(field_height * 0.866);	// height * cos(30deg)
-    field_packed_width  = int(field_width  * 0.866);	// height * cos(30deg)
-  }
-
-  //!!! implement that
-  Dimensions::Dimensions( wxConfigBase &config, wxBitmap &bitmap )	// load from configuration
-    : field_x(0), field_y(0), stack_shift_x(0), stack_shift_y(3),
-      caption_height(30), stone_offset(20),
-      board_x_offset(10), board_y_offset(70),
-      board_stones_spacing(30), player_player_spacing(10), 
-      stones_player_spacing(10), rotation_symmetric(false), 
-      rotate_background(false)
-  {
-    field_width  = bitmap.GetWidth();
-    field_height = bitmap.GetHeight();
-    field_packed_height = int(field_height * 0.866);	// height * cos(30deg)
-    field_packed_width  = int(field_width  * 0.866);	// height * cos(30deg)
-
-    int buf;
-    bool bool_buf;
-
-    if( config.Read( wxT("field_x"), &buf ) ) field_x = buf;
-    if( config.Read( wxT("field_y"), &buf ) ) field_y = buf;
-    if( config.Read( wxT("field_width"), &buf ) ) field_width = buf;
-    if( config.Read( wxT("field_height"), &buf ) ) field_height = buf;
-    if( config.Read( wxT("field_packed_width"), &buf ) ) field_packed_width = buf;
-    if( config.Read( wxT("field_packed_height"), &buf ) ) field_packed_height = buf;
-    if( config.Read( wxT("stack_shift_x"), &buf ) ) stack_shift_x = buf;
-    if( config.Read( wxT("stack_shift_y"), &buf ) ) stack_shift_y = buf;
-    if( config.Read( wxT("caption_height"), &buf ) ) caption_height = buf;
-    if( config.Read( wxT("stone_offset"), &buf ) ) stone_offset = buf;
-    if( config.Read( wxT("board_stones_spacing"), &buf ) ) board_stones_spacing = buf;
-    if( config.Read( wxT("player_player_spacing"), &buf ) ) player_player_spacing = buf;
-    if( config.Read( wxT("stones_player_spacing"), &buf ) ) stones_player_spacing = buf;
-    if( config.Read( wxT("rotation_symmetric"), &bool_buf ) ) rotation_symmetric = bool_buf;
-    if( config.Read( wxT("rotate_background"), &bool_buf ) ) rotate_background = bool_buf;
-  }
-
-  // ----------------------------------------------------------------------------
   // Bitmap_Handler
   // ----------------------------------------------------------------------------
 
@@ -237,8 +173,8 @@ namespace dvonn
     {
       const Stones::Stone_Type &stone_type = stone_bitmap->first;
 
-      wxImage field_stone_image (normal.field_bitmaps[field_empty]);
-      wxImage stone_image (stone_bitmap->second);
+      wxImage field_stone_image (normal.field_bitmaps[field_empty].ConvertToImage());
+      wxImage stone_image (stone_bitmap->second.ConvertToImage());
       unsigned char *field_stone_data = field_stone_image.GetData();
       unsigned char *stone_data       = stone_image.GetData();
       unsigned char mask_colour[3];
@@ -273,7 +209,7 @@ namespace dvonn
 	}
       Field_State_Type field_type = Field_State_Type(stone_type);
       assert( Board::is_stone( field_type ) );
-      normal.field_bitmaps[field_type] = field_stone_image.ConvertToBitmap();
+      normal.field_bitmaps[field_type] = wxBitmap(field_stone_image);
 
       field_stone_image.Destroy();
       stone_image.Destroy();
@@ -292,9 +228,10 @@ namespace dvonn
       {
 	wxBitmap &normal_bitmap = field_bitmap->second;
 	const Field_State_Type &type = field_bitmap->first;
-	wxImage normal_image = wxImage(normal_bitmap).Rotate90( false /*counter clockwise*/ );
+	wxImage normal_image 
+	  = normal_bitmap.ConvertToImage().Rotate90( false /*counter clockwise*/ );
 	rotated.field_bitmaps.insert
-	  (std::pair<Field_State_Type,wxBitmap>(type, normal_image.ConvertToBitmap()));
+	  (std::pair<Field_State_Type,wxBitmap>(type, wxBitmap(normal_image)));
       }
 
       // rotate stone_bitmaps
@@ -305,301 +242,22 @@ namespace dvonn
       {
 	wxBitmap &normal_bitmap = stone_bitmap->second;
 	const Stones::Stone_Type &type = stone_bitmap->first;
-	wxImage normal_image = wxImage(normal_bitmap).Rotate90( false /*counter clockwise*/ );
+	wxImage normal_image = normal_bitmap.ConvertToImage().Rotate90( false /*counter clockwise*/);
 	rotated.stone_bitmaps.insert
-	  (std::pair<Stones::Stone_Type,wxBitmap>(type, normal_image.ConvertToBitmap()));
+	  (std::pair<Stones::Stone_Type,wxBitmap>(type, wxBitmap(normal_image)));
       }
 
       // rotate marks
-      rotated.click_mark = wxImage(normal.click_mark).Rotate90(false/*counter clockwise*/).ConvertToBitmap();
-      rotated.field_mark = wxImage(normal.field_mark).Rotate90(false/*counter clockwise*/).ConvertToBitmap();
-      rotated.stone_mark = wxImage(normal.stone_mark).Rotate90(false/*counter clockwise*/).ConvertToBitmap();
-      rotated.background = wxImage(normal.background).Rotate90(false/*counter clockwise*/).ConvertToBitmap();
+      rotated.click_mark 
+	= wxBitmap(normal.click_mark.ConvertToImage().Rotate90(false/*counter clockwise*/));
+      rotated.field_mark 
+	= wxBitmap(normal.field_mark.ConvertToImage().Rotate90(false/*counter clockwise*/));
+      rotated.stone_mark 
+	= wxBitmap(normal.stone_mark.ConvertToImage().Rotate90(false/*counter clockwise*/));
+      rotated.background 
+	= wxBitmap(normal.background.ConvertToImage().Rotate90(false/*counter clockwise*/));
     }
   }
-  
-  // ----------------------------------------------------------------------------
-  // Basic Panel
-  // ----------------------------------------------------------------------------
-
-  Basic_Panel::Basic_Panel()
-    : x(-1), y(-1), width(-1), height(-1)
-  {
-  }
-  Basic_Panel::~Basic_Panel()
-  {
-  }
-
-  // ----------------------------------------------------------------------------
-  // Spacer
-  // ----------------------------------------------------------------------------
-
-  Spacer::Spacer( int _width, int _height )
-  {
-    width = _width;
-    height = _height;
-  }
-
-  // ----------------------------------------------------------------------------
-  // Horizontal_Sizer
-  // ----------------------------------------------------------------------------
-
-  Horizontal_Sizer::Horizontal_Sizer( Align_Type align )
-    : align(align)
-  {
-  }
-
-  Horizontal_Sizer::~Horizontal_Sizer()
-  {
-    clear();
-  }
-
-  void Horizontal_Sizer::add( Basic_Panel *panel, bool destroy_on_remove )
-  {
-    elements.push_back( std::pair<Basic_Panel*,bool>(panel, destroy_on_remove) );
-  }
-  void Horizontal_Sizer::erase( Basic_Panel *panel )
-  {
-    std::list< std::pair<Basic_Panel*,bool /*destroy*/> >::iterator element;
-    for( element = elements.begin(); element != elements.end(); ++element )
-    {
-      if( element->first == panel )
-      {
-	if( element->second )
-	  delete panel;
-
-	elements.erase(element);
-	break;
-      }
-    }
-    calc_dimensions();
-  }
-  void Horizontal_Sizer::clear()
-  {
-    std::list< std::pair<Basic_Panel*,bool /*destroy*/> >::iterator element;
-    for( element = elements.begin(); element != elements.end(); ++element )
-    {
-      if( element->second )
-	delete element->first;
-    }
-    elements.clear();
-    width = 0;
-    height = 0;
-  }
-
-  void Horizontal_Sizer::draw( wxDC &dc ) const
-  {
-    //wxBrush brush1(*wxBLACK,wxTRANSPARENT);
-    //wxBrush brush2(*wxRED,wxTRANSPARENT);
-    //dc.SetBrush(brush1);
-    std::list< std::pair<Basic_Panel*,bool /*destroy*/> >::const_iterator element;
-    for( element = elements.begin(); element != elements.end(); ++element )
-    {
-      //dc.DrawRectangle( element->first->get_x(), element->first->get_y(), 
-      //		element->first->get_width(), element->first->get_height() );
-      element->first->draw(dc);
-    }
-    //dc.SetBrush(brush2);
-    //dc.DrawRectangle( get_x(), get_y(), get_width(), get_height() );
-  }
-
-  void Horizontal_Sizer::draw_text( wxDC &dc ) const
-  {
-    std::list< std::pair<Basic_Panel*,bool /*destroy*/> >::const_iterator element;
-    for( element = elements.begin(); element != elements.end(); ++element )
-    {
-      element->first->draw_text(dc);
-    }
-  }
-  
-  void Horizontal_Sizer::on_click( int cl_x, int cl_y ) const
-  {
-    if( is_in(cl_x,cl_y) )
-    {
-      std::list< std::pair<Basic_Panel*,bool /*destroy*/> >::const_iterator element;
-      for( element = elements.begin(); element != elements.end(); ++element )
-      {
-	if( cl_x < element->first->get_x() + element->first->get_width() )
-	{
-	  if( element->first->is_in(cl_x,cl_y) )
-	    element->first->on_click( cl_x, cl_y );
-	  break;
-	}
-      }
-    }
-  }
-
-  void Horizontal_Sizer::on_right_click( int cl_x, int cl_y ) const
-  {
-    if( is_in(cl_x,cl_y) )
-    {
-      std::list< std::pair<Basic_Panel*,bool /*destroy*/> >::const_iterator element;
-      for( element = elements.begin(); element != elements.end(); ++element )
-      {
-	if( cl_x < element->first->get_x() + element->first->get_width() )
-	{
-	  if( element->first->is_in(cl_x,cl_y) )
-	    element->first->on_right_click( cl_x, cl_y );
-	  break;
-	}
-      }
-    }
-  }
-  void Horizontal_Sizer::calc_dimensions()
-  {
-    int cur_width = 0;
-    int cur_height = 0;
-    std::list< std::pair<Basic_Panel*,bool /*destroy*/> >::iterator element;
-    for( element = elements.begin(); element != elements.end(); ++element )
-    {
-      element->first->set_x( x + cur_width );
-      element->first->calc_dimensions();
-      if( element->first->get_height() > cur_height )
-	cur_height = element->first->get_height();
-      cur_width += element->first->get_width();
-    }
-    width = cur_width;
-    height = cur_height;
-    for( element = elements.begin(); element != elements.end(); ++element )
-    {
-      switch(align)
-      {
-	case top:    element->first->set_y(y); break;
-	case bottom: element->first->set_y(y +  height - element->first->get_height()); break;
-	case middle: element->first->set_y(y + (height - element->first->get_height()) / 2); break;
-      }
-      element->first->calc_dimensions();
-    }
-  }
-
-  // ----------------------------------------------------------------------------
-  // Vertical_Sizer
-  // ----------------------------------------------------------------------------
-
-  Vertical_Sizer::Vertical_Sizer( Align_Type align )
-    : align(align)
-  {
-  }
-
-  Vertical_Sizer::~Vertical_Sizer()
-  {
-    clear();
-  }
-
-  void Vertical_Sizer::add( Basic_Panel *panel, bool destroy_on_remove )
-  {
-    elements.push_back( std::pair<Basic_Panel*,bool>(panel, destroy_on_remove) );
-  }
-  void Vertical_Sizer::erase( Basic_Panel *panel )
-  {
-    std::list< std::pair<Basic_Panel*,bool /*destroy*/> >::iterator element;
-    for( element = elements.begin(); element != elements.end(); ++element )
-    {
-      if( element->first == panel )
-      {
-	if( element->second )
-	  delete panel;
-
-	elements.erase(element);
-	break;
-      }
-    }
-    calc_dimensions();
-  }
-  void Vertical_Sizer::clear()
-  {
-    std::list< std::pair<Basic_Panel*,bool /*destroy*/> >::iterator element;
-    for( element = elements.begin(); element != elements.end(); ++element )
-    {
-      if( element->second )
-	delete element->first;
-    }
-    elements.clear();
-    width = 0;
-    height = 0;
-  }
-
-  void Vertical_Sizer::draw( wxDC &dc ) const
-  {
-    std::list< std::pair<Basic_Panel*,bool /*destroy*/> >::const_iterator element;
-    for( element = elements.begin(); element != elements.end(); ++element )
-    {
-      //dc.DrawRectangle( element->first->get_x(), element->first->get_y(), 
-      //		  element->first->get_width(), element->first->get_height() );
-      element->first->draw(dc);
-    }
-    //dc.DrawRectangle( get_x(), get_y(), get_width(), get_height() );
-  }
-
-  void Vertical_Sizer::draw_text( wxDC &dc ) const
-  {
-    std::list< std::pair<Basic_Panel*,bool /*destroy*/> >::const_iterator element;
-    for( element = elements.begin(); element != elements.end(); ++element )
-    {
-      element->first->draw_text(dc);
-    }
-  }
-
-  void Vertical_Sizer::on_click( int cl_x, int cl_y ) const
-  {
-    if( is_in(cl_x,cl_y) )
-    {
-      std::list< std::pair<Basic_Panel*,bool /*destroy*/> >::const_iterator element;
-      for( element = elements.begin(); element != elements.end(); ++element )
-      {
-	if( cl_y < element->first->get_y() + element->first->get_height() )
-	{
-	  if( element->first->is_in(cl_x,cl_y) )
-	    element->first->on_click( cl_x, cl_y );
-	  break;
-	}
-      }
-    }
-  }
-
-  void Vertical_Sizer::on_right_click( int cl_x, int cl_y ) const
-  {
-    if( is_in(cl_x,cl_y) )
-    {
-      std::list< std::pair<Basic_Panel*,bool /*destroy*/> >::const_iterator element;
-      for( element = elements.begin(); element != elements.end(); ++element )
-      {
-	if( cl_y < element->first->get_y() + element->first->get_height() )
-	{
-	  if( element->first->is_in(cl_x,cl_y) )
-	    element->first->on_right_click( cl_x, cl_y );
-	  break;
-	}
-      }
-    }
-  }
-  void Vertical_Sizer::calc_dimensions()
-  {
-    int cur_width = 0;
-    int cur_height = 0;
-    std::list< std::pair<Basic_Panel*,bool /*destroy*/> >::iterator element;
-    for( element = elements.begin(); element != elements.end(); ++element )
-    {
-      element->first->set_y( y + cur_height );
-      element->first->calc_dimensions();
-      if( element->first->get_width() > cur_width )
-	cur_width = element->first->get_width();
-      cur_height += element->first->get_height();
-    }
-    width = cur_width;
-    height = cur_height;
-    for( element = elements.begin(); element != elements.end(); ++element )
-    {
-      switch(align)
-      {
-	case left:   element->first->set_x(x); break;
-	case right:  element->first->set_x(x +  width - element->first->get_width()); break;
-	case center: element->first->set_x(x + (width - element->first->get_width()) / 2); break;
-      }
-      element->first->calc_dimensions();
-    }
-  }
-
   // ----------------------------------------------------------------------------
   // Board_Panel
   // ----------------------------------------------------------------------------
@@ -1854,7 +1512,7 @@ namespace dvonn
     bool ok = false;
     wxConfigBase* cfg = wxConfig::Get();
     wxString buf;
-
+    /*
     if( cfg->Read( wxT("skin_file"), &buf) )
     {
       if( wxFileExists(buf) )
@@ -1896,6 +1554,7 @@ namespace dvonn
 	}
       }
     }
+    */
     if( !ok )
     {
       bitmap_handler.normal.field_bitmaps[field_removed]	= wxBitmap(field_removed_xpm);
@@ -1990,55 +1649,56 @@ namespace dvonn
     input = new wxZipInputStream( filename, wxT("field_removed.png") );
     if( input->Eof() ) { delete input; return false; }
     image.LoadFile( *input, wxBITMAP_TYPE_PNG );
-    bitmap_handler.normal.field_bitmaps[field_removed] = image.ConvertToBitmap();
+    bitmap_handler.normal.field_bitmaps[field_removed] = wxBitmap(image);
     delete input;
     input = new wxZipInputStream( filename, wxT("field_empty.png") );
     if( input->Eof() ) { delete input; return false; }
     image.LoadFile( *input, wxBITMAP_TYPE_PNG );
-    bitmap_handler.normal.field_bitmaps[field_empty] = image.ConvertToBitmap();
+    bitmap_handler.normal.field_bitmaps[field_empty] = wxBitmap(image);
     delete input;
     input = new wxZipInputStream( filename, wxT("stone_white.png") );
     if( input->Eof() ) { delete input; return false; }
     image.LoadFile( *input, wxBITMAP_TYPE_PNG );
-    bitmap_handler.normal.stone_bitmaps[Stones::white_stone] = image.ConvertToBitmap();
+    bitmap_handler.normal.stone_bitmaps[Stones::white_stone] = wxBitmap(image);
     delete input;
     input = new wxZipInputStream( filename, wxT("stone_grey.png") );
     if( input->Eof() ) { delete input; return false; }
     image.LoadFile( *input, wxBITMAP_TYPE_PNG );
-    bitmap_handler.normal.stone_bitmaps[Stones::red_stone] = image.ConvertToBitmap();
+    bitmap_handler.normal.stone_bitmaps[Stones::red_stone] = wxBitmap(image);
     delete input;
     input = new wxZipInputStream( filename, wxT("stone_black.png") );
     if( input->Eof() ) { delete input; return false; }
     image.LoadFile( *input, wxBITMAP_TYPE_PNG );
-    bitmap_handler.normal.stone_bitmaps[Stones::black_stone] = image.ConvertToBitmap();
+    bitmap_handler.normal.stone_bitmaps[Stones::black_stone] = wxBitmap(image);
     delete input;
 
     input = new wxZipInputStream( filename, wxT("click_mark.png") );
     if( input->Eof() ) { delete input; return false; }
     image.LoadFile( *input, wxBITMAP_TYPE_PNG );
-    bitmap_handler.normal.click_mark = image.ConvertToBitmap();
+    bitmap_handler.normal.click_mark = wxBitmap(image);
     delete input;
     input = new wxZipInputStream( filename, wxT("field_mark.png") );
     if( input->Eof() ) { delete input; return false; }
     image.LoadFile( *input, wxBITMAP_TYPE_PNG );
-    bitmap_handler.normal.field_mark = image.ConvertToBitmap();
+    bitmap_handler.normal.field_mark = wxBitmap(image);
     delete input;
     input = new wxZipInputStream( filename, wxT("stone_mark.png") );
     if( input->Eof() ) { delete input; return false; }
     image.LoadFile( *input, wxBITMAP_TYPE_PNG );
-    bitmap_handler.normal.stone_mark = image.ConvertToBitmap();
+    bitmap_handler.normal.stone_mark = wxBitmap(image);
     delete input;
 
     input = new wxZipInputStream( filename, wxT("background.png") );
     if( input->Eof() ) { delete input; return false; }
     image.LoadFile( *input, wxBITMAP_TYPE_PNG );
-    bitmap_handler.normal.background = image.ConvertToBitmap();
+    bitmap_handler.normal.background = wxBitmap(image);
     delete input;
 
     input = new wxZipInputStream( filename, wxT("skin.ini") );
     //if( input->Eof() ) { delete input; return false; } // ini file might be empty
     wxFileConfig config( *input );
-    bitmap_handler.dimensions = Dimensions( config, bitmap_handler.normal.field_bitmaps[field_empty] );
+    bitmap_handler.dimensions 
+      = Dimensions( config, bitmap_handler.normal.field_bitmaps[field_empty] );
     delete input;
 
     bitmap_handler.setup_field_stone_bitmaps();

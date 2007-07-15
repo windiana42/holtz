@@ -17,6 +17,11 @@
 #ifndef __DVONN_ANIMATIONS__
 #define __DVONN_ANIMATIONS__
 
+namespace holtz
+{
+  class Game_Window;
+}
+
 namespace dvonn
 {
   class Bitmap_Move_Animation;
@@ -30,6 +35,8 @@ namespace dvonn
 
 namespace dvonn
 {
+  using namespace holtz;
+
   /*! class Bitmap_Move_Animation
    *  moves a bitmap continuously over the screen
    */
