@@ -16,7 +16,7 @@
 
 #include <wx/wx.h>
 #include <wx/config.h>
-#include <wx/wave.h>
+#include <wx/sound.h>
 #include <wx/html/helpctrl.h> // use HTML help
 
 #ifndef __WXDVONN__
@@ -26,13 +26,14 @@
 #define DEFAULT_DATA_DIR "./"
 #endif
 #ifndef DEFAULT_SKIN_FILE
-#define DEFAULT_SKIN_FILE DEFAULT_DATA_DIR wxT("skins/hex70.zip")
+#define DEFAULT_SKIN_FILE DEFAULT_DATA_DIR "skins/hex70.zip"
 #endif
 #ifndef DEFAULT_BEEP_FILE
-#define DEFAULT_BEEP_FILE DEFAULT_DATA_DIR wxT("sounds/beep.wav")
+#define DEFAULT_BEEP_FILE DEFAULT_DATA_DIR "sounds/beep.wav"
 #endif
 
 #include "dvonn.hpp"
+#include "wxholtz.hpp"
 
 namespace dvonn
 {
@@ -44,11 +45,14 @@ namespace dvonn
 #include "animations.hpp"
 //#include "ai.hpp"
 
-namespace dvonn
+namespace holtz
 {
 //#include "wxmain.hpp"
   class Game_Window;
+}
 
+namespace dvonn
+{
 //#include "dialogs.hpp"
   // classes defined in dialogs.hpp
   class Game_Dialog;
@@ -69,23 +73,11 @@ namespace dvonn
 
 namespace dvonn
 {
+  using namespace holtz;
+
   // ============================================================================
   // generic classes
   // ============================================================================
-
-  struct Dimensions
-  {
-    //!!! check that
-    int field_x, field_y, field_width, field_height, field_packed_width, field_packed_height;
-    int stack_shift_x, stack_shift_y;
-    int caption_height, stone_offset, board_x_offset, board_y_offset;
-    int board_stones_spacing, player_player_spacing, stones_player_spacing;
-    bool rotation_symmetric, rotate_background;
-
-    Dimensions();
-    Dimensions( char **field_xpm );
-    Dimensions( wxConfigBase &config, wxBitmap &bitmap ); // load from configuration
-  };
 
   struct Bitmap_Set
   {
@@ -105,80 +97,6 @@ namespace dvonn
 
     void setup_field_stone_bitmaps();
     void setup_rotated_bitmaps();
-  };
-
-  class Basic_Panel
-  {
-  public:
-    Basic_Panel();
-    virtual ~Basic_Panel();
-
-    inline int get_x() const { assert(x>=0); return x; }
-    inline int get_y() const { assert(y>=0); return y; }
-    inline void set_x( int _x ) { x = _x; }
-    inline void set_y( int _y ) { y = _y; }
-    inline int get_width() const { assert(width>=0); return width; }
-    inline int get_height() const { assert(height>=0); return height; }
-
-    inline bool is_in( int _x, int _y ) const { return (_x>=x)&&(_y>=y)&&(_x<x+width)&&(_y<y+height); }
-
-    virtual void calc_dimensions() = 0;
-    virtual void draw( wxDC &dc ) const {}
-    virtual void draw_text( wxDC &dc ) const {}
-    virtual void on_click( int /*x*/, int /*y*/ ) const {}
-    virtual void on_right_click( int /*x*/, int /*y*/ ) const {}
-  protected:
-    int x,y;
-    int width, height;
-  };
-
-  class Spacer : public Basic_Panel
-  {
-  public:
-    Spacer( int width, int height );
-    virtual void calc_dimensions() {}
-  };
-  
-  class Horizontal_Sizer : public Basic_Panel
-  {
-  public:
-    typedef enum Align_Type { top, bottom, middle };
-    Horizontal_Sizer( Align_Type align = top );
-    ~Horizontal_Sizer();
-
-    void add( Basic_Panel *, bool destroy_on_remove = false );
-    void erase( Basic_Panel * );
-    void clear();
-
-    virtual void calc_dimensions();
-    virtual void draw( wxDC &dc ) const;
-    virtual void draw_text( wxDC &dc ) const;
-    virtual void on_click( int x, int y ) const;
-    virtual void on_right_click( int /*x*/, int /*y*/ ) const;
-  private:
-    std::list< std::pair<Basic_Panel*,bool /*destroy*/> > elements;
-    Align_Type align;
-  };
-  
-  class Vertical_Sizer : public Basic_Panel
-  {
-  public:
-    typedef enum Align_Type { left, right, center };
-    Vertical_Sizer( Align_Type align = left );
-    ~Vertical_Sizer();
-
-    void add( Basic_Panel *, bool destroy_on_remove = false );
-    void erase( Basic_Panel * );
-    void clear();
-
-    virtual void calc_dimensions();
-    virtual void draw( wxDC &dc ) const;
-    virtual void draw_text( wxDC &dc ) const;
-    virtual void on_click( int x, int y ) const;
-    virtual void on_right_click( int /*x*/, int /*y*/ ) const;
-  private:
-    std::list< std::pair<Basic_Panel*,bool /*destroy*/> > elements;
-    Align_Type align;
   };
 
   // ============================================================================
@@ -451,7 +369,7 @@ namespace dvonn
     Mouse_Handler mouse_handler;
 
 #if wxUSE_WAVE
-    wxWave sound_beep;
+    wxSound sound_beep;
 #endif
   };
 

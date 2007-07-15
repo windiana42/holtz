@@ -98,9 +98,9 @@ namespace dvonn
     ~Custom_Board_Setup_Panel();
 
     void on_change_win  ( wxCommandEvent& event );
-    void on_spin_win ( wxCommandEvent& event );
+    void on_spin_win ( wxSpinEvent& event );
     void on_change_stones  ( wxCommandEvent& event );
-    void on_spin_stones ( wxCommandEvent& event );
+    void on_spin_stones ( wxSpinEvent& event );
 
     void restore();
     Game get_board();		// get board according to chosen settings

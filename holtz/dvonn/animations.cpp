@@ -287,8 +287,9 @@ namespace dvonn
   // - before initiating a new animation: refresh display 
   bool Move_Sequence_Animation::step()
   {
-    bool ret = true;
+    return false;
     /*
+    bool ret = true;
     switch( state )
       {
       case begin:
@@ -565,17 +566,17 @@ namespace dvonn
       case finished:
 	break;
     }
-    */
-
     return ret;
+    */
   }
 
   // perform animation step for undo animation
   // - before initiating a new animation: refresh display 
   bool Move_Sequence_Animation::step_undo()
   {
-    bool ret = true;
+    return false;
     /*
+    bool ret = true;
     switch( state )
     {
       case begin:
@@ -908,8 +909,8 @@ namespace dvonn
       case finished:
 	break;
     }
-    */
     return ret;
+    */
   }
 
   void Move_Sequence_Animation::on_done( wxTimerEvent &WXUNUSED(event) ) // current sub-animation done
