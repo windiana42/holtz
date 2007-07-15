@@ -53,7 +53,8 @@ namespace holtz
   // handlers) which process them. It can be also done at run-time, but for the
   // simple menu events like this the static method is much simpler.
   BEGIN_EVENT_TABLE(Main_Frame, wxFrame)				//**/
-  EVT_MENU(HOLTZ_NEW_GAME,	  Main_Frame::on_new_game)		//**/
+  EVT_MENU(HOLTZ_NEW_ZERTZ_GAME,  Main_Frame::on_new_zertz_game)	//**/
+  EVT_MENU(HOLTZ_NEW_DVONN_GAME,  Main_Frame::on_new_dvonn_game)	//**/
   EVT_MENU(HOLTZ_UNDO,		  Main_Frame::on_undo_move)		//**/
   EVT_MENU(HOLTZ_SETTINGS,	  Main_Frame::on_settings)		//**/
   EVT_MENU(HOLTZ_QUIT,		  Main_Frame::on_quit)			//**/
@@ -127,28 +128,30 @@ namespace holtz
 
   bool wxHoltz::init_help(wxLocale& loc)
   {
-	// try to load the HTML help file, in decreasing order:
-	// - help/help_la_co.htb
-	// - help/help_la.htb
-	// - data_dir/help/help_la_co.htb
-	// - data_dir/help/help_la.htb
-	// - help/help_en.htb
-	// - data_dir/help/help_en.htb
-	// where 'la' is the language, and 'co' the country of the currently used locale
-	// if all fails, return false
-	wxString language = loc.GetCanonicalName();
-	if(!get_help_controller().Initialize(wxT("help/help_") + language))
-	  if(language.Len() <= 2 || !get_help_controller().Initialize(wxT("help/help_") + language.Left(2)))
-	    if(!get_help_controller().Initialize(wxString(wxT(DEFAULT_DATA_DIR)) 
-						 + wxT("help/help_") + language))
-	      if(language.Len() <= 2 || !get_help_controller().Initialize(wxString(wxT(DEFAULT_DATA_DIR)) 
-									  + wxT("help/help_") 
-									  + language.Left(2)))
-		if(!get_help_controller().Initialize(wxT("help/help_en")))
-		  if(!get_help_controller().Initialize(wxString(wxT(DEFAULT_DATA_DIR)) 
-						       + wxT("help/help_en")))
-	  	  return false;
-	return true;
+    // try to load the HTML help file, in decreasing order:
+    // - help/help_la_co.htb
+    // - help/help_la.htb
+    // - data_dir/help/help_la_co.htb
+    // - data_dir/help/help_la.htb
+    // - help/help_en.htb
+    // - data_dir/help/help_en.htb
+    // where 'la' is the language, and 'co' the country of the currently used locale
+    // if all fails, return false
+    wxString language = loc.GetCanonicalName();
+    if(!get_help_controller().Initialize(wxT("help/help_") + language))
+      if(language.Len() <= 2 || 
+	 !get_help_controller().Initialize(wxT("help/help_") + language.Left(2)))
+	if(!get_help_controller().Initialize(wxString(wxT(DEFAULT_DATA_DIR)) 
+					     + wxT("help/help_") + language))
+	  if(language.Len() <= 2 
+	     || !get_help_controller().Initialize(wxString(wxT(DEFAULT_DATA_DIR)) 
+						  + wxT("help/help_") 
+						  + language.Left(2)))
+	    if(!get_help_controller().Initialize(wxT("help/help_en")))
+	      if(!get_help_controller().Initialize(wxString(wxT(DEFAULT_DATA_DIR)) 
+						   + wxT("help/help_en")))
+		return false;
+    return true;
   }
 
   bool wxHoltz::check_config()
@@ -169,20 +172,33 @@ namespace holtz
   Game_Window::Game_Window( wxFrame *parent_frame )
     : wxScrolledWindow( parent_frame ),
       parent_frame(*parent_frame),
-      gui_manager( game_manager, *this ),
-      game_dialog( this, game_manager, gui_manager )
+      active_game(NO_GAME),
+      zertz_game_manager(0), zertz_gui_manager(0), zertz_game_dialog(0),
+      dvonn_game_manager(0), dvonn_gui_manager(0), dvonn_game_dialog(0)
   {
-    game_manager.set_ui_manager( &gui_manager );
-    Standalone_Game_Setup_Manager *game_setup_manager = new Standalone_Game_Setup_Manager( game_manager );
-    game_manager.set_game_setup_manager( game_setup_manager );
-    game_setup_manager->set_display_handler( &game_dialog );
-
     SetBackgroundColour(*wxWHITE);
   }
 
   Game_Window::~Game_Window()
   {
-    game_manager.stop_game();
+    switch( active_game ) {
+    case ZERTZ:
+      if( zertz_game_manager )
+	zertz_game_manager->stop_game();
+      delete zertz_game_manager;
+      delete zertz_gui_manager;
+      delete zertz_game_dialog;
+      break;
+    case DVONN:
+      if( dvonn_game_manager )
+	dvonn_game_manager->stop_game();
+      delete dvonn_game_manager;
+      delete dvonn_gui_manager;
+      delete dvonn_game_dialog;
+      break;
+    case NO_GAME:
+      break;
+    }
   }
   
   bool Game_Window::on_close()
@@ -192,53 +208,189 @@ namespace holtz
 
   void Game_Window::load_settings()
   {
-    gui_manager.load_settings();
+    switch( active_game ) {
+    case ZERTZ:
+      zertz_gui_manager->load_settings();
+      break;
+    case DVONN:
+      dvonn_gui_manager->load_settings();
+      break;
+    case NO_GAME:
+      break;
+    }
+  }
+
+  void Game_Window::init_zertz() 
+  {
+    switch( active_game ) {
+    case ZERTZ:
+      delete zertz_game_manager;
+      delete zertz_gui_manager;
+      delete zertz_game_dialog;
+      break;
+    case DVONN:
+      delete dvonn_game_manager;
+      delete dvonn_gui_manager;
+      delete dvonn_game_dialog;
+      break;
+    case NO_GAME:
+      break;
+    }
+
+    zertz_game_manager = new zertz::Game_Manager();
+    zertz_gui_manager  = new zertz::WX_GUI_Manager( *zertz_game_manager, *this );
+    zertz_game_dialog  = new zertz::Game_Dialog( this, *zertz_game_manager, *zertz_gui_manager );
+
+    zertz_game_manager->set_ui_manager( zertz_gui_manager );
+    zertz::Standalone_Game_Setup_Manager *game_setup_manager 
+      = new zertz::Standalone_Game_Setup_Manager( *zertz_game_manager );
+    zertz_game_manager->set_game_setup_manager( game_setup_manager );
+    game_setup_manager->set_display_handler( zertz_game_dialog );
+
+    active_game = ZERTZ;
+    refresh();
+  }
+
+  void Game_Window::init_dvonn() 
+  {
+    switch( active_game ) {
+    case ZERTZ:
+      delete zertz_game_manager;
+      delete zertz_gui_manager;
+      delete zertz_game_dialog;
+      break;
+    case DVONN:
+      delete dvonn_game_manager;
+      delete dvonn_gui_manager;
+      delete dvonn_game_dialog;
+      break;
+    case NO_GAME:
+      break;
+    }
+
+    dvonn_game_manager = new dvonn::Game_Manager();
+    dvonn_gui_manager  = new dvonn::WX_GUI_Manager( *dvonn_game_manager, *this );
+    dvonn_game_dialog  = new dvonn::Game_Dialog( this, *dvonn_game_manager, *dvonn_gui_manager );
+
+    dvonn_game_manager->set_ui_manager( dvonn_gui_manager );
+    dvonn::Standalone_Game_Setup_Manager *game_setup_manager 
+      = new dvonn::Standalone_Game_Setup_Manager( *dvonn_game_manager );
+    dvonn_game_manager->set_game_setup_manager( game_setup_manager );
+    game_setup_manager->set_display_handler( dvonn_game_dialog );
+
+    active_game = DVONN;
+    refresh();
   }
   
-  void Game_Window::new_game()
+  void Game_Window::new_zertz_game()
   {
-    game_manager.new_game();
+    if( active_game != ZERTZ )
+      init_zertz();
+    
+    switch( active_game ) {
+    case ZERTZ:
+      zertz_game_manager->new_game();
+      break;
+    case DVONN:
+      dvonn_game_manager->new_game();
+      break;
+    case NO_GAME:
+      break;
+    }
+  }
+  
+  void Game_Window::new_dvonn_game()
+  {
+    if( active_game != DVONN )
+      init_dvonn();
+
+    switch( active_game ) {
+    case ZERTZ:
+      zertz_game_manager->new_game();
+      break;
+    case DVONN:
+      dvonn_game_manager->new_game();
+      break;
+    case NO_GAME:
+      break;
+    }
   }
 
   void Game_Window::undo_move()
   {
-    const Game &game = game_manager.get_game();
-    if( !game.variant_tree.is_first() )
-    {
-      const Variant *variant = game.variant_tree.get_current_variant();
-
-      int num_undo = 1;
-      while( (variant->prev != game.variant_tree.get_root_variant()) &&
-	     ( (game.get_player(variant->current_player_index)->origin==Player::remote) ||
-	       (game.get_player(variant->current_player_index)->type==Player::ai) ||
-	       (variant->prev->possible_variants==1) ) )
-      {
-	variant = variant->prev;
-	num_undo++;
-      }
-
-      game_manager.undo_moves(num_undo);
+    switch( active_game ) {
+    case ZERTZ:
+      zertz_game_manager->undo_move();
+      break;
+    case DVONN:
+      dvonn_game_manager->undo_move();
+      break;
+    case NO_GAME:
+      break;
     }
   }
 
   void Game_Window::settings_dialog()
   {
-    Settings_Dialog dialog( this, gui_manager );
-    dialog.Center();
-    dialog.ShowModal();
+    switch( active_game ) {
+    case ZERTZ:
+      {
+	zertz::Settings_Dialog dialog( this, *zertz_gui_manager );
+	dialog.Center();
+	dialog.ShowModal();
+      }
+      break;
+    case DVONN:
+      {
+	dvonn::Settings_Dialog dialog( this, *dvonn_gui_manager );
+	dialog.Center();
+	dialog.ShowModal();
+      }
+      break;
+    case NO_GAME:
+      break;
+    }
   }
 
   void Game_Window::show_status_text( wxString text ) // shows text in status bar
   {
     parent_frame.SetStatusText( text );
   }
+
   void Game_Window::init_scrollbars()
   {
-    SetScrollbars( 10, 10, gui_manager.get_width() / 10 + 1, gui_manager.get_height() / 10 + 1 );
+    switch( active_game ) {
+    case ZERTZ:
+      SetScrollbars( 10, 10, zertz_gui_manager->get_width() / 10 + 1, 
+		     zertz_gui_manager->get_height() / 10 + 1 );
+      break;
+    case DVONN:
+      SetScrollbars( 10, 10, dvonn_gui_manager->get_width() / 10 + 1, 
+		     dvonn_gui_manager->get_height() / 10 + 1 );
+      break;
+    case NO_GAME:
+      break;
+    }
   }
-    
+  
+  const wxBitmap &Game_Window::get_background_bitmap() 
+  {
+    switch( active_game ) {
+    case ZERTZ:
+      return zertz_gui_manager->get_game_panel().get_background();
+    case DVONN:
+      return dvonn_gui_manager->get_game_panel().get_background();
+    case NO_GAME:
+      break;
+    }
+    assert(false);
+    return *new wxBitmap();
+  }
+  
   void Game_Window::OnDraw( wxDC &_dc )
   {
+    if( active_game == NO_GAME ) return;
+
     // prepare background:
     int width, width2; 
     int height, height2;
@@ -259,7 +411,7 @@ namespace holtz
 #endif
 
 #ifdef DRAW_BACKGROUND
-    const wxBitmap &background = gui_manager.get_game_panel().get_background();
+    const wxBitmap &background = get_background_bitmap();
     int bg_width = background.GetWidth();
     int bg_height = background.GetHeight();
     for( int y = 0; y < height + bg_height; y += bg_height )
@@ -271,19 +423,38 @@ namespace holtz
     }
 #endif
 
-    gui_manager.draw( *dc );
-    gui_manager.draw_mark( *dc );
+    switch( active_game ) {
+    case ZERTZ:
+      zertz_gui_manager->draw( *dc );
+      zertz_gui_manager->draw_mark( *dc );
+      break;
+    case DVONN:
+      dvonn_gui_manager->draw( *dc );
+      dvonn_gui_manager->draw_mark( *dc );
+      break;
+    case NO_GAME:
+      break;
+    }
 
 #ifdef DOUBLE_BUFFER
 #ifdef __WXGTK__		// work around for wxGTK which doesn't draw text on MemoryDC
     // draw text directly on the real device context
     _dc.BeginDrawing();
     _dc.Blit(0,0, width, height, dc, 0, 0 );
-    dc = &_dc;			
+    dc = &_dc;	
 #endif
 #endif
 
-    gui_manager.draw_text( *dc );
+    switch( active_game ) {
+    case ZERTZ:
+      zertz_gui_manager->draw_text( *dc );
+      break;
+    case DVONN:
+      dvonn_gui_manager->draw_text( *dc );
+      break;
+    case NO_GAME:
+      break;
+    }
 
 #ifdef DOUBLE_BUFFER
 #ifndef __WXGTK__
@@ -311,13 +482,31 @@ namespace holtz
 
     if( event.LeftDown() )	// if event is left click
     {
-      gui_manager.mouse_click_left( cl_x, cl_y );
+      switch( active_game ) {
+      case ZERTZ:
+	zertz_gui_manager->mouse_click_left( cl_x, cl_y );
+	break;
+      case DVONN:
+	dvonn_gui_manager->mouse_click_left( cl_x, cl_y );
+	break;
+      case NO_GAME:
+	break;
+      }
     }
     else
     {
       if( event.RightDown() )	// if event is left click
       {
-	gui_manager.mouse_click_right( cl_x, cl_y );
+	switch( active_game ) {
+	case ZERTZ:
+	  zertz_gui_manager->mouse_click_right( cl_x, cl_y );
+	  break;
+	case DVONN:
+	  dvonn_gui_manager->mouse_click_right( cl_x, cl_y );
+	  break;
+	case NO_GAME:
+	  break;
+	}
       }
     }
   }
@@ -367,13 +556,17 @@ namespace holtz
   {
     // create a menu bar
     wxMenu *file_menu = new wxMenu;
-    file_menu->Append(HOLTZ_NEW_GAME,		_("&New Game...\tCtrl-N"), _("Start a new game"));
+    file_menu->Append(HOLTZ_NEW_ZERTZ_GAME, _("&New Zertz Game...\tCtrl-N"), 
+		      _("Start a new Zertz game"));
+    file_menu->Append(HOLTZ_NEW_DVONN_GAME, _("&New Dvonn Game...\tCtrl-N"), 
+		      _("Start a new Dvonn game"));
     file_menu->AppendSeparator();
-    file_menu->Append(HOLTZ_QUIT,		_("E&xit\tAlt-X"), _("Quit Holtz"));
+    file_menu->Append(HOLTZ_QUIT,	    _("E&xit\tAlt-X"), _("Quit Holtz"));
 
     // the "Setting" item should be in the help menu
     setting_menu = new wxMenu;
-    setting_menu->Append(HOLTZ_SETTINGS, _("Display s&ettings...\tCtrl-E"),  _("Change display settings"));
+    setting_menu->Append(HOLTZ_SETTINGS, _("Display s&ettings...\tCtrl-E"),  
+			 _("Change display settings"));
 
     // the "Setting" item should be in the help menu
     game_menu = new wxMenu;
@@ -432,9 +625,14 @@ namespace holtz
   
   // event handlers
 
-  void Main_Frame::on_new_game(wxCommandEvent& WXUNUSED(event))
+  void Main_Frame::on_new_zertz_game(wxCommandEvent& WXUNUSED(event))
   {
-    game_window.new_game();
+    game_window.new_zertz_game();
+  }
+
+  void Main_Frame::on_new_dvonn_game(wxCommandEvent& WXUNUSED(event))
+  {
+    game_window.new_dvonn_game();
   }
 
   void Main_Frame::on_settings(wxCommandEvent& WXUNUSED(event))

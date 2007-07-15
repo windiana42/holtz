@@ -24,7 +24,7 @@
 #include <wx/fontdlg.h>
 #include <fstream>
 
-namespace holtz
+namespace zertz
 {
 
   // ----------------------------------------------------------------------------
@@ -549,7 +549,7 @@ namespace holtz
     }
   }
 
-  void Custom_Board_Setup_Panel::on_spin_win ( wxCommandEvent& event )
+  void Custom_Board_Setup_Panel::on_spin_win ( wxSpinEvent& event )
   {
     changes = true;
     win_choice->SetSelection(2);
@@ -580,7 +580,7 @@ namespace holtz
 	break;
     }
   }
-  void Custom_Board_Setup_Panel::on_spin_stones ( wxCommandEvent& WXUNUSED(event) )
+  void Custom_Board_Setup_Panel::on_spin_stones ( wxSpinEvent& WXUNUSED(event) )
   {
     changes = true;
     stones_choice->SetSelection(2);
@@ -673,11 +673,12 @@ namespace holtz
     //pbm_choice = new wxRadioBox( this, -1 );
     pbm_sizer->Add( new wxStaticText(this,-1,_("Directory") ), 0, wxALL, 10 );
     pbm_directory = new wxTextCtrl( this, DIALOG_CHANGE_DIRECTORY, wxT("") );
-    pbm_sizer->Add( pbm_directory, 2, wxALL, 10 );
+    pbm_sizer->Add( pbm_directory, 1, wxALL, 10 );
     pbm_sizer->Add( new wxButton( this, DIALOG_CHOOSE_DIRECTORY, _("Choose...") ), 0, wxALL, 10 );
+    top_sizer->Add( pbm_sizer, 0, wxEXPAND | wxVERTICAL, 10 );
+
     pbm_game_list = new wxListBox( this,-1,wxDefaultPosition, wxSize(100,100), 0, 0, wxLB_SINGLE );
-    pbm_sizer->Add( pbm_game_list, 1, wxALL, 10 );
-    top_sizer->Add( pbm_sizer, 0, wxCENTER | wxVERTICAL );
+    top_sizer->Add( pbm_game_list, 1, wxEXPAND | wxALL, 20 );
 
     SetAutoLayout( true );
     SetSizer( top_sizer );
@@ -962,7 +963,7 @@ namespace holtz
       Player player( wxstr_to_str(player_name->GetValue()), -1, input, Player::no_output, "", type, 
 		     help_mode );
 
-      int num_players = player_list->Number();
+      int num_players = player_list->GetCount();
       if( !game_dialog.game_setup_manager->add_player( player ) )
       {
 	wxMessageBox(_("Could not add player"), _("Add player"), wxOK | wxICON_INFORMATION, this);
@@ -981,10 +982,15 @@ namespace holtz
       int item = player_list->GetSelection();
       if( item >= 0 )
       {
+	int num_players = player_list->GetCount();
 	if( !game_dialog.game_setup_manager->remove_player( item_player[item] ) )
 	{
 	  wxMessageBox( _("Could not remove player!"), 
 		        _("Remove player"), wxOK | wxICON_INFORMATION, this );
+	}
+	else
+	{
+	  player_name->SetValue( get_default_name(num_players) );
 	}
       }
     }
@@ -1011,7 +1017,7 @@ namespace holtz
     if( game_dialog.game_setup_manager )
     {
       int item = player_list->GetSelection();
-      if( (item >= 0) && (item < player_list->Number()-1) )
+      if( (item >= 0) && (item < player_list->GetCount()-1) )
       {
 	if( !game_dialog.game_setup_manager->player_down( item_player[item] ) )
 	{
@@ -1025,7 +1031,7 @@ namespace holtz
   void Player_Setup_Panel::player_added( const Player &player )
   {
     // setup lookup tables
-    int item = player_list->Number();
+    int item = player_list->GetCount();
     player_item[player.id] = item;
     item_player[item] = player; 
 
@@ -1037,7 +1043,7 @@ namespace holtz
     player_list->Append( str_to_wxstr(name) );
 
     /* this could overwrite the name at any time
-    int num_players = player_list->Number();
+    int num_players = player_list->GetCount();
     wxString default_name;
     default_name.Printf( _("Player %d"), num_players + 1 );get_default_name(num_players + 1)
     player_name->SetValue( default_name );
@@ -1099,7 +1105,7 @@ namespace holtz
   void Player_Setup_Panel::player_down( const Player &player )
   {
     int item = player_item[player.id];
-    if( item < player_list->Number() - 1 )
+    if( item < player_list->GetCount() - 1 )
     {
       int item0 = item;
       int item1 = item + 1;
@@ -1187,11 +1193,11 @@ namespace holtz
     player_list->Clear();
     item_player.clear();
     player_item.clear();
-    std::vector<Player>::iterator i;
+    std::list<Player>::iterator i;
     for( i = game_dialog.players.begin(); i != game_dialog.players.end(); ++i )
       player_added( *i );
 
-    player_name->SetValue( get_default_name(player_list->Number() + 1) );
+    player_name->SetValue( get_default_name(player_list->GetCount() + 1) );
   }
 
   wxString Player_Setup_Panel::get_default_name( int player_num )
@@ -1992,7 +1998,7 @@ namespace holtz
   void Network_Clients_Dialog::new_connection( wxIPV4address host, wxSocketBase *socket )
   {
     client_data[static_cast<void*>(socket)] = socket;
-    client_item[socket] = client_list->Number();
+    client_item[socket] = client_list->GetCount();
     wxString port;
     port.Printf(wxT("%d"), host.Service());
     /*

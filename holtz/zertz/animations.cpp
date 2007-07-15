@@ -19,7 +19,7 @@
 #include "wxmain.hpp"
 #include <stdlib.h>
 
-namespace holtz
+namespace zertz
 {
   inline int min( int a, int b )
   {

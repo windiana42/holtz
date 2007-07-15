@@ -14,10 +14,10 @@
  * 
  */
 
-#ifndef __HOLTZ_MANAGER__
-#define __HOLTZ_MANAGER__
+#ifndef __ZERTZ_MANAGER__
+#define __ZERTZ_MANAGER__
 
-namespace holtz
+namespace zertz
 {
   class Game_Manager;
   class Game_UI_Manager;
@@ -25,12 +25,12 @@ namespace holtz
   class Standalone_Game_Setup_Manager;
 }
 
-#include "holtz.hpp"
+#include "zertz.hpp"
 #include "ai.hpp"
 
 #include <wx/string.h>
 
-namespace holtz
+namespace zertz
 {
   /*! abstract class Game_Setup_Display_Handler
    *  displays everything during game setup
@@ -58,7 +58,8 @@ namespace holtz
     virtual void everything_ready() = 0;
     virtual void aborted() = 0;
     virtual bool ask_new_game( wxString who ) = 0; // other player asks for a new game (true: accept)
-    virtual bool ask_undo_moves( wxString who, int n=2 ) = 0; // other player asks to undo a move (true: accept)
+    virtual bool ask_undo_moves( wxString who, int n = 2 ) = 0; // other player asks to undo a move
+								// (true: accept)
   };
 
   /*! abstract class Game_Setup_Manager
@@ -76,7 +77,7 @@ namespace holtz
     // board commands
     virtual Answer_Type ask_change_board( const Game &game ) = 0;
     virtual const Game &get_board()   = 0;
-    virtual const std::vector<Player> &get_players() = 0;
+    virtual const std::list<Player> &get_players() = 0;
     // player commands
     virtual bool add_player( const Player & ) = 0;
     virtual bool remove_player( const Player & ) = 0;
@@ -87,9 +88,9 @@ namespace holtz
     virtual Game_State can_start() = 0;	// is everyone ready and number of players ok?
     virtual void start_game() = 0; // call only when can_start() == true
     virtual Answer_Type ask_new_game() = 0; // request to play new game
-    virtual Answer_Type ask_undo_moves( int n = 2 ) = 0; // request to undo a move
-    virtual void new_game() = 0; // force new game (may close connections)
-    virtual void stop_game() = 0; // stop game
+    virtual Answer_Type ask_undo_move() = 0; // request to undo a move
+    virtual void force_new_game() = 0; // force new game (may close connections)
+    virtual void stop_game() = 0;  // stop game
 
     virtual ~Game_Setup_Manager();
   };
@@ -105,26 +106,23 @@ namespace holtz
 
     void start_game();
     void continue_game();
-    void ask_new_game();	// request to start new game
+    void new_game();		// request to start new game
+    void force_new_game();	// start a new game (may disconnect game connection)
     void new_game_accepted();
     void new_game_denied();
-    void ask_undo_moves( int n = 2 );
+    void undo_move();
     void undo_accepted();
     void undo_denied();
-
-    void new_game();		// start a new game (may disconnect game connection)
-    void undo_moves( int n = 2 );
     void stop_game();
 
     void set_board  ( const Game& );
-    void set_players( const std::vector<Player>& );
+    void set_players( const std::list<Player>& );
 
     AI_Input *get_hint_ai();
     AI_Input *get_player_ai();
 
     inline const Game &get_game() { return game; }
     inline Game_Setup_Manager *get_game_setup_manager() { return game_setup_manager; }
-    inline Game_UI_Manager    *get_ui_manager()         { return ui_manager; }
 
     inline void set_game_setup_manager( Game_Setup_Manager *sm ) // set by Game_Dialog
     { delete game_setup_manager; game_setup_manager = sm; }
@@ -132,11 +130,10 @@ namespace holtz
     Game_Setup_Manager *game_setup_manager;
     Game_UI_Manager *ui_manager;
     Game game;
-
+    
     AI_Input ai;		// may be replaced by multiple AIs
 
-    bool new_game_requested;
-    int undo_moves_requested;	// number of undo moves requested
+    bool undo_requested, new_game_requested;
   };
 
   /*! abstract class Game_UI_Manager
@@ -162,8 +159,6 @@ namespace holtz
     virtual void stop_user_activity() = 0;
     virtual void do_move_slowly( Move_Sequence sequence, wxEvtHandler *done_handler = 0, 
 				 int event_id=-1 ) = 0; // show user how move is done
-    virtual void undo_move_slowly( wxEvtHandler *done_handler = 0, 
-    				   int event_id=-1 ) = 0; // show user how move is undone
     virtual void show_status_text( wxString text ) = 0; // shows text in status bar
     virtual void beep() = 0;
 
@@ -183,7 +178,6 @@ namespace holtz
   class Standalone_Game_Setup_Manager : public Game_Setup_Manager
   {
   public:
-    // fetches game from game_manager but initialize no players
     Standalone_Game_Setup_Manager( Game_Manager & );
     ~Standalone_Game_Setup_Manager();
 
@@ -193,7 +187,7 @@ namespace holtz
     // board commands
     virtual Answer_Type ask_change_board( const Game &game );
     virtual const Game &get_board();
-    virtual const std::vector<Player> &get_players();
+    virtual const std::list<Player> &get_players();
     // player commands
     virtual bool add_player( const Player & );
     virtual bool remove_player( const Player & );
@@ -204,8 +198,8 @@ namespace holtz
     virtual Game_State can_start(); // is everyone ready and number of players ok?
     virtual void start_game();  // call only when can_start() == true
     virtual Answer_Type ask_new_game(); // request to play new game
-    virtual Answer_Type ask_undo_moves( int n = 2 ); // request to undo a move
-    virtual void new_game();	// force new game (may close connections)
+    virtual Answer_Type ask_undo_move(); // request to undo a move
+    virtual void force_new_game(); // force new game (may close connections)
     virtual void stop_game();   // stop game
   private:
     Game_Manager &game_manager;
@@ -214,8 +208,8 @@ namespace holtz
     Game game;
 
     int current_id;
-    std::vector<Player> players;
-    std::map<int,std::vector<Player>::iterator> id_player; // Table id->player
+    std::list<Player> players;
+    std::map<int,std::list<Player>::iterator> id_player; // Table id->player
   };
 
 }

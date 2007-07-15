@@ -18,7 +18,7 @@
 
 #include <wx/wx.h>
 
-namespace holtz
+namespace dvonn
 {
   // ----------------------------------------------------------------------------
   // Game_Setup_Display_Handler
@@ -42,14 +42,14 @@ namespace holtz
 
   Game_Manager::Game_Manager( Game_UI_Manager *ui_manager )
     : game_setup_manager(0), ui_manager(ui_manager), game(Standard_Ruleset()), 
-      ai(*this, ui_manager), new_game_requested(false), undo_moves_requested(0)
+      /*ai(*this, ui_manager),*/ new_game_requested(false), undo_moves_requested(0)
   {
   }
 
   void Game_Manager::set_ui_manager( Game_UI_Manager *new_ui_manager )
   {
     ui_manager = new_ui_manager;
-    ai.set_ui_manager(ui_manager);
+    //ai.set_ui_manager(ui_manager);
   }
   
   void Game_Manager::start_game()
@@ -93,11 +93,15 @@ namespace holtz
 	    ui_manager->update_board( game ); // update board display
 
 	  winner = game.get_winner_index();
-	  assert( winner >= 0 );
 
 	  if( ui_manager )
-	    ui_manager->report_winner( &*game.get_player(winner) );
-
+	  {
+	    if( winner >= 0 )
+	      ui_manager->report_winner( &*game.get_player(winner) );
+	    else
+	      ui_manager->report_winner( 0 );
+	  }
+	  
 	  go_on = false;
 	}
 	break;
@@ -291,6 +295,29 @@ namespace holtz
       continue_game();
   }
 
+  void Game_Manager::undo_move()
+  {
+#warning figure out what to do with this for zertz AND dvonn
+    /*
+    const Game &game = game_manager.get_game();
+    if( !game.variant_tree.is_first() )
+    {
+      const Variant *variant = game.variant_tree.get_current_variant();
+
+      int num_undo = 1;
+      while( (variant->prev != game.variant_tree.get_root_variant()) &&
+	     ( (game.get_player(variant->current_player_index)->origin==Player::remote) ||
+	       (game.get_player(variant->current_player_index)->type==Player::ai) ||
+	       (variant->prev->possible_variants==1) ) )
+      {
+	variant = variant->prev;
+	num_undo++;
+      }
+      game_manager.undo_moves(num_undo);
+    }
+    */
+  }
+
   void Game_Manager::new_game()
   {
     stop_game();
@@ -314,7 +341,7 @@ namespace holtz
     stop_game();
     game.set_players( players );
   }
-
+  /*
   AI_Input *Game_Manager::get_hint_ai()
   {
     return &ai;
@@ -323,7 +350,7 @@ namespace holtz
   {
     return &ai;
   }
-
+  */
   // ----------------------------------------------------------------------------
   // Game_UI_Manager
   // ----------------------------------------------------------------------------
@@ -346,7 +373,7 @@ namespace holtz
   {
     // init id map
     /*
-    std::vector<Player>::iterator i;
+    std::deque<Player>::iterator i;
     for( i = players.begin(); i != players.end(); ++i )
     {
       id_player[i->id] = i;
@@ -373,7 +400,7 @@ namespace holtz
     if( display_handler )
     {
       // tell handler all players
-      std::vector<Player>::iterator player;
+      std::deque<Player>::iterator player;
       for( player = players.begin(); player != players.end(); ++player )
       {
 	display_handler->player_added(*player);
@@ -396,16 +423,21 @@ namespace holtz
     return game;
   }
 
-  const std::vector<Player> &Standalone_Game_Setup_Manager::get_players()
+  std::vector<Player> Standalone_Game_Setup_Manager::get_players()
   {
-    return players;
+    std::vector<Player> player_vector;
+    player_vector.resize(players.size());
+    for( unsigned i=0; i<players.size(); ++i )
+      player_vector[i] = players[i];
+
+    return player_vector;
   }
 
   bool Standalone_Game_Setup_Manager::add_player( const Player &player )
   {
     if( players.size() < game.get_max_players() )
     {
-      std::vector<Player>::iterator p = players.insert(players.end(), player);
+      std::deque<Player>::iterator p = players.insert(players.end(), player);
       p->id = current_id; ++current_id;
       id_player[p->id] = p;
     
@@ -418,7 +450,8 @@ namespace holtz
   }
   bool Standalone_Game_Setup_Manager::remove_player( const Player &player )
   {
-    std::vector<Player>::iterator player_iterator = id_player[player.id];
+    std::deque<Player>::iterator player_iterator = id_player[player.id];
+    assert( player_iterator->id == player.id );
     if( display_handler )
       display_handler->player_removed(*player_iterator);
 
@@ -428,11 +461,12 @@ namespace holtz
   }
   bool Standalone_Game_Setup_Manager::player_up( const Player &player )
   {
-    std::vector<Player>::iterator player_iterator = id_player[player.id];
+    std::deque<Player>::iterator player_iterator = id_player[player.id];
+    assert( player_iterator->id == player.id );
     if( player_iterator == players.begin() ) // is first player
       return false;
 
-    std::vector<Player>::iterator player_iterator2 = player_iterator; --player_iterator2;
+    std::deque<Player>::iterator player_iterator2 = player_iterator; --player_iterator2;
 
     Player p1 = *player_iterator;
     *player_iterator  = *player_iterator2;
@@ -448,8 +482,9 @@ namespace holtz
   }
   bool Standalone_Game_Setup_Manager::player_down( const Player &player )
   {
-    std::vector<Player>::iterator player_iterator  = id_player[player.id];
-    std::vector<Player>::iterator player_iterator2 = player_iterator; ++player_iterator2;
+    std::deque<Player>::iterator player_iterator  = id_player[player.id];
+    assert( player_iterator->id == player.id );
+    std::deque<Player>::iterator player_iterator2 = player_iterator; ++player_iterator2;
 
     if( player_iterator2 == players.end() ) // is last player
       return false;
@@ -483,7 +518,11 @@ namespace holtz
   {
     assert( can_start() == everyone_ready );
     game_manager.set_board  ( game );
-    game_manager.set_players( players );
+    std::vector<Player> player_vector;
+    player_vector.resize(players.size());
+    for( unsigned i=0; i<players.size(); ++i )
+      player_vector[i] = players[i];
+    game_manager.set_players( player_vector );
     game_manager.start_game();
   }
   Standalone_Game_Setup_Manager::Answer_Type Standalone_Game_Setup_Manager::ask_new_game()

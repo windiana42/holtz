@@ -1,5 +1,5 @@
 AC_INIT(holtz.cpp)
-AM_INIT_AUTOMAKE(holtz, 1.1.11)
+AM_INIT_AUTOMAKE(holtz, 1.2.0)
 AC_PROG_CC
 AC_PROG_CXX
 AC_PROG_INSTALL
@@ -44,6 +44,8 @@ fi
 
 AC_OUTPUT(
 	Makefile
+	zertz/Makefile
+	dvonn/Makefile
 	skins/Makefile
 	skins/eins/Makefile
 	sounds/Makefile

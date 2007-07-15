@@ -23,6 +23,8 @@
 
 #include <string>
 #include <map>
+#include <list>
+#include <vector>
 
 #include <wx/wx.h>
 
@@ -253,5 +255,23 @@ namespace std
   // replace pattern with <replace> in str and return number of occurances
   int replace( string &str, string pattern, string replace, 
 	       string::size_type from=0, string::size_type to=string::npos );
+
+  template<typename T>
+  vector<T> list_to_vector(const list<T> &l) {
+    vector<T> ret(l.size());
+    typename list<T>::const_iterator it; int i;
+    for( it = l.begin(), i=0; it != l.end(); ++it, ++i )
+      ret.at(i) = *it;
+    return ret;
+  }
+
+  template<typename T>
+  list<T> vector_to_list(const vector<T> &v) {
+    list<T> ret;
+    typename vector<T>::const_iterator it;
+    for( it = v.begin(); it != v.end(); ++it )
+      ret.push_back(*it);
+    return ret;
+  }
 }
 #endif

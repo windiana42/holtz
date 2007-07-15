@@ -1,5 +1,5 @@
 /*
- * holtz.cpp
+ * zertz.cpp
  * 
  * Game declaration
  * 
@@ -14,8 +14,8 @@
  * 
  */
 
-#ifndef __HOLTZ_MAIN__
-#define __HOLTZ_MAIN__
+#ifndef __ZERTZ_MAIN__
+#define __ZERTZ_MAIN__
 
 #include <string>
 #include <list>
@@ -27,7 +27,7 @@
 
 #include "util.hpp"
 
-namespace holtz
+namespace zertz
 {
   class Stones;
   class Player;
@@ -118,7 +118,7 @@ namespace holtz
       {   -1, -1,  0,  0,  0,  0,  0, -1, -1 } };
 }
 
-namespace holtz
+namespace zertz
 {
   class Exception
   {
@@ -210,7 +210,8 @@ namespace holtz
     typedef enum Help_Mode{ no_help=0, show_possible_moves, show_hint };
     typedef enum Origin{ local, remote }; // origin where player is controled
 
-    Player( std::string name="", int id=-1, Player_Input *in=0, std::list<Player_Output*> out=no_output,
+    Player( std::string name="", int id=-1, Player_Input *in=0, 
+	    std::list<Player_Output*> out=no_output,
 	    std::string host="", Player_Type type=unknown, Help_Mode help_mode = no_help, 
 	    Origin origin = local );
 

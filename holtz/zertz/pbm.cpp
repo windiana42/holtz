@@ -18,7 +18,7 @@
 
 #include <iostream>
 
-namespace holtz
+namespace zertz
 {
   bool operator<  ( const PBM_Content& c1, const PBM_Content& c2 )
   {
@@ -66,7 +66,7 @@ namespace holtz
 #endif
 
 	  is >> str; 
-	  if( (str == "Zertz") || (str=="Zertz+11") )
+	  if( str == "Zertz" )
 	  {
 	    is >> str; 
 	    if( str == "Board" )
@@ -88,7 +88,7 @@ namespace holtz
 	if( str == "new" )
 	{
 	  is >> str;
-	  if( (str == "Zertz") || (str == "Zertz+11") )
+	  if( str == "Zertz" )
 	  {
 	    is >> str;
 	    if( str == "board" )
@@ -210,8 +210,6 @@ namespace holtz
     std::string str; int board_num;
 
     bool ok = false;
-    bool zertz_plus_11 = false;
-
     is >> str;
     while( is )
     {
@@ -226,11 +224,8 @@ namespace holtz
 #endif
 
 	  is >> str; 
-	  if( (str == "Zertz") || (str == "Zertz+11") )
+	  if( str == "Zertz" )
 	  {
-	    if( str == "Zertz+11" )
-	      zertz_plus_11 = true;
-
 	    is >> str; 
 	    if( str == "Board" )
 	    {
@@ -251,11 +246,8 @@ namespace holtz
 	if( str == "new" )
 	{
 	  is >> str;
-	  if( (str == "Zertz") || (str == "Zertz+11") )
+	  if( str == "Zertz" )
 	  {
-	    if( str == "Zertz+11" )
-	      zertz_plus_11 = true;
-
 	    is >> str;
 	    if( str == "board" )
 	    {
@@ -293,6 +285,18 @@ namespace holtz
       return -1;
     }
 
+    int num_moves_read = 0;
+    if( from == 0 )		// if this is the first call of load_game setup a new game
+    {
+      Ruleset *ruleset = new Tournament_Ruleset();
+      ruleset->min_players = 2;	// exact 2 players
+      ruleset->max_players = 2;	// exact 2 players
+      game.reset_game( *ruleset );
+      delete ruleset;
+      ++num_moves_read;		// initializing game counts as move "0"
+      ++from;			// start from real move "1"
+    }
+
     is >> str;
     do				// search for "Player 2"
     {
@@ -309,39 +313,9 @@ namespace holtz
     std::cout << "  \"Player 2\" found" << std::endl;
 #endif
 
-    std::string name1, name2;
-    is >> name1; 
-    is >> name2; 
-
-    int num_moves_read = 0;
-    if( from == 0 )		// if this is the first call of load_game setup a new game
-    {
-      Ruleset *ruleset;
-      if( zertz_plus_11 )
-      {
-	Board board( (const int*) board_48, 
-		     sizeof(board_48[0]) / sizeof(board_48[0][0]),
-		     sizeof(board_48)    / sizeof(board_48[0]),
-		     Board::s48_rings );
-
-	ruleset = new Custom_Ruleset( board, Tournament_Common_Stones(), 
-				      new Tournament_Win_Condition(), 
-				      new Standard_Coordinate_Translator(board) );
-      }
-      else
-	ruleset = new Tournament_Ruleset();
-
-      ruleset->min_players = 2;	// exact 2 players
-      ruleset->max_players = 2;	// exact 2 players
-      game.reset_game( *ruleset );
-      std::vector<Player> players;
-      players.push_back( Player( name1, 50, 0 ) );
-      players.push_back( Player( name2, 51, 0 ) );
-      game.set_players( players );
-      delete ruleset;
-      ++num_moves_read;		// initializing game counts as move "0"
-      ++from;			// start from real move "1"
-    }
+    std::string name;
+    is >> name; game.add_player( Player( name, 50, 0 ) );
+    is >> name; game.add_player( Player( name, 51, 0 ) );
 
 #ifndef __WXMSW__
     std::cout << "Players: " << game.players.size() <<  std::endl;
