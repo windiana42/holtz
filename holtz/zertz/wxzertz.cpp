@@ -176,8 +176,9 @@ namespace zertz
 
       wxImage field_stone_image (normal.field_bitmaps[field_empty].ConvertToImage());
       wxImage stone_image (stone_bitmap->second.ConvertToImage());
-      unsigned char *field_stone_data = field_stone_image.GetData();
-      unsigned char *stone_data       = stone_image.GetData();
+      unsigned char *field_stone_data  = field_stone_image.GetData();
+      unsigned char *field_stone_alpha = field_stone_image.GetAlpha();
+      unsigned char *stone_data        = stone_image.GetData();
       unsigned char mask_colour[3];
       mask_colour[0] = stone_image.GetMaskRed();
       mask_colour[1] = stone_image.GetMaskGreen();
@@ -206,6 +207,8 @@ namespace zertz
 	      field_stone_data[(x+y*field_stone_image.GetWidth())*3 + c] = 
 		stone_data[(x+y*stone_image.GetWidth())*3 + c];
 	    }
+	    if( field_stone_alpha )
+	      field_stone_alpha[(x+y*field_stone_image.GetWidth())] = 255;
 	  }
 	}
       Field_State_Type field_type = Field_State_Type(stone_type);
@@ -1590,7 +1593,7 @@ namespace zertz
 
   void WX_GUI_Manager::beep()
   {
-#if wxUSE_WAVE
+#if wxUSE_SOUND
     if( game_settings.play_sound )
       sound_beep.Play();
 #endif
@@ -1606,8 +1609,7 @@ namespace zertz
     bool ok = false;
     wxConfigBase* cfg = wxConfig::Get();
     wxString buf;
-    /*
-    if( cfg->Read( wxT("skin_file"), &buf) )
+    if( cfg->Read( wxT("/zertz/skin_file"), &buf) )
     {
       if( wxFileExists(buf) )
       {
@@ -1625,7 +1627,7 @@ namespace zertz
       {
 	if( load_skin( buf ) )
 	{
-	  cfg->Write( wxT("skin_file"), buf);
+	  cfg->Write( wxT("/zertz/skin_file"), buf);
 	  cfg->Flush();
 	  game_settings.skin_file = buf;
 	  ok = true;
@@ -1641,14 +1643,13 @@ namespace zertz
       {
 	if( load_skin( buf ) )
 	{
-	  cfg->Write( wxT("skin_file"), buf);
+	  cfg->Write( wxT("/zertz/skin_file"), buf);
 	  cfg->Flush();
 	  game_settings.skin_file = buf;
 	  ok = true;
 	}
       }
     }
-    */
     if( !ok )
     {
       bitmap_handler.normal.field_bitmaps[field_removed]	= wxBitmap(field_removed_xpm);
@@ -1667,7 +1668,7 @@ namespace zertz
     }
 
     ok = false;
-    if( cfg->Read( wxT("beep_file"), &buf) )
+    if( cfg->Read( wxT("/zertz/beep_file"), &buf) )
     {
       if( wxFileExists(buf) )
       {
@@ -1685,7 +1686,7 @@ namespace zertz
       {
 	if( load_beep(buf) )
 	{
-	  cfg->Write( wxT("beep_file"), buf);
+	  cfg->Write( wxT("/zertz/beep_file"), buf);
 	  cfg->Flush();
 	  game_settings.beep_file = buf;
 	  ok = true;
@@ -1696,7 +1697,7 @@ namespace zertz
     {
       if( load_beep(buf) )
       {
-	cfg->Write( wxT("beep_file"), buf );
+	cfg->Write( wxT("/zertz/beep_file"), buf );
 	cfg->Flush();
 	game_settings.beep_file = buf;
 	ok = true;
@@ -1705,20 +1706,20 @@ namespace zertz
     if( !ok )		// disable sound if there is no valid sound file
     {
       game_settings.play_sound = false;
-      cfg->Write( wxT("play_sound"), false );
+      cfg->Write( wxT("/zertz/play_sound"), false );
       cfg->Flush();
     }
     else
     {
       bool play_sound;
-      if( cfg->Read( wxT("play_sound"), &play_sound ) )
+      if( cfg->Read( wxT("/zertz/play_sound"), &play_sound ) )
       {
 	game_settings.play_sound = play_sound;
       }
       else
       {
 	game_settings.play_sound = true;
-	cfg->Write( wxT("play_sound"), true );
+	cfg->Write( wxT("/zertz/play_sound"), true );
 	cfg->Flush();
       }
     }
@@ -1727,9 +1728,9 @@ namespace zertz
   void WX_GUI_Manager::save_settings()
   {
     wxConfigBase* cfg = wxConfig::Get();
-    cfg->Write( wxT("skin_file"),  game_settings.skin_file );
-    cfg->Write( wxT("beep_file"),  game_settings.beep_file );
-    cfg->Write( wxT("play_sound"), game_settings.play_sound );
+    cfg->Write( wxT("/zertz/skin_file"),  game_settings.skin_file );
+    cfg->Write( wxT("/zertz/beep_file"),  game_settings.beep_file );
+    cfg->Write( wxT("/zertz/play_sound"), game_settings.play_sound );
     cfg->Flush();
   }
 
@@ -1806,7 +1807,7 @@ namespace zertz
   {
     if( wxFile::Exists( filename ) )
     {
-#if wxUSE_WAVE
+#if wxUSE_SOUND
       if( sound_beep.Create(filename) )
       {
 	sound_beep.Play();

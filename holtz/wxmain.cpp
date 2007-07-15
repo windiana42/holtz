@@ -185,6 +185,7 @@ namespace holtz
     case ZERTZ:
       if( zertz_game_manager )
 	zertz_game_manager->stop_game();
+      active_game = NO_GAME;
       delete zertz_game_manager;
       delete zertz_gui_manager;
       delete zertz_game_dialog;
@@ -192,6 +193,7 @@ namespace holtz
     case DVONN:
       if( dvonn_game_manager )
 	dvonn_game_manager->stop_game();
+      active_game = NO_GAME;
       delete dvonn_game_manager;
       delete dvonn_gui_manager;
       delete dvonn_game_dialog;
@@ -224,11 +226,13 @@ namespace holtz
   {
     switch( active_game ) {
     case ZERTZ:
+      active_game = NO_GAME;
       delete zertz_game_manager;
       delete zertz_gui_manager;
       delete zertz_game_dialog;
       break;
     case DVONN:
+      active_game = NO_GAME;
       delete dvonn_game_manager;
       delete dvonn_gui_manager;
       delete dvonn_game_dialog;
@@ -255,11 +259,13 @@ namespace holtz
   {
     switch( active_game ) {
     case ZERTZ:
+      active_game = NO_GAME;
       delete zertz_game_manager;
       delete zertz_gui_manager;
       delete zertz_game_dialog;
       break;
     case DVONN:
+      active_game = NO_GAME;
       delete dvonn_game_manager;
       delete dvonn_gui_manager;
       delete dvonn_game_dialog;

@@ -88,7 +88,7 @@ namespace zertz
     virtual Game_State can_start() = 0;	// is everyone ready and number of players ok?
     virtual void start_game() = 0; // call only when can_start() == true
     virtual Answer_Type ask_new_game() = 0; // request to play new game
-    virtual Answer_Type ask_undo_move() = 0; // request to undo a move
+    virtual Answer_Type ask_undo_moves(int n=2) = 0; // request to undo n half moves
     virtual void force_new_game() = 0; // force new game (may close connections)
     virtual void stop_game() = 0;  // stop game
 
@@ -103,6 +103,7 @@ namespace zertz
   public:
     Game_Manager( Game_UI_Manager *ui_manager = 0 );
     void set_ui_manager( Game_UI_Manager * );
+    Game_UI_Manager *get_ui_manager() { return ui_manager; }
 
     void start_game();
     void continue_game();
@@ -134,6 +135,7 @@ namespace zertz
     AI_Input ai;		// may be replaced by multiple AIs
 
     bool undo_requested, new_game_requested;
+    int num_undo_moves;
   };
 
   /*! abstract class Game_UI_Manager
@@ -159,6 +161,8 @@ namespace zertz
     virtual void stop_user_activity() = 0;
     virtual void do_move_slowly( Move_Sequence sequence, wxEvtHandler *done_handler = 0, 
 				 int event_id=-1 ) = 0; // show user how move is done
+    virtual void undo_move_slowly( wxEvtHandler *done_handler = 0, 
+				   int event_id=-1 ) = 0; // show user how move is undone
     virtual void show_status_text( wxString text ) = 0; // shows text in status bar
     virtual void beep() = 0;
 
@@ -198,7 +202,7 @@ namespace zertz
     virtual Game_State can_start(); // is everyone ready and number of players ok?
     virtual void start_game();  // call only when can_start() == true
     virtual Answer_Type ask_new_game(); // request to play new game
-    virtual Answer_Type ask_undo_move(); // request to undo a move
+    virtual Answer_Type ask_undo_moves(int n=2); // request to undo n half moves
     virtual void force_new_game(); // force new game (may close connections)
     virtual void stop_game();   // stop game
   private:

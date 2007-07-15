@@ -79,6 +79,9 @@ namespace dvonn
     virtual bool TransferDataFromWindow();
     wxWizardPage *get_last_board_page() const;
 
+    void on_continue_game_choice  ( wxCommandEvent& event );
+    void on_new_game_choice	  ( wxCommandEvent& event );
+
     void restore();		// display stored game state
   private:
     Game_Dialog &game_dialog;

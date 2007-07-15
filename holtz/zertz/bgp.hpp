@@ -18,11 +18,11 @@
 #define __HOLTZ_BGP_PROTOCOL__
 
 #include "msg_net.hpp"
-#include "holtz.hpp"
+#include "zertz.hpp"
 
 #include <string>
 
-namespace holtz
+namespace zertz
 {
   namespace BGP
   {

@@ -33,13 +33,14 @@ namespace holtz
     virtual ~Line_Network_Handler();
   protected:
     friend class Line_Network;
-    virtual void process_line( Line_Network *sender, std::string line ) = 0; // line has no '\n' at end
+    virtual void process_line( Line_Network *connection, std::string line ) = 0; 
+				// line has no '\n' at end
     // is called when connection is established (for Line_Network_Client only)
-    virtual void on_connect( Line_Network *sender ) = 0;
+    virtual void on_connect( Line_Network *connection ) = 0;
     // is called when connection was closed or couldn't be established
-    virtual void on_lost( Line_Network *sender ) = 0;
+    virtual void on_lost( Line_Network *connection ) = 0;
     // is called when an error occured
-    virtual void on_error( Line_Network *sender ) = 0;
+    virtual void on_error( Line_Network *connection ) = 0;
   };
 
 

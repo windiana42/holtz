@@ -84,7 +84,7 @@ namespace zertz
     virtual Game_State can_start();	// is everyone ready and number of players ok?
     virtual void start_game(); // call only when can_start() == true
     virtual Answer_Type ask_new_game(); // request to play new game
-    virtual Answer_Type ask_undo_move(); // request to undo a move
+    virtual Answer_Type ask_undo_moves(int n=2); // request to undo n half moves
     virtual void force_new_game(); // force new game (may close connections)
     virtual void stop_game();  // stop game
 

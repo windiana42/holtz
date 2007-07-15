@@ -297,9 +297,8 @@ namespace dvonn
 
   void Game_Manager::undo_move()
   {
-#warning figure out what to do with this for zertz AND dvonn
-    /*
-    const Game &game = game_manager.get_game();
+    // determine number of moves to undo
+    const Game &game = get_game();
     if( !game.variant_tree.is_first() )
     {
       const Variant *variant = game.variant_tree.get_current_variant();
@@ -313,9 +312,10 @@ namespace dvonn
 	variant = variant->prev;
 	num_undo++;
       }
-      game_manager.undo_moves(num_undo);
+
+      // ask to undo the number of moves
+      ask_undo_moves(num_undo);
     }
-    */
   }
 
   void Game_Manager::new_game()
@@ -476,7 +476,7 @@ namespace dvonn
     id_player[player_iterator2->id] = player_iterator2;
 
     if( display_handler )
-      display_handler->player_up(*player_iterator);
+      display_handler->player_up(*player_iterator2);
 
     return true;
   }
@@ -497,7 +497,7 @@ namespace dvonn
     id_player[player_iterator2->id] = player_iterator2;
 
     if( display_handler )
-      display_handler->player_up(*player_iterator);
+      display_handler->player_down(*player_iterator2);
 
     return true;
   }
