@@ -60,6 +60,10 @@ namespace holtz
   template<class Message>
   void Message_Network<Message>::send_message( Message *message ) 
   {
+#ifndef __WXMSW__
+    // !!! Debug output
+    std::cerr << "send: "; message->print(std::cerr);
+#endif
     line_network->send_line( long_to_string(message->get_type()) + ' ' + message->write_to_line() );
   }
 
@@ -83,33 +87,33 @@ namespace holtz
   }
 
   template<class Message>
-  void Message_Network<Message>::process_line( Line_Network *sender, std::string line )
+  void Message_Network<Message>::process_line( Line_Network *connection, std::string line )
   {
-    assert( sender == line_network );
+    assert( connection == line_network );
     assert( handler );
     handler->process_message( this, Message::read_from_line(line) );
   }
   // is called when connection is established (for Line_Network_Client only)
   template<class Message>
-  void Message_Network<Message>::on_connect( Line_Network *sender )
+  void Message_Network<Message>::on_connect( Line_Network *connection )
   {
-    assert( sender == line_network );
+    assert( connection == line_network );
     if( handler )
       handler->on_connect(this);
   }
   // is called when connection was closed or couldn't be established
   template<class Message>
-  void Message_Network<Message>::on_lost( Line_Network *sender )
+  void Message_Network<Message>::on_lost( Line_Network *connection )
   {
-    assert( sender == line_network );
+    assert( connection == line_network );
     if( handler )
       handler->on_lost(this);
   }
   // is called when an error occured
   template<class Message>
-  void Message_Network<Message>::on_error( Line_Network *sender )
+  void Message_Network<Message>::on_error( Line_Network *connection )
   {
-    assert( sender == line_network );
+    assert( connection == line_network );
     if( handler )
       handler->on_error(this);
   }

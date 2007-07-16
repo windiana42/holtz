@@ -30,6 +30,66 @@ namespace zertz
   using namespace holtz;
   namespace BGP
   {
+
+    // ============================================================================
+    // ----------------------------------------------------------------------------
+    // general help functions
+    // ----------------------------------------------------------------------------
+    // ============================================================================
+
+    std::string to_string(Message_Type type)
+    {
+      switch(type)
+      {
+        case msg_helo: return "helo";
+        case msg_list_protocols: return "list_protocols";
+        case msg_disconnect: return "disconnect";
+        case msg_accept: return "accept";
+        case msg_deny: return "deny";
+        case msg_defer: return "defer";
+        case msg_try_again: return "try_again";
+        case msg_get_rooms: return "get_rooms";
+        case msg_tell_rooms: return "tell_rooms";
+        case msg_choose_room: return "choose_room";
+        case msg_get_phase: return "get_phase";
+        case msg_tell_phase: return "tell_phase";
+        case msg_get_game: return "get_game";
+        case msg_tell_game: return "tell_game";
+        case msg_get_setup: return "get_setup";
+        case msg_tell_setup: return "tell_setup";
+        case msg_get_moves: return "get_moves";
+        case msg_tell_moves: return "tell_moves";
+        case msg_get_situation: return "get_situation";
+        case msg_tell_situation: return "tell_situation";
+        case msg_request_final_setup: return "request_final_setup";
+        case msg_request_move_reminder: return "request_move_reminder";
+        case msg_setup: return "setup";
+        case msg_get_setup_and_changes: return "get_setup_and_changes";
+        case msg_get_moves_and_play: return "get_moves_and_play";
+        case msg_get_situation_and_play: return "get_situation_and_play";
+        case msg_add_player: return "add_player";
+        case msg_accept_player: return "accept_player";
+        case msg_setup_change: return "setup_change";
+        case msg_ask_setup_change: return "ask_setup_change";
+        case msg_ask_capable: return "ask_capable";
+        case msg_incapable: return "incapable";
+        case msg_ready: return "ready";
+        case msg_start_game: return "start_game";
+        case msg_your_turn: return "your_turn";
+        case msg_move: return "move";
+        case msg_undo: return "undo";
+        case msg_ask_undo: return "ask_undo";
+        case msg_new_game: return "new_game";
+        case msg_ask_new_game: return "ask_new_game";
+        case msg_chat: return "chat";
+        case msg_set_nick: return "set_nick";
+        case msg_nick_change: return "nick_change";
+        case msg_ping: return "ping";
+        case msg_pong: return "pong";
+        case msg_error: return "error";
+      }
+    }
+
     // ============================================================================
     // ----------------------------------------------------------------------------
     // get/put help functions
@@ -654,12 +714,20 @@ namespace zertz
 	  Msg_Helo *msg = new Msg_Helo();
 	  if( msg->read_from_line(line) )
 	    return msg;
+	  delete msg;
+	  break;
 	}
 	case msg_list_protocols:
 	{
 	  Msg_List_Protocols *msg = new Msg_List_Protocols();
 	  if( msg->read_from_line(line) )
 	    return msg;
+	  delete msg;
+	  break;
+	}
+	case msg_disconnect:
+	{
+	  return new Msg_Disconnect();
 	}
 	case msg_accept:
 	{
@@ -674,12 +742,16 @@ namespace zertz
 	  Msg_Defer *msg = new Msg_Defer();
 	  if( msg->read_from_line(line) )
 	    return msg;
+	  delete msg;
+	  break;
 	}
 	case msg_try_again:
 	{
 	  Msg_Try_Again *msg = new Msg_Try_Again();
 	  if( msg->read_from_line(line) )
 	    return msg;
+	  delete msg;
+	  break;
 	}
 	case msg_get_rooms:
 	{
@@ -690,12 +762,16 @@ namespace zertz
 	  Msg_Tell_Rooms *msg = new Msg_Tell_Rooms();
 	  if( msg->read_from_line(line) )
 	    return msg;
+	  delete msg;
+	  break;
 	}
 	case msg_choose_room:
 	{
 	  Msg_Choose_Room *msg = new Msg_Choose_Room();
 	  if( msg->read_from_line(line) )
 	    return msg;
+	  delete msg;
+	  break;
 	}
 	case msg_get_phase:
 	{
@@ -706,6 +782,8 @@ namespace zertz
 	  Msg_Tell_Phase *msg = new Msg_Tell_Phase();
 	  if( msg->read_from_line(line) )
 	    return msg;
+	  delete msg;
+	  break;
 	}
 	case msg_get_game:
 	{
@@ -716,6 +794,8 @@ namespace zertz
 	  Msg_Tell_Game *msg = new Msg_Tell_Game();
 	  if( msg->read_from_line(line) )
 	    return msg;
+	  delete msg;
+	  break;
 	}
 	case msg_get_setup:
 	{
@@ -726,6 +806,8 @@ namespace zertz
 	  Msg_Tell_Setup *msg = new Msg_Tell_Setup();
 	  if( msg->read_from_line(line) )
 	    return msg;
+	  delete msg;
+	  break;
 	}
 	case msg_get_moves:
 	{
@@ -736,6 +818,8 @@ namespace zertz
 	  Msg_Tell_Moves *msg = new Msg_Tell_Moves();
 	  if( msg->read_from_line(line) )
 	    return msg;
+	  delete msg;
+	  break;
 	}
 	case msg_get_situation:
 	{
@@ -746,6 +830,8 @@ namespace zertz
 	  Msg_Tell_Situation *msg = new Msg_Tell_Situation();
 	  if( msg->read_from_line(line) )
 	    return msg;
+	  delete msg;
+	  break;
 	}
 	case msg_request_final_setup:
 	{
@@ -776,36 +862,48 @@ namespace zertz
 	  Msg_Add_Player *msg = new Msg_Add_Player();
 	  if( msg->read_from_line(line) )
 	    return msg;
+	  delete msg;
+	  break;
 	}
 	case msg_accept_player:
 	{
 	  Msg_Accept_Player *msg = new Msg_Accept_Player();
 	  if( msg->read_from_line(line) )
 	    return msg;
+	  delete msg;
+	  break;
 	}
 	case msg_setup_change:
 	{
 	  Msg_Setup_Change *msg = new Msg_Setup_Change();
 	  if( msg->read_from_line(line) )
 	    return msg;
+	  delete msg;
+	  break;
 	}
 	case msg_ask_setup_change:
 	{
 	  Msg_Ask_Setup_Change *msg = new Msg_Ask_Setup_Change();
 	  if( msg->read_from_line(line) )
 	    return msg;
+	  delete msg;
+	  break;
 	}
 	case msg_ask_capable:
 	{
 	  Msg_Ask_Capable *msg = new Msg_Ask_Capable();
 	  if( msg->read_from_line(line) )
 	    return msg;
+	  delete msg;
+	  break;
 	}
 	case msg_incapable:
 	{
 	  Msg_Incapable *msg = new Msg_Incapable();
 	  if( msg->read_from_line(line) )
 	    return msg;
+	  delete msg;
+	  break;
 	}
 	case msg_ready:
 	{
@@ -824,18 +922,24 @@ namespace zertz
 	  Msg_Move *msg = new Msg_Move();
 	  if( msg->read_from_line(line) )
 	    return msg;
+	  delete msg;
+	  break;
 	}
 	case msg_undo:
 	{
 	  Msg_Undo *msg = new Msg_Undo();
 	  if( msg->read_from_line(line) )
 	    return msg;
+	  delete msg;
+	  break;
 	}
 	case msg_ask_undo:
 	{
 	  Msg_Ask_Undo *msg = new Msg_Ask_Undo();
 	  if( msg->read_from_line(line) )
 	    return msg;
+	  delete msg;
+	  break;
 	}
 	case msg_new_game:
 	{
@@ -846,24 +950,32 @@ namespace zertz
 	  Msg_Ask_New_Game *msg = new Msg_Ask_New_Game();
 	  if( msg->read_from_line(line) )
 	    return msg;
+	  delete msg;
+	  break;
 	}
 	case msg_chat:
 	{
 	  Msg_Chat *msg = new Msg_Chat();
 	  if( msg->read_from_line(line) )
 	    return msg;
+	  delete msg;
+	  break;
 	}
 	case msg_set_nick:
 	{
 	  Msg_Set_Nick *msg = new Msg_Set_Nick();
 	  if( msg->read_from_line(line) )
 	    return msg;
+	  delete msg;
+	  break;
 	}
 	case msg_nick_change:
 	{
 	  Msg_Nick_Change *msg = new Msg_Nick_Change();
 	  if( msg->read_from_line(line) )
 	    return msg;
+	  delete msg;
+	  break;
 	}
 	case msg_ping:
 	{
@@ -967,6 +1079,12 @@ namespace zertz
 
       return os.str();
     }
+
+    // ----------------------------------------------------------------------------
+    // Msg_Disconnect
+    // ----------------------------------------------------------------------------
+
+    Msg_Disconnect::Msg_Disconnect() : Message(msg_disconnect) {}
 
     // ----------------------------------------------------------------------------
     // Msg_Accept

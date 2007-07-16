@@ -15,1992 +15,1106 @@
  */
 
 #include "network.hpp"
-
-#include "wxzertz.hpp"
 #include "util.hpp"
-#ifndef __OLD_GCC__
-  #include <sstream>
-#else
-  #include <strstream>
-#endif
+#include "wxmain.hpp"
+
+#include <iostream>
 
 namespace zertz
 {
-  //BEGIN_EVENT_TABLE(Network_Manager, wxEvtHandler)				
-  //EVT_SOCKET(NETWORK_EVENT, Network_Manager::on_network)
-  //EVT_TIMER(ANIMATION_DONE, Network_Manager::on_done)		//**/
-  //END_EVENT_TABLE()						//**/
+  using namespace holtz;
 
-  Network_Connection_Handler::~Network_Connection_Handler()
-  {
-  }
+//============================================================================================================
+//============================================================================================================
+//  Server
+//============================================================================================================
+//============================================================================================================
 
-  Network_Manager::Network_Manager( Game_Manager &game_manager, Game_UI_Manager &ui_manager )
+  Network_Manager_BGP100a_Server::Network_Manager_BGP100a_Server
+  ( Game_Manager &game_manager, Game_UI_Manager &ui_manager )
     : game_manager(game_manager), ui_manager(ui_manager), 
-      server(0), client(0), connection_handler(0), 
-      display_handler(0), mode(mode_undefined),
-      state(begin), current_id(101), 
+      display_handler(0), 
       game( game_manager.get_game() ),
-      max_clients(15), clients_ready(0), clients_player_setup_ack(0),
-      max_string_size(60),
-      timeout_sequencial_read(700) // 700 milliseconds
+      timer(this,NETWORK_TIMER),
+      msg_net_server(this),
+      max_connections(15), response_timeout(6000/*ms*/),
+      current_id(11), current_player_id(101), game_phase(GAME_INIT), 
+      clients_ready(0), clients_player_setup_ack(0)
   {
-    // connect event functions
-    Connect( NETWORK_EVENT, wxEVT_SOCKET, 
-	     (wxObjectEventFunction) (wxEventFunction) (wxSocketEventFunction) 
-	     &Network_Manager::on_network );
-    Connect( ANIMATION_DONE, wxEVT_TIMER, 
-	     (wxObjectEventFunction) (wxEventFunction) (wxTimerEventFunction) 
-	     &Network_Manager::on_done );
   }
 
-  Network_Manager::~Network_Manager()
+  Network_Manager_BGP100a_Server::~Network_Manager_BGP100a_Server()
+  {
+    if( display_handler )
+      display_handler->aborted();
+
+    close_connections();
+  }
+
+  // connection commands
+  bool Network_Manager_BGP100a_Server::setup_server( int port )
+  {
+    close_connections();
+    return msg_net_server.bind(port);
+  }
+
+  //---------------------------------------------
+  //---------------------------------------------
+  // commands inherited from Basic_Network_Server
+  //---------------------------------------------
+  //---------------------------------------------
+
+  void Network_Manager_BGP100a_Server::close_connections()
+  {
+    std::map<Message_Network<BGP::Message>*,Connection_State>::iterator it;
+    for( it=msg_net_connection_state.begin();
+	 it!=msg_net_connection_state.end(); ++it )
+    {
+      Message_Network<BGP::Message> *connection = it->first;
+      BGP::Msg_Disconnect msg;
+      connection->send_message(&msg);
+      connection->flush();
+      delete connection;
+    }
+    msg_net_connection_state.clear();
+    player_id_connection.clear();
+  }
+
+  bool Network_Manager_BGP100a_Server::may_disconnect_id( Connection_Id id )
+  {
+    if( does_include(id_connection, id) ) return true;
+    else return false;
+  }
+  void Network_Manager_BGP100a_Server::disconnect_id( Connection_Id id )
+  {
+    assert( does_include(id_connection, id) );
+    disconnect(id_connection[id]);
+  }
+
+  //-------------------------------------------
+  //-------------------------------------------
+  // commands inherited from Game_Setup_Manager
+  //-------------------------------------------
+  //-------------------------------------------
+
+  Game_Setup_Manager::Type Network_Manager_BGP100a_Server::get_type()
+  {
+    return Game_Setup_Manager::server;
+  }
+
+  void Network_Manager_BGP100a_Server::set_display_handler( Game_Setup_Display_Handler* handler )
+  {
+    display_handler = handler;
+  }
+
+  //-------------------------------------------
+  // board commands
+  //-------------------------------------------
+  Game_Setup_Manager::Answer_Type Network_Manager_BGP100a_Server::ask_change_board( const Game &game )
+  {
+  }
+  const Game &Network_Manager_BGP100a_Server::get_board()
+  {
+    return game;
+  }
+  const std::list<Player> &Network_Manager_BGP100a_Server::get_players()
+  {
+    return players;
+  }
+  //-------------------------------------------
+  // player commands
+  //-------------------------------------------
+  bool Network_Manager_BGP100a_Server::add_player( const Player & )
+  {
+  }
+  bool Network_Manager_BGP100a_Server::remove_player( const Player & )
+  {
+  }
+  bool Network_Manager_BGP100a_Server::player_up( const Player & )
+  {
+  }
+  bool Network_Manager_BGP100a_Server::player_down( const Player & )
+  {
+  }
+  // ready with adding players
+  void Network_Manager_BGP100a_Server::ready()
+  {
+  }
+  //-------------------------------------------
+  // game commands
+  //-------------------------------------------
+
+  // is everyone ready and number of players ok?
+  Game_Setup_Manager::Game_State Network_Manager_BGP100a_Server::can_start()
+  {
+  }
+  // call only when can_start() == true
+  void Network_Manager_BGP100a_Server::start_game()
+  {
+  }
+  // request to play new game
+  Game_Setup_Manager::Answer_Type Network_Manager_BGP100a_Server::ask_new_game()
+  {
+  }
+  // request to undo n half moves
+  Game_Setup_Manager::Answer_Type Network_Manager_BGP100a_Server::ask_undo_moves(int n)
+  {
+  }
+  // force new game (may close connections)
+  void Network_Manager_BGP100a_Server::force_new_game()
+  {
+  }
+  // stop game
+  void Network_Manager_BGP100a_Server::stop_game()
+  {
+  }
+
+  //-------------------------------------------
+  //-------------------------------------------
+  // commands inherited from Player Input
+  //-------------------------------------------
+  //-------------------------------------------
+
+  Player_Input::Player_State Network_Manager_BGP100a_Server::determine_move() throw(Exception)
+  {
+  }
+  Move_Sequence Network_Manager_BGP100a_Server::get_move()
+  {
+  }
+  long Network_Manager_BGP100a_Server::get_used_time()
+  {
+  }
+
+  //-------------------------------------------
+  //-------------------------------------------
+  // commands inherited from Player Output
+  //-------------------------------------------
+  //-------------------------------------------
+
+  void Network_Manager_BGP100a_Server::report_move( const Move_Sequence & )
+  {
+  }
+
+  //------------------------------------------------
+  //------------------------------------------------
+  // commands inherited from Message_Network_Handler
+  //------------------------------------------------
+  //------------------------------------------------
+
+  // is called when message arrives
+  // specifics: message must be deleted, message==0: invalid message arrived
+  void Network_Manager_BGP100a_Server::process_message( Message_Network<BGP::Message> *connection, 
+							BGP::Message *message )
+  {
+    bool invalid = false;
+    Connection_State &conn_state = msg_net_connection_state[connection];
+    if( message )
+    {
+#ifndef __WXMSW__
+      // !!! Debug output
+      std::cerr << "Server received: "; message->print(std::cerr);
+#endif
+
+      //------------------------------
+      // non state dependent messages:
+
+      if( message->get_type() == BGP::msg_disconnect )
+      {
+	  conn_state.state = BGP_UNCONNECTED;
+	  disconnect(connection);
+	  return;
+      }
+      if( message->get_type() == BGP::msg_ping )
+      {
+	// send response
+	BGP::Msg_Pong msg;
+	connection->send_message(&msg);
+	return;
+      }
+      if( message->get_type() == BGP::msg_chat )
+      {
+	// todo: relay and display chat message
+	return;
+      }
+
+      //------------------------------
+      // state dependent messages:
+
+      switch(conn_state.state) 
+      {
+	case BGP_UNCONNECTED:
+	{
+	  invalid = true;
+	  break;
+	}
+	case BGP_CONNECTED:
+	{
+	  conn_state.timer.stop();
+	  switch( message->get_type() )
+	  {
+	    case BGP::msg_helo:
+	    {
+	      BGP::Msg_Helo *det_msg = static_cast<BGP::Msg_Helo*>(message);
+	      BGP::Protocol protocol = det_msg->get_protocol();
+	      // supported protocols: BGP 1.00a
+	      if( protocol.name == "BGP" && protocol.number== 1.00 &&
+		  protocol.letter == 'a' )
+	      {
+		// accept protocol
+		conn_state.state = BGP_HANDSHAKE;
+		conn_state.nick_name = det_msg->get_host_nick();
+		// send response
+		BGP::Msg_Accept msg;
+		connection->send_message(&msg);
+		// set timeout
+		conn_state.timer.start(response_timeout);
+	      } else {
+		// protocol mismatch => list supported protocols
+		std::list<BGP::Protocol> supported_protocols;
+		supported_protocols.push_back(BGP::Protocol("BGP",1.00,'a'));
+		// send response
+		BGP::Msg_List_Protocols msg(supported_protocols);
+		connection->send_message(&msg);
+		// set timeout
+		conn_state.timer.start(response_timeout);
+	      }
+	      break;
+	    }
+	    default: invalid = true; break;
+	  }
+	  break;
+	}
+	case BGP_HANDSHAKE:
+	{
+	  conn_state.timer.stop(); // stop timeout
+	  switch( message->get_type() )
+	  {
+	    case BGP::msg_get_rooms:
+	    {
+	      conn_state.state = BGP_CHOOSE_ROOM;
+	      std::list<BGP::Room> rooms;
+	      rooms.push_back(BGP::Room("standard room",get_client_count(),true,get_bgp_phase()));
+	      // send response
+	      BGP::Msg_Tell_Rooms msg(rooms);
+	      connection->send_message(&msg);
+	      break;
+	    }
+	    default: invalid = true; break;
+	  }
+	  break;
+	}
+	case BGP_CHOOSE_ROOM:
+	{
+	  switch( message->get_type() )
+	  {
+	    case BGP::msg_choose_room:
+	    {
+	      BGP::Msg_Choose_Room *det_msg = static_cast<BGP::Msg_Choose_Room*>(message);
+	      BGP::Room room = det_msg->get_room();
+	      if(room.name == "standard room")
+	      {
+		conn_state.state = BGP_INFO;
+		// send response
+		BGP::Msg_Accept msg;
+		connection->send_message(&msg);
+	      }
+	      else
+	      {
+#ifndef __WXMSW__
+		std::cerr << "Server Error - Invalid room name in:" << std::endl;
+#endif
+		invalid = true;
+	      }
+	      break;
+	    }
+	    default: invalid = true; break;
+	  }
+	  break;
+	}
+	case BGP_ERROR:
+	{
+	  switch( message->get_type() )
+	  {
+	    case BGP::msg_get_phase:
+	    {
+	      // reintegrate connection
+	      // todo: send phase
+	      break;
+	    }
+	    default: invalid = true; break;
+	  }
+	  break;
+	}
+	default: invalid = true; break;
+      }
+
+      //------------------------------
+      // error handling:
+    }
+    else
+    {
+      invalid = true;
+    }
+    if( invalid )
+    {
+#ifndef __WXMSW__
+      std::cerr << "Server Error - Invalid network message from " << conn_state.name << " in state " 
+		<< to_string(conn_state.state) << ": ";
+      if( message )
+	message->print(std::cerr);
+      else
+	std::cerr << "<unrecognized message>" << std::endl;
+#endif
+      switch(conn_state.state)
+      {
+	case BGP_UNCONNECTED:
+	  break;
+	case BGP_CONNECTED:
+	case BGP_HANDSHAKE:
+	case BGP_CHOOSE_ROOM:
+	  conn_state.state = BGP_UNCONNECTED;
+	  disconnect(connection);
+	  break;
+	default:
+	  conn_state.state = BGP_ERROR;
+	  // send response
+	  BGP::Msg_Error msg;
+	  connection->send_message(&msg);
+	  break;
+      }
+    }
+  }
+  // is called when connection is established (for Message_Network_Client only)
+  void Network_Manager_BGP100a_Server::on_connect( Message_Network<BGP::Message> *connection )
+  {
+    assert(false);		// shouldn't happen for server
+  }
+  // is called when connection was closed or couldn't be established
+  void Network_Manager_BGP100a_Server::on_lost( Message_Network<BGP::Message> *connection )
+  {
+    Connection_State &conn_state = msg_net_connection_state[connection];
+    if( connection_handler )
+      connection_handler->closed_connection(conn_state.id);
+#ifndef __WXMSW__
+    std::cerr << "Server Error - Connection Lost to " << conn_state.name << std::endl;
+#endif
+    std::list<int> &player_ids = msg_net_connection_state[connection].controlled_player_ids;
+    for(std::list<int>::iterator it = player_ids.begin(); it != player_ids.end(); ++it )
+      player_id_connection.erase(*it);
+    msg_net_connection_state.erase(connection);
+    delete connection;
+  }
+  // is called when an error occured
+  void Network_Manager_BGP100a_Server::on_error( Message_Network<BGP::Message> *connection )
+  {
+    Connection_State &conn_state = msg_net_connection_state[connection];
+#ifndef __WXMSW__
+    std::cerr << "Server Error - Low level message error from " << conn_state.name << std::endl;
+#endif
+    switch(conn_state.state)
+    {
+      case BGP_UNCONNECTED:
+	break;
+      case BGP_CONNECTED:
+      case BGP_HANDSHAKE:
+      case BGP_CHOOSE_ROOM:
+	conn_state.state = BGP_UNCONNECTED;
+	disconnect(connection);
+	break;
+      default:
+	conn_state.state = BGP_ERROR;
+	// send response
+	BGP::Msg_Error msg;
+	connection->send_message(&msg);
+	break;
+    }
+  }
+
+  //-------------------------------------------------------
+  //-------------------------------------------------------
+  // commands inherited from Message_Network_Server_Handler
+  //-------------------------------------------------------
+  //-------------------------------------------------------
+
+  // specifics: message_network must be deleted!
+  // ->set_handler() should be called
+  void Network_Manager_BGP100a_Server::new_connection( Message_Network<BGP::Message> *connection )
+  {
+    if( get_client_count() >= max_connections )
+    {
+      delete connection;
+      return;
+    }
+    connection->set_handler(this);
+
+    Connection_State &conn_state = msg_net_connection_state[connection]; // this inserts automatically
+    conn_state.id = current_id++;
+    conn_state.state = BGP_CONNECTED;
+    conn_state.name = connection->get_remote_host() + ":" + long_to_string(connection->get_remote_port());
+    id_connection[conn_state.id] = connection;
+
+    conn_state.timer.init(this,connection);
+    conn_state.timer.start(response_timeout);
+    // wait for helo
+  }
+
+  //----------------
+  //----------------
+  // event handlers
+  //----------------
+  //----------------
+    
+  void Network_Manager_BGP100a_Server::on_timer(wxTimerEvent& event)
+  {
+  }
+
+  void Network_Manager_BGP100a_Server::on_connection_timer( Message_Network<BGP::Message> *connection )
+  {
+#ifndef __WXMSW__
+    std::cerr << "Server Error - Timeout triggered" << std::endl;
+#endif
+    Connection_State &conn_state = msg_net_connection_state[connection];
+    switch(conn_state.state) 
+    {
+      case BGP_CONNECTED:
+      case BGP_HANDSHAKE:
+      {
+	conn_state.state = BGP_UNCONNECTED;
+	disconnect(connection);
+	break;
+      }
+      default:
+      {
+	break;
+      }
+    }
+  }
+
+  //------------------
+  //------------------
+  // private functions
+  //------------------
+  //------------------
+
+  std::string Network_Manager_BGP100a_Server::to_string(Protocol_State state)
+  {
+    switch(state) {
+      case BGP_UNCONNECTED: return "UNCONNECTED"; 
+      case BGP_CONNECTED: return "CONNECTED"; 
+      case BGP_HANDSHAKE: return "HANDSHAKE"; 
+      case BGP_CHOOSE_ROOM: return "CHOOSE_ROOM";
+      case BGP_INFO: return "INFO"; 
+      case BGP_SETUP: return "SETUP"; 
+      case BGP_ADD_PLAYER: return "ADD_PLAYER"; 
+      case BGP_REMOVE_PLAYER: return "REMOVE_PLAYER"; 
+      case BGP_READY: return "READY"; 
+      case BGP_OTHERS_TURN: return "OTHERS_TURN"; 
+      case BGP_HIS_TURN: return "HIS_TURN"; 
+      case BGP_ASK_UNDO: return "ASK_UNDO"; 
+      case BGP_ACCEPT_UNDO: return "ACCEPT_UNDO"; 
+      case BGP_ASK_NEW_GAME: return "ASK_NEW_GAME"; 
+      case BGP_ACCEPT_NEW_GAME: return "ACCEPT_NEW_GAME";
+      case BGP_ERROR: return "ERROR";
+    }
+    assert(false);
+    return "<invalid>";
+  }
+
+  void Network_Manager_BGP100a_Server::continue_game()
+  {
+    game_manager.continue_game();
+  }
+
+  void Network_Manager_BGP100a_Server::disconnect(Message_Network<BGP::Message>* connection)
+  {
+    Connection_State &conn_state = msg_net_connection_state[connection];
+    if( connection_handler )
+      connection_handler->closed_connection(conn_state.id);
+
+    BGP::Msg_Disconnect msg;
+    connection->send_message(&msg);
+    connection->flush();
+    std::list<int> &player_ids = msg_net_connection_state[connection].controlled_player_ids;
+    for(std::list<int>::iterator it = player_ids.begin(); it != player_ids.end(); ++it )
+      player_id_connection.erase(*it);
+    msg_net_connection_state.erase(connection);
+    delete connection;
+  }
+
+  void Network_Manager_BGP100a_Server::start_timer(int milliseconds)
+  {
+    timer.Start(milliseconds,wxTIMER_ONE_SHOT);
+  }
+
+  unsigned Network_Manager_BGP100a_Server::get_client_count()
+  {
+    return (unsigned)msg_net_connection_state.size();
+  }
+
+  BGP::Phase_Type Network_Manager_BGP100a_Server::get_bgp_phase()
+  {
+    if( game_phase == GAME_PLAYING )
+      return BGP::phase_playing;
+    else
+      return BGP::phase_setup;
+  }
+
+  BEGIN_EVENT_TABLE(Network_Manager_BGP100a_Server, wxEvtHandler)				
+    EVT_TIMER(NETWORK_TIMER, Network_Manager_BGP100a_Server::on_timer)	//**/
+  END_EVENT_TABLE()							//**/
+
+//============================================================================================================
+//============================================================================================================
+//  Client
+//============================================================================================================
+//============================================================================================================
+
+  Network_Manager_BGP100a_Client::Network_Manager_BGP100a_Client
+  ( Game_Manager &game_manager, Game_UI_Manager &ui_manager )
+    : game_manager(game_manager), ui_manager(ui_manager), 
+      display_handler(0), 
+      game( game_manager.get_game() ),
+      timer(this,NETWORK_TIMER),
+      msg_net_client(0),
+      response_timeout(6000/*ms*/),
+      game_phase(GAME_INIT)
+  {
+    conn_state.state = BGP_UNCONNECTED;
+  }
+
+  Network_Manager_BGP100a_Client::~Network_Manager_BGP100a_Client()
   {
     if( display_handler )
       display_handler->aborted();
 
     close_connection();
   }
-  
-  bool Network_Manager::setup_server( wxIPV4address port ) throw(Network_Exception)
-  {
-    close_connection();		// close previous connection if any
 
-    if( mode == mode_undefined )
-    {
-      state = begin;
-      assert( !server );
-      mode = mode_server;
-      
-      server = new wxSocketServer(port,wxSOCKET_NOWAIT);
-      server->SetEventHandler(*this,NETWORK_EVENT);
-      server->SetNotify(wxSOCKET_CONNECTION_FLAG);
-      server->Notify(TRUE);
-      
-      if( server->Ok() )
-      {
-	//server->GetLocal(localhost);
-	return true;
-      }
-      else
-      {
-	server->Destroy();
-	server = 0;
-	mode = mode_undefined;
-      }
-    }
-    return false;
+  //--------------------
+  // connection commands
+  //--------------------
+
+  // returns true for success
+  bool Network_Manager_BGP100a_Client::connect_to_server( std::string host, int port )
+  {
+    close_connection();
+    conn_state.state = BGP_UNCONNECTED;
+    conn_state.name = host + ":" + long_to_string(port);
+    msg_net_client = new Message_Network_Client<BGP::Message>(host,port,this);
+    return true;		// on_lost will be called on failure
   }
 
-  bool Network_Manager::setup_client( wxIPV4address host ) throw(Network_Exception)
+  void Network_Manager_BGP100a_Client::close_connection()
   {
-    close_connection();		// close previous connection if any
-
-    if( mode == mode_undefined )
+    conn_state.state = BGP_UNCONNECTED;
+    if( msg_net_client != 0 )
     {
-      state = begin;
-      mode = mode_connecting;
-
-      if( !client )
-	client = new wxSocketClient(wxSOCKET_NOWAIT);
-      
-      client->SetEventHandler(*this,NETWORK_EVENT);
-      client->SetNotify(wxSOCKET_CONNECTION_FLAG | wxSOCKET_INPUT_FLAG | wxSOCKET_LOST_FLAG);
-      client->Notify(TRUE);
-      
-      client->Connect(host,false);
-      bool success = client->WaitOnConnect(10);	// wait 10 seconds
-
-#ifndef __WXMSW__
-      if( !success )
-      {
-	std::cerr << "Could not connect to server" << std::endl;
-      }
-      else
-	std::cerr << "Connected to server" << std::endl;
-#endif
-
-      if( !client->IsConnected() )
-      {
-	client->Destroy();
-	client = 0;
-	mode = mode_undefined;
-	return false;
-      }
-      mode = mode_client;	// already set by on_connect or received handshake
-    }
-    return true;
-  }
-
-  void Network_Manager::set_connection_handler( Network_Connection_Handler *handler )
-  {
-    connection_handler = handler;
-  }
-  
-  void Network_Manager::close_connection()
-  {
-    switch( mode )
-    {
-      case mode_server:
-      {
-	// send setup of all players to all clients
-	std::map<wxSocketBase*,Client>::iterator client_it;
-	for( client_it = clients.begin(); client_it != clients.end(); ++client_it )
-	{
-	  Client &c = client_it->second;
-	  if( c.socket )
-	  {
-	    write_message_type( *c.socket, msg_abort_game );
-	    c.socket->Destroy();
-	  }
-	}
-	clients.clear();
-
-	mode = mode_undefined;
-	server->Close();
-	server->Destroy();
-	server = 0;
-
-	id_client.clear();
-	players.clear();
-	own_players.clear();
-	id_own_player.clear();
-	clients_ready = 0;
-	clients_player_setup_ack = 0;
-	state = begin;
-      }
-      break;
-      case mode_client:
-      {
-	write_message_type( *client, msg_abort_game );
-	mode = mode_undefined;
-	client->Destroy();
-	client = 0;
-
-	id_client.clear();
-	players.clear();
-	own_players.clear();
-	id_own_player.clear();
-	clients_ready = 0;
-	clients_player_setup_ack = 0;
-	state = begin;
-      }
-      break;
-      case mode_connecting:
-      case mode_undefined:
-	break;
+      BGP::Msg_Disconnect msg;
+      msg_net_client->send_message(&msg);
+      msg_net_client->flush();
+      delete msg_net_client;
+      msg_net_client = 0;
     }
   }
 
-  bool Network_Manager::may_disconnect( wxSocketBase *socket )
+  //-------------------------------------------
+  //-------------------------------------------
+  // commands inherited from Game_Setup_Manager
+  //-------------------------------------------
+  //-------------------------------------------
+
+  Game_Setup_Manager::Type Network_Manager_BGP100a_Client::get_type()
   {
-    if( mode == mode_server )
-    {
-      Client &c = clients[socket];
-      if( c.socket )
-      {
-	if( (state == begin) || (state == is_ready) )
-	  return true;
-      }
-      else
-      {
-	clients.erase( socket ); // erase entry if just added
-      }
-    }
-    if( mode == mode_client )
-    {
-      if( (state == begin) || (state == is_ready) )
-	return socket == client;
-    }
-    return false;
+    return Game_Setup_Manager::client;
   }
 
-  void Network_Manager::disconnect( wxSocketBase *socket )
-  {
-    if( mode == mode_server )
-    {
-      Client &c = clients[socket];
-      if( c.socket )
-      {
-	write_message_type( *c.socket, msg_abort_game );
-
-	// erase pointers to client objects
-	std::list<std::list<Player>::iterator>::iterator player;
-	for( player = c.players.begin(); player != c.players.end(); ++player )
-	{
-	  report_player_removed( &**player );
-	  
-	  id_player.erase( (*player)->id ); 
-	  players.erase( *player );
-	  id_client.erase( (*player)->id );
-	}
-	c.socket->Destroy();
-	clients.erase( socket );
-	recount_client_stat();
-	check_state();
-      }
-      else
-      {
-	clients.erase( socket ); // erase entry if just added
-      }
-    }
-    if( mode == mode_client )
-    {
-      close_connection();
-    }
-  }
-
-  Game_Setup_Manager::Type Network_Manager::get_type()
-  {
-    if( mode == mode_server ) 
-      return Game_Setup_Manager::server;
-    else
-      return Game_Setup_Manager::client;
-  }
-
-  void Network_Manager::set_display_handler( Game_Setup_Display_Handler *handler )
+  void Network_Manager_BGP100a_Client::set_display_handler( Game_Setup_Display_Handler* handler )
   {
     display_handler = handler;
-    /* handler will request this information anyway
-    if( display_handler )
-    {
-      // tell handler all players
-      std::list<Player>::iterator player;
-      for( player = players.begin(); player != players.end(); ++player )
-      {
-	display_handler->player_added(*player);
-      }
-
-      // tell handler which board is currently active
-      display_handler->set_board( game );
-    }
-    */
   }
 
+  //-------------------------------------------
   // board commands
-  Game_Setup_Manager::Answer_Type Network_Manager::ask_change_board( const Game &new_game )
+  //-------------------------------------------
+  Game_Setup_Manager::Answer_Type Network_Manager_BGP100a_Client::ask_change_board( const Game &game )
   {
-    if( mode == mode_server )
-    {
-      game = new_game;
-      report_ruleset_change();
-      return accept;
-    }
-    if( mode == mode_client )
-    {
-      write_message_type( *client, msg_board );
-      write_board( *client, new_game );
-      return wait_for_answer;
-    }
-    return deny;
   }
-
-  const Game &Network_Manager::get_board()
+  const Game &Network_Manager_BGP100a_Client::get_board()
   {
     return game;
   }
-
-  const std::list<Player> &Network_Manager::get_players()
+  const std::list<Player> &Network_Manager_BGP100a_Client::get_players()
   {
     return players;
   }
-
+  //-------------------------------------------
   // player commands
-  bool Network_Manager::add_player( const Player &player )
+  //-------------------------------------------
+  bool Network_Manager_BGP100a_Client::add_player( const Player & )
   {
-    if( mode == mode_server )
-    {
-      if( state == begin )
-      {
-	if( players.size() < game.get_max_players() )
-	{
-	  std::list<Player_Output*> outlist;
-	  outlist.push_back(this);
-	  
-	  int id = current_id; ++current_id;
-	  
-	  std::list<Player>::iterator p = players.insert(players.end(), player);
-	  p->id = id;
-	  p->outputs.clear();
-	  p->outputs.push_back( this );
-	  id_player[id] = p;
-	  
-	  report_player_added( &*p );
-	  return true;
-	}
-	else
-	  ui_manager.report_error( _("Too many players!"), _("Add failed") );
-      }
-    }
-    else
-    {
-      if( mode == mode_client )
-      {
-	if( state == handshake )
-	{
-	  requested_player_name = player.name;
-	  requested_player_type = player.type;
-	  state = request_player;
-	  
-	  write_message_type( *client, msg_player_request );
-	  write_string( *client, player.name );
-	  write_int( *client, player.type );
-	  
-	  return true;
-	}
-      }
-    }
-    return false;
   }
-  bool Network_Manager::remove_player( const Player &player )
+  bool Network_Manager_BGP100a_Client::remove_player( const Player & )
   {
-    if( mode == mode_server )
-    {
-      if( (state == begin) || (state == is_ready) )
-      {
-	if( id_player.find(player.id) != id_player.end() )
-	{
-	  std::list<Player>::iterator player_it = id_player[player.id];
-	  report_player_removed( &*player_it );
-	  
-	  players.erase(player_it);
-	  id_player.erase( player.id ); 
-	  Client *client = id_client[player.id];
-	  id_client.erase( player.id );
-	  // erase player from list of players hosted by this player
-	  if( client )
-	  {
-	    std::list<std::list<Player>::iterator>::iterator client_player;
-	    for( client_player = client->players.begin();
-		 client_player != client->players.end(); ++client_player )
-	    {
-	      if( *client_player == player_it )
-	      {
-		client->players.erase(client_player);
-		break;
-	      }
-	    }
-	  }
-	  return true;
-	}
-      }
-    }
-    if( mode == mode_client )
-    {
-      if( (state == begin) || (state == handshake) || (state == request_player) )
-      {
-	write_message_type( *client, msg_player_removed );
-	write_int( *client, player.id );
-	return true;
-      }
-    }
-    return false;
   }
-  bool Network_Manager::player_up( const Player &player )
+  bool Network_Manager_BGP100a_Client::player_up( const Player & )
   {
-    if( mode == mode_server )
-    {
-      if( (state == begin) || (state == is_ready) )
-      {
-	if( id_player.find(player.id) != id_player.end() )
-	{
-	  if( id_player[ player.id ] != players.begin() ) 
-	  {
-	    std::list<Player>::iterator player1 = id_player[player.id];
-	    std::list<Player>::iterator player2 = player1; --player2;
-	    
-	    report_player_up( &*player1 );
-
-	    Player p1 = *player1;
-	    players.erase(player1);
-	    player1 = players.insert(player2,p1);	// insert player before player 2
-    
-	    id_player[p1.id] = player1;
-	    return true;
-	  }
-	}
-      }
-    }
-    if( mode == mode_client )
-    {
-      if( (state == begin) || (state == handshake) || (state == request_player) )
-      {
-	write_message_type( *client, msg_player_up );
-	write_int( *client, player.id );
-	return true;
-      }
-    }
-    return false;
   }
-  bool Network_Manager::player_down( const Player &player )
+  bool Network_Manager_BGP100a_Client::player_down( const Player & )
   {
-    if( mode == mode_server )
-    {
-      if( (state == begin) || (state == is_ready) )
-      {
-	if( id_player.find(player.id) != id_player.end() )
-	{
-	  if( id_player[ player.id ] != --players.end() ) 
-	  {
-	    std::list<Player>::iterator player1 = id_player[player.id];
-	    std::list<Player>::iterator player2 = player1; ++player2;
-	    
-	    report_player_down( &*player1 );
-
-	    Player p2 = *player2;
-	    players.erase(player2);
-	    player2 = players.insert(player1,p2); // insert player 2 before player
-    
-	    id_player[p2.id] = player2;
-	    return true;
-	  }
-	}
-      }
-    }
-    if( mode == mode_client )
-    {
-      if( (state == begin) || (state == handshake) || (state == request_player) )
-      {
-	write_message_type( *client, msg_player_down );
-	write_int( *client, player.id );
-	return true;
-      }
-    }
-    return false;
   }
-  void Network_Manager::ready()      // ready with adding players
+  // ready with adding players
+  void Network_Manager_BGP100a_Client::ready()
   {
-    if( mode == mode_server )
-    {
-      if( state == begin )
-      {
-	state = is_ready;
-	check_state();
-      }
-    }
-    else
-    {
-      if( mode == mode_client )
-      {
-	if( state == handshake )
-	{
-	  state = is_ready;
-	  write_message_type( *client, msg_ready );
-	}
-      }
-    }
   }
+  //-------------------------------------------
+  // game commands
+  //-------------------------------------------
 
   // is everyone ready and number of players ok?
-  Game_Setup_Manager::Game_State Network_Manager::can_start() 
+  Game_Setup_Manager::Game_State Network_Manager_BGP100a_Client::can_start()
   {
-    // check if all clients are ready
-    if( mode == mode_server )
+  }
+  // call only when can_start() == true
+  void Network_Manager_BGP100a_Client::start_game()
+  {
+  }
+  // request to play new game
+  Game_Setup_Manager::Answer_Type Network_Manager_BGP100a_Client::ask_new_game()
+  {
+  }
+  // request to undo n half moves
+  Game_Setup_Manager::Answer_Type Network_Manager_BGP100a_Client::ask_undo_moves(int n)
+  {
+  }
+  // force new game (may close connections)
+  void Network_Manager_BGP100a_Client::force_new_game()
+  {
+  }
+  // stop game
+  void Network_Manager_BGP100a_Client::stop_game()
+  {
+  }
+
+  //-------------------------------------------
+  //-------------------------------------------
+  // commands inherited from Player Input
+  //-------------------------------------------
+  //-------------------------------------------
+
+  Player_Input::Player_State Network_Manager_BGP100a_Client::determine_move() throw(Exception)
+  {
+  }
+  Move_Sequence Network_Manager_BGP100a_Client::get_move()
+  {
+  }
+  long Network_Manager_BGP100a_Client::get_used_time()
+  {
+  }
+
+  //-------------------------------------------
+  //-------------------------------------------
+  // commands inherited from Player Output
+  //-------------------------------------------
+  //-------------------------------------------
+
+  void Network_Manager_BGP100a_Client::report_move( const Move_Sequence & )
+  {
+  }
+
+  //------------------------------------------------
+  //------------------------------------------------
+  // commands inherited from Message_Network_Handler
+  //------------------------------------------------
+  //------------------------------------------------
+
+  // is called when message arrives
+  // specifics: message must be deleted, message==0: invalid message arrived
+  void Network_Manager_BGP100a_Client::process_message( Message_Network<BGP::Message> *connection, 
+							BGP::Message *message )
+  {
+    assert(connection == msg_net_client);
+#ifndef __WXMSW__
+    // !!! Debug output
+    std::cerr << "Client received: "; message->print(std::cerr);
+#endif
+
+    //------------------------------
+    // non state dependent messages:
+
+    if( message->get_type() == BGP::msg_disconnect )
     {
-      if( players.size() < game.get_min_players() )
+      conn_state.state = BGP_UNCONNECTED;
+      disconnect();
+      return;
+    }
+    if( message->get_type() == BGP::msg_ping )
+    {
+      // send response
+      BGP::Msg_Pong msg;
+      connection->send_message(&msg);
+      return;
+    }
+    if( message->get_type() == BGP::msg_chat )
+    {
+      // todo: relay and display chat message
+      return;
+    }
+
+    //------------------------------
+    // state dependent messages:
+
+    bool invalid = false;
+    switch(conn_state.state) 
+    {
+      case BGP_UNCONNECTED:
       {
-	return too_few_players;
+	invalid = true;
+	break;
       }
-
-      check_state();
-
-      if( (state == players_ready) || (state == game_started) )
+      case BGP_HANDSHAKE:
       {
-	return everyone_ready;
-      }
-    }
-    else if( mode == mode_client )
-    {
-      if( state == game_started )
-	return everyone_ready;
-    }
-    return not_ready;
-  }
-
-  void Network_Manager::start_game() // call only when can_start() == true
-  {
-    game_manager.set_board( game );
-    game_manager.set_players( players );
-    game_manager.start_game();
-  }
-
-  Game_Setup_Manager::Answer_Type Network_Manager::ask_new_game() // request to play new game
-  {
-    if( mode == mode_server )
-    {
-      state = begin;
-      clients_ready = 0;
-      clients_player_setup_ack = 0;
-
-      std::map<wxSocketBase*,Client>::iterator client_it;
-      for( client_it = clients.begin(); client_it != clients.end(); ++client_it )
-      {
-	Client &c = client_it->second;
-	c.state = handshake;	// already connected clients are in state handshake
-	write_message_type( *c.socket, msg_new_game );      
-      }
-    }
-    if( mode == mode_client )
-    {
-      state = handshake;
-      write_message_type( *client, msg_new_game );
-    }
-    return wait_for_answer;
-  }
-
-  Game_Setup_Manager::Answer_Type Network_Manager::ask_undo_moves(int n) // request to play new game
-  {
-    //!!! implement this !!!
-    return deny;
-  }
-  
-  void Network_Manager::force_new_game()   // force new game (may close connections)
-  {
-    if( display_handler )	// there should be a display handler that may display a game setup dialog
-      display_handler->game_setup(); // Attention: this opens a dialog which might destroy this object
-  }
-
-  void Network_Manager::stop_game()  // stop game
-  {
-    state = game_stop;		// avoid processing of network commands
-  }
-
-  // Player_Input functions
-  Player_Input::Player_State Network_Manager::determine_move() throw(Exception)
-  {
-    if( state == move_received )
-    {
-      return finished;
-    }
-    assert( state == game_started );
-    state = accept_move;
-    sequence.clear();
-
-    return wait_for_event;
-  }
-
-  Move_Sequence Network_Manager::get_move()
-  {
-    assert( state == move_received );
-
-    // moue should be already done
-    //sequence.do_sequence( game );
-
-    state = game_started;
-    return sequence;
-  }
-
-  long Network_Manager::get_used_time()
-  {
-    return 1;			// !!! measure time
-  }
-
-  // Player_Output functions
-  void Network_Manager::report_move( const Move_Sequence &sequence )
-  {
-    switch( mode )
-    {
-      case mode_server:
-      {
-	// send setup of all players to all clients
-	std::map<wxSocketBase*,Client>::iterator client_it;
-	for( client_it = clients.begin(); client_it != clients.end(); ++client_it )
+	stop_timer();
+	switch( message->get_type() )
 	{
-	  Client &c = client_it->second;
-	  if( c.socket )
+	  case BGP::msg_list_protocols:
 	  {
-	    write_message_type( *c.socket, msg_report_move );
-	
-	    write_move( *c.socket, sequence );
-	  }
-	}
-      }
-      break;
-      case mode_client:
-      {
-	write_message_type( *client, msg_report_move );
-	write_move( *client, sequence );
-      }
-      break;
-      case mode_connecting:
-      case mode_undefined:
-	break;
-    }
-  }
-
-  void Network_Manager::on_network( wxSocketEvent &event )
-  {
-    switch( event.GetSocketEvent() )
-    {
-      case wxSOCKET_CONNECTION:
-	on_connect( *event.GetSocket() );
-	break;
-      case wxSOCKET_INPUT:
-	on_input( *event.GetSocket() );
-	break;
-      case wxSOCKET_OUTPUT:
-	on_output( *event.GetSocket() );
-	break;
-      case wxSOCKET_LOST:
-	on_lost( *event.GetSocket() );
-	break;
-    }
-  }
-
-  void Network_Manager::on_done( wxTimerEvent & )
-  {
-    state = move_received;
-    continue_game();
-  }
-
-  void Network_Manager::on_connect( wxSocketBase& sock )
-  {
-    if( mode == mode_connecting )
-    {
-      mode = mode_client;
-    }
-    if( mode == mode_server )
-    {
-      assert(server);
-     
-      if( clients.size() == 0 )	// first client
-      {
-	// determine local network adress:
-	//sock.GetLocal(localhost);
-      }
-
-      if( clients.size() < max_clients )
-      {
-	wxSocketBase *socket;
-	socket = server->Accept(false);
-	if( socket )
-	{
-	  Client &c = clients[socket];
-	  c.socket = socket;
-	  
-	  socket->SetEventHandler(*this, NETWORK_EVENT);
-	  socket->SetNotify(wxSOCKET_INPUT_FLAG | wxSOCKET_OUTPUT_FLAG | wxSOCKET_LOST_FLAG);
-	  socket->Notify(TRUE);
-
-	  if( connection_handler )
-	  {
-	    wxIPV4address host;
-	    socket->GetPeer(host);
-	    connection_handler->new_connection( host, socket );
-	  }
-	}
-      }
-      else
-      {
-	write_message_type( sock, msg_handshake_deny );
-      }
-    }
-  }
-
-  void Network_Manager::on_input( wxSocketBase& sock )
-  {
-    // disable input events
-    sock.SetNotify(wxSOCKET_LOST_FLAG);
-    
-    Message_Type message_type = read_message_type(sock);
-
-    switch( message_type )
-    {
-      case msg_handshake:
-      {
-	if( mode == mode_server )
-	{
-	  // client accepted handschake
-	  Client &c = clients[ &sock ];
-	  if( c.socket )
-	  {
-	    if( c.state == begin )
+	    BGP::Msg_List_Protocols *det_msg = static_cast<BGP::Msg_List_Protocols*>(message);
+	    std::list<BGP::Protocol> protocols = det_msg->get_protocols();
+	    bool match = false;
+	    // supported protocols: BGP 1.00a
+	    for( std::list<BGP::Protocol>::iterator it=protocols.begin(); it!=protocols.end(); ++it )
 	    {
-	      assert( c.socket == &sock );
-	      c.state = handshake;
-
-	      report_players( *c.socket );
-	      report_ruleset_change();
-	    }
-	    else
-	    {
-	      write_message_type( sock, msg_illegal_request );
-	    }
-	  }
-	  else
-	  {
-	    // unknown client...
-	    clients.erase( &sock ); // erase entry if just added
-	  }
-	}
-	if( mode == mode_connecting ) // handshake message prooves that client is connected
-	  mode = mode_client;
-	if( mode == mode_client )
-	{
-	  // server offers handschake
-	  if( state == begin )
-	  {
-	    if( &sock == static_cast<wxSocketBase*>(client) )
-	    {
-	      state = handshake;
-	      write_message_type( sock, msg_handshake ); // return handshake
-	    }
-	  }
-	}
-      }
-      break;
-      case msg_handshake_deny:
-      {
-	if( mode == mode_client )
-	{
-	  assert( &sock == static_cast<wxSocketBase*>(client) );
-	  // server denied handshake
-	  close_connection();
-	}
-      }
-      break;
-      case msg_player_request:
-      {
-	// ***********
-	// parameters:
-
-	// get name
-	std::string name = read_string(sock);
-	// get type
-	Player::Player_Type type = Player::Player_Type(read_int(sock));
-
-	if( mode == mode_server )
-	{
-	  // client requests to add player
-	  if( ((state == begin) || (state == is_ready)) &&
-	      (players.size() < game.get_max_players() ) )
-	  {
-	    Client &c = clients[&sock];
-	    if( c.socket && (c.state == handshake) ) // is it a connected client?
-	    {
-	      // ******
-	      // accept
-
-	      switch(type)
+	      BGP::Protocol &protocol = *it;
+	      if( protocol.name == "BGP" && protocol.number== 1.00 &&
+		  protocol.letter == 'a' )
 	      {
-		default: type = Player::unknown; break;
-		case Player::user:
-		case Player::ai:
-		  break;
+		match = true;
+		// send response
+		BGP::Msg_Helo msg(protocol,connection->get_local_host());
+		connection->send_message(&msg);
+		// setup timeout
+		start_timer(response_timeout);
 	      }
-	      // get host
-	      std::string host;
-	      wxIPV4address addr;
-	      if( sock.GetPeer(addr) )
-	      {
-		host = wxstr_to_str(addr.Hostname());
-	      }
-
-	      Player player( name, current_id, this, Player::no_output, host, type );
-
-	      std::list<Player>::iterator p = players.insert(players.end(), player);
-	      c.players.push_back( p );
-	      id_player[current_id] = p;
-	      id_client[current_id] = &c;
-
-	      write_message_type( sock, msg_player_ack );
-	      // return id for player to client
-	      write_int( sock, current_id );
-
-	      report_player_added( &*p );
-	  
-	      ++current_id;
-
-	      // !!! player request might cause everyone to be ready
 	    }
-	    else
+	    if( !match )
 	    {
 #ifndef __WXMSW__
-	      if( !c.socket )
-	      {
-		std::cerr << std::endl << "error: unknown client" << std::endl;
-		clients.erase( &sock ); // erase entry if just added
-	      }
-	      if( c.state != handshake )
-		std::cerr << std::endl << "error: client not in state handshake" << std::endl;
+	      std::cerr << "Client Error - No protocol match found!" << std::endl;
 #endif
+	      conn_state.state = BGP_UNCONNECTED;
+	      disconnect();
 	    }
+	    break;
 	  }
-	  else
+	  case BGP::msg_accept:
 	  {
-#ifndef __WXMSW__
-	    if( (state != begin) && (state != is_ready) )
-	      std::cerr << std::endl << "error: wrong state" << std::endl;
-	    if( players.size() < game.get_max_players() )
-	      std::cerr << std::endl << "error: too many players" << std::endl;
-#endif
-	    // *****
-	    // deny
-	    write_message_type( sock, msg_player_deny );
+	    conn_state.state = BGP_ROOMS;
+	    // send response
+	    BGP::Msg_Get_Rooms msg;
+	    connection->send_message(&msg);
+	    // setup timeout
+	    start_timer(response_timeout);
+	    break;
 	  }
-	}
-	else
-	{
-#ifndef __WXMSW__
-	  std::cerr << std::endl << "error: client can't receive that message type" << std::endl;
-#endif
-	}
-      }
-      break;
-      case msg_player_ack:
-      {
-	if( mode == mode_client )
-	{
-	  assert( &sock == static_cast<wxSocketBase*>(client) );
-	  if( state == request_player )
-	  {
-	    state = handshake;
-	    int id = read_int( sock );
-	    Player player( requested_player_name, id, 0, Player::no_output,
-			   "", requested_player_type );
-
-	    std::list<Player>::iterator p = own_players.insert(own_players.end(), player);
-	    id_own_player[id] = p;
-
-	    // report that player was accepted
-	    ui_manager.show_status_text( _("Player added successfully") );
-	  }
-	}
-      }
-      break;
-      case msg_player_deny:
-      {
-	if( mode == mode_client )
-	{
-	  assert( &sock == static_cast<wxSocketBase*>(client) );
-	  if( state == request_player )
-	  {
-	    state = handshake;
-	    // report that player was denied
-	    ui_manager.report_error( _("Adding of Player denied!"), _("Add failed") );
-	  }
-	}
-      }
-      break;
-      case msg_ready:
-      {
-	if( mode == mode_server )
-	{
-	  // client tells to be ready with player adding
-	  if( (state == begin) || (state == is_ready ) )
-	  {
-	    Client &c = clients[&sock];
-	    if( c.socket )	// is it a connected client?
-	    {
-	      if( c.state == handshake )
-	      {
-		c.state = is_ready;
-		++clients_ready;
-	      
-		check_state();
-	      }
-	    }
-	    else
-	    {
-	      // unknown client...
-	      clients.erase( &sock ); // erase entry if just added
-	    }
-	  }
-	}
-      }
-      break;
-      case msg_player_added:
-      {
-	if( mode == mode_client )
-	{
-	  if( (state == begin) || (state == handshake) || (state == request_player) || 
-	      (state == is_ready) )
-	  {
-	    Player player = read_player( *client );
-	    if( player.host == "" ) // is player hosted by server?
-	    {
-	      wxIPV4address adr;
-	      sock.GetPeer( adr );      
-	      player.host = wxstr_to_str(adr.Hostname());
-	    }
-	  
-	    std::list<Player>::iterator p = players.insert(players.end(), player);
-	    id_player[ player.id ] = p;
-
-	    report_player_added( &*p );
-	  }
-	}
-      }
-      break;
-      case msg_player_removed:
-      {
-	int id = read_int( sock );
-	if( mode == mode_server )
-	{
-	  if( (state == begin) || (state == is_ready ) )
-	  {
-	    // if client is responsable for player
-	    if( id_client[id]->socket == &sock )
-	    {
-	      remove_player( *id_player[id] );
-	    }
-	    else
-	    {
-	      write_message_type( sock, msg_player_change_deny );
-	    }
-	  }
-	}
-	if( mode == mode_client )
-	{
-	  if( (state == begin) || (state == handshake) || (state == request_player) || 
-	      (state == is_ready) )
-	  {
-	    Player *player = &*id_player[ id ];
-	    if( player )
-	    {
-	      report_player_removed( player );
-	      // don't erase player from lists as it will be cleared before final setup is transmitted
-	    }
-	  }   
-	}
-      }
-      break;
-      case msg_player_up:
-      {
-	int id = read_int( sock );
-	if( mode == mode_server )
-	{
-	  if( (state == begin) || (state == is_ready) )
-	  {
-	    // if client is responsable for player
-	    if( id_client[id]->socket == &sock )
-	    {
-	      player_up( *id_player[id] );
-	    }
-	    else
-	    {
-	      write_message_type( sock, msg_player_change_deny );
-	    }
-	  }
-	}
-	if( mode == mode_client )
-	{
-	  if( (state == begin) || (state == handshake) || (state == request_player) || (state == is_ready) )
-	  {
-	    std::list<Player>::iterator player = id_player[id];
-	    std::list<Player>::iterator player2 = player; --player2;
-	    
-	    report_player_up( &*player );
-
-	    Player p1 = *player;
-	    players.erase(player);
-	    player = players.insert(player2,p1);	// insert player before player 2
-    
-	    id_player[p1.id] = player;
-	  }
-	}
-      }
-      break;
-      case msg_player_down:
-      {
-	int id = read_int( sock );
-	if( mode == mode_server )
-	{
-	  if( (state == begin) || (state == handshake) || (state == request_player) || 
-	      (state == is_ready) )
-	  {
-	    // if client is responsable for player
-	    if( id_client[id]->socket == &sock )
-	    {
-	      player_down( *id_player[id] );
-	    }
-	    else
-	    {
-	      write_message_type( sock, msg_player_change_deny );
-	    }
-	  }
-	}
-	if( mode == mode_client )
-	{
-	  if( (state == begin) || (state == handshake) || (state == request_player) || 
-	      (state == is_ready) )
-	  {
-	    std::list<Player>::iterator player = id_player[id];
-	    std::list<Player>::iterator player2 = player; ++player2;
-	    
-	    report_player_down( &*player );
-
-	    Player p2 = *player2;
-	    players.erase(player2);
-	    player2 = players.insert(player,p2); // insert player 2 before player
-    
-	    id_player[p2.id] = player2;
-	  }
-	}
-      }
-      break;
-      case msg_player_change_deny:
-      {
-	if( mode == mode_client )
-	{
-	  if( (state == begin) || (state == handshake) || (state == request_player) || 
-	      (state == is_ready) )
-	  {
-	    if( display_handler )
-	      display_handler->player_change_denied();
-	  }
-	}
-      }
-      break;
-      case msg_player_setup: 
-      {
-	if( mode == mode_client )
-	{
-	  assert( &sock == static_cast<wxSocketBase*>(client) );
-	  if( state == is_ready )
-	  {
-	    state = players_ready;
-
-	    players.clear();
-	    id_player.clear();
-	    int num_players = read_int( sock );
-	  
-	    for( int i = 0; i < num_players; ++i )
-	    {
-	      Player player = read_player( sock );
-	      if( player.host == "" ) // is player hosted by server?
-	      {
-		wxIPV4address adr;
-		sock.GetPeer( adr );
-		player.host = wxstr_to_str(adr.Hostname());
-	      }
-
-	      if( id_own_player.find(player.id) != id_own_player.end() )
-	      {
-		Player_Input *input;
-		if( player.type == Player::ai )
-		  input = game_manager.get_player_ai();
-		else
-		  input = ui_manager.get_user_input();
-		  
-		player.input = input;
-		player.host = "";
-		  
-		std::list<Player_Output*> outlist;
-		outlist.push_back(this);
-		player.outputs = outlist;
-	      }
-	      players.push_back( player );
-	    }
-
-	    write_message_type( sock, msg_player_setup_ack );
-	  }
-	}
-      }
-      break;
-      case msg_player_setup_ack:
-      {
-	if( mode == mode_server )
-	{
-	  // client has recognized player setup
-	  if( state == players_ready )
-	  {
-	    Client &c = clients[&sock];
-	    if( c.socket )	// is it a connected client?
-	    {
-	      if( c.state == is_ready )
-	      {
-		c.state = players_ready;
-
-		++clients_player_setup_ack;
-
-		if( clients_player_setup_ack >= clients.size() )
-		{
-		  // send that game started to all clients
-		  std::map<wxSocketBase*,Client>::iterator client_it;
-		  for( client_it = clients.begin(); client_it != clients.end(); ++client_it )
-		  {
-		    Client &c = client_it->second;
-		    if( c.socket )
-		    {
-		      assert( c.state == players_ready );
-		      c.state = game_started;
-		    
-		      write_message_type( *c.socket, msg_start_game );
-		    }
-		  }
-		  state = game_started;
-
-		  continue_game();
-		}
-	      }
-	    }
-	    else
-	    {
-	      // unknown client...
-	      clients.erase( &sock ); // erase entry if just added
-	    }
-	  }
-	}
-      }
-      break;
-      case msg_board:
-      {
-	Game new_game = read_board( sock );
-	if( mode == mode_server )
-	{
-	  if( (state == begin) || (state == is_ready) )
-	  {
-	    Client &c = clients[&sock];
-	    if( c.socket )	// is it a connected client?
-	    {
-	      wxIPV4address host;
-	      sock.GetPeer(host);
-
-	      if( display_handler )
-	      {
-		if( display_handler->ask_change_board( new_game, host.Hostname() ) )
-		{
-		  ask_change_board( new_game );
-		}
-		else
-		{
-		  write_message_type( sock, msg_board_deny );
-		  report_ruleset_change();
-		}
-	      }
-	    }
-	    else
-	    {
-	      // unknown client...
-	      clients.erase( &sock ); // erase entry if just added
-	    }
-	  }
-	}
-	if( mode == mode_client )
-	{
-	  if( (state == begin) || (state == handshake) || (state == request_player) || 
-	      (state == is_ready) )
-	  {
-	    game = new_game;
-	    report_ruleset_change();
-	  }
-	}
-      }
-      break;
-      case msg_board_deny:
-      {
-	if( mode == mode_client )
-	{
-	  if( (state == begin) || (state == handshake) || (state == request_player) || 
-	      (state == is_ready) )
-	  {
-	    if( display_handler )
-	      display_handler->board_change_denied();
-	  }
-	}
-      }
-      break;
-      case msg_start_game:
-      {
-	// !!! when AIs are playing, we have to garantee that all
-	// players are listening before the first player is sending his
-	// move
-
-	if( mode == mode_client )
-	{
-	  assert( &sock == static_cast<wxSocketBase*>(client) );
-	  if( state == players_ready )
-	  {
-	    state = game_started;
-
-	    continue_game();
-	  }
-	}
-      }
-      break;
-      case msg_report_move:
-      {
-	if( mode == mode_server )
-	{
-	  // client reports a move
-	  if( state == accept_move )
-	  {
-	    Client &c = clients[&sock];
-	    if( c.socket )	// is it a connected client?
-	    {
-	      if( c.state == game_started )
-	      {
-		if( id_client[game_manager.get_game().current_player->id] == &c ) 
-				// is the client responsible for player ?
-		{
-		  // read move
-		  sequence = read_move( sock );
-		  state = move_received;
-
-		  // send move to clients, that didn't know that move:
-		  std::map<wxSocketBase*,Client>::iterator client_it;
-		  for( client_it = clients.begin(); client_it != clients.end(); ++client_it )
-		  {
-		    Client &dest_client = client_it->second;
-		    if( dest_client.socket != c.socket )
-		    {
-		      if( dest_client.socket )
-		      {
-			write_message_type( *dest_client.socket, msg_report_move );
-		  
-			write_move( *dest_client.socket, sequence );
-		      }
-		    }
-		  }
-		  state = wait_for_move;
-		  ui_manager.do_move_slowly( sequence, this, ANIMATION_DONE );
-		}
-	      }
-	    }
-	    else
-	    {
-	      // unknown client...
-	      clients.erase( &sock ); // erase entry if just added
-	    }
-	  }
-	}
-	else
-	{
-	  // client reports a move
-	  if( state == accept_move )
-	  {
-	    if( &sock == static_cast<wxSocketBase*>(client) )
-	    {
-	      // read move
-	      sequence = read_move( sock );
-	      state = move_received;
-	    
-	      ui_manager.do_move_slowly( sequence, this, ANIMATION_DONE );
-	    }
-	  }
-	}
-      }
-      break;
-      case msg_undo_request:
-      {
-      }
-      break;
-      case msg_undo_ack:
-      {
-      }
-      break;
-      case msg_undo_deny:
-      {
-      }
-      break;
-      case msg_abort_game:
-      {
-	if( connection_handler )
-	  connection_handler->closed_connection( &sock );
-
-	if( mode == mode_server )
-	{
-	  disconnect( &sock );
-	}
-	if( mode == mode_client )
-	{
-	  ui_manager.report_error( _("Server disconnected"), _("Disconnection") );
-
-	  if( (state == begin) || (state == handshake) || (state == request_player) )
-	  {
-	    if( display_handler )
-	      display_handler->aborted();
-	  }
-	}
-	// in the future network players should be overtaken by AIs
-      }
-      break;
-      case msg_new_game: 
-      {
-	if( (state == game_started) || (state == accept_move) || (state == move_received) ||
-	    (state == game_stop ) )
-	{
-	  wxIPV4address host;
-	  sock.GetPeer(host);
-	  if( display_handler )
-	  {
-	    if( display_handler->ask_new_game( host.Hostname() ) )
-	    {
-	      force_new_game(); // Attention: this opens a dialog which might destroy this object
-	    }
-	  }
-	}
-      }
-      break;
-      case msg_illegal_request:
-      {
-      }
-      break;
-    }
-    
-    // enable input events
-    sock.SetNotify(wxSOCKET_LOST_FLAG || wxSOCKET_INPUT_FLAG);
-  }
-
-  void Network_Manager::on_output( wxSocketBase& sock ) // start output
-  {
-    if( mode == mode_server )
-    {
-      write_message_type( sock, msg_handshake );
-    }
-  }
-
-  void Network_Manager::on_lost( wxSocketBase& sock )
-  {
-    if( mode == mode_server )
-    {
-      switch(state)
-      {
-	case begin:
-	case is_ready:
-	{
-	  std::map<wxSocketBase*,Client>::iterator client;
-	  client = clients.find(&sock);
-	  if( client != clients.end() )
-	  {
-	    Client &c = client->second;
-	    // remove players of host
-	    std::list<std::list<Player>::iterator>::iterator player;
-	    for( player = c.players.begin(); player != c.players.end(); ++player )
-	    {
-	      players.erase(*player);
-	    }
-	    // remove host
-	    clients.erase(client);
-	  }
+	  default: invalid = true; break;
 	}
 	break;
-	case players_ready:
-	case game_started:
-	case accept_move:
-	case move_received:
-	case game_stop:
+      }
+      case BGP_ROOMS:
+      {
+	stop_timer();
+	switch( message->get_type() )
 	{
-	  std::map<wxSocketBase*,Client>::iterator client;
-	  client = clients.find(&sock);
-	  if( client != clients.end() )
+	  case BGP::msg_tell_rooms:
 	  {
-	    Client &c = client->second;
-	    // remove players of host
-	    std::list<std::list<Player>::iterator>::iterator player;
-	    for( player = c.players.begin(); player != c.players.end(); ++player )
+	    BGP::Msg_Tell_Rooms *det_msg = static_cast<BGP::Msg_Tell_Rooms*>(message);
+	    std::list<BGP::Room> rooms = det_msg->get_rooms();
+	    bool match = false;
+	    // search standard room
+	    for( std::list<BGP::Room>::iterator it=rooms.begin(); it!=rooms.end(); ++it )
 	    {
-	      players.erase(*player); // should replace player with ai
+	      BGP::Room &room = *it;
+	      if( room.name == "standard room" && room.is_open )
+	      {
+		match = true;
+		conn_state.state = BGP_ASK_ROOM;
+		// send response
+		BGP::Msg_Choose_Room msg(room);
+		connection->send_message(&msg);
+		// setup timeout
+		start_timer(response_timeout);
+	      }
 	    }
-	    // remove host
-	    clients.erase(client);
+	    if( !match )
+	    {
+#ifndef __WXMSW__
+	      std::cerr << "Client Error - Standard room not available!" << std::endl;
+#endif
+	      conn_state.state = BGP_UNCONNECTED;
+	      disconnect();
+	    }
+	    break;
 	  }
-	  //wxMessageBox(_("Connection lost!"), _("Network Message"), wxOK | wxICON_ERROR, &game_window);
+	  default: invalid = true; break;
 	}
 	break;
-	case wait_for_move:
+      }
+      case BGP_ASK_ROOM:
+      {
+	stop_timer();
+	switch( message->get_type() )
+	{
+	  case BGP::msg_accept:
+	  {
+#ifndef __WXMSW__
+	    // !!! Debug
+	    std::cerr << "Client Success:" << std::endl;
+#endif
+	    break;
+	  }
+	  default: invalid = true; break;
+	}
+	break;
+      }
+      case BGP_ERROR:
+      {
+	switch( message->get_type() )
+	{
+	  case BGP::msg_error:
+	  {
+	    // restart by querying phase
+	    conn_state.state = BGP_GET_PHASE;
+	    BGP::Msg_Get_Phase msg;
+	    connection->send_message(&msg);
+	    start_timer(response_timeout);
+	    break;
+	  }
+	  default: invalid = true; break;
+	}
+	break;
+      }
+      default: invalid = true; break;
+    }
+
+    //------------------------------
+    // error handling:
+
+    if( invalid )
+    {
+#ifndef __WXMSW__
+      std::cerr << "Client Error - Invalid network message from " << conn_state.name << " in state " 
+		<< to_string(conn_state.state) << ": ";
+      message->print(std::cerr);
+#endif
+      switch(conn_state.state)
+      {
+	case BGP_UNCONNECTED:
 	  break;
-	case handshake:
-	case request_player:
-	  assert( false );	// no state for server!
-      }
-    }
-    if( mode == mode_client )
-    {
-      client->Destroy();		// destroy client after only connection is lost
-      client = 0;
-
-      mode = mode_undefined;
-      state = begin;
-      //wxMessageBox(_("Connection lost"), _("Network Message"), wxOK | wxICON_INFORMATION, &game_window);
-    }
-  }
-
-  void Network_Manager::recount_client_stat()
-  {
-    if( mode == mode_server )
-    {
-      clients_ready = 0;
-      clients_player_setup_ack = 0;
-      
-      // send setup of all players to all clients
-      std::map<wxSocketBase*,Client>::iterator client_it;
-      for( client_it = clients.begin(); client_it != clients.end(); ++client_it )
-      {
-	Client &c = client_it->second;
-	if( c.socket )
-	{
-	  if( c.state == is_ready )
-	  {
-	    ++clients_ready;
-	  }
-	  if( c.state == players_ready )
-	  {
-	    ++clients_player_setup_ack;
-	  }
-	}
-      }	
-    }
-  }
-  // forces some actions in certain states
-  void Network_Manager::check_state()
-  {
-    // check if all clients are ready
-    if( mode == mode_server )
-    {
-      if( state == is_ready )
-      {
-	if( clients_ready >= clients.size() )
-	{
-	  if( players.size() >= game.get_min_players() )
-	  {
-	    state = players_ready;
-
-	    // make sure every client knows the current ruleset
-	    report_ruleset_change();
-	    
-	    // send setup of all players to all clients
-	    std::map<wxSocketBase*,Client>::iterator client_it;
-	    for( client_it = clients.begin(); client_it != clients.end(); ++client_it )
-	    {
-	      Client &c = client_it->second;
-	      if( c.socket )
-	      {
-		write_message_type( *c.socket, msg_player_setup );
-		
-		assert( c.state == is_ready );
-		
-		write_int( *c.socket, players.size() );
-		std::list<Player>::iterator player;
-		for( player = players.begin(); player != players.end(); ++player )
-		{
-		  write_player( *c.socket, *player );
-		}
-	      }
-	    }
-	    /*
-	    // insert players in game
-	    if( gui_connected )
-	      game_window->new_game( players, *ruleset );
-	    else
-	      game.players = players;
-
-	    if( !clients.size() ) // if no clients
-	    {
-	      continue_game();	// don't wait for answers on player_setup request
-	    }
-	    */
-	  }
-	}
+	case BGP_HANDSHAKE:
+	case BGP_ROOMS:
+	case BGP_ASK_ROOM:
+	  conn_state.state = BGP_UNCONNECTED;
+	  disconnect();
+	  break;
+	default:
+	  conn_state.state = BGP_ERROR;
+	  // send response
+	  BGP::Msg_Error msg;
+	  connection->send_message(&msg);
+	  // setup timeout
+	  start_timer(response_timeout);
+	  break;
       }
     }
   }
-
-  void Network_Manager::write_string( wxSocketBase& sock, std::string str )
+  // is called when connection is established (for Message_Network_Client only)
+  void Network_Manager_BGP100a_Client::on_connect( Message_Network<BGP::Message> *connection )
   {
-#ifndef __WXMSW__	
-    std::cerr << str << " ";
-#endif
-
-    unsigned size = str.size();
-    sock.Write( &size, sizeof(size) );
-    sock.Write( str.c_str(), size );      
-  }
-  std::string Network_Manager::read_string( wxSocketBase& sock )
-  {
-    std::string ret;
-
-    unsigned size;
-    sock.WaitForRead( 0, timeout_sequencial_read );
-    sock.Read( &size, sizeof(size) );
-    if( size > max_string_size )
-      size = max_string_size;
-
-    char *buf = new char[size + 1];
-    if( buf != 0 )
+    assert(connection == msg_net_client);
+    if(conn_state.state == BGP_UNCONNECTED)
     {
-      sock.WaitForRead( 0, timeout_sequencial_read );
-      sock.Read(buf,size);
-      buf[size] = 0;		// terminate C-string
-      ret = buf;
-      delete[] buf;
+      conn_state.state = BGP_HANDSHAKE;
+      // send request
+      BGP::Msg_Helo msg(BGP::Protocol("BGP",1.00,'a'), connection->get_local_host());
+      connection->send_message(&msg);
+      // setup timeout
+      start_timer(response_timeout);
     }
-
-#ifndef __WXMSW__
-    std::cerr << ret << " ";
-#endif
-
-    return ret;
-  }
-
-  void Network_Manager::write_int( wxSocketBase& sock, int i )
-  {
-#ifndef __WXMSW__
-    std::cerr << i << " ";
-#endif
-    sock.Write( &i, sizeof(i) );
-  }
-
-  int Network_Manager::read_int( wxSocketBase& sock )
-  {
-    int i;
-    sock.WaitForRead( 0, timeout_sequencial_read );
-    sock.Read( &i, sizeof(i) );
-
-#ifndef __WXMSW__
-    std::cerr << i << " ";
-#endif
-
-    return i;
-  }
-
-  void Network_Manager::write_message_type( wxSocketBase& sock, Message_Type type )
-  {
-#ifndef __WXMSW__
-    std::cerr << std::endl << "------------------------------------" << std::endl;
-    std::cerr << "Send: ";
-    switch( type )
+    else
     {
-      case msg_handshake: std::cerr << "handshake "; break;
-      case msg_handshake_deny: std::cerr << "handshake_deny "; break;
-      case msg_player_request: std::cerr << "player_request "; break;
-      case msg_player_ack: std::cerr << "player_ack "; break;
-      case msg_player_deny: std::cerr << "player_deny "; break;
-      case msg_ready: std::cerr << "ready "; break;
-      case msg_player_added: std::cerr << "player_added "; break;
-      case msg_player_removed: std::cerr << "player_removed "; break;
-      case msg_player_up: std::cerr << "player_up "; break;
-      case msg_player_down: std::cerr << "player_down "; break;
-      case msg_player_change_deny: std::cerr << "player_change_deny "; break;
-      case msg_player_setup: std::cerr << "player_setup "; break; 
-      case msg_player_setup_ack: std::cerr << "player_setup_ack "; break;
-      case msg_board: std::cerr << "ruleset "; break;
-      case msg_board_deny: std::cerr << "ruleset_deny "; break;
-      case msg_start_game: std::cerr << "start_game "; break;
-      case msg_report_move: std::cerr << "report_move "; break;
-      case msg_undo_request: std::cerr << "undo_request "; break;
-      case msg_undo_ack: std::cerr << "undo_ack "; break;
-      case msg_undo_deny: std::cerr << "undo_deny "; break;
-      case msg_abort_game: std::cerr << "abort_game "; break;
-      case msg_new_game: std::cerr << "new_game "; break;
-      case msg_illegal_request: std::cerr << "illegal_request "; break;
-      default: std::cerr << "!!! wrong message type !!! "; break;
+      // misplaced connect
+#ifndef __WXMSW__
+      std::cerr << "Client Error - Misplaced connect from " << conn_state.name << " in state " 
+		<< to_string(conn_state.state) << std::endl;
+#endif
+      switch(conn_state.state)
+      {
+	case BGP_UNCONNECTED:
+	  break;
+	case BGP_HANDSHAKE:
+	case BGP_ROOMS:
+	case BGP_ASK_ROOM:
+	  conn_state.state = BGP_UNCONNECTED;
+	  disconnect();
+	  break;
+	default:
+	  conn_state.state = BGP_ERROR;
+	  // send response
+	  BGP::Msg_Error msg;
+	  connection->send_message(&msg);
+	  // setup timeout
+	  start_timer(response_timeout);
+	  break;
+      }
     }
-#endif
-    sock.Write( &type, sizeof(type) );
   }
-
-  Network_Manager::Message_Type Network_Manager::read_message_type( wxSocketBase& sock )
+  // is called when connection was closed or couldn't be established
+  void Network_Manager_BGP100a_Client::on_lost( Message_Network<BGP::Message> *connection )
   {
-    Message_Type type;
-    sock.Read( &type, sizeof(type) );
-
+    assert(connection == msg_net_client);
 #ifndef __WXMSW__
-    std::cerr << std::endl << "------------------------------------" << std::endl;
-    std::cerr << "Received: ";
-    switch( type )
-    {
-      case msg_handshake: std::cerr << "handshake "; break;
-      case msg_handshake_deny: std::cerr << "handshake_deny "; break;
-      case msg_player_request: std::cerr << "player_request "; break;
-      case msg_player_ack: std::cerr << "player_ack "; break;
-      case msg_player_deny: std::cerr << "player_deny "; break;
-      case msg_ready: std::cerr << "ready "; break;
-      case msg_player_added: std::cerr << "player_added "; break;
-      case msg_player_removed: std::cerr << "player_removed "; break;
-      case msg_player_up: std::cerr << "player_up "; break;
-      case msg_player_down: std::cerr << "player_down "; break;
-      case msg_player_change_deny: std::cerr << "player_change_deny "; break;
-      case msg_player_setup: std::cerr << "player_setup "; break; 
-      case msg_player_setup_ack: std::cerr << "player_setup_ack "; break;
-      case msg_board: std::cerr << "ruleset "; break;
-      case msg_board_deny: std::cerr << "ruleset_deny "; break;
-      case msg_start_game: std::cerr << "start_game "; break;
-      case msg_report_move: std::cerr << "report_move "; break;
-      case msg_undo_request: std::cerr << "undo_request "; break;
-      case msg_undo_ack: std::cerr << "undo_ack "; break;
-      case msg_undo_deny: std::cerr << "undo_deny "; break;
-      case msg_abort_game: std::cerr << "abort_game "; break;
-      case msg_new_game: std::cerr << "new_game "; break;
-      case msg_illegal_request: std::cerr << "illegal_request "; break;
-      default: std::cerr << "!!! wrong message type !!! "; break;
-    }
+    std::cerr << "Client Error - Connection Lost!" << std::endl;
 #endif
-
-    return type;
+    conn_state.state = BGP_UNCONNECTED;
+    delete msg_net_client;
+    msg_net_client = 0;
   }
-
-  void Network_Manager::write_player( wxSocketBase& sock, Player player )
+  // is called when an error occured
+  void Network_Manager_BGP100a_Client::on_error( Message_Network<BGP::Message> *connection )
   {
-    write_int( sock, player.id );
-    write_string( sock, player.name );
-    write_string( sock, player.host );
-    write_int( sock, player.type );
-    write_int( sock, player.help_mode );
-  }
-
-  Player Network_Manager::read_player( wxSocketBase& sock )
-  {
-    int id		= read_int( sock );
-    std::string name	= read_string( sock );
-    std::string host	= read_string( sock );
-    Player::Player_Type type = Player::Player_Type( read_int( sock ) );
-    Player::Help_Mode help_mode = Player::Help_Mode( read_int( sock ) );
-
-    // correct type value
-    switch( type )
+    assert(connection == msg_net_client);
+#ifndef __WXMSW__
+    std::cerr << "Client Error - Low level message error!" << std::endl;
+#endif
+    switch(conn_state.state)
     {
-      default: type = Player::unknown; break;
-      case Player::ai:
-      case Player::user:
-	// type ok
+      case BGP_UNCONNECTED:
 	break;
-    }
-    // correct help_mode
-    switch( help_mode )
-    {
-      default: help_mode = Player::no_help; break;
-      case Player::no_help:
-      case Player::show_possible_moves:
-      case Player::show_hint:
-	// type ok
+      case BGP_HANDSHAKE:
+      case BGP_ROOMS:
+      case BGP_ASK_ROOM:
+	conn_state.state = BGP_UNCONNECTED;
+	disconnect();
 	break;
-    }
-
-    std::list<Player_Output*> outputs; outputs.push_back(this);
-    return Player( name, id, this, outputs, host, type );
-  }
-  
-  void Network_Manager::write_move( wxSocketBase& sock, Move_Sequence sequence )
-  {
-#ifndef __WXMSW__
-    std::cerr << sequence << " ";
-#endif
-
-#ifndef __OLD_GCC__
-    std::ostringstream os;
-    os << sequence;
-
-    unsigned size = os.str().size();
-
-    write_int( sock, size );
-    sock.WriteMsg( os.str().c_str(), size );
-#else
-    char buf[4096];
-    std::ostrstream os(buf,4096);
-    os << sequence;
-
-    unsigned size = os.pcount();
-    write_int( sock, size );
-    sock.WriteMsg( os.str(), size );
-#endif
-  }
-  Move_Sequence Network_Manager::read_move( wxSocketBase& sock )
-  {
-    unsigned size = read_int( sock );
-    if( size > max_string_size*20 ) size = max_string_size*20;
-
-    char *buf = new char[size + 1];
-    sock.WaitForRead( 0, timeout_sequencial_read * 3 );	// move sequence might get quite long
-    sock.ReadMsg( buf, size );
-    buf[size] = 0;		// terminate string
-    std::string str = buf;
-#ifndef __OLD_GCC__
-    std::istringstream is(str);
-#else
-    std::istrstream is(str.c_str());
-#endif
-
-    Move_Sequence seq;
-    is >> seq;
-
-#ifndef __WXMSW__
-    std::cerr << seq << " ";
-#endif
-
-    return seq;
-  }
-
-  void Network_Manager::write_board_base( wxSocketBase& sock, Board board )
-  {
-    write_int( sock, int(board.board_type) );
-    if( board.board_type == Board::custom )
-    {
-      assert(false);
-    }
-  }
-
-  Board Network_Manager::read_board_base( wxSocketBase& sock )
-  {
-    int i = read_int( sock );
-    
-    switch( Board::Board_Type(i) )
-    {
-      case Board::s37_rings: 
-	return Board( (const int*) board_37, 
-		      sizeof(board_37[0]) / sizeof(board_37[0][0]),
-		      sizeof(board_37)    / sizeof(board_37[0]),
-		      Board::s37_rings );
-      case Board::s40_rings: 
-	return Board( (const int*) board_40, 
-		      sizeof(board_40[0]) / sizeof(board_40[0][0]),
-		      sizeof(board_40)    / sizeof(board_40[0]),
-		      Board::s40_rings );
-      case Board::s44_rings: 
-	return Board( (const int*) board_44, 
-		      sizeof(board_44[0]) / sizeof(board_44[0][0]),
-		      sizeof(board_44)    / sizeof(board_44[0]),
-		      Board::s44_rings );
-      case Board::s48_rings: 
-	return Board( (const int*) board_48, 
-		      sizeof(board_48[0]) / sizeof(board_48[0][0]),
-		      sizeof(board_48)    / sizeof(board_48[0]),
-		      Board::s48_rings );
-      case Board::s61_rings: 
-	return Board( (const int*) board_61, 
-		      sizeof(board_61[0]) / sizeof(board_61[0][0]),
-		      sizeof(board_61)    / sizeof(board_61[0]),
-		      Board::s61_rings );
-      case Board::custom:
-	//read board fields
-	//break;
+      case BGP_ERROR:
       default:
+	conn_state.state = BGP_ERROR;
+	// send response
+	BGP::Msg_Error msg;
+	connection->send_message(&msg);
+	// setup timeout
+	start_timer(response_timeout);
+	break;
+    }
+  }
+
+  //----------------
+  //----------------
+  // event handlers
+  //----------------
+  //----------------
+    
+  void Network_Manager_BGP100a_Client::on_timer(wxTimerEvent& event)
+  {
+    Message_Network<BGP::Message> *connection = msg_net_client;
 #ifndef __WXMSW__
-	std::cerr << "!!! Wrong board type !!!" << std::endl;
+    std::cerr << "Client Error - Timeout triggered" << std::endl;
 #endif
-	// shouldn't happen
+    switch(conn_state.state)
+    {
+      case BGP_UNCONNECTED:
+	break;
+      case BGP_HANDSHAKE:
+      case BGP_ROOMS:
+      case BGP_ASK_ROOM:
+	conn_state.state = BGP_UNCONNECTED;
+	disconnect();
+	break;
+      case BGP_ERROR:		// repeat error until error returns or disconnect
+      default:
+	conn_state.state = BGP_ERROR;
+	// send response
+	BGP::Msg_Error msg;
+	connection->send_message(&msg);
+	// setup timeout
+	start_timer(response_timeout);
 	break;
     }
-    // return standard board
-    return Board( (const int*) board_37, 
-		  sizeof(board_37[0]) / sizeof(board_37[0][0]),
-		  sizeof(board_37)    / sizeof(board_37[0]),
-		  Board::custom );
   }
 
-  void Network_Manager::write_common_stones( wxSocketBase& sock, Common_Stones common_stones )
+  //------------------
+  //------------------
+  // private functions
+  //------------------
+  //------------------
+
+  std::string Network_Manager_BGP100a_Client::to_string(Protocol_State state)
   {
-    write_int( sock, int(common_stones.get_type()) );
-    if( common_stones.get_type() == Common_Stones::custom )
-    {
-      write_int( sock, common_stones.stone_count[ Stones::white_stone ] );
-      write_int( sock, common_stones.stone_count[ Stones::grey_stone  ] );
-      write_int( sock, common_stones.stone_count[ Stones::black_stone ] );
+    switch(state) {
+      case BGP_UNCONNECTED: return "UNCONNECTED"; 
+      case BGP_HANDSHAKE: return "HANDSHAKE"; 
+      case BGP_ROOMS: return "ROOMS";
+      case BGP_ASK_ROOM: return "ASK_ROOM"; 
+      case BGP_GET_PHASE: return "GET_PHASE"; 
+      case BGP_SETUP_PREPARE_1: return "SETUP_PREPARE_1"; 
+      case BGP_PLAY_PREPARE_1: return "PLAY_PREPARE_1"; 
+      case BGP_PLAY_PREPARE_2: return "PLAY_PREPARE_2"; 
+      case BGP_PLAY_PREPARE_3A: return "PLAY_PREPARE_3A";
+      case BGP_PLAY_PREPARE_3B: return "PLAY_PREPARE_3B"; 
+      case BGP_TAKE_PLAYER: return "TAKE_PLAYER"; 
+      case BGP_ASK_TAKE_PLAYER: return "ASK_TAKE_PLAYER";
+      case BGP_SETUP: return "SETUP"; 
+      case BGP_ADD_PLAYER: return "ADD_PLAYER"; 
+      case BGP_REMOVE_PLAYER: return "REMOVE_PLAYER"; 
+      case BGP_READY: return "READY"; 
+      case BGP_OTHERS_TURN: return "OTHERS_TURN"; 
+      case BGP_MY_TURN: return "MY_TURN";
+      case BGP_ASK_UNDO: return "ASK_UNDO"; 
+      case BGP_ACCEPT_UNDO: return "ACCEPT_UNDO"; 
+      case BGP_ASK_NEW_GAME: return "ASK_NEW_GAME"; 
+      case BGP_ACCEPT_NEW_GAME: return "ACCEPT_NEW_GAME";
+      case BGP_ERROR: return "ERROR";
     }
+    assert(false);
+    return "<invalid>";
   }
 
-  Common_Stones Network_Manager::read_common_stones( wxSocketBase& sock )
-  {
-    int type = read_int(sock);
-    switch( Common_Stones::Common_Stones_Type( type ) )
-    {
-      case Common_Stones::standard:   return Standard_Common_Stones();
-      case Common_Stones::tournament: return Tournament_Common_Stones();
-      case Common_Stones::custom:
-      {
-	int num_white = read_int(sock);
-	int num_grey  = read_int(sock);
-	int num_black = read_int(sock);
-	return Custom_Common_Stones( num_white, num_grey, num_black );
-      }
-    }
-    return Custom_Common_Stones( -1, -1, -1 );
-  }
-
-  void Network_Manager::write_win_condition( wxSocketBase& sock, Win_Condition *win_condition )
-  {
-    write_int( sock, int(win_condition->get_type()) );
-    if( win_condition->get_type() == Win_Condition::generic )
-    {
-      Generic_Win_Condition *gwc = dynamic_cast<Generic_Win_Condition*>(win_condition);
-      write_int( sock, gwc->num_white );
-      write_int( sock, gwc->num_grey );
-      write_int( sock, gwc->num_black );
-      write_int( sock, gwc->num_all );
-    }
-  }
-
-  Win_Condition *Network_Manager::read_win_condition( wxSocketBase& sock )
-  {
-    int type = read_int(sock);
-    switch( Win_Condition::Win_Condition_Type( type ) )
-    {
-      case Win_Condition::standard:   return new Standard_Win_Condition(); 
-      case Win_Condition::tournament: return new Tournament_Win_Condition(); 
-      case Win_Condition::generic:
-      {
-	int num_white = read_int(sock);
-	int num_grey  = read_int(sock);
-	int num_black = read_int(sock);
-	int num_all   = read_int(sock);
-	return new Generic_Win_Condition( num_white, num_grey, num_black, num_all ); 
-      }
-      case Win_Condition::full_custom: 
-	break;
-    }
-    return 0;
-  }
-
-  void Network_Manager::write_ruleset( wxSocketBase& sock, const Ruleset &ruleset )
-  {
-    write_board_base( sock, ruleset.board );
-    write_common_stones( sock, ruleset.common_stones );
-    write_win_condition( sock, ruleset.win_condition );
-  }
-
-  Ruleset *Network_Manager::read_ruleset( wxSocketBase& sock )
-  {
-    Board board			 = read_board_base( sock );
-    Common_Stones common_stones  = read_common_stones( sock );
-    Win_Condition *win_condition = read_win_condition( sock );
-
-    return new Custom_Ruleset( board, common_stones, win_condition, 
-			       new Standard_Coordinate_Translator(board) );
-  }
-
-  void Network_Manager::write_board( wxSocketBase& sock, const Game &game )
-  {
-    write_ruleset( sock, *game.ruleset );
-    // write_moves
-  }
-
-  Game Network_Manager::read_board( wxSocketBase& sock )
-  {
-    Ruleset *ruleset = read_ruleset( sock );
-    Game game( *ruleset );
-    delete ruleset;
-    // read_moves
-
-    return game;
-  }
-  
-  void Network_Manager::continue_game()
+  void Network_Manager_BGP100a_Client::continue_game()
   {
     game_manager.continue_game();
   }
 
-  void Network_Manager::report_player_added( Player *player )
+  void Network_Manager_BGP100a_Client::disconnect()
   {
-    if( mode == mode_server )
-    {
-      // tell all clients that a player was added
-      std::map<wxSocketBase*,Client>::iterator client_it;
-      for( client_it = clients.begin(); client_it != clients.end(); ++client_it )
-      {
-	Client &c = client_it->second;
-	if( c.socket )
-	{
-	  write_message_type( *c.socket, msg_player_added );
-	  write_player (*c.socket, *player );
-	}
-      }
-    }
-
-    if( display_handler )
-      display_handler->player_added(*player);
-  }
-  void Network_Manager::report_player_removed( Player *player )
-  {
-    if( mode == mode_server )
-    {
-      // tell all clients that a player was removed
-      std::map<wxSocketBase*,Client>::iterator client_it;
-      for( client_it = clients.begin(); client_it != clients.end(); ++client_it )
-      {
-	Client &c = client_it->second;
-	if( c.socket )
-	{
-	  write_message_type( *c.socket, msg_player_removed );
-	  write_int (*c.socket, player->id );
-	}
-      }
-    }
-
-    if( display_handler )
-      display_handler->player_removed(*player);
+    conn_state.state = BGP_UNCONNECTED;
+    BGP::Msg_Disconnect msg;
+    msg_net_client->send_message(&msg);
+    msg_net_client->flush();
+    delete msg_net_client;
+    msg_net_client = 0;
   }
 
-  void Network_Manager::report_player_up( Player *player )
+  void Network_Manager_BGP100a_Client::start_timer(int milliseconds)
   {
-    if( mode == mode_server )
-    {
-      // tell all clients that a player moved up
-      std::map<wxSocketBase*,Client>::iterator client_it;
-      for( client_it = clients.begin(); client_it != clients.end(); ++client_it )
-      {
-	Client &c = client_it->second;
-	if( c.socket )
-	{
-	  write_message_type( *c.socket, msg_player_up );
-	  write_int (*c.socket, player->id );
-	}
-      }
-    }
-
-    if( display_handler )
-      display_handler->player_up(*player);
-  }
-  void Network_Manager::report_player_down( Player *player )
-  {
-    if( mode == mode_server )
-    {
-      // tell all clients that a player moved down
-      std::map<wxSocketBase*,Client>::iterator client_it;
-      for( client_it = clients.begin(); client_it != clients.end(); ++client_it )
-      {
-	Client &c = client_it->second;
-	if( c.socket )
-	{
-	  write_message_type( *c.socket, msg_player_down );
-	  write_int (*c.socket, player->id );
-	}
-      }
-    }
-
-    if( display_handler )
-      display_handler->player_down(*player);
+    timer.Start(milliseconds,wxTIMER_ONE_SHOT);
   }
 
-  void Network_Manager::report_players( wxSocketBase &sock )
+  void Network_Manager_BGP100a_Client::stop_timer()
   {
-    if( mode == mode_server )
-    {
-      std::list<Player>::iterator player;
-      for( player = players.begin(); player != players.end(); ++player )
-      {
-	write_message_type( sock, msg_player_added );
-	write_player( sock, *player );
-      }
-    }
+    timer.Stop();
   }
 
-  void Network_Manager::report_ruleset_change()
+  BGP::Phase_Type Network_Manager_BGP100a_Client::get_bgp_phase()
   {
-    if( mode == mode_server )
-    {
-      // tell all clients that the ruleset was changed
-      std::map<wxSocketBase*,Client>::iterator client_it;
-      for( client_it = clients.begin(); client_it != clients.end(); ++client_it )
-      {
-	Client &c = client_it->second;
-	if( c.socket )
-	{
-	  write_message_type( *c.socket, msg_board );
-	  write_board( *c.socket, game );
-	}
-      }
-    }
-
-    if( display_handler )
-    {
-      display_handler->set_board( game );
-    }
+    if( game_phase == GAME_PLAYING )
+      return BGP::phase_playing;
+    else
+      return BGP::phase_setup;
   }
 
-  Network_Manager::Client::Client()
-    : socket(0), state(begin)
-  {
-  }
+  BEGIN_EVENT_TABLE(Network_Manager_BGP100a_Client, wxEvtHandler)				
+    EVT_TIMER(NETWORK_TIMER, Network_Manager_BGP100a_Client::on_timer)	//**/
+  END_EVENT_TABLE()							//**/
+
 }
 

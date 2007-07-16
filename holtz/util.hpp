@@ -106,9 +106,9 @@ namespace std
   private:
     string &str;
     bool error;
-    friend istream &operator>>( istream &, Escaped_String );
+    friend istream &operator>>( istream &, Escaped_String& );
   };
-  istream &operator>>( istream &, Escaped_String );
+  istream &operator>>( istream &, Escaped_String& );
   inline Escaped_String unescape( std::string &str ) { return Escaped_String(str); }
 
   // allows reading escaped strings from any istream with operator>>  
@@ -183,6 +183,13 @@ namespace std
   private:
     ostream &os;
   };
+
+  // tests whether map or set includes an element
+  template<typename Container, typename Element>
+  inline bool does_include( Container c, Element e )
+  {
+    return c.find(e) != c.end();
+  }
 
   // returns true if pattern matches inside string
   inline bool contains( std::string str, std::string pattern )

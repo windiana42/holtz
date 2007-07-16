@@ -562,9 +562,9 @@ namespace holtz
   {
     // create a menu bar
     wxMenu *file_menu = new wxMenu;
-    file_menu->Append(HOLTZ_NEW_ZERTZ_GAME, _("&New Zertz Game...\tCtrl-N"), 
+    file_menu->Append(HOLTZ_NEW_ZERTZ_GAME, _("New &Zertz Game...\tCtrl-Z"), 
 		      _("Start a new Zertz game"));
-    file_menu->Append(HOLTZ_NEW_DVONN_GAME, _("&New Dvonn Game...\tCtrl-N"), 
+    file_menu->Append(HOLTZ_NEW_DVONN_GAME, _("New &Dvonn Game...\tCtrl-D"), 
 		      _("Start a new Dvonn game"));
     file_menu->AppendSeparator();
     file_menu->Append(HOLTZ_QUIT,	    _("E&xit\tAlt-X"), _("Quit Holtz"));

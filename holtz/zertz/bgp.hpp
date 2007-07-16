@@ -46,6 +46,7 @@ namespace zertz
       // Subversion A,B,C
       msg_helo=0,		// helo <protocol> <host_nick>
       msg_list_protocols,	// list_protocols <protocol_cnt> {<protocol>}*
+      msg_disconnect,		// disconnect
       msg_accept,		// accept
       msg_deny,			// deny
       msg_defer,		// defer <id>
@@ -129,6 +130,8 @@ namespace zertz
       msg_error=999		// error
 				// = tell partner to go to error state
     };
+
+    std::string to_string(Message_Type type);
   
     // ============================================================================
     // parameter types
@@ -150,6 +153,10 @@ namespace zertz
       std::string name;		// protocol name ("BGP")
       float number;		// fixed point format ####.##
       char letter;		// subversion letter 'a'-'d'
+
+      Protocol(){}
+      Protocol(std::string name, float number, char letter)
+	: name(name), number(number), letter(letter) {}
     };
 
     // ----------------------------------------------------------------------------
@@ -188,6 +195,10 @@ namespace zertz
       int host_cnt;
       bool is_open;
       Phase_Type phase;
+
+      Room() {}
+      Room(std::string name, int host_cnt, bool is_open, Phase_Type phase)
+	: name(name), host_cnt(host_cnt), is_open(is_open), phase(phase) {}
     };
 
     // ----------------------------------------------------------------------------
@@ -455,6 +466,7 @@ namespace zertz
       // message number at the beginning of the line indicates the message type
       static Message *read_from_line( std::string line ); // returns 0 for parse error
       virtual std::string write_to_line() { return ""; } // message does not include message type
+      virtual void print( std::ostream &os ) { os << to_string(get_type()) << ' ' << write_to_line() << '\n'; }
 
       Message_Type get_type() { return type; }
 
@@ -492,6 +504,12 @@ namespace zertz
       std::list<Protocol> get_protocols() { return protocols; }
     private:
       std::list<Protocol> protocols;
+    };
+
+    class Msg_Disconnect : public Message
+    {
+    public:
+      Msg_Disconnect();
     };
 
     class Msg_Accept : public Message
