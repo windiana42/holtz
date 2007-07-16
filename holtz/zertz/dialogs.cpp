@@ -99,59 +99,43 @@ namespace zertz
 	}
 	else if( network_server->GetValue() )
 	{
-	  wxIPV4address port;
-	  if( port.Service( server_port->GetValue() ) )
-	  {
-	    Network_Manager *network_manager = new Network_Manager( game_dialog.game_manager, 
-								    game_dialog.gui_manager );
+	  Network_Manager_BGP100a_Server *network_manager 
+	    = new Network_Manager_BGP100a_Server( game_dialog.game_manager, 
+						  game_dialog.gui_manager );
 	    
-	    if( network_manager->setup_server(port) )
-	    {
-	      if( changed_setup_manager ) // is setup_manager created in this dialog run
-		delete game_dialog.game_setup_manager;
+	  if( network_manager->setup_server(server_port->GetValue()) )
+	  {
+	    if( changed_setup_manager ) // is setup_manager created in this dialog run
+	      delete game_dialog.game_setup_manager;
 	      
-	      game_dialog.game_setup_manager = network_manager;
-	      changed_setup_manager = true;
-	    }
-	    else
-	    {
-	      delete network_manager;
-	      wxMessageBox(_("Can't listen port"), _("Network Message"), wxOK | wxICON_ERROR, this);
-	      return false;
-	    }
+	    game_dialog.game_setup_manager = network_manager;
+	    changed_setup_manager = true;
 	  }
 	  else
 	  {
-	    wxMessageBox(_("Illegal port"), _("Network Message"), wxOK | wxICON_ERROR, this);
+	    delete network_manager;
+	    wxMessageBox(_("Can't listen port"), _("Network Message"), wxOK | wxICON_ERROR, this);
 	    return false;
 	  }
 	}
 	else if( network_client->GetValue() )
 	{
-	  wxIPV4address host;
-	  if( host.Hostname(hostname->GetValue()) && 
-	      host.Service(client_port->GetValue()) )
-	  {	  
-	    Network_Manager *network_manager = new Network_Manager( game_dialog.game_manager, 
-								    game_dialog.gui_manager );
-	    if( network_manager->setup_client(host) )
-	    {
-	      if( changed_setup_manager ) // is setup_manager created in this dialog run
-		delete game_dialog.game_setup_manager;
+	  Network_Manager_BGP100a_Client *network_manager 
+	    = new Network_Manager_BGP100a_Client( game_dialog.game_manager, 
+						  game_dialog.gui_manager );
+
+	  if( network_manager->connect_to_server(wxstr_to_str(hostname->GetValue()),client_port->GetValue()) )
+	  {
+	    if( changed_setup_manager ) // is setup_manager created in this dialog run
+	      delete game_dialog.game_setup_manager;
 	      
-	      game_dialog.game_setup_manager = network_manager;
-	      changed_setup_manager = true;
-	    }
-	    else
-	    {
-	      wxMessageBox(_("Connection to Server failed"), _("Network Message"), 
-			   wxOK | wxICON_ERROR,this);
-	      return false;
-	    }
+	    game_dialog.game_setup_manager = network_manager;
+	    changed_setup_manager = true;
 	  }
 	  else
 	  {
-	    wxMessageBox(_("Illegal hostname"), _("Network Message"), wxOK | wxICON_ERROR, this);
+	    wxMessageBox(_("Connection to Server failed"), _("Network Message"), 
+			 wxOK | wxICON_ERROR,this);
 	    return false;
 	  }
 	}
@@ -1972,21 +1956,21 @@ namespace zertz
   // Network_Clients_Dialog
   // ============================================================================
 
-  Network_Clients_Dialog::Network_Clients_Dialog( wxWindow *parent, Network_Manager &network_manager )
+  Network_Clients_Dialog::Network_Clients_Dialog( wxWindow *parent, Basic_Network_Server &network_server )
     : wxDialog(),
-      network_manager(network_manager)
+      network_server(network_server)
   {
 	// create the dialog
 #ifdef __WXMSW__ // this has to be done before the dialog is created, ...
-	SetExtraStyle(wxDIALOG_EX_CONTEXTHELP);
+    SetExtraStyle(wxDIALOG_EX_CONTEXTHELP);
 #endif // ... hence the two-step construction (Create() below) is necessary.
-	wxDialog::Create(parent,-1,wxString(_("Network client setup")));
+    wxDialog::Create(parent,-1,wxString(_("Network client setup")));
 
-	// create the child controls
+    // create the child controls
     client_list = new wxListBox( this, LISTBOX_DCLICK, wxDefaultPosition, 
-				  wxSize(120,120), 0, 0, wxLB_SINGLE );
+				 wxSize(120,120), 0, 0, wxLB_SINGLE );
 
-    network_manager.set_connection_handler(this);
+    network_server.set_connection_handler(this);
 
     wxBoxSizer *top_sizer = new wxBoxSizer( wxVERTICAL );
     
@@ -2013,44 +1997,46 @@ namespace zertz
 
   Network_Clients_Dialog::~Network_Clients_Dialog()
   {
-    network_manager.set_connection_handler(0);
+    network_server.set_connection_handler(0);
   }
 
-  void Network_Clients_Dialog::new_connection( wxIPV4address host, wxSocketBase *socket )
+  void Network_Clients_Dialog::new_connection( std::string name, Basic_Network_Server::Connection_Id conn_id )
   {
-    client_data[static_cast<void*>(socket)] = socket;
-    client_item[socket] = client_list->GetCount();
-    wxString port;
-    port.Printf(wxT("%d"), host.Service());
-    /*
-    std::ostringstream port;
-    port << host.Service();
-    */
-    client_list->Append( host.Hostname() + wxT('(') + port + wxT(')'), socket );
+    client_data[reinterpret_cast<void*>(conn_id)] = conn_id;
+    client_item[conn_id] = client_list->GetCount();
+    client_list->Append( str_to_wxstr(name), reinterpret_cast<void*>(conn_id) );
   }
 
-  void Network_Clients_Dialog::closed_connection( wxSocketBase *socket )
+  void Network_Clients_Dialog::closed_connection( Basic_Network_Server::Connection_Id conn_id )
   {
-    client_list->Delete( client_item[socket] );
+    int item = client_item[conn_id];
+    client_list->Delete( item );
+    // decrement higher item numbers
+    std::map<Basic_Network_Server::Connection_Id,int>::iterator it;
+    for( it = client_item.begin(); it != client_item.end(); ++it )
+    {
+      int &check_item = it->second;
+      if( check_item > item ) 
+	--check_item;
+    }
   }
   
   void Network_Clients_Dialog::on_disconnect( wxCommandEvent& WXUNUSED(event) )
   {
-    network_manager.close_connection();
+    network_server.close_connections();
   }
 
   void Network_Clients_Dialog::on_dclick( wxCommandEvent& event )
   {
-    wxSocketBase *socket = client_data[event.m_clientData];
+    Basic_Network_Server::Connection_Id conn_id = client_data[event.m_clientData];
     wxString hostname = event.m_commandString;
-    if( network_manager.may_disconnect( socket ) )
+    if( network_server.may_disconnect_id( conn_id ) )
     {
       wxString msg;
       msg.Printf( _("Do you really want to disconnect %s?"), hostname.c_str() );
       if( wxMessageBox( msg, _("Disconnect?"), wxYES | wxNO | wxCANCEL | wxICON_QUESTION ) == wxYES )
       {
-	network_manager.disconnect( socket );
-	client_list->Delete(event.m_commandInt);
+	network_server.disconnect_id( conn_id );
       }
     }
     else
@@ -2059,7 +2045,6 @@ namespace zertz
       msg.Printf( _("Can't disconnect host %s yet!"), hostname.c_str() );
       wxMessageBox( msg, _("Can't disconnect!"), wxOK | wxICON_ERROR );
     }
-
   }
 
   BEGIN_EVENT_TABLE(Network_Clients_Dialog, wxDialog)			//**/

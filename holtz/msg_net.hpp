@@ -33,10 +33,11 @@ namespace holtz
     virtual ~Message_Network_Handler() {}
   protected:
     friend class Message_Network<Message>;
+    // is called when message arrives
     virtual void process_message( Message_Network<Message> *sender, 
 				  Message *message ) = 0;    
-    // message must be deleted,
-    // message==0: invalid message arrived
+				// message must be deleted,
+				// message==0: invalid message arrived
     // is called when connection is established (for Message_Network_Client only)
     virtual void on_connect( Message_Network<Message> *sender ) = 0;
     // is called when connection was closed or couldn't be established
@@ -66,13 +67,14 @@ namespace holtz
     Line_Network *get_line_network() { return line_network; }
     wxSocketBase *get_socket() { return line_network->get_socket(); }
   protected:
-    virtual void process_line( Line_Network *sender, std::string line ); // line has no '\n' at end
+    virtual void process_line( Line_Network *connection, std::string line ); 
+				// line has no '\n' at end
     // is called when connection is established (for Line_Network_Client only)
-    virtual void on_connect( Line_Network *sender );
+    virtual void on_connect( Line_Network *connection );
     // is called when connection was closed or couldn't be established
-    virtual void on_lost( Line_Network *sender );
+    virtual void on_lost( Line_Network *connection );
     // is called when an error occured
-    virtual void on_error( Line_Network *sender );
+    virtual void on_error( Line_Network *connection );
   private:
     Line_Network *line_network;
     Message_Network_Handler<Message> *handler;

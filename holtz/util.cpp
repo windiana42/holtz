@@ -149,7 +149,7 @@ namespace std
     : str(str), error(false)
   {
   }
-  istream &operator>>( istream &is, Escaped_String estr )
+  istream &operator>>( istream &is, Escaped_String &estr )
   {
     bool ok = false;
     string &dest = estr.str;
@@ -177,6 +177,7 @@ namespace std
     {
       is.putback(c);
       static_cast<istringstream&>(is) >> dest;
+      ok = true;
     }
 
     if( !ok ) 

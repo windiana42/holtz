@@ -376,19 +376,19 @@ namespace zertz
   class Network_Clients_Dialog : public wxDialog, Network_Connection_Handler
   {
   public:
-    Network_Clients_Dialog( wxWindow *parent, Network_Manager &network_manager );
+    Network_Clients_Dialog( wxWindow *parent, Basic_Network_Server &network_server );
     ~Network_Clients_Dialog();
 
-    virtual void new_connection( wxIPV4address host, wxSocketBase *socket );
-    virtual void closed_connection( wxSocketBase *socket );
+    virtual void new_connection( std::string name, Basic_Network_Server::Connection_Id conn_id );
+    virtual void closed_connection( Basic_Network_Server::Connection_Id conn_id );
 
     void on_disconnect( wxCommandEvent& event );
     void on_dclick( wxCommandEvent& event );
   private:
     wxListBox *client_list;
-    std::map<void*,wxSocketBase*> client_data;
-    std::map<wxSocketBase*,int> client_item;
-    Network_Manager &network_manager;
+    std::map<void*,Basic_Network_Server::Connection_Id> client_data;
+    std::map<Basic_Network_Server::Connection_Id,int> client_item;
+    Basic_Network_Server &network_server;
 
     // any class wishing to process wxWindows events must use this macro
     DECLARE_EVENT_TABLE()	//**/

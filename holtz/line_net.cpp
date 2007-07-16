@@ -56,10 +56,10 @@ namespace holtz
   }
   void Line_Network::destroy()
   {
+    destroyed = true;
     socket->Close();
     socket->Destroy();
     socket = 0;
-    destroyed = true;
 
 #if wxUSE_GUI
     if ( !wxPendingDelete.Member(this) )
