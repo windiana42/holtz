@@ -473,6 +473,7 @@ namespace zertz
     inline const std::list<Move*> &get_moves() const { return *moves; }
     inline bool is_empty() { return moves->empty(); }
   private:
+    void modify_moves();	// called before <moves> is modified
     std::list<Move*> *moves;
 
     Ref_Counter *ref_counter;
@@ -530,6 +531,7 @@ namespace zertz
     inline Variant *get_root_variant()    { return root; }
     inline const Variant *get_current_variant() const { return current_variant; }
     inline const Variant *get_root_variant()    const { return root; }
+    std::list<Move_Sequence> get_current_variant_moves();
   public:
     friend class Game;
     void add_in_current_variant( int current_player_index, const Move_Sequence &, 
@@ -616,7 +618,7 @@ namespace zertz
     // **********************
     // game control functions
     Game_State continue_game() throw(Exception); // start or continue game
-    void stop_game();		// stop game to allow changing the position with do_move and undo_move
+    void stop_game(); // stop game to allow changing the position with do_move and undo_move
     int get_winner_index() { return winner_player_index; } // returns -1 if no player won
     void reset_game();		// doesn't reset players
     void reset_game( const Ruleset & );	// doesn't reset players
@@ -640,6 +642,7 @@ namespace zertz
 
     int get_num_possible_moves(); // number of possible moves in current situation
     std::list<Move_Sequence> get_possible_moves(); // get possible moves in situation
+    std::list<Move_Sequence> get_played_moves();   // get moves played since start
     
     std::vector<Player>::iterator get_next_player( std::vector<Player>::iterator player );
     std::vector<Player>::iterator get_prev_player( std::vector<Player>::iterator player );
@@ -709,6 +712,7 @@ namespace zertz
   public:
     virtual std::string encode( Move_Sequence ) = 0;
     virtual Move_Sequence    decode( std::istream& ) = 0;
+    virtual ~Move_Translator() {}
   };
 
   class Standard_Move_Translator : public Move_Translator

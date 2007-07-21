@@ -413,7 +413,7 @@ namespace holtz
     wxDC *dc = &mem;
 #else
     wxDC *dc = &_dc;
-    dc->BeginDrawing();
+    //dc->BeginDrawing();
 #endif
 
 #ifdef DRAW_BACKGROUND
@@ -445,7 +445,7 @@ namespace holtz
 #ifdef DOUBLE_BUFFER
 #ifdef __WXGTK__		// work around for wxGTK which doesn't draw text on MemoryDC
     // draw text directly on the real device context
-    _dc.BeginDrawing();
+    //_dc.BeginDrawing();
     _dc.Blit(0,0, width, height, dc, 0, 0 );
     dc = &_dc;	
 #endif
@@ -465,14 +465,14 @@ namespace holtz
 #ifdef DOUBLE_BUFFER
 #ifndef __WXGTK__
     // draw buffer on the real device context
-    _dc.BeginDrawing();
+    //_dc.BeginDrawing();
     _dc.Blit(0,0, width, height, dc, 0, 0 );
-    _dc.EndDrawing();
+    //_dc.EndDrawing();
 #else
-    _dc.EndDrawing();
+    //_dc.EndDrawing();
 #endif
 #else
-    dc->EndDrawing();
+    // dc->EndDrawing();
 #endif
   }
   void Game_Window::on_erase_background( wxEraseEvent &event )
@@ -672,7 +672,7 @@ namespace holtz
     wxString msg;
     msg =  _("Holtz is a game about making sacrifices.\n");
     msg += _("GPLed by Martin Trautmann (2003)\n");
-    msg += _("Based on Zèrtz (r) and (c) by Don & Co NV, 2001.");
+    msg += _("Based on Zertz (r) and (c) by Don & Co NV, 2001.");
 
     wxMessageBox(msg, _("About Holtz"), wxOK | wxICON_INFORMATION, this);
   }

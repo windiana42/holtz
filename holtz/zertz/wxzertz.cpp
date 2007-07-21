@@ -30,12 +30,12 @@
 // ----------------------------------------------------------------------------
 
 #include "wxzertz.hpp"
+#include "wxmain.hpp"
 #include "zertz.hpp"
 #include "dialogs.hpp"
 #include "ai.hpp"
 #include "util.hpp"
 #include "pbm.hpp"
-#include "wxmain.hpp"
 
 #include <wx/zipstrm.h>
 #include <wx/image.h>
@@ -1109,10 +1109,13 @@ namespace zertz
     sequence_generator_hook = 0;
 
     used_time = stop_watch.Time();
-    if( game.current_player->help_mode == Player::show_hint )
+    if( game.players.size() )
     {
-      ai->abort();
-      gui_manager.remove_hint();
+      if( game.current_player->help_mode == Player::show_hint )
+      {
+	ai->abort();
+	gui_manager.remove_hint();
+      }
     }
 
     gui_manager.show_user_information(false,false);
@@ -1287,7 +1290,8 @@ namespace zertz
       sequence_generator(0),
       click_mark_x(-1), 
       move_animation( new Move_Sequence_Animation(*this,game_window) ),
-      mouse_handler( game_manager, *this, sequence_generator )
+      mouse_handler( game_manager, *this, sequence_generator ),
+      user_activity_allowed(false)
   {
     load_settings();
 
@@ -1317,6 +1321,7 @@ namespace zertz
       game_panel.add_player( *i );
     }
     calc_dimensions();
+    show_user_information(true,true /*do_refresh*/);
   }
 
   void WX_GUI_Manager::set_board( const Game &new_game )
@@ -1509,10 +1514,10 @@ namespace zertz
     click_mark_y = y;
 
     wxClientDC dc(&game_window);
-    dc.BeginDrawing();
+    //dc.BeginDrawing(); depricated
     game_window.PrepareDC(dc);
     draw_mark(dc);
-    dc.EndDrawing();
+    //dc.EndDrawing(); depricated
   }
 
   void WX_GUI_Manager::draw_mark( wxDC &dc )
@@ -1543,11 +1548,16 @@ namespace zertz
   {
     show_user_information( true );
     beep();			// tell user that his activity is recommended
+    user_activity_allowed = true;
   }
   void WX_GUI_Manager::stop_user_activity()
   {
     show_user_information( false, false );
-    mouse_handler.disable_mouse_input();
+    if( user_activity_allowed )
+    {
+      user_activity_allowed = false;
+      mouse_handler.disable_mouse_input();
+    }
   }
 
   void WX_GUI_Manager::do_move_slowly( Move_Sequence sequence, wxEvtHandler *done_handler, 

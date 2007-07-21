@@ -456,7 +456,13 @@ namespace dvonn
       display_handler->player_removed(*player_iterator);
 
     players.erase(player_iterator);
-    id_player.erase( player.id ); 
+    // reload iterators due to erase
+    id_player.clear();
+    std::deque<Player>::iterator i;
+    for( i = players.begin(); i != players.end(); ++i )
+    {
+      id_player[i->id] = i;
+    }
     return true;
   }
   bool Standalone_Game_Setup_Manager::player_up( const Player &player )

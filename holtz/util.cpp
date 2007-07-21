@@ -80,7 +80,8 @@ namespace holtz
     return std::pair<long,unsigned /*digits*/>( num, end - start );
   }
 
-  std::string double_to_string( double number, int post_point_digits, int assert_max_pre_point_digits )
+  std::string double_to_string( double number, int post_point_digits, 
+				int assert_max_pre_point_digits )
   {
     std::string str;
 #ifndef __OLD_GCC__
@@ -91,7 +92,8 @@ namespace holtz
 #endif
     if( post_point_digits >= 0 )
     {
-      int pre_point_digits=0, compare=1;
+      int pre_point_digits=0;
+      double compare=1;
       while( compare < number )
       {
 	compare *= 10; 

@@ -56,6 +56,7 @@ namespace holtz
     ~Message_Network();
     void send_message( Message *message ); // message won't be deleted
     void flush();
+    bool is_connected() { return line_network->is_connected(); }
     // the following functions return 0 or "" if not connected
     std::string get_remote_host()	{ return line_network->get_remote_host(); }
     int get_remote_port()		{ return line_network->get_remote_port(); }

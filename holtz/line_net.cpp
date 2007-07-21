@@ -47,7 +47,7 @@ namespace holtz
       socket->SetNotify( wxSOCKET_CONNECTION_FLAG | wxSOCKET_OUTPUT_FLAG | 
 			 wxSOCKET_INPUT_FLAG | wxSOCKET_LOST_FLAG );
       socket->Notify(TRUE);
-      socket->SetFlags(wxSOCKET_NOWAIT | wxSOCKET_BLOCK);
+      socket->SetFlags(wxSOCKET_NOWAIT);
     }
   }
   Line_Network::~Line_Network()
@@ -82,30 +82,30 @@ namespace holtz
 	send_buffer.erase( send_buffer.size() - 2, 1 );
       }
     }
+
+    if( !socket || destroyed || (connection_state != connected)) return; 
+
     if( auto_flush )
       flush();
+    else
+      do_send();
   }
 
   void Line_Network::flush()
   {
-    if( !socket || destroyed || (connection_state != connected)) return;
+    if( !socket || destroyed || (connection_state != connected)) return; 
 
-    if( !send_buffer.size() ) return;
-
-    const char* buf = send_buffer.c_str();
-    socket->Write(buf, send_buffer.size());
-
-    if( socket->LastCount() != send_buffer.size() )
+    wxSocketFlags flags = socket->GetFlags();
+    // switch to blocking and send until done
+    socket->SetFlags(wxSOCKET_WAITALL);
+    while( send_buffer.size() )
     {
-      send_buffer = send_buffer.substr( socket->LastCount() );
-      if( socket->Error() && (socket->LastError() != wxSOCKET_WOULDBLOCK) )
-      {
-	if( line_handler )
-	  line_handler->on_error(this);
-      }
+      do_send();
+      if( send_buffer.size() && socket->Error())	// critical or non-critical error
+	wxTheApp->Yield(true);	// allow to process on_lost events
     }
-    else
-      send_buffer = "";
+    // restore flags
+    socket->SetFlags(flags);
   }
 
   std::string Line_Network::get_remote_host()	// returns "" if not connected
@@ -160,7 +160,7 @@ namespace holtz
 	on_input();
 	break;
       case wxSOCKET_OUTPUT:
-	flush();
+	do_send();
 	break;
       case wxSOCKET_LOST:
 	if( line_handler )
@@ -180,16 +180,45 @@ namespace holtz
       receive_buffer.append(buffer, socket->LastCount());
     }while( socket->LastCount() > 0 );
     
-    std::string::size_type pos,last_pos=0;
+    std::string::size_type pos;
     if( line_handler )
     {
-      while( (pos = receive_buffer.find('\n', last_pos)) != std::string::npos )
+      while( (pos = receive_buffer.find('\n', 0)) != std::string::npos )
       {
-	line_handler->process_line( this, receive_buffer.substr(last_pos,pos) );
-	last_pos = pos + 1;
+	std::string line = receive_buffer.substr(0,pos);
+	receive_buffer = receive_buffer.substr(pos+1);
+	line_handler->process_line( this, line );
       }
     }
-    receive_buffer = receive_buffer.substr(last_pos);
+  }
+
+  void Line_Network::do_send()
+  {
+    if( !socket || destroyed || (connection_state != connected) )
+    {
+      if( line_handler )
+	line_handler->on_error(this);
+      send_buffer = "";
+      return;
+    }
+
+    if( !send_buffer.size() ) return;
+
+    const char* buf = send_buffer.c_str();
+    socket->Write(buf, send_buffer.size());
+    if( socket->Error() && (socket->LastError() != wxSOCKET_WOULDBLOCK) )
+    {
+#ifndef __WXMSW__
+      std::cerr << "socket error occured: " << socket->LastError() << std::endl;
+#endif
+      if( line_handler )
+	line_handler->on_error(this);
+      send_buffer = "";
+    }
+    else
+    {
+      send_buffer = send_buffer.substr( socket->LastCount() );
+    }
   }
 
   void Line_Network::set_handler( Line_Network_Handler *handler )
@@ -261,7 +290,7 @@ namespace holtz
     server_socket->SetEventHandler(*this,-1);
     server_socket->SetNotify( wxSOCKET_CONNECTION_FLAG );
     server_socket->Notify(TRUE);
-    server_socket->SetFlags(wxSOCKET_NOWAIT | wxSOCKET_BLOCK);
+    server_socket->SetFlags(wxSOCKET_NOWAIT | wxSOCKET_REUSEADDR);
 
     return server_socket->Ok();
   }

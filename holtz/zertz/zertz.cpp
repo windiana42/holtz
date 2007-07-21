@@ -980,10 +980,24 @@ namespace zertz
     return false;
   }
 
-  void Variant_Tree::add_in_current_variant( int current_player_index, 
-					     const Move_Sequence &sequence, unsigned possible_variants )
+  std::list<Move_Sequence> Variant_Tree::get_current_variant_moves()
   {
-    current_variant = current_variant->add_variant( current_player_index, sequence, possible_variants );
+    std::list<Move_Sequence> ret;
+    Variant *cur = get_current_variant();
+    while( cur != get_root_variant() )
+    {
+      ret.push_front(cur->move_sequence);
+      cur = cur->prev;
+    }
+    return ret;
+  }
+
+  void Variant_Tree::add_in_current_variant( int current_player_index, 
+					     const Move_Sequence &sequence, 
+					     unsigned possible_variants )
+  {
+    current_variant = current_variant->add_variant( current_player_index, sequence, 
+						    possible_variants );
   }
   void Variant_Tree::move_a_variant_back()
   {
@@ -1099,8 +1113,11 @@ namespace zertz
 	  // get move
 	  sequence = current_player->input->get_move();
 
-	  // do move
-	  do_move( sequence );
+	  // report move
+	  for( output =  current_player->outputs.begin();
+	       output != current_player->outputs.end();
+	       ++output )
+	    (*output)->report_move( sequence );
 
 	  // calculate average time
 	  long time = current_player->input->get_used_time();
@@ -1110,15 +1127,13 @@ namespace zertz
 	  ++current_player->num_measures;
 	  current_player->average_time /= current_player->num_measures;
 
-	  // report move
-	  for( output =  current_player->outputs.begin();
-	       output != current_player->outputs.end();
-	       ++output )
-	    (*output)->report_move( sequence );
+	  // do move
+	  do_move( sequence );
 
 	  // check win condition
 	  if( win_condition->did_player_win(*this,*prev_player) )
 	  {
+
 	    winner_player_index = prev_player_index;
 	    current_player->is_active = false;
 	    return finished;
@@ -1313,36 +1328,39 @@ namespace zertz
       common_stones_avail = true;
 
     // change player
-    current_player->is_active = false;
-    bool next_player; unsigned players_skipped = 0;
-    do
+    if( players.size() )
     {
-      ++current_player; 
-      ++current_player_index;
-      if( current_player == players.end() )		 // if last player
+      current_player->is_active = false;
+      bool next_player; unsigned players_skipped = 0;
+      do
       {
-	current_player = players.begin();		 // cycle to first player
-	current_player_index = 0;
-      }
-      next_player = false;
-      if( !common_stones_avail )
-      {
-	// assert that player has stones if no knock out move is possible
-	if( !board.is_knock_out_possible() )
+	++current_player; 
+	++current_player_index;
+	if( current_player == players.end() )		 // if last player
 	{
-	  if( current_player->stones.stone_count[ Stones::white_stone ] +
-	      current_player->stones.stone_count[ Stones::grey_stone  ] +
-	      current_player->stones.stone_count[ Stones::black_stone ] == 0 )
+	  current_player = players.begin();		 // cycle to first player
+	  current_player_index = 0;
+	}
+	next_player = false;
+	if( !common_stones_avail )
+	{
+	  // assert that player has stones if no knock out move is possible
+	  if( !board.is_knock_out_possible() )
 	  {
-	    next_player = true; // player can't move
-	    ++players_skipped;
-	    if( players_skipped >= players.size() )
-	      return false; // no player may move
+	    if( current_player->stones.stone_count[ Stones::white_stone ] +
+		current_player->stones.stone_count[ Stones::grey_stone  ] +
+		current_player->stones.stone_count[ Stones::black_stone ] == 0 )
+	    {
+	      next_player = true; // player can't move
+	      ++players_skipped;
+	      if( players_skipped >= players.size() )
+		return false; // no player may move
+	    }
 	  }
 	}
-      }
-    }while( next_player );
-    current_player->is_active = true;
+      }while( next_player );
+      current_player->is_active = true;
+    }
     return true;
   }
 
@@ -1866,6 +1884,12 @@ namespace zertz
     }
 
     return possible_moves;
+  }
+
+  // get moves played since start
+  std::list<Move_Sequence> Game::get_played_moves() 
+  {
+    return variant_tree.get_current_variant_moves();
   }
 
   std::vector<Player>::iterator Game::get_next_player( std::vector<Player>::iterator player )
@@ -2479,8 +2503,9 @@ namespace zertz
     Move::Move_Type type;
     Move *move = 0;
 
+    clear();
     eis >> num_moves;
-    for( int i = 0; i < num_moves + 1; i++ )
+    for( int i = 0; i < num_moves; i++ )
     {
       int move_type;
       eis >> move_type;
@@ -2506,6 +2531,7 @@ namespace zertz
   // true: add ok
   void Move_Sequence::add_move( Move *move )
   {
+    modify_moves();
     moves->push_back( move );
   }
 
@@ -2515,6 +2541,7 @@ namespace zertz
     if( !move->check_previous_move( game, get_last_move() ) )
       return false;
 
+    modify_moves();
     moves->push_back( move );
     return true;
   }
@@ -2532,6 +2559,7 @@ namespace zertz
   {
     if( moves->size() )
     {
+      modify_moves();
       moves->back()->undo_move(game);
       delete moves->back();
       moves->pop_back();
@@ -2570,6 +2598,16 @@ namespace zertz
     }
 
     return ret;
+  }
+
+  void Move_Sequence::modify_moves()
+  {
+    if( ref_counter->cnt > 1 )
+    {
+      --ref_counter->cnt;
+      moves = new std::list<Move*>(*moves);
+      ref_counter = new Ref_Counter();
+    }
   }
 
   Move_Sequence::Move_Sequence()

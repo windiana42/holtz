@@ -1,4 +1,4 @@
-AC_INIT(holtz.cpp)
+AC_INIT(wxmain.cpp)
 AM_INIT_AUTOMAKE(holtz, 1.2.0)
 AC_PROG_CC
 AC_PROG_CXX

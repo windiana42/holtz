@@ -93,7 +93,8 @@ namespace dvonn
 	  if( changed_setup_manager ) // is setup_manager created in this dialog run
 	    delete game_dialog.game_setup_manager;
 	  
-	  game_dialog.game_setup_manager = new Standalone_Game_Setup_Manager( game_dialog.game_manager );
+	  game_dialog.game_setup_manager 
+	    = new Standalone_Game_Setup_Manager( game_dialog.game_manager );
 	  changed_setup_manager = true;
 	}
 	else if( network_server->GetValue() )
@@ -657,13 +658,13 @@ namespace dvonn
     SetSizer( top_sizer );
     */
     wxNotebook *notebook = new wxNotebook( this, -1 );
-    wxNotebookSizer *sizer = new wxNotebookSizer( notebook );
+    //wxNotebookSizer *sizer = new wxNotebookSizer( notebook );
 
     custom_board_panel = new Custom_Board_Setup_Panel( notebook, game_dialog );
     notebook->AddPage( custom_board_panel, _("Ruleset") );
 
     SetAutoLayout( true );     // tell dialog to use sizer
-    SetSizer(sizer);
+    //SetSizer(sizer);
   }
 
   wxWizardPage *Custom_Board_Page::GetPrev() const
@@ -1434,13 +1435,13 @@ namespace dvonn
     : wxWizardPage(parent), game_dialog(game_dialog)
   {
     notebook = new wxNotebook( this, -1 );
-    wxNotebookSizer *sizer = new wxNotebookSizer( notebook );
+    //wxNotebookSizer *sizer = new wxNotebookSizer( notebook );
 
     player_setup_panel = new Player_Setup_Panel( notebook, game_dialog );
     notebook->AddPage( player_setup_panel, _("Player setup") );
 
     SetAutoLayout( true );     // tell dialog to use sizer
-    SetSizer(sizer);
+    //SetSizer(sizer);
   }
 
   wxWizardPage *Player_Page::GetPrev() const
@@ -2099,7 +2100,7 @@ namespace dvonn
 
     //wxPanel *notebook_panel = new wxPanel( this, -1 );
     notebook = new wxNotebook( this, -1 );
-    wxNotebookSizer *notebook_sizer = new wxNotebookSizer( notebook );
+    //wxNotebookSizer *notebook_sizer = new wxNotebookSizer( notebook );
 
     display_page = new Display_Setup_Page( notebook, this, gui_manager );
     look_feel_page = new Look_Feel_Page( notebook, this, gui_manager );
@@ -2107,7 +2108,7 @@ namespace dvonn
     notebook->AddPage( display_page, _("Arrangement") );
     notebook->AddPage( look_feel_page, _("Look & Feel") );
 
-    top_sizer->Add( notebook_sizer, 0, wxEXPAND );
+    //top_sizer->Add( notebook_sizer, 0, wxEXPAND );
 
     wxBoxSizer *button_sizer = new wxBoxSizer( wxHORIZONTAL );
     button_sizer->Add( new wxButton(this, DIALOG_OK,      _("OK"),      wxDefaultPosition), 
@@ -2244,8 +2245,8 @@ namespace dvonn
 
   void Network_Clients_Dialog::on_dclick( wxCommandEvent& event )
   {
-    wxSocketBase *socket = client_data[event.m_clientData];
-    wxString hostname = event.m_commandString;
+    wxSocketBase *socket = client_data[event.GetClientData()];
+    wxString hostname = event.GetString();
     if( network_manager.may_disconnect( socket ) )
     {
       wxString msg;
@@ -2253,7 +2254,7 @@ namespace dvonn
       if( wxMessageBox( msg, _("Disconnect?"), wxYES | wxNO | wxCANCEL | wxICON_QUESTION ) == wxYES )
       {
 	network_manager.disconnect( socket );
-	client_list->Delete(event.m_commandInt);
+	client_list->Delete(event.GetSelection());
       }
     }
     else
@@ -2323,7 +2324,7 @@ namespace dvonn
   }
 
   BEGIN_EVENT_TABLE(Network_Connection_Dialog, wxDialog)		//**/
-  EVT_BUTTON(DIALOG_OK,     Network_Connection_Dialog::OnOK)		//**/
-  EVT_BUTTON(DIALOG_CANCEL, Network_Connection_Dialog::OnCancel)	//**/
+  //EVT_BUTTON(DIALOG_OK,     Network_Connection_Dialog::OnOK)		//**/
+  //EVT_BUTTON(DIALOG_CANCEL, Network_Connection_Dialog::OnCancel)	//**/
   END_EVENT_TABLE()							//**/
 }

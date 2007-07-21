@@ -106,7 +106,7 @@ namespace zertz
   bool Bitmap_Move_Animation::step()
   {
     wxDC *dc = game_window.get_client_dc();
-    dc->BeginDrawing();
+    //dc->BeginDrawing(); depricated
 
     int width  = bitmap.GetWidth();
     int height = bitmap.GetHeight();
@@ -172,7 +172,7 @@ namespace zertz
     }
 
 
-    dc->EndDrawing();
+    //dc->EndDrawing(); depricated
     old_bg_x = bg_x; old_bg_y = bg_y;
     old_x = pos_x; old_y = pos_y;
     pos_x = new_x; pos_y = new_y;

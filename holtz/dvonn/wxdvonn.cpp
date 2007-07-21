@@ -1193,7 +1193,8 @@ namespace dvonn
       sequence_generator(0),
       click_mark_x(-1), 
       move_animation( new Move_Sequence_Animation(*this,game_window) ),
-      mouse_handler( game_manager, *this, sequence_generator )
+      mouse_handler( game_manager, *this, sequence_generator ),
+      user_activity_allowed(false)
   {
     load_settings();
 
@@ -1223,6 +1224,7 @@ namespace dvonn
       game_panel.add_player( *i );
     }
     calc_dimensions();
+    show_user_information(true,true /*do_refresh*/);
   }
 
   void WX_GUI_Manager::set_board( const Game &new_game )
@@ -1449,11 +1451,16 @@ namespace dvonn
   {
     show_user_information( true );
     beep();			// tell user that his activity is recommended
+    user_activity_allowed = true;
   }
   void WX_GUI_Manager::stop_user_activity()
   {
     show_user_information( false, false );
-    mouse_handler.disable_mouse_input();
+    if( user_activity_allowed )
+    {
+      user_activity_allowed = false;
+      mouse_handler.disable_mouse_input();
+    }
   }
 
   void WX_GUI_Manager::do_move_slowly( Move_Sequence sequence, wxEvtHandler *done_handler, 

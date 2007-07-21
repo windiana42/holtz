@@ -167,6 +167,7 @@ namespace dvonn
     				   int event_id=-1 ) = 0; // show user how move is undone
     virtual void show_status_text( wxString text ) = 0; // shows text in status bar
     virtual void beep() = 0;
+    virtual void refresh() = 0;
 
     // interface for information access
     virtual Player_Input *get_user_input() = 0;

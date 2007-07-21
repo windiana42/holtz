@@ -191,6 +191,22 @@ namespace std
     return c.find(e) != c.end();
   }
 
+  // tests whether map or set includes an element
+  template<typename Container, typename Element>
+  inline bool erase( Container c, Element e )
+  {
+    typename Container::iterator it;
+    for( it=c.begin(); it!=c.end(); ++it )
+    {
+      if( *it == e )
+      {
+	c.erase(it);
+	return true;
+      }
+    }
+    return false;
+  }
+
   // returns true if pattern matches inside string
   inline bool contains( std::string str, std::string pattern )
   {

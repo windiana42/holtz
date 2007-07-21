@@ -69,6 +69,7 @@ namespace zertz
         case msg_get_situation_and_play: return "get_situation_and_play";
         case msg_add_player: return "add_player";
         case msg_accept_player: return "accept_player";
+        case msg_remove_player: return "remove_player";
         case msg_setup_change: return "setup_change";
         case msg_ask_setup_change: return "ask_setup_change";
         case msg_ask_capable: return "ask_capable";
@@ -88,6 +89,7 @@ namespace zertz
         case msg_pong: return "pong";
         case msg_error: return "error";
       }
+      return "<invalid message type>";
     }
 
     // ============================================================================
@@ -128,6 +130,9 @@ namespace zertz
 	      continue;		// field type ok => continue loop
 	    }
 	  }
+#ifndef __WXMSW__
+	  std::cerr << "error: received invalid field" << std::endl;
+#endif
 	  return false;		// if field type is invalid
 	}
       }
@@ -354,8 +359,17 @@ namespace zertz
 	  unsigned min_players, max_players;
 
 	  if( !read_board(eis,board) ) return false;
+#ifndef __WXMSW__
+	  std::cerr << "read board" << std::endl;
+#endif
 	  if( !read_common_stones(eis,common_stones) ) return false;
+#ifndef __WXMSW__
+	  std::cerr << "read common stones" << std::endl;
+#endif
 	  if( !read_win_condition(eis,win_condition) ) return false;
+#ifndef __WXMSW__
+	  std::cerr << "read win condition" << std::endl;
+#endif
 	  eis >> min_players >> max_players;
 
 	  ruleset = Custom_Ruleset( board, common_stones, win_condition, 
@@ -577,6 +591,12 @@ namespace zertz
 	  return true;
 	}
 	break;
+	// todo: implement transmission of other changes
+	default:
+	{
+	  return false;		// unsupported change
+	}
+	break;
       }
       return false;
     }
@@ -598,11 +618,18 @@ namespace zertz
 	case change_common_stones:
 	{
 	  assert( dynamic_cast<Setup_Change_Common_Stones*>(setup_change) );
-	  Setup_Change_Common_Stones *change = static_cast<Setup_Change_Common_Stones*>(setup_change);
+	  Setup_Change_Common_Stones *change 
+	    = static_cast<Setup_Change_Common_Stones*>(setup_change);
 	  write_common_stones(eos,change->common_stones);
 	  return;
 	}
 	break;
+	// todo: implement transmission of other changes
+	default:
+	{
+	  eos << "<unsupported_change>";
+	  return;		// unsupported change
+	}
       }
       assert(false);
     }
@@ -868,6 +895,14 @@ namespace zertz
 	case msg_accept_player:
 	{
 	  Msg_Accept_Player *msg = new Msg_Accept_Player();
+	  if( msg->read_from_line(line) )
+	    return msg;
+	  delete msg;
+	  break;
+	}
+	case msg_remove_player:
+	{
+	  Msg_Remove_Player *msg = new Msg_Remove_Player();
 	  if( msg->read_from_line(line) )
 	    return msg;
 	  delete msg;
@@ -1205,7 +1240,7 @@ namespace zertz
 	Room room;
 	int room_phase;
 	eis >> room.name >> room.host_cnt >> room.is_open >> room_phase;
-	room.phase = Phase_Type(room.phase);
+	room.phase = Phase_Type(room_phase);
 	switch( room.phase )
 	{
 	  case phase_setup:
@@ -1406,9 +1441,30 @@ namespace zertz
       int msg_number;
       eis >> msg_number;
 
+#ifndef __WXMSW__
+      // !!! Debug output
+      std::cerr << "receiving tell-setup message" << std::endl; 
+#endif
       if( !read_ruleset( eis, setup.ruleset ) ) return false;
+#ifndef __WXMSW__
+      // !!! Debug output
+      std::cerr << "ruleset received" << std::endl; 
+#endif
+      if( !read_moves  ( eis, setup.init_moves ) ) return false;
+#ifndef __WXMSW__
+      // !!! Debug output
+      std::cerr << "moves received" << std::endl; 
+#endif
       if( !read_players( eis, setup.initial_players ) ) return false;
+#ifndef __WXMSW__
+      // !!! Debug output
+      std::cerr << "initial players received" << std::endl; 
+#endif
       if( !read_player_settings( eis, setup.current_players ) ) return false;
+#ifndef __WXMSW__
+      // !!! Debug output
+      std::cerr << "current players received" << std::endl; 
+#endif
 
       if( eis.did_error_occur() )
 	return false;
@@ -1421,6 +1477,7 @@ namespace zertz
       std::escape_ostream eos(os);
 
       write_ruleset( eos, setup.ruleset );
+      write_moves  ( eos, setup.init_moves );
       write_players( eos, setup.initial_players );
       write_player_settings( eos, setup.current_players );
 
@@ -1625,6 +1682,45 @@ namespace zertz
     }
     
     std::string Msg_Accept_Player::write_to_line()
+    {
+      std::ostringstream os;
+      std::escape_ostream eos(os);
+
+      eos << id;
+
+      return os.str();
+    }
+
+    // ----------------------------------------------------------------------------
+    // Msg_Remove_Player
+    // ----------------------------------------------------------------------------
+
+    Msg_Remove_Player::Msg_Remove_Player( int id )
+      : Message(msg_remove_player), id(id)
+    {
+    }
+    
+    Msg_Remove_Player::Msg_Remove_Player()
+      : Message(msg_remove_player)
+    {
+    }
+
+    bool Msg_Remove_Player::read_from_line( std::string line ) // returns false on parse error
+    {
+      std::istringstream is(line);
+      std::escape_istream eis(is);
+      
+      int msg_number;
+      eis >> msg_number;
+
+      eis >> id;
+
+      if( eis.did_error_occur() )
+	return false;
+      return true;
+    }
+    
+    std::string Msg_Remove_Player::write_to_line()
     {
       std::ostringstream os;
       std::escape_ostream eos(os);
@@ -1908,8 +2004,8 @@ namespace zertz
     // Msg_Move
     // ----------------------------------------------------------------------------
 
-    Msg_Move::Msg_Move( Move_Sequence move )
-      : Message(msg_move), move(move)
+    Msg_Move::Msg_Move( int player_id, Move_Sequence move )
+      : Message(msg_move), player_id(player_id), move(move)
     {
     }
     
@@ -1924,7 +2020,7 @@ namespace zertz
       std::escape_istream eis(is);
       
       int msg_number;
-      eis >> msg_number;
+      eis >> msg_number >> player_id;
 
       if( !read_move_sequence(eis,move) ) return false;
 
@@ -1938,6 +2034,7 @@ namespace zertz
       std::ostringstream os;
       std::escape_ostream eos(os);
 
+      eos << player_id;
       write_move_sequence(eos,move);
 
       return os.str();

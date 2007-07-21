@@ -376,6 +376,7 @@ namespace zertz
     AI_Result current_hint;	// move sequence recommented by the AI
 
     Mouse_Handler mouse_handler;
+    bool user_activity_allowed;
 
 #if wxUSE_SOUND
     wxSound sound_beep;
