@@ -94,6 +94,8 @@ namespace zertz
       msg_add_player=45,	// add_player <player_setting>
       msg_accept_player,	// accept_player <id>
 				// = server gives unique id for player
+      msg_remove_player,	// remove_player <id>
+				// = ask server to remove player
       msg_setup_change=50,	// setup_change <setup_changes>
 				// = request setup change (<change_number> helps to serialize changes)
 				//   simultaneous changes with same <n> leads to auto increment
@@ -204,20 +206,21 @@ namespace zertz
     // ----------------------------------------------------------------------------
     // <game>: is string of
     // ----------------------------------------------------------------------------
-    //   "Zertz"
-    //   "Dvonn" ?
+    //   "/GIPFPROJECT/ZERTZ"
+    //   "/GIPFPROJECT/DVONN" 
     //     ...
 
     // ----------------------------------------------------------------------------
     // <setup> : consists of
     // ----------------------------------------------------------------------------
-    //   <ruleset> <initial_players> <current_players>
+    //   <ruleset> <moves> <initial_players> <current_players>
     // ----------------------------------------------------------------------------
     // * initial players store default names and pre gained stones
     // * current players store already registered players
     struct Setup
     {
       Ruleset ruleset;
+      std::list<Move_Sequence> init_moves; // moves executed before players start
       std::list<Player> initial_players; // players with given stones and default names
       std::list<Player> current_players; // currently registered players
     };
@@ -326,7 +329,7 @@ namespace zertz
     // ----------------------------------------------------------------------------
     // <player_settings> : is array of <player_setting>
     // ----------------------------------------------------------------------------
-    //   <player_cnt> { <player_id> <player_settings> }*
+    //   <player_cnt> { <player_id> <player_setting> }*
 
     // ----------------------------------------------------------------------------
     // <player_setting> : consists of
@@ -466,7 +469,8 @@ namespace zertz
       // message number at the beginning of the line indicates the message type
       static Message *read_from_line( std::string line ); // returns 0 for parse error
       virtual std::string write_to_line() { return ""; } // message does not include message type
-      virtual void print( std::ostream &os ) { os << to_string(get_type()) << ' ' << write_to_line() << '\n'; }
+      virtual void print( std::ostream &os ) 
+      { os << to_string(get_type()) << ' ' << write_to_line() << '\n'; }
 
       Message_Type get_type() { return type; }
 
@@ -764,6 +768,21 @@ namespace zertz
       int id;
     };
 
+    class Msg_Remove_Player : public Message
+    {
+    public:
+      Msg_Remove_Player( int id );
+      Msg_Remove_Player();
+
+      // message number is included at the beginning of the line
+      bool read_from_line( std::string line ); // returns false on parse error
+      virtual std::string write_to_line();
+  
+      int get_id()   { return id; }
+    private:
+      int id;
+    };
+
     class Msg_Setup_Change : public Message
     {
     public:
@@ -875,7 +894,7 @@ namespace zertz
     class Msg_Move : public Message
     {
     public:
-      Msg_Move( Move_Sequence move );
+      Msg_Move( int player_id, Move_Sequence move );
       Msg_Move();
 
       // message number is included at the beginning of the line
@@ -883,7 +902,9 @@ namespace zertz
       virtual std::string write_to_line();
   
       Move_Sequence get_move()   { return move; }
+      int get_player_id() { return player_id; }
     private:
+      int player_id;
       Move_Sequence move;
     };
 
@@ -935,7 +956,7 @@ namespace zertz
       bool read_from_line( std::string line ); // returns false on parse error
       virtual std::string write_to_line();
 
-      std::string		get_host_nick()		{ return host_nick; }
+      std::string get_host_nick()		{ return host_nick; }
     private:
       std::string host_nick;
     };

@@ -77,13 +77,14 @@ namespace holtz
   void Message_Network<Message>::set_handler
   ( Message_Network_Handler<Message> *new_handler )
   {
+    Message_Network_Handler<Message> *old_handler = handler;
+    handler = new_handler;
     // if handler was 0, tell line_network to send lines to this object
-    if( (new_handler) && (!handler) )
+    if( (new_handler) && (!old_handler) )
       line_network->set_handler(this);
     // if new_handler is set to 0, tell line_network to buffer the lines
-    if( (!new_handler) && (handler) )
+    if( (!new_handler) && (old_handler) )
       line_network->set_handler(0);
-    handler = new_handler;
   }
 
   template<class Message>
@@ -159,8 +160,8 @@ namespace holtz
   {
     Message_Network<Message> *network = 
       new Message_Network<Message>( line_network, 0 /*no handler yet*/ );
-    line_network->set_handler(network);
-    server_handler->new_connection( network );
+    server_handler->new_connection( network );  // will call set_handler
+    line_network->set_handler(network);		// line_network buffers input data
   }
 }
 

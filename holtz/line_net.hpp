@@ -26,6 +26,7 @@
 
 namespace holtz
 {
+  class Line_Network;
 
   class Line_Network_Handler
   {
@@ -57,6 +58,7 @@ namespace holtz
     // send line over network connection ('\n' or '\r\n' at the end is removed)
     void send_line( std::string line );
     void flush();
+    bool is_connected() { if(!socket) return false; return socket->IsConnected(); }
     std::string get_remote_host();	// returns "" if not connected
     int get_remote_port();		// returns 0 if not bound
     std::string get_local_host();	// returns "" if not connected
@@ -71,6 +73,7 @@ namespace holtz
   private:
     void on_network( wxSocketEvent &event );
     void on_input();
+    void do_send();
 
     Line_Network_Handler *line_handler;
     wxSocketBase *socket;

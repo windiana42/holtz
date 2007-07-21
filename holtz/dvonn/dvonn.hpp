@@ -659,6 +659,7 @@ namespace dvonn
   public:
     virtual std::string encode( Move_Sequence ) = 0;
     virtual Move_Sequence    decode( std::istream& ) = 0;
+    virtual ~Move_Translator() {}
   };
 
   class Standard_Move_Translator : public Move_Translator

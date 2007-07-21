@@ -23,6 +23,7 @@ namespace zertz
 {
   class Game_Dialog;
   class Settings_Dialog;
+  class Network_Clients_Dialog;
 }
 
 #include "network.hpp"
@@ -54,15 +55,22 @@ namespace zertz
     virtual wxWizardPage *GetNext() const;
     virtual bool TransferDataFromWindow();
 
+    void on_server_port( wxSpinEvent& );
+    void on_client_port( wxSpinEvent& );
+    void on_host_name( wxCommandEvent& );
+
     void restore();		// display stored game state
   private:
     Game_Dialog &game_dialog;
     bool changes;
     bool changed_setup_manager;
 
+    Network_Clients_Dialog *clients_dialog;
+
     wxRadioButton *alone, *network_server, *network_client, *don_t_change;
     wxTextCtrl *hostname;
     wxSpinCtrl *server_port, *client_port;
+    bool alone_val, network_server_val, network_client_val;
 
     friend class Game_Dialog;
     DECLARE_EVENT_TABLE() //**/
@@ -88,6 +96,7 @@ namespace zertz
 
     wxRadioButton *new_game, *continue_game, *don_t_change;
     wxRadioBox *new_game_choice, *continue_game_choice;
+    bool new_game_val, continue_game_val;
 
     friend class Game_Dialog;
     DECLARE_EVENT_TABLE() //**/
@@ -99,6 +108,7 @@ namespace zertz
     Custom_Board_Setup_Panel( wxWindow *parent, Game_Dialog & );
     ~Custom_Board_Setup_Panel();
 
+    void on_change_board  ( wxCommandEvent& event );
     void on_change_win  ( wxCommandEvent& event );
     void on_spin_win ( wxSpinEvent& event );
     void on_change_stones  ( wxCommandEvent& event );
@@ -106,6 +116,8 @@ namespace zertz
 
     void restore();
     Game get_board();		// get board according to chosen settings
+    bool is_changes() { return changes; }
+    void set_changes( bool ch ) { changes = ch; }
   private:
     Game_Dialog &game_dialog;
     bool changes;
@@ -131,7 +143,6 @@ namespace zertz
     void restore();		// display stored game state
   private:
     Game_Dialog &game_dialog;
-    bool changes;
 
     Custom_Board_Setup_Panel *custom_board_panel;
 
@@ -164,6 +175,7 @@ namespace zertz
     wxString valid_directory;	// stores only a valid directory path or ""
     std::map< int, std::list< std::pair<PBM_Content,std::string> > > pbm_files; 
 				// board_num -> last_move_num -> file
+    int pbm_game_list_val;
 
     friend class Game_Dialog;
     DECLARE_EVENT_TABLE() //**/
@@ -191,6 +203,9 @@ namespace zertz
     void player_ready( const Player & );
 
     void restore();		// display stored game state
+    void players_changed();	// default players changed
+    void everything_ready();	// all players are ready
+    void update_status_display();
   private:
     wxString get_default_name( int player_num );
 
@@ -203,6 +218,8 @@ namespace zertz
     std::map<int,int> player_item; // id->item_number
 
     wxRadioBox *help_choice;
+    wxStaticText *status_display;
+    wxButton *ready_button;
 
     friend class Game_Dialog;
     DECLARE_EVENT_TABLE() //**/
@@ -218,12 +235,18 @@ namespace zertz
     virtual bool TransferDataFromWindow();
 
     void restore();		// display stored game state
+    void players_changed();	// default players changed
+    void everything_ready();	// all players are ready
+    void set_ready(bool r) { ready=r; }
+    bool is_ready() { return ready; }
   private:
     Game_Dialog &game_dialog;
 
     Player_Setup_Panel *player_setup_panel;
 
     wxNotebook *notebook;
+
+    bool ready;
 
     friend class Game_Dialog;
     DECLARE_EVENT_TABLE() //**/
@@ -250,10 +273,12 @@ namespace zertz
     virtual void player_change_denied();
     virtual void player_ready( const Player & );
     // game commands
+    virtual void enter_player_setup();
     virtual void everything_ready();
     virtual void aborted();
     virtual bool ask_new_game( wxString who ); // other player asks for a new game (true: accept)
-    virtual bool ask_undo_moves( wxString who, int n = 2 ); // other player asks to undo a move (true: accept)
+    virtual bool ask_undo_moves( wxString who, int n = 2 ); 
+				// other player asks to undo a move (true: accept)
   private:
     void get_data_from_setup_manager();
 

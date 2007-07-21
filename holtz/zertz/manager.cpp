@@ -126,6 +126,8 @@ namespace zertz
     else
     {
       new_game_requested = true;
+      if( ui_manager )
+	ui_manager->stop_user_activity();
       assert( game_setup_manager );
       switch( game_setup_manager->ask_new_game() )
       {
@@ -172,6 +174,10 @@ namespace zertz
       if( wxMessageBox( msg, _("New game?"), wxYES | wxNO | wxCANCEL | wxICON_QUESTION ) == wxYES )
       {
 	force_new_game();
+      }
+      else
+      {
+	continue_game();
       }
     }
   }
@@ -432,7 +438,14 @@ namespace zertz
       display_handler->player_removed(*player_iterator);
 
     players.erase(player_iterator);
-    id_player.erase( player.id ); 
+    // reload iterators due to erase
+    id_player.clear();
+    std::list<Player>::iterator i;
+    for( i = players.begin(); i != players.end(); ++i )
+    {
+      id_player[i->id] = i;
+    }
+
     return true;
   }
   bool Standalone_Game_Setup_Manager::player_up( const Player &player )
@@ -475,19 +488,40 @@ namespace zertz
 
     return true;
   }
+
   void Standalone_Game_Setup_Manager::ready()	
   {
   }
+
+  // returns players before feedback
+  std::list<Player> Standalone_Game_Setup_Manager::enable_player_feedback() 
+  {
+    return players;
+  }
+
+  // whether this player can choose a board to play
+  bool Standalone_Game_Setup_Manager::can_choose_board() 
+  {
+    return true;
+  }
+
+  // whether the player setup can be entered
+  bool Standalone_Game_Setup_Manager::can_enter_player_setup() 
+  {
+    return true;
+  }
+
   Game_Setup_Manager::Game_State Standalone_Game_Setup_Manager::can_start()
   {
-    if( players.size() < game.ruleset->get_min_players() )
+    if( players.size() < game.get_min_players() )
       return too_few_players;
 
-    if( players.size() > game.ruleset->get_max_players() )
+    if( players.size() > game.get_max_players() )
       return too_many_players;
 
     return everyone_ready;
   }
+
   void Standalone_Game_Setup_Manager::start_game()
   {
     assert( can_start() == everyone_ready );
@@ -514,6 +548,10 @@ namespace zertz
   {
     game_manager.stop_game();
   }
+  void Standalone_Game_Setup_Manager::game_setup_entered()
+  {
+  }
+
   
 }
 

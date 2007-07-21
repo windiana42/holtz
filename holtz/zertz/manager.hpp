@@ -55,6 +55,7 @@ namespace zertz
     virtual void player_change_denied() = 0;
     virtual void player_ready( const Player & ) = 0;
     // game commands
+    virtual void enter_player_setup() = 0; // allow to enter the player setup process
     virtual void everything_ready() = 0;
     virtual void aborted() = 0;
     virtual bool ask_new_game( wxString who ) = 0; // other player asks for a new game (true: accept)
@@ -85,12 +86,16 @@ namespace zertz
     virtual bool player_down( const Player & ) = 0;
     virtual void ready() = 0;      // ready with adding players
     // game commands
+    virtual std::list<Player> enable_player_feedback() = 0; // returns players before feedback
+    virtual bool can_choose_board() = 0; // whether this player can choose a board to play
+    virtual bool can_enter_player_setup() = 0; // whether the player setup can be entered
     virtual Game_State can_start() = 0;	// is everyone ready and number of players ok?
     virtual void start_game() = 0; // call only when can_start() == true
     virtual Answer_Type ask_new_game() = 0; // request to play new game
     virtual Answer_Type ask_undo_moves(int n=2) = 0; // request to undo n half moves
     virtual void force_new_game() = 0; // force new game (may close connections)
     virtual void stop_game() = 0;  // stop game
+    virtual void game_setup_entered() = 0;  // game setup entered (game setup may be modal dialog)
 
     virtual ~Game_Setup_Manager();
   };
@@ -165,6 +170,7 @@ namespace zertz
 				   int event_id=-1 ) = 0; // show user how move is undone
     virtual void show_status_text( wxString text ) = 0; // shows text in status bar
     virtual void beep() = 0;
+    virtual void refresh() = 0;
 
     // interface for information access
     virtual Player_Input *get_user_input() = 0;
@@ -199,12 +205,16 @@ namespace zertz
     virtual bool player_down( const Player & );
     virtual void ready();	// ready with adding players
     // game commands
+    virtual std::list<Player> enable_player_feedback(); // returns players before feedback
+    virtual bool can_choose_board(); // whether this player can choose a board to play
+    virtual bool can_enter_player_setup(); // whether the player setup can be entered
     virtual Game_State can_start(); // is everyone ready and number of players ok?
     virtual void start_game();  // call only when can_start() == true
     virtual Answer_Type ask_new_game(); // request to play new game
     virtual Answer_Type ask_undo_moves(int n=2); // request to undo n half moves
     virtual void force_new_game(); // force new game (may close connections)
     virtual void stop_game();   // stop game
+    virtual void game_setup_entered();  // game setup entered (game setup may be modal dialog)
   private:
     Game_Manager &game_manager;
     Game_Setup_Display_Handler *display_handler;

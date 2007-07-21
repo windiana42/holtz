@@ -14,8 +14,6 @@
  * 
  */
 
-#include <wx/wx.h>
-
 #ifndef __WXHOLTZ_MAIN__
 #define __WXHOLTZ_MAIN__
 
@@ -28,6 +26,8 @@ namespace holtz
 #include "zertz/dialogs.hpp"
 #include "dvonn/manager.hpp"
 #include "dvonn/dialogs.hpp"
+
+#include <wx/wx.h>
 
 namespace holtz
 {
@@ -183,6 +183,7 @@ namespace holtz
     DIALOG_RULESET,
     DIALOG_NEW_GAME_CHOICE,
     DIALOG_CONTINUE_GAME_CHOICE,
+    DIALOG_BOARD_CHOICE,
     DIALOG_WIN_CHOICE,
     DIALOG_WIN_SPIN,
     DIALOG_STONES_CHOICE,
@@ -190,6 +191,9 @@ namespace holtz
     DIALOG_APPLY,
     DIALOG_RESTORE,
     DIALOG_SPIN,
+    DIALOG_HOST_NAME,
+    DIALOG_SERVER_PORT,
+    DIALOG_CLIENT_PORT,
     DIALOG_CHOOSE_PBM_DIRECTORY,
     DIALOG_CHANGE_PBM_DIRECTORY,
     DIALOG_CHOOSE_LG_DIRECTORY,
