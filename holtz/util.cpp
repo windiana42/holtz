@@ -129,7 +129,7 @@ namespace std
       escape = true;
     else
     {
-      for( int i=0; i<ret.size(); ++i )
+      for( unsigned i=0; i<ret.size(); ++i )
 	if( isspace( ret[i] ) )
 	{
 	  escape = true;

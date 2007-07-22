@@ -23,8 +23,10 @@
 
 #include <string>
 #include <map>
+#include <set>
 #include <list>
 #include <vector>
+#include <algorithm>
 
 #include <wx/wx.h>
 
@@ -185,10 +187,37 @@ namespace std
   };
 
   // tests whether map or set includes an element
+  /*
   template<typename Container, typename Element>
   inline bool does_include( Container c, Element e )
   {
     return c.find(e) != c.end();
+  }
+  */
+  template<typename Key, typename Element>
+  inline bool does_include( map<Key,Element> c, Key e )
+  {
+    return c.find(e) != c.end();
+  }
+
+  template<typename Element>
+  inline bool does_include( set<Element> c, Element e )
+  {
+    return c.find(e) != c.end();
+  }
+
+  // tests whether list includes an element
+  template<typename Element>
+  inline bool does_include( list<Element> c, Element e )
+  {
+    return find(c.begin(),c.end(),e) != c.end();
+  }
+
+  // tests whether vector includes an element
+  template<typename Element>
+  inline bool does_include( vector<Element> c, Element e )
+  {
+    return find(c.begin(),c.end(),e) != c.end();
   }
 
   // tests whether map or set includes an element
