@@ -1,7 +1,8 @@
 /*
  * network.hpp
  * 
- * Netzwork access
+ * Netzwork access according to the BGP 1.00a protocol (see docs/ for
+ * state diagrams of master and slave nodes)
  * 
  * Copyright (c) 2003 by Martin Trautmann (martintrautmann@gmx.de) 
  * 
@@ -196,6 +197,7 @@ namespace zertz
     public:
       Connection_Id id;
       std::set<int> controlled_player_ids;
+      std::set<int> abandoned_player_ids;
       Protocol_State state;
       std::string name;
       std::string nick_name;
@@ -214,14 +216,18 @@ namespace zertz
       Connection_State &operator=(const Connection_State &s);
     };
 
-    void continue_game();
-    void disconnect(Message_Network<BGP::Message>*,bool send_disconnect=true);
+    void continue_game();	// continue game after interruption / waiting on event
+    void discard(Message_Network<BGP::Message>* connection);  
+				// discard influence on server state
+    void disconnect(Message_Network<BGP::Message>* connection,bool send_disconnect=true);
+				// disconnect connection and optionally send msg before
     void broadcast(BGP::Message*, BGP::Phase_Type phase = BGP::phase_playing, 
 		   bool check_phase=true, Message_Network<BGP::Message>* skip_connection=0);
+ 				// broadcase message to all connections in <phase>
     void start_timer(int milliseconds);
     void stop_timer();
     unsigned get_client_count();
-    BGP::Phase_Type get_bgp_phase();
+    BGP::Phase_Type get_game_phase();
     int do_add_player( const Player &, Message_Network<BGP::Message>* connection=0 );    
 					    // actually add player and return ID
     void do_remove_player( int player_id ); // actually remove player
@@ -229,10 +235,11 @@ namespace zertz
     bool do_player_down( int player_id );   // actually move player down
     bool do_ask_new_game( Message_Network<BGP::Message>* asking_connection=0 );
     void check_all_ready();		    // check whether all clients are ready 
-    bool check_all_answered();
-    void setup_players();
-    void process_move( const Move_Sequence&, Message_Network<BGP::Message>* connection=0, 
-		       int player_id=-1 );
+    bool check_all_answered();		    // check whether all clients answered a request
+    void setup_players();		    // setup players for local use
+    bool process_move( const Move_Sequence&, Message_Network<BGP::Message>* connection=0, 
+		       int player_id=-1 );  // process a move and initiate consequences
+    void process_deferred_messages();       // process all messages that were deferred
 
     Game_Manager &game_manager;
     Game_UI_Manager &ui_manager;
@@ -271,6 +278,7 @@ namespace zertz
     Message_Network<BGP::Message>* asking_client;
     Message_Network<BGP::Message>* possibly_interrupted_connection;
     std::list<std::pair<int/*player_id*/,Move_Sequence> > pending_moves;
+    std::list<std::pair<Message_Network<BGP::Message>*,BGP::Message*> > deferred_messages;
 
     DECLARE_EVENT_TABLE() //**/
   };
@@ -353,8 +361,8 @@ namespace zertz
     typedef enum Protocol_State{ BGP_UNCONNECTED, BGP_HANDSHAKE, BGP_ROOMS,
 				 BGP_ASK_ROOM, BGP_GET_PHASE, BGP_SETUP_PREPARE_1, 
 				 BGP_PLAY_PREPARE_1, BGP_PLAY_PREPARE_2, BGP_PLAY_PREPARE_3A,
-				 BGP_PLAY_PREPARE_3B, BGP_TAKE_PLAYER, BGP_ASK_TAKE_PLAYER,
-				 BGP_SETUP, BGP_ADD_PLAYER, BGP_REMOVE_PLAYER, 
+				 BGP_PLAY_PREPARE_3B, BGP_PLAY_PREPARE_4A, BGP_TAKE_PLAYER, 
+				 BGP_ASK_TAKE_PLAYER, BGP_SETUP, BGP_ADD_PLAYER, BGP_REMOVE_PLAYER, 
 				 BGP_READY, BGP_OTHERS_TURN, BGP_MY_TURN,
 				 BGP_ASK_UNDO, BGP_ACCEPT_UNDO, 
 				 BGP_ASK_NEW_GAME, BGP_ACCEPT_NEW_GAME,
@@ -377,11 +385,14 @@ namespace zertz
     void disconnect(bool send_disconnect=true);
     void start_timer(int milliseconds);
     void stop_timer();
-    BGP::Phase_Type get_bgp_phase();
-    void do_add_player( const Player &, bool local );   // actually add player
+    BGP::Phase_Type get_game_phase();
+    void do_add_player( const Player&, bool local );   // actually add player
     void do_remove_player( int player_id ); // actually remove player
     void setup_players();
-    void process_move( const Move_Sequence&, bool local, int player_id=-1 );
+    bool process_setup( BGP::Setup );
+    bool process_moves( std::list<Move_Sequence> );
+    bool process_move( const Move_Sequence&, bool local, int player_id=-1 );
+    void process_deferred_messages();       // process all messages that were deferred
 
     Game_Manager &game_manager;
     Game_UI_Manager &ui_manager;
@@ -407,8 +418,11 @@ namespace zertz
     bool asking_undo;
     Player requested_add_player;
     int requested_remove_player_id;
+    std::set<int>::iterator requested_take_player_id;
     std::list<std::pair<int/*player_id*/,Move_Sequence> > pending_moves;
+    std::list<std::pair<Message_Network<BGP::Message>*,BGP::Message*> > deferred_messages;
     int error_recovery_pongs;
+    unsigned error_recovery_attempts;
 
     DECLARE_EVENT_TABLE() //**/
   };

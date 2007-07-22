@@ -63,6 +63,7 @@ namespace zertz
         case msg_tell_situation: return "tell_situation";
         case msg_request_final_setup: return "request_final_setup";
         case msg_request_move_reminder: return "request_move_reminder";
+        case msg_take_player: return "take_player";
         case msg_setup: return "setup";
         case msg_get_setup_and_changes: return "get_setup_and_changes";
         case msg_get_moves_and_play: return "get_moves_and_play";
@@ -868,6 +869,14 @@ namespace zertz
 	{
 	  return new Msg_Request_Move_Reminder();
 	}
+	case msg_take_player:
+	{
+	  Msg_Take_Player *msg = new Msg_Take_Player();
+	  if( msg->read_from_line(line) )
+	    return msg;
+	  delete msg;
+	  break;
+	}
 	case msg_setup:
 	{
 	  return new Msg_Setup();
@@ -1588,6 +1597,45 @@ namespace zertz
     // ----------------------------------------------------------------------------
 
     Msg_Request_Move_Reminder::Msg_Request_Move_Reminder() : Message(msg_request_move_reminder) {}
+
+    // ----------------------------------------------------------------------------
+    // Msg_Take_Player
+    // ----------------------------------------------------------------------------
+
+    Msg_Take_Player::Msg_Take_Player( int id )
+      : Message(msg_take_player), id(id)
+    {
+    }
+    
+    Msg_Take_Player::Msg_Take_Player()
+      : Message(msg_take_player)
+    {
+    }
+
+    bool Msg_Take_Player::read_from_line( std::string line ) // returns false on parse error
+    {
+      std::istringstream is(line);
+      std::escape_istream eis(is);
+      
+      int msg_number;
+      eis >> msg_number;
+
+      eis >> id;
+
+      if( eis.did_error_occur() )
+	return false;
+      return true;
+    }
+    
+    std::string Msg_Take_Player::write_to_line()
+    {
+      std::ostringstream os;
+      std::escape_ostream eos(os);
+
+      eos << id;
+
+      return os.str();
+    }
 
     // ----------------------------------------------------------------------------
     // Msg_Setup

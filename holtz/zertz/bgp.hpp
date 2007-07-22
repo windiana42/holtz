@@ -78,6 +78,8 @@ namespace zertz
 				// = ask server to give a final setup at the end of 
       msg_request_move_reminder,// request_move_reminder
 				// = ask server to tell me when it is my turn
+      msg_take_player,		// take_player <id>
+				// = request to take over abandoned player <id>
       msg_setup=40,		// setup
 				// = go to setup state (may add players)
       // Subversion B,C:
@@ -86,20 +88,21 @@ namespace zertz
 
       // Subversion A,B,C:
       msg_get_moves_and_play,	// get_moves_and_play
-				// = ask for moves already played and be aware of getting further moves
+				// = ask for moves already played and be aware of getting further 
+				//   moves
       msg_get_situation_and_play, // get_situation_and_play
-				// = ask for current situation of the game and be aware that moves may 
-				//   be sent from now on
+				// = ask for current situation of the game and be aware that moves 
+				//   may be sent from now on
 
-      msg_add_player=45,	// add_player <player_setting>
+      msg_add_player=50,	// add_player <player_setting>
       msg_accept_player,	// accept_player <id>
 				// = server gives unique id for player
       msg_remove_player,	// remove_player <id>
 				// = ask server to remove player
-      msg_setup_change=50,	// setup_change <setup_changes>
-				// = request setup change (<change_number> helps to serialize changes)
-				//   simultaneous changes with same <n> leads to auto increment
-				//   of the <n> told by the slave
+      msg_setup_change=60,	// setup_change <setup_changes>
+				// = request setup change (<change_number> helps to serialize 
+				//   changes) simultaneous changes with same <n> leads to auto 
+				//   increment of the <n> told by the slave
 
       // Subversion C:
       msg_ask_setup_change,	// ask_setup_change <setup_changes>
@@ -712,6 +715,21 @@ namespace zertz
     {
     public:
       Msg_Request_Move_Reminder();
+    };
+
+    class Msg_Take_Player : public Message
+    {
+    public:
+      Msg_Take_Player( int id );
+      Msg_Take_Player();
+
+      // message number is included at the beginning of the line
+      bool read_from_line( std::string line ); // returns false on parse error
+      virtual std::string write_to_line();
+  
+      int get_id()   { return id; }
+    private:
+      int id;
     };
 
     class Msg_Setup : public Message

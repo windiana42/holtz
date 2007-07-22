@@ -118,6 +118,7 @@ namespace zertz
 	    
 	  if( network_manager->setup_server(server_port->GetValue()) )
 	  {
+	    if(clients_dialog) clients_dialog->Destroy();
 	    clients_dialog = new Network_Clients_Dialog(game_dialog.wizard,*network_manager);
 	    clients_dialog->Show();
 
@@ -1092,6 +1093,7 @@ namespace zertz
 	player_name->SetSelection( 0, player_name->GetLastPosition() );
       }
     }
+    update_status_display();
   }
 
   void Player_Setup_Panel::on_remove_player( wxCommandEvent& WXUNUSED(event) )
@@ -1113,6 +1115,7 @@ namespace zertz
 	}
       }
     }
+    update_status_display();
   }
     
   void Player_Setup_Panel::on_player_up( wxCommandEvent& WXUNUSED(event) )
@@ -1129,6 +1132,7 @@ namespace zertz
 	}
       }
     }
+    update_status_display();
   }
 
   void Player_Setup_Panel::on_player_down( wxCommandEvent& WXUNUSED(event) )
@@ -1145,6 +1149,7 @@ namespace zertz
 	}
       }
     }
+    update_status_display();
   }
 
   void Player_Setup_Panel::player_added( const Player &player )

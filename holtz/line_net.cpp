@@ -16,6 +16,8 @@
 
 #include "line_net.hpp"
 
+#include <wx/app.h>
+
 namespace holtz
 {
 
@@ -60,13 +62,10 @@ namespace holtz
     socket->Close();
     socket->Destroy();
     socket = 0;
+    //wxPostDelete(this);
 
-#if wxUSE_GUI
-    if ( !wxPendingDelete.Member(this) )
-      wxPendingDelete.Append(this);
-#else
-    delete this;
-#endif
+    //!!!figure out a way to delete this object after events are
+    //processed and no half processed event is still on the stack
   }
 
   void Line_Network::send_line( std::string line )

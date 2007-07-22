@@ -1,5 +1,6 @@
-*BUGS: 
+* BUGS: 
 
+- cleaning up left-over players when starting new game (potential crashes)
 - figure out potential problems with line_net code on the stack while
   processing modal game setup dialog
 - failed network connection attempts are not reported nicely for client
@@ -9,16 +10,24 @@
 
 - think about good way to handle finished games loaded as pbm file
 - for any reason reading skin.ini files with 2 underscores in one name crashes...
-- why segfault on exit?
+- why segfault on exit with wxWidgets 2.8?
+
+* Features:
 
 - better AI (looking for sente moves first, rate situations better)
 - save settings, last ruleset
 - save game, load game
 - fully customize board 
 - customize AI
-- zabindex of dialogs
 - connect dialog resizable
 - show ready status in connect dialog
 - show ready status, ai status and help mode for each player
 - show moves played (position tree)
 - show moves review 
+
+- for full bgp 1.00a master support: 
+ * implement move reminder
+ * implement board transmition as alternative to setup+moves
+ (I will implement this if someone wants to develop his own bgp 1.00a
+ client which is facilitated by just dealing with boards - please
+ contact: martintrautmann@gmx.net)
