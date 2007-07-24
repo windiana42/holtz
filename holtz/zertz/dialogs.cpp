@@ -33,7 +33,7 @@ namespace zertz
   // ----------------------------------------------------------------------------
 
   Setup_Manager_Page::Setup_Manager_Page( wxWizard *parent, Game_Dialog &game_dialog )
-    : wxWizardPage(parent), game_dialog(game_dialog), changes(true), changed_setup_manager(false),
+    : wxWizardPage(parent), game_dialog(game_dialog), changes(true),
       clients_dialog(0)
   {
     alone          = new wxRadioButton( this, -1, _("Play alone") );
@@ -101,14 +101,23 @@ namespace zertz
     {
       if( !don_t_change->GetValue() )
       {
+	// cleanup common to all choices
+	if( clients_dialog )
+	{
+	  clients_dialog->Destroy();
+	  clients_dialog = 0;
+	}
+	if( game_dialog.game_setup_manager )
+	{
+	  game_dialog.game_setup_manager->set_display_handler(0);
+	  delete game_dialog.game_setup_manager;
+	  game_dialog.game_setup_manager = 0;
+	}
+
 	if( alone->GetValue() )
 	{
-	  if( changed_setup_manager ) // is setup_manager created in this dialog run
-	    delete game_dialog.game_setup_manager;
-	  
 	  game_dialog.game_setup_manager 
 	    = new Standalone_Game_Setup_Manager( game_dialog.game_manager );
-	  changed_setup_manager = true;
 	}
 	else if( network_server->GetValue() )
 	{
@@ -118,15 +127,10 @@ namespace zertz
 	    
 	  if( network_manager->setup_server(server_port->GetValue()) )
 	  {
-	    if(clients_dialog) clients_dialog->Destroy();
+	    game_dialog.game_setup_manager = network_manager;
+
 	    clients_dialog = new Network_Clients_Dialog(game_dialog.wizard,*network_manager);
 	    clients_dialog->Show();
-
-	    if( changed_setup_manager ) // is setup_manager created in this dialog run
-	      delete game_dialog.game_setup_manager;
-	      
-	    game_dialog.game_setup_manager = network_manager;
-	    changed_setup_manager = true;
 	  }
 	  else
 	  {
@@ -144,14 +148,11 @@ namespace zertz
 	  if( network_manager->connect_to_server(wxstr_to_str(hostname->GetValue()),
 						 client_port->GetValue()) )
 	  {
-	    if( changed_setup_manager ) // is setup_manager created in this dialog run
-	      delete game_dialog.game_setup_manager;
-	      
 	    game_dialog.game_setup_manager = network_manager;
-	    changed_setup_manager = true;
 	  }
 	  else
 	  {
+	    delete network_manager;
 	    wxMessageBox(_("Connection to Server failed"), _("Network Message"), 
 			 wxOK | wxICON_ERROR,this);
 	    return false;
@@ -159,10 +160,6 @@ namespace zertz
 	}
 	else
 	  return false;		// nothing checked ?!?
-	
-	//don_t_change->SetValue( true ); // when user goes back: default = don't change
-
-	// restore data from game_setup_manager
       }
       game_dialog.game_setup_manager->set_display_handler( &game_dialog );
       game_dialog.get_data_from_setup_manager();
@@ -309,8 +306,13 @@ namespace zertz
 	}
 	if( continue_game_choice->GetSelection() != 1 )
 	{
-	  game_dialog.game.ruleset->min_players = game_dialog.players.size();
-	  game_dialog.game.ruleset->max_players = game_dialog.players.size();
+	  if( (game_dialog.game.players.size() >= game_dialog.game.get_min_players()) &&
+	      (game_dialog.game.players.size() <= game_dialog.game.get_max_players()) )
+	  {
+	    // limit number of players to the amount present in the game to be continued
+	    game_dialog.game.ruleset->min_players = game_dialog.game.players.size();
+	    game_dialog.game.ruleset->max_players = game_dialog.game.players.size();
+	  }
 	  if( game_dialog.game_setup_manager->ask_change_board( game_dialog.game ) == 
 	      Game_Setup_Manager::deny )
 	  {
@@ -330,7 +332,11 @@ namespace zertz
     if( game_dialog.game_setup_manager )
       if( !game_dialog.game_setup_manager->can_enter_player_setup() &&
 	  GetNext() == &game_dialog.player_page )
+      {
+	wxMessageBox( _("Please wait for connection to allow player setup"), 
+		      _("Waiting..."), wxOK | wxICON_INFORMATION );
 	return false;
+      }
 
     return true;
   }
@@ -363,6 +369,7 @@ namespace zertz
 	case Ruleset::tournament: new_game_choice->SetSelection(1); break;
 	case Ruleset::custom:     new_game_choice->SetSelection(2); break;
       }
+      don_t_change->Enable(false);
       new_game->Enable(true);
       new_game_choice->Enable(true);
       continue_game->Enable(true);
@@ -371,6 +378,7 @@ namespace zertz
     else
     {
       don_t_change->SetValue(true);
+      don_t_change->Enable(true);
       new_game->Enable(false);
       new_game_choice->Enable(false);
       continue_game->Enable(false);
@@ -735,7 +743,11 @@ namespace zertz
     if( game_dialog.game_setup_manager )
       if( !game_dialog.game_setup_manager->can_enter_player_setup() &&
 	  GetNext() == &game_dialog.player_page )
+      {
+	wxMessageBox( _("Please wait for connection to allow player setup"), 
+		      _("Waiting..."), wxOK | wxICON_INFORMATION );
 	return false;
+      }
 
     return true;
   }
@@ -845,7 +857,11 @@ namespace zertz
     if( game_dialog.game_setup_manager )
       if( !game_dialog.game_setup_manager->can_enter_player_setup() &&
 	  GetNext() == &game_dialog.player_page )
+      {
+	wxMessageBox( _("Please wait for connection to allow player setup"), 
+		      _("Waiting..."), wxOK | wxICON_INFORMATION );
 	return false;
+      }
 
     return true;
   }
@@ -1089,8 +1105,7 @@ namespace zertz
       }
       else
       {
-	player_name->SetValue( get_default_name(num_players + 2) );
-	player_name->SetSelection( 0, player_name->GetLastPosition() );
+	set_player_name( get_default_name(num_players + 2) );
       }
     }
     update_status_display();
@@ -1111,7 +1126,7 @@ namespace zertz
 	}
 	else
 	{
-	  player_name->SetValue( get_default_name(num_players) );
+	  set_player_name( get_default_name(num_players) );
 	}
       }
     }
@@ -1168,8 +1183,7 @@ namespace zertz
 
     if( !player_name->IsModified() )
     {
-      player_name->SetValue( get_default_name(player_list->GetCount() + 1) );
-      player_name->SetSelection( 0, player_name->GetLastPosition() );
+      set_player_name( get_default_name(player_list->GetCount() + 1) );
     }
     update_status_display();
   }
@@ -1197,6 +1211,11 @@ namespace zertz
       if( new_item >= item )
 	--new_item;
       item_player[new_item] = j->second;
+    }
+
+    if( !player_name->IsModified() )
+    {
+      set_player_name( get_default_name(player_list->GetCount() + 1) );
     }
     update_status_display();
   }
@@ -1326,8 +1345,7 @@ namespace zertz
     for( i = game_dialog.players.begin(); i != game_dialog.players.end(); ++i )
       player_added( *i );
 
-    player_name->SetValue( get_default_name(player_list->GetCount() + 1) );
-    player_name->SetSelection( 0, player_name->GetLastPosition() );
+    set_player_name( get_default_name(player_list->GetCount() + 1) );
     update_status_display();
   }
 
@@ -1336,8 +1354,7 @@ namespace zertz
   {
     if( !player_name->IsModified() )
     {
-      player_name->SetValue( get_default_name(player_list->GetCount() + 1) );
-      player_name->SetSelection( 0, player_name->GetLastPosition() );
+      set_player_name( get_default_name(player_list->GetCount() + 1) );
     }
   }
 
@@ -1393,6 +1410,13 @@ namespace zertz
       name.Printf( _("Player %d"), player_num );
       return name;
     }
+  }
+
+  void Player_Setup_Panel::set_player_name( wxString name )
+  {
+    player_name->SetValue(name);
+    player_name->SetSelection( 0, player_name->GetLastPosition() );
+    player_name->SetFocus();
   }
 
   BEGIN_EVENT_TABLE(Player_Setup_Panel, wxPanel)				
@@ -1504,6 +1528,9 @@ namespace zertz
       player_page( wizard, *this ),
       dummy( wizard )
   {
+    // self register
+    game_manager.set_game_setup_display_handler( this );
+
     best_size = bounding_size( setup_manager_page.GetBestSize(), board_page.GetBestSize() );
     best_size = bounding_size( best_size, custom_board_page.GetBestSize() );
     best_size = bounding_size( best_size, custom_board_page.GetBestSize() );
@@ -1515,12 +1542,11 @@ namespace zertz
   Game_Dialog::~Game_Dialog()
   {
     wizard->Destroy();
-    if( game_setup_manager && setup_manager_page.changed_setup_manager )
+    if( game_setup_manager )
     {
       game_setup_manager->set_display_handler(0);
       delete game_setup_manager;
       game_setup_manager = 0;
-      setup_manager_page.changed_setup_manager = false;
     }
   }
 
@@ -1538,22 +1564,17 @@ namespace zertz
     //wizard->SetPageSize(best_size); doesn't help
     if( wizard->RunWizard(&setup_manager_page) )
     {
-      if( setup_manager_page.changed_setup_manager )
-	game_manager.set_game_setup_manager( game_setup_manager );
-      setup_manager_page.changed_setup_manager = false;
       assert( game_setup_manager->can_start() == Game_Setup_Manager::everyone_ready );
       game_setup_manager->start_game();
     }
     else
     {
-      if( setup_manager_page.changed_setup_manager )
-	delete game_setup_manager;
+      game_setup_manager->set_display_handler(0);
+      delete game_setup_manager;
       game_setup_manager = 0;
-      setup_manager_page.changed_setup_manager = false;
     }
 
-    //!!! check whether workaround is useful/bad
-    // workaround for wxWizard to make it posible to rerun the wizard
+    // workaround for wxWizard bug of wrong next button display
     wizard->ShowPage(&dummy);	
     dummy.Show(false);
   }
@@ -1631,6 +1652,8 @@ namespace zertz
   }
   void Game_Dialog::aborted()
   {
+    wxMessageBox( _("Connection was closed or server not reachable!"), _("disconnect"), 
+		  wxOK | wxICON_INFORMATION );
   }
 
   bool Game_Dialog::ask_new_game( wxString who ) // other player asks for a new game (true: accept)

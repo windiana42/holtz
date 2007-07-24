@@ -1293,6 +1293,9 @@ namespace zertz
       mouse_handler( game_manager, *this, sequence_generator ),
       user_activity_allowed(false)
   {
+    // self register
+    game_manager.set_ui_manager( this );
+
     load_settings();
 
     add( &game_panel );

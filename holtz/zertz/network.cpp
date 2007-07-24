@@ -47,14 +47,16 @@ namespace zertz
       clients_ready(0), clients_asked(0), asking_client(0),
       possibly_interrupted_connection(0)
   {
+    // self register
+    game_manager.set_game_setup_manager( this );
   }
 
   Network_Manager_BGP100a_Server::~Network_Manager_BGP100a_Server()
   {
-    if( display_handler )
-      display_handler->aborted();
-
     close_connections();
+
+    // self unregister
+    game_manager.set_game_setup_manager( 0 );
   }
 
   // connection commands
@@ -304,6 +306,7 @@ namespace zertz
 	  disconnect(connection);  // connection didn't accept new game
       }
     }
+    cleanup_players();
     // open new game dialog
     if( display_handler )	// there should be a display handler
 				// that may display a game setup
@@ -1070,7 +1073,7 @@ namespace zertz
       }
     }
 
-    std::set<int> &player_ids = conn_state.controlled_player_ids;
+    std::set<int> player_ids = conn_state.controlled_player_ids;
     for(std::set<int>::iterator it = player_ids.begin(); it != player_ids.end(); ++it )
     {
       int id = *it;
@@ -1584,6 +1587,28 @@ namespace zertz
     }
   }
 
+  void Network_Manager_BGP100a_Server::cleanup_players()
+  {
+    if( abandoned_player_ids.size() )
+    {
+      // discard all players
+      players.clear();
+      id_player.clear();
+      player_id_connection.clear();
+      abandoned_player_ids.clear();
+      own_player_ids.clear();
+      std::map<Message_Network<BGP::Message>*,Connection_State>::iterator it;
+      for( it=msg_net_connection_state.begin();
+	   it!=msg_net_connection_state.end(); ++it )
+      {
+	//Message_Network<BGP::Message>* connection = it->first;
+	Connection_State &conn_state = it->second;
+	conn_state.abandoned_player_ids.clear();
+	conn_state.controlled_player_ids.clear();
+      }
+    }
+  }
+
   bool Network_Manager_BGP100a_Server::process_move
   ( const Move_Sequence& move_sequence, Message_Network<BGP::Message>* connection, int player_id )
   {
@@ -1718,19 +1743,22 @@ namespace zertz
       timer(this,NETWORK_TIMER),
       msg_net_client(0),
       response_timeout(6000/*ms*/), 
+      connection_lost(false),
       display_phase(DISPLAY_INIT), game_phase(BGP::phase_setup),
       sequence_available(false), awaiting_move(false), asking_new_game(false), 
       asking_undo(false), error_recovery_attempts(0)
   {
     conn_state.state = BGP_UNCONNECTED;
+    // self register
+    game_manager.set_game_setup_manager( this );
   }
 
   Network_Manager_BGP100a_Client::~Network_Manager_BGP100a_Client()
   {
-    if( display_handler )
-      display_handler->aborted();
-
     close_connection();
+
+    // self unregister
+    game_manager.set_game_setup_manager( 0 );
   }
 
   //--------------------
@@ -1741,10 +1769,18 @@ namespace zertz
   bool Network_Manager_BGP100a_Client::connect_to_server( std::string host, int port )
   {
     close_connection();
-    conn_state.state = BGP_UNCONNECTED;
     conn_state.name = host + ":" + long_to_string(port);
+    connection_lost = false;
     msg_net_client = new Message_Network_Client<BGP::Message>(host,port,this);
-    return true;		// on_lost will be called on failure
+    if( connection_lost )
+      return false;
+    else
+    {
+      // setup timeout
+      start_timer(response_timeout);
+
+      return true;		// on_lost may be called later on failure
+    }
   }
 
   void Network_Manager_BGP100a_Client::close_connection()
@@ -1936,6 +1972,7 @@ namespace zertz
     asking_new_game = false;
     display_phase = DISPLAY_INIT;
     game_phase = BGP::phase_setup;
+    cleanup_players();
     // open new game dialog
     if( display_handler )	// there should be a display handler
 				// that may display a game setup
@@ -2319,11 +2356,15 @@ namespace zertz
 	    case BGP::msg_tell_setup:
 	    {
 	      BGP::Msg_Tell_Setup *det_msg = static_cast<BGP::Msg_Tell_Setup*>(message);
-	      process_setup(det_msg->get_setup());
-	      conn_state.state = BGP_PLAY_PREPARE_4A;
-	      // setup timeout
-	      start_timer(response_timeout);
-	      // wait for follow-up message
+	      if( process_setup(det_msg->get_setup()) )
+	      {
+		conn_state.state = BGP_PLAY_PREPARE_4A;
+		// setup timeout
+		start_timer(response_timeout);
+		// wait for follow-up message
+	      }
+	      else
+		invalid = true;
 	      break;
 	    }
 	    default: invalid = true; break;
@@ -2339,8 +2380,10 @@ namespace zertz
 	    {
 	      BGP::Msg_Tell_Moves *det_msg = static_cast<BGP::Msg_Tell_Moves*>(message);
 	      game.set_players(list_to_vector(players));
-	      process_moves(det_msg->get_moves());
-	      start_game();
+	      if( process_moves(det_msg->get_moves()) )
+		start_game();
+	      else
+		invalid = true;
 	      break;
 	    }
 	    default: invalid = true; break;
@@ -2496,8 +2539,7 @@ namespace zertz
 	      {
 		std::string name = det_msg->get_host_nick();
 		if( name=="" ) 
-		  name = msg_net_client->get_remote_host() + ":" 
-		    + long_to_string(msg_net_client->get_remote_port());
+		  name = conn_state.name;
 		conn_state.state = BGP_ACCEPT_NEW_GAME;
 		if( display_handler->ask_new_game(str_to_wxstr(name)) )
 		{
@@ -2728,6 +2770,7 @@ namespace zertz
   // is called when connection was closed or couldn't be established
   void Network_Manager_BGP100a_Client::on_lost( Message_Network<BGP::Message> *connection )
   {
+    connection_lost = true;
     if(connection != msg_net_client) return;  // already disconnected ?
 #ifndef __WXMSW__
     std::cerr << "Client Error - Connection Lost!" << std::endl;
@@ -2781,6 +2824,18 @@ namespace zertz
     switch(conn_state.state)
     {
       case BGP_UNCONNECTED:
+	if( connection->get_socket()->Error() )
+	{
+	  // this happens in case of the client connecting to an
+	  // unreachable host but even no negative response is sent by
+	  // routers (it can also happen just if connecting takes more
+	  // than <response_timeout>)
+	  msg_net_client->set_handler(0);
+	  delete msg_net_client;
+	  msg_net_client = 0;
+	  if( display_handler )
+	    display_handler->aborted();
+	}
 	break;
       case BGP_HANDSHAKE:
       case BGP_ROOMS:
@@ -2858,6 +2913,9 @@ namespace zertz
     msg_net_client->set_handler(0);
     delete msg_net_client;
     msg_net_client = 0;
+
+    if( display_handler )
+      display_handler->aborted();
   }
 
   void Network_Manager_BGP100a_Client::start_timer(int milliseconds)
@@ -2940,8 +2998,7 @@ namespace zertz
 	player.input = this;
 	if(player.host == "" && msg_net_client->is_connected())
 	{
-	  player.host = msg_net_client->get_remote_host() + ":" 
-	    + long_to_string(msg_net_client->get_remote_port());
+	  player.host = conn_state.name;
 	}
       }
     }
@@ -2962,6 +3019,26 @@ namespace zertz
       int id = *denied_it;
       own_player_ids.erase(id);
     }
+  }
+
+  void Network_Manager_BGP100a_Client::cleanup_players()
+  {
+    bool done;
+    // remove all remote players since they are managed by the server
+    do{
+      done = true;
+      std::list<Player>::iterator it;
+      for( it=players.begin(); it!=players.end(); ++it )
+      {
+	Player &player = *it;
+	if( player.origin == Player::remote )
+	{
+	  players.erase(it);	// iterator might be affected by erase
+	  done = false;
+	  break;	
+	}
+      }
+    }while(!done);
   }
 
   bool Network_Manager_BGP100a_Client::process_setup( BGP::Setup setup )

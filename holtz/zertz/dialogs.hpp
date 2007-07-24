@@ -63,7 +63,6 @@ namespace zertz
   private:
     Game_Dialog &game_dialog;
     bool changes;
-    bool changed_setup_manager;
 
     Network_Clients_Dialog *clients_dialog;
 
@@ -208,6 +207,7 @@ namespace zertz
     void update_status_display();
   private:
     wxString get_default_name( int player_num );
+    void set_player_name( wxString name );
 
     Game_Dialog &game_dialog;
 

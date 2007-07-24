@@ -245,12 +245,6 @@ namespace holtz
     zertz_gui_manager  = new zertz::WX_GUI_Manager( *zertz_game_manager, *this );
     zertz_game_dialog  = new zertz::Game_Dialog( this, *zertz_game_manager, *zertz_gui_manager );
 
-    zertz_game_manager->set_ui_manager( zertz_gui_manager );
-    zertz::Standalone_Game_Setup_Manager *game_setup_manager 
-      = new zertz::Standalone_Game_Setup_Manager( *zertz_game_manager );
-    zertz_game_manager->set_game_setup_manager( game_setup_manager );
-    game_setup_manager->set_display_handler( zertz_game_dialog );
-
     active_game = ZERTZ;
     refresh();
   }
@@ -277,7 +271,7 @@ namespace holtz
     dvonn_game_manager = new dvonn::Game_Manager();
     dvonn_gui_manager  = new dvonn::WX_GUI_Manager( *dvonn_game_manager, *this );
     dvonn_game_dialog  = new dvonn::Game_Dialog( this, *dvonn_game_manager, *dvonn_gui_manager );
-
+    // todo: simplify like done for zertz and don't initialize with standalone
     dvonn_game_manager->set_ui_manager( dvonn_gui_manager );
     dvonn::Standalone_Game_Setup_Manager *game_setup_manager 
       = new dvonn::Standalone_Game_Setup_Manager( *dvonn_game_manager );
