@@ -237,6 +237,7 @@ namespace zertz
     void check_all_ready();		    // check whether all clients are ready 
     bool check_all_answered();		    // check whether all clients answered a request
     void setup_players();		    // setup players for local use
+    void cleanup_players();
     bool process_move( const Move_Sequence&, Message_Network<BGP::Message>* connection=0, 
 		       int player_id=-1 );  // process a move and initiate consequences
     void process_deferred_messages();       // process all messages that were deferred
@@ -389,6 +390,7 @@ namespace zertz
     void do_add_player( const Player&, bool local );   // actually add player
     void do_remove_player( int player_id ); // actually remove player
     void setup_players();
+    void cleanup_players();
     bool process_setup( BGP::Setup );
     bool process_moves( std::list<Move_Sequence> );
     bool process_move( const Move_Sequence&, bool local, int player_id=-1 );
@@ -408,6 +410,7 @@ namespace zertz
     std::map<int,std::list<Player>::iterator> id_player; // Table id->player
     std::set<int> own_player_ids;
 
+    bool connection_lost;
     Display_Phase display_phase;
     BGP::Phase_Type game_phase;
     Connection_State conn_state;

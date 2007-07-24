@@ -41,8 +41,9 @@ namespace zertz
   // ----------------------------------------------------------------------------
 
   Game_Manager::Game_Manager( Game_UI_Manager *ui_manager )
-    : game_setup_manager(0), ui_manager(ui_manager), game(Standard_Ruleset()), 
-      ai(*this, ui_manager), undo_requested(false), new_game_requested(false)
+    : game_setup_manager(0), game_setup_display_handler(0), ui_manager(ui_manager), 
+      game(Standard_Ruleset()), ai(*this, ui_manager), 
+      undo_requested(false), new_game_requested(false)
   {
   }
 
@@ -125,15 +126,22 @@ namespace zertz
     }
     else
     {
-      new_game_requested = true;
       if( ui_manager )
 	ui_manager->stop_user_activity();
-      assert( game_setup_manager );
-      switch( game_setup_manager->ask_new_game() )
+      if( game_setup_manager )
       {
-	case Game_Setup_Manager::accept: new_game_accepted(); break;
-	case Game_Setup_Manager::deny:   new_game_denied(); break;
-	case Game_Setup_Manager::wait_for_answer: break;
+	new_game_requested = true;
+	switch( game_setup_manager->ask_new_game() )
+	{
+	  case Game_Setup_Manager::accept: new_game_accepted(); break;
+	  case Game_Setup_Manager::deny:   new_game_denied(); break;
+	  case Game_Setup_Manager::wait_for_answer: break;
+	}
+      }
+      else if( game_setup_display_handler )
+      {
+	stop_game();
+	game_setup_display_handler->game_setup();
       }
     }
   }
@@ -359,8 +367,10 @@ namespace zertz
 
   Standalone_Game_Setup_Manager::Standalone_Game_Setup_Manager( Game_Manager &game_manager )
     : game_manager(game_manager), display_handler(0), game( game_manager.get_game() ), 
-      current_id(42), players( vector_to_list(game.players) )
+      current_id(42)
   {
+    // self register
+    game_manager.set_game_setup_manager( this );
     // init id map
     std::list<Player>::iterator i;
     for( i = players.begin(); i != players.end(); ++i )
@@ -372,8 +382,12 @@ namespace zertz
   Standalone_Game_Setup_Manager::~Standalone_Game_Setup_Manager()
   {
     stop_game();
+
     if( display_handler )
       display_handler->aborted();
+
+    // self unregister
+    game_manager.set_game_setup_manager( 0 );
   }
 
   Game_Setup_Manager::Type Standalone_Game_Setup_Manager::get_type()
@@ -551,7 +565,5 @@ namespace zertz
   void Standalone_Game_Setup_Manager::game_setup_entered()
   {
   }
-
-  
 }
 

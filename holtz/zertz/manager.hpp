@@ -130,10 +130,13 @@ namespace zertz
     inline const Game &get_game() { return game; }
     inline Game_Setup_Manager *get_game_setup_manager() { return game_setup_manager; }
 
-    inline void set_game_setup_manager( Game_Setup_Manager *sm ) // set by Game_Dialog
-    { delete game_setup_manager; game_setup_manager = sm; }
+    inline void set_game_setup_manager( Game_Setup_Manager *sm )
+    { game_setup_manager = sm; }
+    inline void set_game_setup_display_handler( Game_Setup_Display_Handler *sm )
+    { game_setup_display_handler = sm; }
   private:
     Game_Setup_Manager *game_setup_manager;
+    Game_Setup_Display_Handler *game_setup_display_handler;
     Game_UI_Manager *ui_manager;
     Game game;
     

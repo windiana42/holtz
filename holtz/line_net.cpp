@@ -162,6 +162,9 @@ namespace holtz
 	do_send();
 	break;
       case wxSOCKET_LOST:
+#ifndef __WXMSW__
+	std::cerr << "Debug: connection lost" << std::endl;
+#endif
 	if( line_handler )
 	  line_handler->on_lost(this);
 	connection_state = lost;
@@ -240,7 +243,7 @@ namespace holtz
     address.Service( port );
 
     connection_state = connecting;
-    client_socket->Connect( address, false );
+    client_socket->Connect( address, false /*no wait for connect*/ );
   }
 
   // ----------------------------------------------------------------------------

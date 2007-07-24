@@ -1538,8 +1538,6 @@ namespace dvonn
 
     if( wizard->RunWizard(&setup_manager_page) )
     {
-      if( setup_manager_page.changed_setup_manager )
-	game_manager.set_game_setup_manager( game_setup_manager );
       setup_manager_page.changed_setup_manager = false;
       assert( game_setup_manager->can_start() == Game_Setup_Manager::everyone_ready );
       game_setup_manager->start_game();
