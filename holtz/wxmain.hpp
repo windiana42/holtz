@@ -29,6 +29,18 @@ namespace holtz
 
 #include <wx/wx.h>
 
+// ============================================================================
+// declarations
+// ============================================================================
+
+#ifdef __WXMSW__
+#define DRAW_BACKGROUND
+#define DOUBLE_BUFFER
+#else
+#define DRAW_BACKGROUND
+#define DOUBLE_BUFFER
+#endif
+
 namespace holtz
 {
   // ==========================================================================

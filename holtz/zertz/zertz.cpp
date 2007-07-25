@@ -3339,6 +3339,7 @@ namespace zertz
 	break;
     }
     assert(false);
+    return Field_Pos();
   }
 
   void Sequence_Generator::reset()

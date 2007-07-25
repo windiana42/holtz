@@ -47,6 +47,7 @@ namespace zertz
   public:
     virtual void new_connection( std::string name, Basic_Network_Server::Connection_Id conn_id ) = 0;
     virtual void closed_connection( Basic_Network_Server::Connection_Id conn_id ) = 0;
+    virtual void destroy() = 0;
 
     virtual ~Network_Connection_Handler() {}
   };

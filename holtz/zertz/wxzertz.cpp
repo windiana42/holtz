@@ -21,9 +21,9 @@
 // compiled in picture set
 //#define PURIST_50
 //#define HEX_50
-#define HEX_70
+//#define HEX_70
 //#define HEX_100
-//#define EINS
+#define EINS
 
 // ----------------------------------------------------------------------------
 // headers
@@ -179,6 +179,7 @@ namespace zertz
       unsigned char *field_stone_data  = field_stone_image.GetData();
       unsigned char *field_stone_alpha = field_stone_image.GetAlpha();
       unsigned char *stone_data        = stone_image.GetData();
+      unsigned char *stone_alpha       = stone_image.GetAlpha();
       unsigned char mask_colour[3];
       mask_colour[0] = stone_image.GetMaskRed();
       mask_colour[1] = stone_image.GetMaskGreen();
@@ -191,26 +192,57 @@ namespace zertz
       for( int x = 0; x < min_width; ++x )
         for( int y = 0; y < min_height; ++y )
 	{
-	  bool masked = true;
-	  for( int c = 0; c < 3; ++c )
+	  if( stone_alpha && field_stone_alpha )
 	  {
-	    if( mask_colour[c] != stone_data[(x+y*stone_image.GetWidth())*3 + c] )
-	    {
-	      masked = false;
-	      break;
-	    }
-	  }
-	  if( !masked )
-	  {
+	    int sa = stone_alpha[x+y*stone_image.GetWidth()];
+	    int fa = field_stone_alpha[x+y*stone_image.GetWidth()];
+	    int smul = sa;
+	    int fmul = (1-sa/255.)*fa;
+	    int na = max(sa,fa);
 	    for( int c = 0; c < 3; ++c )
 	    {
-	      field_stone_data[(x+y*field_stone_image.GetWidth())*3 + c] = 
-		stone_data[(x+y*stone_image.GetWidth())*3 + c];
+	      int s = stone_data[(x+y*stone_image.GetWidth())*3 + c];
+	      int f = field_stone_data[(x+y*stone_image.GetWidth())*3 + c];
+	      if( smul+fmul > 0 )
+		field_stone_data[(x+y*stone_image.GetWidth())*3 + c]
+		  = ( s * smul + f * fmul ) / (smul+fmul); // apply weightings
+	      else
+		na = 0;
 	    }
-	    if( field_stone_alpha )
-	      field_stone_alpha[(x+y*field_stone_image.GetWidth())] = 255;
+	    field_stone_alpha[x+y*stone_image.GetWidth()] = na;
+	  }
+	  else
+	  {
+	    // fall-back implementation for no/partial alpha support
+ 	    bool masked = true;
+	    for( int c = 0; c < 3; ++c )
+	    {
+	      if( mask_colour[c] != stone_data[(x+y*stone_image.GetWidth())*3 + c] )
+	      {
+		masked = false;
+		break;
+	      }
+	    }
+	    if( stone_alpha )
+	      if( stone_alpha[x+y*stone_image.GetWidth()] < 255 )
+		masked = true; // consider using alpha as half transparency
+	    if( !masked )
+	    {
+	      for( int c = 0; c < 3; ++c )
+	      {
+		field_stone_data[(x+y*field_stone_image.GetWidth())*3 + c] = 
+		  stone_data[(x+y*stone_image.GetWidth())*3 + c];
+	      }
+	      if( field_stone_alpha )
+		field_stone_alpha[(x+y*field_stone_image.GetWidth())] = 255;
+	    }
 	  }
 	}
+      // !! workaround for bitmap->image->bitmap convertion loosing alpha
+      wxImage field_empty_image (normal.field_bitmaps[field_empty].ConvertToImage());
+      normal.field_bitmaps[field_empty] = wxBitmap(field_empty_image);
+      // !! end workaround
+
       Field_State_Type field_type = Field_State_Type(stone_type);
       assert( Board::is_stone( field_type ) );
       normal.field_bitmaps[field_type] = wxBitmap(field_stone_image);
@@ -1635,7 +1667,7 @@ namespace zertz
     }
     if( !ok )
     {
-      buf = wxT(DEFAULT_SKIN_FILE);
+      buf = str_to_wxstr(DEFAULT_SKIN_FILE);
       if( wxFileExists(buf) )
       {
 	if( load_skin( buf ) )
@@ -1694,7 +1726,7 @@ namespace zertz
     }
     if( !ok )
     {
-      buf = wxT(DEFAULT_BEEP_FILE);
+      buf = str_to_wxstr(DEFAULT_BEEP_FILE);
       if( wxFileExists(buf) )
       {
 	if( load_beep(buf) )
