@@ -59,18 +59,6 @@ namespace dvonn
   class Settings_Dialog;
 }
 
-// ============================================================================
-// declarations
-// ============================================================================
-
-#ifdef __WXMSW__
-#define DRAW_BACKGROUND
-#define DOUBLE_BUFFER
-#else
-#define DRAW_BACKGROUND
-#define DOUBLE_BUFFER
-#endif
-
 namespace dvonn
 {
   using namespace holtz;

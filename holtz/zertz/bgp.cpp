@@ -417,10 +417,10 @@ namespace zertz
 	// check input
 	if( (white_stones < 0) || (grey_stones < 0) || (black_stones < 0) )
 	  return false;
-	std::list<Player>::const_iterator i;
-	for( i = players.begin(); i != players.end(); ++i )
+	std::list<Player>::const_iterator it;
+	for( it = players.begin(); it != players.end(); ++it )
 	{
-	  if( i->id == player_id )
+	  if( it->id == player_id )
 	    return false;
 	}
 	
@@ -511,10 +511,10 @@ namespace zertz
 	player.id = player_id;
 
 	// check input
-	std::list<Player>::const_iterator i;
-	for( i = players.begin(); i != players.end(); ++i )
+	std::list<Player>::const_iterator it;
+	for( it = players.begin(); it != players.end(); ++it )
 	{
-	  if( i->id == player_id )
+	  if( it->id == player_id )
 	    return false;
 	}
 	

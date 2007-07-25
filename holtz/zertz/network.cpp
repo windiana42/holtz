@@ -57,6 +57,8 @@ namespace zertz
 
     // self unregister
     game_manager.set_game_setup_manager( 0 );
+    if( connection_handler )
+      connection_handler->destroy();
   }
 
   // connection commands
@@ -361,6 +363,7 @@ namespace zertz
 #endif
 	// Server fooled itself, this should not happen!
 	assert(false);
+	return Player_Input::wait_for_event;
       }
       else
       {

@@ -918,7 +918,7 @@ namespace zertz
   DEFINE_EVENT_TYPE(EVT_AI_REPORT_HINT) //**/
   DEFINE_EVENT_TYPE(EVT_AI_FINISHED)    //**/
 
-  IMPLEMENT_DYNAMIC_CLASS(AI_Event, wxEvent) //**/
+  IMPLEMENT_DYNAMIC_CLASS( zertz::AI_Event, wxEvent ) //**/
 
   AI_Event::AI_Event()
     : wxEvent(-1)

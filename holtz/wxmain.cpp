@@ -389,7 +389,8 @@ namespace holtz
   
   void Game_Window::OnDraw( wxDC &_dc )
   {
-    if( active_game == NO_GAME ) return;
+    if( active_game == NO_GAME ) 
+      return;
 
     // prepare background:
     int width, width2; 
@@ -471,7 +472,12 @@ namespace holtz
   }
   void Game_Window::on_erase_background( wxEraseEvent &event )
   {
-    // do nothing, just don't erase background...
+    if( active_game == NO_GAME ) 
+      event.Skip(); // execute parent handler for this event
+    else
+    {
+      // do nothing, just don't erase background...
+    }
   }
   void Game_Window::on_mouse_event( wxMouseEvent &event )
   {
@@ -529,7 +535,7 @@ namespace holtz
   // frame constructor
   Main_Frame::Main_Frame( const wxString& title )
     : wxFrame( /*paRent*/0, /*id*/-1, title, restore_position(), restore_size(), 
-	       wxDEFAULT_FRAME_STYLE | wxHSCROLL | wxVSCROLL ),
+	       wxDEFAULT_FRAME_STYLE ),
       game_window(this),
       setting_menu(0)
   {

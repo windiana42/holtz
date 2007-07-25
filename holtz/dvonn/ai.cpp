@@ -122,7 +122,7 @@ namespace dvonn
   // ----------------------------------------------------------------------------
 
   Position::Position( Game &game )
-    : knock_out_possible( game.board.is_knock_out_possible() ),
+    : knock_out_possible( false ),
       expanded(0), rating(0), handler(0)
   {
   }
@@ -144,7 +144,7 @@ namespace dvonn
 				      Field_Iterator from, Field_Iterator over, Field_Iterator to )
   {
     bool ret = true;
-
+/*
     Move *move = new Knock_Out_Move( from.get_pos(), over.get_pos(), to.get_pos() );
     assert( move->check_move( game ) );
     bool ok = sequence.add_move( game, move );
@@ -190,6 +190,7 @@ namespace dvonn
       sequence.undo_last_move( game );
     }
     sequence.undo_last_move( game );
+    */
     return ret;
   }
 
@@ -197,6 +198,7 @@ namespace dvonn
 				Field_Permutation &field_permutation, bool expand_first )
   {
     bool ret = true;
+/*
     Move_Sequence sequence;
 
     Move *move = new Set_Move( to.get_pos(), type );
@@ -252,6 +254,7 @@ namespace dvonn
       ret = add_branch( game, new Branch( sequence.clone(), Position(knock_out_possible) ) );
     }
     sequence.undo_sequence( game );
+    */
     return ret;
   }
 
@@ -272,7 +275,7 @@ namespace dvonn
     sorted_positions.clear();
     
     bool go_on = true;
-
+/*
     if( knock_out_possible )
     {
       Field_Pos pos;
@@ -397,6 +400,7 @@ namespace dvonn
     }
     if( go_on ) 
       expanded = true;
+*/
   }
 
   void Position::set_expanded_handler( Position_Expanded_Handler *_handler )
@@ -443,7 +447,7 @@ namespace dvonn
   {
     stone_types.resize(3);
     stone_types[0] = Stones::white_stone;
-    stone_types[1] = Stones::grey_stone;
+    stone_types[1] = Stones::red_stone;
     stone_types[2] = Stones::black_stone;
     real_average_time = average_time;
   }
@@ -569,9 +573,11 @@ namespace dvonn
   double AI::rate_player( Player &player )
   {
     double rate = 0;
+    /*
     rate += player.stones.stone_count[Stones::white_stone] * rate_white;
-    rate += player.stones.stone_count[Stones::grey_stone]  * rate_grey;
+    rate += player.stones.stone_count[Stones::red_stone]   * rate_grey;
     rate += player.stones.stone_count[Stones::black_stone] * rate_black;
+    */
     return rate;
   }
 
@@ -918,7 +924,7 @@ namespace dvonn
   DEFINE_EVENT_TYPE(EVT_AI_REPORT_HINT) //**/
   DEFINE_EVENT_TYPE(EVT_AI_FINISHED)    //**/
 
-  IMPLEMENT_DYNAMIC_CLASS(AI_Event, wxEvent) //**/
+  IMPLEMENT_DYNAMIC_CLASS( dvonn::AI_Event, wxEvent ) //**/
 
   AI_Event::AI_Event()
     : wxEvent(-1)
@@ -1047,10 +1053,12 @@ namespace dvonn
 
   void AI_Input::on_report_hint( AI_Event &event )
   {
+    /*
     if( thread_active && (event.thread == thread) && give_hints && ui_manager )
     {
       ui_manager->give_hint( event.ai_result );
     }
+    */
   }
 
   void AI_Input::on_finished( AI_Event &event )

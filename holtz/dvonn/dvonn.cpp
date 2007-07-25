@@ -3003,6 +3003,7 @@ namespace dvonn
 	return Field_Pos();
     }
     assert(false);
+    return Field_Pos();
   }
 
   void Sequence_Generator::reset()

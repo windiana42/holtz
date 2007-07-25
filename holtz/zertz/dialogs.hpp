@@ -406,6 +406,7 @@ namespace zertz
 
     virtual void new_connection( std::string name, Basic_Network_Server::Connection_Id conn_id );
     virtual void closed_connection( Basic_Network_Server::Connection_Id conn_id );
+    virtual void destroy();
 
     void on_disconnect( wxCommandEvent& event );
     void on_dclick( wxCommandEvent& event );
@@ -414,6 +415,7 @@ namespace zertz
     std::map<void*,Basic_Network_Server::Connection_Id> client_data;
     std::map<Basic_Network_Server::Connection_Id,int> client_item;
     Basic_Network_Server &network_server;
+    bool destroyed;
 
     // any class wishing to process wxWindows events must use this macro
     DECLARE_EVENT_TABLE()	//**/

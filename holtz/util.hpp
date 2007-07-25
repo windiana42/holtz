@@ -38,6 +38,9 @@
 
 namespace holtz
 {
+  template<typename T> inline T min(T t1, T t2) { return t1 < t2 ? t1 : t2; }
+  template<typename T> inline T max(T t1, T t2) { return t1 > t2 ? t1 : t2; }
+
   inline int random( int min, int max )
   {
     assert( max > min );
@@ -134,7 +137,7 @@ namespace std
       if( (i < 0) || (i > 1) )	// i should be '1' for true or '0' for false
 	error = true;
       else
-	var = i;		
+	var = i ? true : false;		
       error = error || is.fail();
       return *this;
     }

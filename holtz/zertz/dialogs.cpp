@@ -1569,9 +1569,12 @@ namespace zertz
     }
     else
     {
-      game_setup_manager->set_display_handler(0);
-      delete game_setup_manager;
-      game_setup_manager = 0;
+      if( game_setup_manager )
+      {
+	game_setup_manager->set_display_handler(0);
+	delete game_setup_manager;
+	game_setup_manager = 0;
+      }
     }
 
     // workaround for wxWizard bug of wrong next button display
@@ -2187,7 +2190,7 @@ namespace zertz
   Network_Clients_Dialog::Network_Clients_Dialog( wxWindow *parent, 
 						  Basic_Network_Server &network_server )
     : wxDialog(),
-      network_server(network_server)
+      network_server(network_server), destroyed(false)
   {
 	// create the dialog
 #ifdef __WXMSW__ // this has to be done before the dialog is created, ...
@@ -2250,14 +2253,22 @@ namespace zertz
 	--check_item;
     }
   }
-  
+
+  void Network_Clients_Dialog::destroy()
+  {
+    destroyed=true;
+    this->Destroy();
+  }
+
   void Network_Clients_Dialog::on_disconnect( wxCommandEvent& WXUNUSED(event) )
   {
+    if( destroyed ) return;
     network_server.close_connections();
   }
 
   void Network_Clients_Dialog::on_dclick( wxCommandEvent& event )
   {
+    if( destroyed ) return;
     Basic_Network_Server::Connection_Id conn_id = client_data[event.GetClientData()];
     wxString hostname = event.GetString();
     if( network_server.may_disconnect_id( conn_id ) )

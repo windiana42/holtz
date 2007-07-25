@@ -1218,7 +1218,7 @@ namespace dvonn
     if( game_dialog.game_setup_manager )
     {
       int item = player_list->GetSelection();
-      if( (item >= 0) && (item < player_list->GetCount()-1) )
+      if( (item >= 0) && (item < (int)player_list->GetCount()-1) )
       {
 	if( !game_dialog.game_setup_manager->player_down( item_player[item] ) )
 	{
@@ -1306,7 +1306,7 @@ namespace dvonn
   void Player_Setup_Panel::player_down( const Player &player )
   {
     int item = player_item[player.id];
-    if( item < player_list->GetCount() - 1 )
+    if( item < (int)player_list->GetCount() - 1 )
     {
       int item0 = item;
       int item1 = item + 1;
@@ -1541,13 +1541,6 @@ namespace dvonn
       setup_manager_page.changed_setup_manager = false;
       assert( game_setup_manager->can_start() == Game_Setup_Manager::everyone_ready );
       game_setup_manager->start_game();
-    }
-    else
-    {
-      if( setup_manager_page.changed_setup_manager )
-	delete game_setup_manager;
-      game_setup_manager = 0;
-      setup_manager_page.changed_setup_manager = false;
     }
 
     // workaround for wxWizard to make it posible to rerun the wizard
