@@ -1,0 +1,8 @@
+#!/bin/sh
+for i in */skin/; do
+  skin_name=$(echo $i | sed "s/\([^/]*\)\/skin\//\1/");
+  echo "Packing skin $skin_name..."
+  cd $i;
+  zip ../../$skin_name.zip *.png skin.ini;
+  cd ../..;
+done
