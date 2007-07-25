@@ -1,0 +1,10 @@
+#!/bin/sh
+for i in *.zip; do
+  skin_name=$(basename $i .zip);
+  echo "Unpacking skin $skin_name...";
+  mkdir $skin_name;
+  mkdir $skin_name/skin/;
+  cd $skin_name/skin/;
+  unzip ../../$skin_name.zip;
+  cd ../..;
+done
