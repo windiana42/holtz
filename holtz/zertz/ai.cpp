@@ -865,6 +865,7 @@ namespace zertz
 
   wxThread::ExitCode AI_Thread::Entry()
   {
+    // determine move (get_move()) while blocking the AI thread
     if( give_hints_only )
     {
       get_move(game);

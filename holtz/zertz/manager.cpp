@@ -276,35 +276,7 @@ namespace zertz
     else
     {
       undo_requested = false;
-
-      if( ui_manager )
-	ui_manager->stop_user_activity(); // disable user input 
-      // !!! also for non mouse players!!!
-
-      bool error = false;
-      for( int i=0; i<num_undo_moves; ++i )
-      {
-	if( !game.undo_move() )
-	{
-	  error = true;
-	  num_undo_moves = i;		// reduce number of undo moves
-	  if( ui_manager )
-	    ui_manager->report_error(_("Undo move failed"),_("Undo failed"));
-	  break;
-	}
-      }
-      /*
-      if( ui_manager )
-	ui_manager->update_board( game ); // update board display
-      */
-      if( ui_manager )
-      {
-	(new Undo_Animation(*this, num_undo_moves))->step();
-	if( error )
-	  ui_manager->report_error(_("Undo move failed"),_("Undo failed"));
-      }
-      else
-	continue_game();
+      do_undo_moves( num_undo_moves );
     }
   }
 
@@ -321,6 +293,36 @@ namespace zertz
       if( ui_manager )
 	ui_manager->report_information(_("Requested undo was denied"),_("Undo denied"));
     }
+  }
+
+  void Game_Manager::do_undo_moves( int n )
+  {
+    if( ui_manager )
+      ui_manager->stop_user_activity(); // disable user input 
+    // !!! also for non mouse players!!!
+
+    bool error = false;
+    for( int i=0; i<n; ++i )
+    {
+      if( !game.undo_move() )
+      {
+	error = true;
+	n = i;		// reduce number of undo moves
+	break;
+      }
+    }
+    /*
+      if( ui_manager )
+      ui_manager->update_board( game ); // update board display
+    */
+    if( ui_manager )
+    {
+      if( error )
+	ui_manager->report_error(_("Undo move failed"),_("Undo failed"));
+      (new Undo_Animation(*this, n))->step();  // will call continue_game
+    }
+    else
+      continue_game();
   }
 
   void Game_Manager::stop_game()
@@ -511,6 +513,11 @@ namespace zertz
   std::list<Player> Standalone_Game_Setup_Manager::enable_player_feedback() 
   {
     return players;
+  }
+
+  // disables feedback about player changes
+  void Standalone_Game_Setup_Manager::disable_player_feedback()  
+  {
   }
 
   // whether this player can choose a board to play

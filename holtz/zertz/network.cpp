@@ -39,13 +39,12 @@ namespace zertz
       timer(this,NETWORK_TIMER),
       msg_net_server(this),
       max_connections(15), allow_visitors(true), response_timeout(6000/*ms*/),
-      current_id(11), current_player_id(101), display_phase(DISPLAY_INIT), 
-      game_phase(BGP::phase_setup), disable_new_connections(false), 
-      is_ready(false), sequence_available(false), awaiting_move(false), 
-      asking_new_game(false), asking_undo(false), asking_done(false), 
-      answer(false), clients_in_setup(1), 
-      clients_ready(0), clients_asked(0), asking_client(0),
-      possibly_interrupted_connection(0)
+      current_id(11), current_player_id(101),
+      display_phase(DISPLAY_INIT), game_phase(BGP::phase_setup), 
+      disable_new_connections(false), is_ready(false), sequence_available(false), 
+      awaiting_move(false), asking_new_game(false), asking_undo(false), asking_done(false), 
+      answer(false), clients_in_setup(1), clients_ready(0), clients_asked(0), asking_client(0),
+      asking_n(0), possibly_interrupted_connection(0)
   {
     // self register
     game_manager.set_game_setup_manager( this );
@@ -107,6 +106,10 @@ namespace zertz
   {
     assert( does_include(id_connection, id) );
     disconnect(id_connection[id]);
+  }
+  void Network_Manager_BGP100a_Server::allow_connect( bool allow )
+  {
+    disable_new_connections = !allow;
   }
 
   //-------------------------------------------
@@ -188,6 +191,13 @@ namespace zertz
     return players;
   }
 
+  // disables feedback about player changes
+  void Network_Manager_BGP100a_Server::disable_player_feedback() 
+  {
+    if(display_phase == DISPLAY_SETUP)
+      display_phase = DISPLAY_INIT;
+  }
+
   // whether this player can choose a board to play
   bool Network_Manager_BGP100a_Server::can_choose_board() 
   {
@@ -236,6 +246,7 @@ namespace zertz
   // request to play new game
   Game_Setup_Manager::Answer_Type Network_Manager_BGP100a_Server::ask_new_game()
   {
+    if( !game.players.size() || game_phase == BGP::phase_setup ) return accept;
     int id = game.get_current_player().id;
     if( !does_include(own_player_ids,id) )
     {
@@ -246,8 +257,13 @@ namespace zertz
       return deny;
     else
     {
-      if( check_all_answered() )
-	return accept;
+      if( check_all_answered(false/*don't answer local*/) )
+      {
+	if( answer )
+	  return accept;
+	else 
+	  return deny;
+      }
       else
 	return wait_for_answer;
     }
@@ -255,11 +271,27 @@ namespace zertz
   // request to undo n half moves
   Game_Setup_Manager::Answer_Type Network_Manager_BGP100a_Server::ask_undo_moves(int n)
   {
-    // !!! intentional fault injection: !!!
-    BGP::Msg_Move msg(0,Move_Sequence());
-    broadcast(&msg);
-
-    return deny;
+    if( !game.players.size() || game_phase == BGP::phase_setup ) return accept;
+    int id = game.get_current_player().id;
+    if( !does_include(own_player_ids,id) )
+    {
+      return deny;		// only allow new game when its the players turn
+    }
+    // send request
+    if( !do_ask_undo(n,0/*local*/) )
+      return deny;
+    else
+    {
+      if( check_all_answered(false/*don't answer local*/) )
+      {
+	if( answer )
+	  return accept;
+	else 
+	  return deny;
+      }
+      else
+	return wait_for_answer;
+    }
   }
   // force new game (may close connections)
   void Network_Manager_BGP100a_Server::force_new_game()
@@ -267,11 +299,11 @@ namespace zertz
     // reset local state
     display_phase = DISPLAY_INIT;
     game_phase = BGP::phase_setup;
-    disable_new_connections = false;
     is_ready = false;
     sequence_available = false;
     awaiting_move = false;
     asking_new_game = false;
+    asking_undo = false;
     clients_ready = 0;
     clients_in_setup = 1; 
     // reset connection states (no concurrency)
@@ -779,6 +811,13 @@ namespace zertz
 		invalid=true;
 	      break;
 	    }
+	    case BGP::msg_ask_undo:
+	    {
+	      BGP::Msg_Ask_Undo *det_msg = static_cast<BGP::Msg_Ask_Undo*>(message);
+	      if(!do_ask_undo(det_msg->get_n(),connection)) 
+		invalid=true;
+	      break;
+	    }
 	    default: invalid = true; break;
 	  }
 	  break;
@@ -802,6 +841,37 @@ namespace zertz
 	    {
 	      conn_state.state = BGP_OTHERS_TURN;
 	      if( !asking_new_game || clients_asked == 0 ) invalid = true;
+	      else
+	      {
+		answer = false;
+		--clients_asked;
+		check_all_answered();
+	      }
+	      break;
+	    }
+	    default: invalid = true; break;
+	  }
+	  break;
+	}
+	case BGP_ACCEPT_UNDO:
+	{
+	  switch( message->get_type() )
+	  {
+	    case BGP::msg_accept:
+	    {
+	      conn_state.state = BGP_OTHERS_TURN;
+	      if( !asking_undo || clients_asked == 0 ) invalid = true;
+	      else
+	      {
+		--clients_asked;
+		check_all_answered();
+	      }
+	      break;
+	    }
+	    case BGP::msg_deny:
+	    {
+	      conn_state.state = BGP_OTHERS_TURN;
+	      if( !asking_undo || clients_asked == 0 ) invalid = true;
 	      else
 	      {
 		answer = false;
@@ -956,8 +1026,13 @@ namespace zertz
   //----------------
   //----------------
     
-  void Network_Manager_BGP100a_Server::on_timer(wxTimerEvent& event)
+  void Network_Manager_BGP100a_Server::on_timer(wxTimerEvent& WXUNUSED(event))
   {
+  }
+    
+  void Network_Manager_BGP100a_Server::on_done(wxTimerEvent& WXUNUSED(event))
+  {
+    continue_game();
   }
 
   void Network_Manager_BGP100a_Server::on_connection_timer
@@ -1200,7 +1275,7 @@ namespace zertz
       own_player_ids.insert(p->id);
     }
 		
-    if( display_handler )
+    if( display_handler && display_phase == DISPLAY_SETUP )
     {
       display_handler->player_added(*p);
     }
@@ -1218,7 +1293,7 @@ namespace zertz
   void Network_Manager_BGP100a_Server::do_remove_player( int player_id )
   {
     assert(does_include(id_player,player_id));
-    if( display_handler )
+    if( display_handler && display_phase == DISPLAY_SETUP )
       display_handler->player_removed(*id_player[player_id]);
 
     if( does_include(player_id_connection,player_id) )
@@ -1262,7 +1337,7 @@ namespace zertz
     id_player[player_iterator->id]  = player_iterator;
     id_player[player_iterator2->id] = player_iterator2;
 
-    if( display_handler )
+    if( display_handler && display_phase == DISPLAY_SETUP )
       display_handler->player_up(*player_iterator2);
 
     // other protocol versions have to tell connected clients about player change
@@ -1285,7 +1360,7 @@ namespace zertz
     id_player[player_iterator ->id] = player_iterator;
     id_player[player_iterator2->id] = player_iterator2;
 
-    if( display_handler )
+    if( display_handler && display_phase == DISPLAY_SETUP )
       display_handler->player_down(*player_iterator2);
 
     // other protocol versions have to tell connected clients about player change
@@ -1337,7 +1412,8 @@ namespace zertz
       if( connection == asking_client ) continue;
       Connection_State &conn_state = msg_net_connection_state[connection];
       if( !conn_state.in_init && conn_state.phase == BGP::phase_playing &&
-	  conn_state.state == BGP_OTHERS_TURN )
+	  conn_state.state == BGP_OTHERS_TURN &&
+	  !conn_state.controlled_player_ids.empty() )  // don't ask viewing only clients
       {
 	++clients_asked;
 	conn_state.state = BGP_ACCEPT_NEW_GAME;
@@ -1359,7 +1435,6 @@ namespace zertz
 	  --clients_asked;	// received answer of this user
 	  answer=false;		// new game denied
 	}
-	check_all_answered();
       }
       else
       {
@@ -1370,6 +1445,89 @@ namespace zertz
     {
       --clients_asked;		// server sent the request
     }
+    check_all_answered();
+    return true;
+  }
+
+  bool Network_Manager_BGP100a_Server::do_ask_undo
+  ( int n, Message_Network<BGP::Message>* asking_connection )
+  {
+    if( asking_new_game || asking_undo ) 
+    {
+      if( asking_connection != asking_client )
+      {
+	BGP::Msg_Deny msg;
+	asking_connection->send_message(&msg);
+	return true;
+      }
+      else
+	return false;
+    }
+
+    std::string ask_name;
+    asking_client = asking_connection;
+    asking_n = n;
+    asking_done = false;
+    clients_asked = 1;		// includes the server itself
+    asking_undo = true;
+    answer = true;		// default answer (wired-and)
+
+    if( asking_client )
+    {
+      Connection_State &conn_state = msg_net_connection_state[asking_client];
+      ask_name = conn_state.name;
+    }
+    BGP::Msg_Ask_Undo msg(ask_name, n);
+
+    std::list<Message_Network<BGP::Message>*> connections;
+    std::map<Message_Network<BGP::Message>*,Connection_State>::iterator it;
+    for( it=msg_net_connection_state.begin();
+	 it!=msg_net_connection_state.end(); ++it )
+    {
+      if( it->first )
+	connections.push_back(it->first);
+    }
+    std::list<Message_Network<BGP::Message>*>::iterator conn_it;
+    for( conn_it=connections.begin(); conn_it!=connections.end(); ++conn_it )
+    {
+      Message_Network<BGP::Message>* connection = *conn_it;
+      if( connection == asking_client ) continue;
+      Connection_State &conn_state = msg_net_connection_state[connection];
+      if( !conn_state.in_init && conn_state.phase == BGP::phase_playing &&
+	  conn_state.state == BGP_OTHERS_TURN && 
+	  !conn_state.controlled_player_ids.empty() )  // don't ask viewing only clients
+      {
+	++clients_asked;
+	conn_state.state = BGP_ACCEPT_UNDO;
+	connection->send_message(&msg);
+      }
+    }
+    asking_done = true;
+    // ask server user
+    if( asking_client )
+    {
+      if( display_handler )
+      {
+	if( display_handler->ask_undo_moves(str_to_wxstr(ask_name),n) )
+	{
+	  --clients_asked;	// received answer of this user
+	}
+	else
+	{
+	  --clients_asked;	// received answer of this user
+	  answer=false;		// undo denied
+	}
+      }
+      else
+      {
+	--clients_asked;	// not asked
+      }
+    } 
+    else
+    {
+      --clients_asked;		// server sent the request
+    }
+    check_all_answered();
     return true;
   }
 
@@ -1446,18 +1604,18 @@ namespace zertz
 	}
       }while(!done);
 
-      if( display_handler )
+      if( display_handler && display_phase == DISPLAY_SETUP )
 	display_handler->everything_ready();
     }
   }   
 
   // check whether all clients answered to a blocking request (new game/undo)
-  bool Network_Manager_BGP100a_Server::check_all_answered()
+  bool Network_Manager_BGP100a_Server::check_all_answered(bool answer_local)
   {
     if( !asking_new_game && !asking_undo ) return false;
 #ifndef __WXMSW__
     std::cerr << "Server - Remaining answers: " << clients_asked << " " << asking_new_game 
-	      << std::endl;
+	      << "/" << asking_undo << std::endl;
 #endif
     if( asking_done && clients_asked==0 )
     {
@@ -1538,10 +1696,13 @@ namespace zertz
 	// answer local requester and start new game
 	if( !asking_client )	// local requester?
 	{
-	  if( answer )
-	    game_manager.new_game_accepted();  // calls force_new_game
-	  else
-	    game_manager.new_game_denied();
+	  if( answer_local )
+	  {
+	    if( answer )
+	      game_manager.new_game_accepted();  // calls force_new_game
+	    else
+	      game_manager.new_game_denied();
+	  }
 	}
 	else			// remote requester
 	{
@@ -1555,6 +1716,82 @@ namespace zertz
       if( asking_undo )
       {
 	asking_undo = false;
+	assert(game.players.size());
+	// apply undo
+	if( answer )
+	{
+	  for(int i=0; i<asking_n; ++i)
+	    if(!game.undo_move())
+	      break;
+	}
+	int id = game.get_current_player().id;
+	// answer remote requester
+	if( asking_client )	// remote requester?
+	{
+	  if( answer )
+	  {
+	    Connection_State &conn_state = msg_net_connection_state[asking_client];
+	    if( does_include(conn_state.controlled_player_ids,id) )
+	      conn_state.state = BGP_HIS_TURN;
+	    else
+	      conn_state.state = BGP_OTHERS_TURN;
+	    BGP::Msg_Accept msg;
+	    asking_client->send_message(&msg);
+	  }
+	  else
+	  {
+	    BGP::Msg_Deny msg;
+	    asking_client->send_message(&msg);
+	  }
+	}
+	// broadcast conclusions
+	if( answer )
+	{
+	  // broadcast new game message and update state
+	  BGP::Msg_Undo msg(asking_n);
+	  // extract current connections since the connections can change (iterators!)
+	  std::list<Message_Network<BGP::Message>*> connections;
+	  std::map<Message_Network<BGP::Message>*,Connection_State>::iterator it;
+	  for( it=msg_net_connection_state.begin();
+	       it!=msg_net_connection_state.end(); ++it )
+	  {
+	    if( it->first )
+	      connections.push_back(it->first);
+	  }
+	  std::list<Message_Network<BGP::Message>*>::iterator conn_it;
+	  for( conn_it=connections.begin(); conn_it!=connections.end(); ++conn_it )
+	  {
+	    Message_Network<BGP::Message>* connection = *conn_it;
+	    Connection_State &conn_state = msg_net_connection_state[connection];
+	    if(!conn_state.in_init && connection != asking_client)
+	    {
+	      // update state
+	      assert(conn_state.phase==BGP::phase_playing);
+	      assert(conn_state.state==BGP_OTHERS_TURN);
+	      if( does_include(conn_state.controlled_player_ids,id) )
+		conn_state.state = BGP_HIS_TURN;
+	      else
+		conn_state.state = BGP_OTHERS_TURN;
+	      // send message
+	      connection->send_message(&msg);
+	    }
+	  }
+	}
+	// answer local requester and undo move on display
+	if( !asking_client )	// local requester?
+	{
+	  if( answer_local )
+	  {
+	    if( answer )
+	      game_manager.undo_accepted(); // updates display (animation)
+	    else
+	      game_manager.undo_denied();
+	  }
+	}
+	else
+	{
+	  game_manager.do_undo_moves(asking_n);
+	}
       }
       return true;
     }
@@ -1620,6 +1857,13 @@ namespace zertz
     {
 #ifndef __WXMSW__
       std::cerr << "Server Error - Received move while asking for new game!" << std::endl;
+#endif
+      error = true;
+    }
+    if( asking_undo ) // only player who's turn it is is allowed to ask for undo
+    {
+#ifndef __WXMSW__
+      std::cerr << "Server Error - Received move while asking for undo!" << std::endl;
 #endif
       error = true;
     }
@@ -1702,7 +1946,8 @@ namespace zertz
 	  sequence = move_sequence;
 	  sequence_available = true;
 	  awaiting_move = false;
-	  continue_game();
+	  ui_manager.do_move_slowly( sequence, this, ANIMATION_DONE );
+	  // triggers continue_game() after done
 	}
 	else
 	{
@@ -1730,6 +1975,7 @@ namespace zertz
 
   BEGIN_EVENT_TABLE(Network_Manager_BGP100a_Server, wxEvtHandler)				
     EVT_TIMER(NETWORK_TIMER, Network_Manager_BGP100a_Server::on_timer)	//**/
+    EVT_TIMER(ANIMATION_DONE, Network_Manager_BGP100a_Server::on_done)	//**/
   END_EVENT_TABLE()							//**/
 
 //=================================================================================================
@@ -1749,7 +1995,7 @@ namespace zertz
       connection_lost(false),
       display_phase(DISPLAY_INIT), game_phase(BGP::phase_setup),
       sequence_available(false), awaiting_move(false), asking_new_game(false), 
-      asking_undo(false), error_recovery_attempts(0)
+      asking_undo(false), asking_n(0), error_recovery_attempts(0)
   {
     conn_state.state = BGP_UNCONNECTED;
     // self register
@@ -1897,6 +2143,13 @@ namespace zertz
     return players;
   }
 
+  // disables feedback about player changes
+  void Network_Manager_BGP100a_Client::disable_player_feedback() 
+  {
+    if(display_phase == DISPLAY_SETUP)
+      display_phase = DISPLAY_INIT;
+  }
+
   // whether this player can choose a board to play
   bool Network_Manager_BGP100a_Client::can_choose_board() 
   {
@@ -1944,7 +2197,7 @@ namespace zertz
   {
     if( !msg_net_client ) 
       return accept;
-    if( conn_state.state != BGP_MY_TURN || asking_new_game )
+    if( conn_state.state != BGP_MY_TURN || asking_new_game || asking_undo )
     {
       return deny;		// only allow new game when its the players turn
     }
@@ -1960,12 +2213,17 @@ namespace zertz
   {
     if( !msg_net_client ) 
       return accept;
-
-    // !!! intentional fault injection: !!!
-    BGP::Msg_Move msg(0,Move_Sequence());
+    if( conn_state.state != BGP_MY_TURN || asking_new_game || asking_undo )
+    {
+      return deny;		// only allow undo when its the players turn
+    }
+    // send request
+    conn_state.state = BGP_ASK_UNDO;
+    asking_undo = true;
+    asking_n = n;
+    BGP::Msg_Ask_Undo msg("",n);
     msg_net_client->send_message(&msg);
-
-    return deny;
+    return wait_for_answer;
   }
   // force new game (may close connections)
   void Network_Manager_BGP100a_Client::force_new_game()
@@ -1979,6 +2237,7 @@ namespace zertz
     sequence_available = false;
     awaiting_move = false;
     asking_new_game = false;
+    asking_undo = false;
     display_phase = DISPLAY_INIT;
     game_phase = BGP::phase_setup;
     cleanup_players();
@@ -1997,12 +2256,15 @@ namespace zertz
   void Network_Manager_BGP100a_Client::game_setup_entered()
   {
     if( !msg_net_client ) return;
+
+    // later comment: wizard is not modal any more...
+
     // Modal game setup dialog may leave some network interrupts
     // unserved since they are blocked on the stack. As a counter
     // measure the input event is triggered manually by unregistering
     // and reregistering:
-    msg_net_client->set_handler(0);
-    msg_net_client->set_handler(this);
+    //msg_net_client->set_handler(0);
+    //msg_net_client->set_handler(this);
   }
 
   //-------------------------------------------
@@ -2458,7 +2720,7 @@ namespace zertz
 	    case BGP::msg_deny:
 	    {
 	      conn_state.state = BGP_SETUP;
-	      if( display_handler )
+	      if( display_handler && display_phase == DISPLAY_SETUP )
 		display_handler->player_change_denied();
 	      break;
 	    }
@@ -2485,7 +2747,7 @@ namespace zertz
 	    case BGP::msg_deny:
 	    {
 	      conn_state.state = BGP_SETUP;
-	      if( display_handler )
+	      if( display_handler && display_phase == DISPLAY_SETUP )
 		display_handler->player_change_denied();
 	      break;
 	    }
@@ -2509,7 +2771,7 @@ namespace zertz
 	      if( process_setup( det_msg->get_setup() ) )
 	      {
 		conn_state.state = BGP_OTHERS_TURN;
-		if( display_handler )
+		if( display_handler && display_phase == DISPLAY_SETUP )
 		  display_handler->everything_ready();
 	      }
 	      else
@@ -2573,9 +2835,58 @@ namespace zertz
 	      }
 	      break;
 	    }
+	    case BGP::msg_ask_undo:
+	    {
+	      BGP::Msg_Ask_Undo *det_msg = static_cast<BGP::Msg_Ask_Undo*>(message);
+	      if( display_handler )
+	      {
+		std::string name = det_msg->get_host_nick();
+		if( name=="" ) 
+		  name = conn_state.name;
+		conn_state.state = BGP_ACCEPT_UNDO;
+		if( display_handler->ask_undo_moves(str_to_wxstr(name), det_msg->get_n()) )
+		{
+		  conn_state.state = BGP_OTHERS_TURN;
+		  // send response
+		  BGP::Msg_Accept msg;
+		  connection->send_message(&msg);
+		}
+		else
+		{
+		  conn_state.state = BGP_OTHERS_TURN;
+		  // send response
+		  BGP::Msg_Deny msg;
+		  connection->send_message(&msg);
+		}
+	      }
+	      else
+	      {
+		// send response
+		BGP::Msg_Accept msg;
+		connection->send_message(&msg);
+	      }
+	      break;
+	    }
 	    case BGP::msg_new_game:
 	    {
 	      force_new_game();
+	      break;
+	    }
+	    case BGP::msg_undo:
+	    {
+	      BGP::Msg_Undo *det_msg = static_cast<BGP::Msg_Undo*>(message);
+	      // apply undo in local game copy
+	      int n = det_msg->get_n();
+	      for(int i=0; i<n; ++i)
+	      {
+		if(!game.undo_move())
+		{
+		  n = i;
+		  break;
+		}
+	      }
+	      // report to game manager
+	      game_manager.do_undo_moves(n);
 	      break;
 	    }
 	    default: invalid = true; break;
@@ -2599,7 +2910,7 @@ namespace zertz
 	      assert(does_include(own_player_ids,game.get_current_player().id));
 	      conn_state.state = BGP_MY_TURN;
 	      asking_new_game = false;
-	      game_manager.new_game_accepted();
+	      game_manager.new_game_accepted();	 // calls force_new_game
 	      break;
 	    }
 	    case BGP::msg_deny:
@@ -2615,6 +2926,44 @@ namespace zertz
 	  break;
 	}
 	case BGP_ACCEPT_NEW_GAME:
+	{
+	  switch( message->get_type() )
+	  {
+	    default: invalid = true; break;
+	  }
+	  break;
+	}
+	case BGP_ASK_UNDO:
+	{
+	  switch( message->get_type() )
+	  {
+	    case BGP::msg_accept:
+	    {
+	      assert(does_include(own_player_ids,game.get_current_player().id));
+	      conn_state.state = BGP_MY_TURN;
+	      asking_undo = false;
+	      // apply undo in local game copy
+	      for(int i=0; i<asking_n; ++i)
+		if(!game.undo_move())
+		  break;
+	      // report to game manager
+	      game_manager.undo_accepted();
+	      break;
+	    }
+	    case BGP::msg_deny:
+	    {
+	      assert(does_include(own_player_ids,game.get_current_player().id));
+	      conn_state.state = BGP_MY_TURN;
+	      asking_undo = false;
+	      // report to game manager
+	      game_manager.undo_denied();
+	      break;
+	    }
+	    default: invalid = true; break;
+	  }
+	  break;
+	}
+	case BGP_ACCEPT_UNDO:
 	{
 	  switch( message->get_type() )
 	  {
@@ -2644,6 +2993,7 @@ namespace zertz
 		sequence_available = false;
 		awaiting_move = false;
 		asking_new_game = false;
+		asking_undo = false;
 		deferred_messages.clear();
 		// initiate pre-check for recovery
 		conn_state.state = BGP_ERROR_RECOVERY;
@@ -2864,6 +3214,11 @@ namespace zertz
     }
   }
 
+  void Network_Manager_BGP100a_Client::on_done(wxTimerEvent& WXUNUSED(event))
+  {
+    continue_game();
+  }
+
   //------------------
   //------------------
   // private functions
@@ -2951,7 +3306,7 @@ namespace zertz
     if( local )
       own_player_ids.insert(p->id);
 		
-    if( display_handler )
+    if( display_handler && display_phase == DISPLAY_SETUP )
     {
       display_handler->player_added(*p);
     }
@@ -2961,7 +3316,7 @@ namespace zertz
   void Network_Manager_BGP100a_Client::do_remove_player( int player_id )
   {
     assert(does_include(id_player,player_id));
-    if( display_handler )
+    if( display_handler && display_phase == DISPLAY_SETUP )
       display_handler->player_removed(*id_player[player_id]);
 
     players.erase(id_player[player_id]);
@@ -3138,6 +3493,13 @@ namespace zertz
 #endif
       error = true;
     }
+    if( asking_undo ) // only player who's turn it is is allowed to ask for undo
+    {
+#ifndef __WXMSW__
+      std::cerr << "Client Error - Received move while asking for undo!" << std::endl;
+#endif
+      error = true;
+    }
     if( local )
     {
       if( conn_state.state != BGP_MY_TURN )
@@ -3226,7 +3588,8 @@ namespace zertz
 	  sequence = move_sequence;
 	  sequence_available = true;
 	  awaiting_move = false;
-	  continue_game();
+	  ui_manager.do_move_slowly( sequence, this, ANIMATION_DONE );
+	  // triggers continue_game() after done
 	}
 	else
 	{
@@ -3254,6 +3617,7 @@ namespace zertz
 
   BEGIN_EVENT_TABLE(Network_Manager_BGP100a_Client, wxEvtHandler)				
     EVT_TIMER(NETWORK_TIMER, Network_Manager_BGP100a_Client::on_timer)	//**/
+    EVT_TIMER(ANIMATION_DONE, Network_Manager_BGP100a_Client::on_done)	//**/
   END_EVENT_TABLE()							//**/
 
 }

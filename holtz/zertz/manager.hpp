@@ -88,6 +88,7 @@ namespace zertz
     virtual void ready() = 0;      // ready with adding players
     // game commands
     virtual std::list<Player> enable_player_feedback() = 0; // returns players before feedback
+    virtual void disable_player_feedback() = 0; // disables feedback about player changes
     virtual bool can_choose_board() = 0; // whether this player can choose a board to play
     virtual bool can_enter_player_setup() = 0; // whether the player setup can be entered
     virtual Game_State can_start() = 0;	// is everyone ready and number of players ok?
@@ -120,6 +121,7 @@ namespace zertz
     void undo_move();
     void undo_accepted();
     void undo_denied();
+    void do_undo_moves( int n=2 );
     void stop_game();
 
     void set_board  ( const Game& );
@@ -210,6 +212,7 @@ namespace zertz
     virtual void ready();	// ready with adding players
     // game commands
     virtual std::list<Player> enable_player_feedback(); // returns players before feedback
+    virtual void disable_player_feedback(); // disables feedback about player changes
     virtual bool can_choose_board(); // whether this player can choose a board to play
     virtual bool can_enter_player_setup(); // whether the player setup can be entered
     virtual Game_State can_start(); // is everyone ready and number of players ok?

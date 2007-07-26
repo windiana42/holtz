@@ -43,10 +43,10 @@ namespace zertz
     server_port = new wxSpinCtrl( this, DIALOG_SERVER_PORT );
     client_port = new wxSpinCtrl( this, DIALOG_CLIENT_PORT );
     server_port->SetRange( 1, 65535 );
-    server_port->SetValue( DEFAULT_PORT );
+    server_port->SetValue( game_dialog.server_port );
     client_port->SetRange( 1, 65535 );
-    client_port->SetValue( DEFAULT_PORT );
-    hostname = new wxTextCtrl( this, DIALOG_HOST_NAME, wxT(""), wxDefaultPosition, 
+    client_port->SetValue( game_dialog.client_port );
+    hostname = new wxTextCtrl( this, DIALOG_HOST_NAME, game_dialog.hostname, wxDefaultPosition, 
 			       wxDefaultSize, wxTE_PROCESS_ENTER );
     
     wxBoxSizer *top_sizer = new wxBoxSizer( wxVERTICAL );
@@ -84,8 +84,10 @@ namespace zertz
     return game_dialog.get_board_page();
   }
 
-  bool Setup_Manager_Page::TransferDataFromWindow(bool direction)
+  bool Setup_Manager_Page::transfer_data_from_window(bool direction)
   {
+    if( !direction ) return true; // always allow to go back
+
     // detect changes
     if(!changes)
     {
@@ -103,7 +105,7 @@ namespace zertz
 	// cleanup common to all choices
 	if( game_dialog.clients_dialog )
 	{
-	  game_dialog.clients_dialog->Destroy();
+	  game_dialog.clients_dialog->destroy();
 	  game_dialog.clients_dialog = 0;
 	}
 	if( game_dialog.game_setup_manager )
@@ -120,6 +122,9 @@ namespace zertz
 	}
 	else if( network_server->GetValue() )
 	{
+	  // save choice of connection parameters
+	  game_dialog.server_port = server_port->GetValue();
+
 	  Network_Manager_BGP100a_Server *network_manager 
 	    = new Network_Manager_BGP100a_Server( game_dialog.game_manager, 
 						  game_dialog.gui_manager );
@@ -142,6 +147,10 @@ namespace zertz
 	}
 	else if( network_client->GetValue() )
 	{
+	  // save choice of connection parameters
+	  game_dialog.client_port = client_port->GetValue();
+	  game_dialog.hostname = hostname->GetValue();
+
 	  Network_Manager_BGP100a_Client *network_manager 
 	    = new Network_Manager_BGP100a_Client( game_dialog.game_manager, 
 						  game_dialog.gui_manager );
@@ -176,7 +185,7 @@ namespace zertz
 
   void Setup_Manager_Page::on_page_changing( wxWizardEvent& event )
   {
-    if( !TransferDataFromWindow(event.GetDirection()) )
+    if( !transfer_data_from_window(event.GetDirection()) )
       event.Veto();
   }
 
@@ -275,8 +284,10 @@ namespace zertz
       return game_dialog.get_player_page();
   }
 
-  bool Board_Page::TransferDataFromWindow()
+  bool Board_Page::transfer_data_from_window(bool direction)
   {
+    if( !direction ) return true; // always allow to go back
+
     // detect changes
     if(!changes)
     {
@@ -349,6 +360,12 @@ namespace zertz
     return true;
   }
 
+  void Board_Page::on_page_changing( wxWizardEvent& event )
+  {
+    if( !transfer_data_from_window(event.GetDirection()) )
+      event.Veto();
+  }
+
   void Board_Page::on_new_game_choice	   ( wxCommandEvent& /*event*/ )
   {
     changes = true;
@@ -405,7 +422,7 @@ namespace zertz
   }
 
   BEGIN_EVENT_TABLE(Board_Page, wxWizardPage)				
-    // EVT_TEXT_ENTER(DIALOG_BOARD,	Board_Page::on_player_name)		   //**/
+    EVT_WIZARD_PAGE_CHANGING(DIALOG_WIZARD, Board_Page::on_page_changing)	   //**/
     EVT_RADIOBOX(DIALOG_NEW_GAME_CHOICE, Board_Page::on_new_game_choice)	   //**/
     EVT_RADIOBOX(DIALOG_CONTINUE_GAME_CHOICE, Board_Page::on_continue_game_choice) //**/
   END_EVENT_TABLE()								   //**/
@@ -735,8 +752,10 @@ namespace zertz
     return game_dialog.get_player_page();
   }
 
-  bool Custom_Board_Page::TransferDataFromWindow()
+  bool Custom_Board_Page::transfer_data_from_window(bool direction)
   {
+    if( !direction ) return true; // always allow to go back
+
     if( custom_board_panel->is_changes() )
     {
       game_dialog.game = custom_board_panel->get_board();
@@ -760,13 +779,19 @@ namespace zertz
     return true;
   }
 
+  void Custom_Board_Page::on_page_changing( wxWizardEvent& event )
+  {
+    if( !transfer_data_from_window(event.GetDirection()) )
+      event.Veto();
+  }
+
   void Custom_Board_Page::restore()		// display stored game state
   {
     custom_board_panel->restore();
   }
 
   BEGIN_EVENT_TABLE(Custom_Board_Page, wxWizardPage)				
-    // EVT_TEXT_ENTER(DIALOG_CUSTOM_BOARD,	Custom_Board_Page::on_player_name)	//**/
+    EVT_WIZARD_PAGE_CHANGING(DIALOG_WIZARD, Custom_Board_Page::on_page_changing) //**/
   END_EVENT_TABLE()								//**/
 
   // ----------------------------------------------------------------------------
@@ -805,8 +830,10 @@ namespace zertz
     return game_dialog.get_player_page();
   }
 
-  bool Load_Board_Page::TransferDataFromWindow()
+  bool Load_Board_Page::transfer_data_from_window(bool direction)
   {
+    if( !direction ) return true; // always allow to go back
+
     // check for changes
     if( !changes )
     {
@@ -872,6 +899,12 @@ namespace zertz
       }
 
     return true;
+  }
+
+  void Load_Board_Page::on_page_changing( wxWizardEvent& event )
+  {
+    if( !transfer_data_from_window(event.GetDirection()) )
+      event.Veto();
   }
 
   void Load_Board_Page::restore()		// display stored game state
@@ -986,6 +1019,7 @@ namespace zertz
   }
 
   BEGIN_EVENT_TABLE(Load_Board_Page, wxWizardPage)				
+    EVT_WIZARD_PAGE_CHANGING(DIALOG_WIZARD,	Load_Board_Page::on_page_changing) 
     EVT_BUTTON(DIALOG_CHOOSE_DIRECTORY,		Load_Board_Page::on_choose_directory)		
     EVT_TEXT_ENTER(DIALOG_CHANGE_DIRECTORY,	Load_Board_Page::on_change_directory)	//**/
   END_EVENT_TABLE()								//**/
@@ -1471,8 +1505,16 @@ namespace zertz
     return 0;
   }
 
-  bool Player_Page::TransferDataFromWindow()
+  bool Player_Page::transfer_data_from_window(bool direction)
   {
+    if( !direction )
+    {
+      if( ready )		// allow to go back when not marked ready
+	return false;
+      else
+	return true; 
+    }
+
     switch( game_dialog.game_setup_manager->can_start() )
     {
       case Game_Setup_Manager::too_few_players: 
@@ -1491,6 +1533,12 @@ namespace zertz
 	return true;
     }
     return false;
+  }
+
+  void Player_Page::on_page_changing( wxWizardEvent& event )
+  {
+    if( !transfer_data_from_window(event.GetDirection()) )
+      event.Veto();
   }
 
   // display stored game state
@@ -1513,7 +1561,7 @@ namespace zertz
   }
 
   BEGIN_EVENT_TABLE(Player_Page, wxWizardPage)				
-    // EVT_TEXT_ENTER(DIALOG_PLAYER_NAME,	Player_Page::on_player_name)	//**/
+    EVT_WIZARD_PAGE_CHANGING(DIALOG_WIZARD, Player_Page::on_page_changing) //**/
   END_EVENT_TABLE()								//**/
 
   // ----------------------------------------------------------------------------
@@ -1552,6 +1600,7 @@ namespace zertz
 			    WX_GUI_Manager &gui_manager )
     : game_manager(game_manager), gui_manager(gui_manager),
       game( Standard_Ruleset() ), game_setup_manager(0),
+      hostname(wxT("")), server_port(DEFAULT_PORT), client_port(DEFAULT_PORT),
       wizard(0), clients_dialog(0)
   {
     // self register
@@ -1567,7 +1616,7 @@ namespace zertz
     }
     if( clients_dialog )
     {
-      clients_dialog->Destroy();
+      clients_dialog->destroy();
       clients_dialog = 0;
     }
     if( game_setup_manager )
@@ -1707,8 +1756,12 @@ namespace zertz
   void Game_Dialog::on_wizard_finished( wxWizardEvent& event )
   {
     wizard = 0;			// wizard will destroy itself
-    assert( game_setup_manager->can_start() == Game_Setup_Manager::everyone_ready );
-    game_setup_manager->start_game();
+    if( game_setup_manager )
+    {
+      game_setup_manager->disable_player_feedback();
+      assert( game_setup_manager->can_start() == Game_Setup_Manager::everyone_ready );
+      game_setup_manager->start_game();
+    }
   }
 
   void Game_Dialog::on_wizard_page_changing( wxWizardEvent& event )
@@ -1718,6 +1771,10 @@ namespace zertz
 
   void Game_Dialog::on_wizard_cancel( wxWizardEvent& event )
   {
+    if( game_setup_manager )
+    {
+      game_setup_manager->disable_player_feedback();
+    }
     wizard = 0;			// wizard will destroy itself
   }
 
@@ -2224,25 +2281,27 @@ namespace zertz
     : wxDialog(),
       network_server(network_server), destroyed(false)
   {
-	// create the dialog
+    // create the dialog
+    long style = wxDEFAULT_DIALOG_STYLE | wxRESIZE_BORDER;
 #ifdef __WXMSW__ // this has to be done before the dialog is created, ...
-    SetExtraStyle(wxDIALOG_EX_CONTEXTHELP);
+    style |= wxDIALOG_EX_CONTEXTHELP;
 #endif // ... hence the two-step construction (Create() below) is necessary.
-    wxDialog::Create(parent,-1,wxString(_("Network clients")));
+    wxDialog::Create(parent,-1,wxString(_("Network clients")),wxPoint(0,0), wxDefaultSize, style );
 
     // create the child controls
     client_list = new wxListBox( this, LISTBOX_DCLICK, wxDefaultPosition, 
-				 wxSize(120,120), 0, 0, wxLB_SINGLE );
+				 wxDefaultSize, 0, 0, wxLB_SINGLE );
+    allow_connect = new wxCheckBox( this, DIALOG_ALLOW_CONNECT, _("allow new connections") );
+    allow_connect->SetValue(true);  // default value is true
 
     // self register
     network_server.set_connection_handler(this);
 
     wxBoxSizer *top_sizer = new wxBoxSizer( wxVERTICAL );
-    
-    top_sizer->Add(client_list, 0, wxALL, 10);
-
+    top_sizer->Add(client_list, 1, wxALL | wxEXPAND, 10);
+    top_sizer->Add(allow_connect, 0, wxLEFT | wxRIGHT | wxALIGN_CENTER_HORIZONTAL, 10);
     wxBoxSizer* button_sizer = new wxBoxSizer(wxHORIZONTAL);
-    top_sizer->Add(button_sizer, 0, wxALL, 0);
+    top_sizer->Add(button_sizer, 0, wxALL | wxALIGN_CENTER_HORIZONTAL, 0);
 
     button_sizer->Add( new wxButton( this, DIALOG_DISCONNECT, _("Disconnect All") ), 0, wxALL, 10 );
 
@@ -2256,14 +2315,14 @@ namespace zertz
     // set sizer
     SetAutoLayout( true );     // tell dialog to use sizer
     SetSizer( top_sizer );      // actually set the sizer
-    top_sizer->Fit( this );            // set size to minimum size as calculated by the sizer
-    top_sizer->SetSizeHints( this );   // set size hints to honour mininum size     
+    SetSize(wxSize(160,160));
+    //top_sizer->Fit( this );            // set size to minimum size as calculated by the sizer
+    //top_sizer->SetSizeHints( this );   // set size hints to honour mininum size     
   }
 
   Network_Clients_Dialog::~Network_Clients_Dialog()
   {
-    // self unregister
-    network_server.set_connection_handler(0);
+    // should already be unregistered
   }
 
   void Network_Clients_Dialog::new_connection( std::string name, 
@@ -2290,7 +2349,11 @@ namespace zertz
 
   void Network_Clients_Dialog::destroy()
   {
+    if( destroyed ) return;
     destroyed=true;
+    // self unregister
+    network_server.set_connection_handler(0);
+
     this->Destroy();
   }
 
@@ -2323,10 +2386,23 @@ namespace zertz
     }
   }
 
-  BEGIN_EVENT_TABLE(Network_Clients_Dialog, wxDialog)			//**/
-  EVT_BUTTON(DIALOG_DISCONNECT, Network_Clients_Dialog::on_disconnect)	//**/
-  EVT_LISTBOX_DCLICK(LISTBOX_DCLICK, Network_Clients_Dialog::on_dclick)	//**/
-  END_EVENT_TABLE()							//**/
+  void Network_Clients_Dialog::on_allow_connect( wxCommandEvent& event )
+  {
+    if( event.IsChecked() )
+    {
+      network_server.allow_connect(true);
+    }
+    else
+    {
+      network_server.allow_connect(false);
+    }
+  }
+
+  BEGIN_EVENT_TABLE(Network_Clients_Dialog, wxDialog)				//**/
+    EVT_BUTTON(DIALOG_DISCONNECT, Network_Clients_Dialog::on_disconnect)	//**/
+    EVT_LISTBOX_DCLICK(LISTBOX_DCLICK, Network_Clients_Dialog::on_dclick)	//**/
+    EVT_CHECKBOX(DIALOG_ALLOW_CONNECT, Network_Clients_Dialog::on_allow_connect)//**/
+  END_EVENT_TABLE()								//**/
 
   // ============================================================================
   // Network_Connection_Dialog
