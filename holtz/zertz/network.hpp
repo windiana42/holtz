@@ -38,6 +38,7 @@ namespace zertz
     virtual void close_connections() = 0;
     virtual bool may_disconnect_id( Connection_Id id ) = 0;
     virtual void disconnect_id( Connection_Id id ) = 0;
+    virtual void allow_connect( bool allow ) = 0;
   protected:
     Network_Connection_Handler *connection_handler;
   };
@@ -92,6 +93,7 @@ namespace zertz
     virtual void close_connections();
     virtual bool may_disconnect_id( Connection_Id id );
     virtual void disconnect_id( Connection_Id id );
+    virtual void allow_connect( bool allow );
 
     //-------------------------------------------
     // commands inherited from Game_Setup_Manager
@@ -110,6 +112,7 @@ namespace zertz
     virtual void ready();      // ready with adding players
     // game commands
     virtual std::list<Player> enable_player_feedback(); // returns players before feedback
+    virtual void disable_player_feedback(); // disables feedback about player changes
     virtual bool can_choose_board(); // whether this player can choose a board to play
     virtual bool can_enter_player_setup(); // whether the player setup can be entered
     virtual Game_State can_start();	// is everyone ready and number of players ok?
@@ -158,6 +161,7 @@ namespace zertz
     // event handlers
     
     void on_timer(wxTimerEvent& event);
+    void on_done(wxTimerEvent& event);
     void on_connection_timer( Message_Network<BGP::Message> *connection ); 
   private:
     typedef enum Display_Phase{ DISPLAY_INIT, DISPLAY_SETUP, DISPLAY_PLAYING };
@@ -235,8 +239,9 @@ namespace zertz
     bool do_player_up( int player_id );	    // actually move player up
     bool do_player_down( int player_id );   // actually move player down
     bool do_ask_new_game( Message_Network<BGP::Message>* asking_connection=0 );
+    bool do_ask_undo( int n, Message_Network<BGP::Message>* asking_connection=0 );
     void check_all_ready();		    // check whether all clients are ready 
-    bool check_all_answered();		    // check whether all clients answered a request
+    bool check_all_answered(bool answer_local=true); // check whether all clients answered a request
     void setup_players();		    // setup players for local use
     void cleanup_players();
     bool process_move( const Move_Sequence&, Message_Network<BGP::Message>* connection=0, 
@@ -278,6 +283,7 @@ namespace zertz
     unsigned clients_in_setup, clients_ready;
     unsigned clients_asked;
     Message_Network<BGP::Message>* asking_client;
+    int asking_n;
     Message_Network<BGP::Message>* possibly_interrupted_connection;
     std::list<std::pair<int/*player_id*/,Move_Sequence> > pending_moves;
     std::list<std::pair<Message_Network<BGP::Message>*,BGP::Message*> > deferred_messages;
@@ -316,6 +322,7 @@ namespace zertz
     virtual void ready();      // ready with adding players
     // game commands
     virtual std::list<Player> enable_player_feedback(); // returns players before feedback
+    virtual void disable_player_feedback(); // disables feedback about player changes
     virtual bool can_choose_board(); // whether this player can choose a board to play
     virtual bool can_enter_player_setup(); // whether the player setup can be entered
     virtual Game_State can_start();	// is everyone ready and number of players ok?
@@ -357,6 +364,7 @@ namespace zertz
     // event handlers
     
     void on_timer(wxTimerEvent& event);
+    void on_done(wxTimerEvent& event);
   private:
     typedef enum Display_Phase{ DISPLAY_INIT, DISPLAY_SETUP, DISPLAY_PLAYING };
     // BGP 1.00a protocol states 
@@ -420,6 +428,7 @@ namespace zertz
     bool awaiting_move;
     bool asking_new_game;
     bool asking_undo;
+    int asking_n;
     Player requested_add_player;
     int requested_remove_player_id;
     std::set<int>::iterator requested_take_player_id;

@@ -53,7 +53,7 @@ namespace zertz
 
     virtual wxWizardPage *GetPrev() const;
     virtual wxWizardPage *GetNext() const;
-    bool TransferDataFromWindow(bool direction);
+    bool transfer_data_from_window(bool direction);
 
     void on_page_changing( wxWizardEvent& event );
     void on_server_port( wxSpinEvent& );
@@ -81,9 +81,10 @@ namespace zertz
 
     virtual wxWizardPage *GetPrev() const;
     virtual wxWizardPage *GetNext() const;
-    virtual bool TransferDataFromWindow();
+    virtual bool transfer_data_from_window(bool direction);
     wxWizardPage *get_last_board_page() const;
 
+    void on_page_changing	  ( wxWizardEvent& event );
     void on_continue_game_choice  ( wxCommandEvent& event );
     void on_new_game_choice	  ( wxCommandEvent& event );
 
@@ -136,7 +137,9 @@ namespace zertz
 
     virtual wxWizardPage *GetPrev() const;
     virtual wxWizardPage *GetNext() const;
-    virtual bool TransferDataFromWindow();
+    virtual bool transfer_data_from_window(bool direction);
+
+    void on_page_changing( wxWizardEvent& event );
 
     void restore();		// display stored game state
   private:
@@ -155,11 +158,12 @@ namespace zertz
 
     virtual wxWizardPage *GetPrev() const;
     virtual wxWizardPage *GetNext() const;
-    virtual bool TransferDataFromWindow();
+    virtual bool transfer_data_from_window(bool direction);
 
     void restore();		// display stored game state
   private:
     bool scan_directory( wxString directory );
+    void on_page_changing   ( wxWizardEvent& event );
     void on_choose_directory( wxCommandEvent& event );
     void on_change_directory( wxCommandEvent& event );
 
@@ -230,7 +234,9 @@ namespace zertz
 
     virtual wxWizardPage *GetPrev() const;
     virtual wxWizardPage *GetNext() const;
-    virtual bool TransferDataFromWindow();
+    virtual bool transfer_data_from_window(bool direction);
+
+    void on_page_changing( wxWizardEvent& event );
 
     void restore();		// display stored game state
     void players_changed();	// default players changed
@@ -315,6 +321,9 @@ namespace zertz
     std::list<Player> players;
     Game_Setup_Manager *game_setup_manager;
     wxString valid_directory;	// stores only a valid directory path or ""
+    wxString hostname;		// stores last chosen hostname
+    int server_port;		// stores last chosen port for server
+    int client_port;		// stores last chosen port for client
 
     Game_Setup_Wizard  *wizard;
     Network_Clients_Dialog *clients_dialog;
@@ -431,8 +440,10 @@ namespace zertz
 
     void on_disconnect( wxCommandEvent& event );
     void on_dclick( wxCommandEvent& event );
+    void on_allow_connect( wxCommandEvent& event );
   private:
-    wxListBox *client_list;
+    wxListBox  *client_list;
+    wxCheckBox *allow_connect;
     std::map<void*,Basic_Network_Server::Connection_Id> client_data;
     std::map<Basic_Network_Server::Connection_Id,int> client_item;
     Basic_Network_Server &network_server;
