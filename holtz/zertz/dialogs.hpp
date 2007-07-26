@@ -53,8 +53,9 @@ namespace zertz
 
     virtual wxWizardPage *GetPrev() const;
     virtual wxWizardPage *GetNext() const;
-    virtual bool TransferDataFromWindow();
+    bool TransferDataFromWindow(bool direction);
 
+    void on_page_changing( wxWizardEvent& event );
     void on_server_port( wxSpinEvent& );
     void on_client_port( wxSpinEvent& );
     void on_host_name( wxCommandEvent& );
@@ -63,8 +64,6 @@ namespace zertz
   private:
     Game_Dialog &game_dialog;
     bool changes;
-
-    Network_Clients_Dialog *clients_dialog;
 
     wxRadioButton *alone, *network_server, *network_client, *don_t_change;
     wxTextCtrl *hostname;
@@ -171,7 +170,6 @@ namespace zertz
     wxTextCtrl *pbm_directory;
     wxListBox  *pbm_game_list;
 
-    wxString valid_directory;	// stores only a valid directory path or ""
     std::map< int, std::list< std::pair<PBM_Content,std::string> > > pbm_files; 
 				// board_num -> last_move_num -> file
     int pbm_game_list_val;
@@ -252,6 +250,23 @@ namespace zertz
     DECLARE_EVENT_TABLE() //**/
   };
 
+  class Game_Setup_Wizard : public wxWizard
+  {
+  public:
+    Game_Setup_Wizard( wxWindow *parent, int id, Game_Dialog& );
+
+    wxWizardPage *get_first_page() { return setup_manager_page; }
+  private:
+    Setup_Manager_Page  *setup_manager_page;
+    Board_Page		*board_page;
+    Custom_Board_Page   *custom_board_page;
+    Load_Board_Page     *load_board_page;
+    Player_Page		*player_page;
+    wxSize best_size;
+
+    friend class Game_Dialog;
+  };
+
   class Game_Dialog : public Game_Setup_Display_Handler
   {
   public:
@@ -276,27 +291,33 @@ namespace zertz
     virtual void enter_player_setup();
     virtual void everything_ready();
     virtual void aborted();
+    virtual void game_started();
     virtual bool ask_new_game( wxString who ); // other player asks for a new game (true: accept)
     virtual bool ask_undo_moves( wxString who, int n = 2 ); 
 				// other player asks to undo a move (true: accept)
+
+    void on_wizard_finished( wxWizardEvent& event );
+    void on_wizard_page_changing( wxWizardEvent& event );
+    void on_wizard_cancel( wxWizardEvent& event );
   private:
     void get_data_from_setup_manager();
+    Setup_Manager_Page  *get_setup_manager_page() {assert(wizard);return wizard->setup_manager_page;}
+    Board_Page		*get_board_page()	  {assert(wizard);return wizard->board_page;}
+    Custom_Board_Page   *get_custom_board_page()  {assert(wizard);return wizard->custom_board_page;}
+    Load_Board_Page     *get_load_board_page()	  {assert(wizard);return wizard->load_board_page;}
+    Player_Page		*get_player_page()	  {assert(wizard);return wizard->player_page;}
 
     Game_Manager   &game_manager;
     WX_GUI_Manager &gui_manager;
 
+    // state that should be saved between several runs of the setup dialog
     Game game;
     std::list<Player> players;
     Game_Setup_Manager *game_setup_manager;
+    wxString valid_directory;	// stores only a valid directory path or ""
 
-    wxWizard		*wizard;
-    Setup_Manager_Page  setup_manager_page;
-    Board_Page		board_page;
-    Custom_Board_Page   custom_board_page;
-    Load_Board_Page     load_board_page;
-    Player_Page		player_page;
-    wxWizardPageSimple  dummy;
-    wxSize best_size;
+    Game_Setup_Wizard  *wizard;
+    Network_Clients_Dialog *clients_dialog;
 
     friend class Setup_Manager_Page;
     friend class Board_Page;

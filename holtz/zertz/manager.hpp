@@ -58,6 +58,7 @@ namespace zertz
     virtual void enter_player_setup() = 0; // allow to enter the player setup process
     virtual void everything_ready() = 0;
     virtual void aborted() = 0;
+    virtual void game_started() = 0;
     virtual bool ask_new_game( wxString who ) = 0; // other player asks for a new game (true: accept)
     virtual bool ask_undo_moves( wxString who, int n = 2 ) = 0; // other player asks to undo a move
 								// (true: accept)

@@ -103,6 +103,9 @@ namespace holtz
     void OnDraw( wxDC &dc );
     void on_erase_background( wxEraseEvent &event );
     void on_mouse_event( wxMouseEvent &event );
+    void on_wizard_page_changing( wxWizardEvent& event );
+    void on_wizard_finished( wxWizardEvent& event );
+    void on_wizard_cancel( wxWizardEvent& event );
     void refresh();
     wxDC *get_client_dc();	// must be destroyed
 
@@ -200,6 +203,7 @@ namespace holtz
     DIALOG_WIN_SPIN,
     DIALOG_STONES_CHOICE,
     DIALOG_STONES_SPIN,
+    DIALOG_WIZARD,
     DIALOG_APPLY,
     DIALOG_RESTORE,
     DIALOG_SPIN,

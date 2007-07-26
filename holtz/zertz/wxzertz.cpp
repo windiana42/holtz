@@ -197,7 +197,7 @@ namespace zertz
 	    int sa = stone_alpha[x+y*stone_image.GetWidth()];
 	    int fa = field_stone_alpha[x+y*stone_image.GetWidth()];
 	    int smul = sa;
-	    int fmul = (1-sa/255.)*fa;
+	    int fmul = int((1-sa/255.)*fa);
 	    int na = max(sa,fa);
 	    for( int c = 0; c < 3; ++c )
 	    {
