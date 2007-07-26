@@ -1092,16 +1092,16 @@ namespace zertz
   // constructors and operators of Connection_State
 
   Network_Manager_BGP100a_Server::Connection_State::Connection_State() 
-    : private_timer(new Timer()), final_setup(false),
+    : private_timer(new Timer()), disconnecting(false), final_setup(false),
       move_reminder(false), in_init(true), is_ready(false),
       phase(BGP::phase_setup), timer(*private_timer)
   {
   }
   Network_Manager_BGP100a_Server::Connection_State::Connection_State(const Connection_State &s) 
     : private_timer(new Timer()), id(s.id), controlled_player_ids(s.controlled_player_ids),
-      state(s.state), name(s.name), nick_name(s.nick_name), final_setup(s.final_setup),
-      move_reminder(s.move_reminder), in_init(s.in_init), is_ready(s.is_ready), 
-      phase(s.phase), timer(*private_timer) 
+      state(s.state), name(s.name), nick_name(s.nick_name), disconnecting(s.disconnecting),
+      final_setup(s.final_setup), move_reminder(s.move_reminder), in_init(s.in_init), 
+      is_ready(s.is_ready), phase(s.phase), timer(*private_timer) 
   {
   }
   Network_Manager_BGP100a_Server::Connection_State::~Connection_State() 
@@ -1112,8 +1112,8 @@ namespace zertz
   Network_Manager_BGP100a_Server::Connection_State::operator=(const Connection_State &s)
   { 
     id=s.id;controlled_player_ids=s.controlled_player_ids;state=s.state;name=s.name;
-    nick_name=s.nick_name;final_setup=s.final_setup;move_reminder=s.move_reminder;
-    in_init=s.in_init;is_ready=s.is_ready;phase=s.phase;
+    nick_name=s.nick_name;disconnecting=s.disconnecting;final_setup=s.final_setup;
+    move_reminder=s.move_reminder;in_init=s.in_init;is_ready=s.is_ready;phase=s.phase;
     return *this; 
   }
 

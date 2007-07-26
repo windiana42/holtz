@@ -1405,7 +1405,7 @@ namespace zertz
     Game &game = get_display_game();
     stone_mark_positions.clear();
     field_mark_positions.clear();
-    if( visible )
+    if( visible && game.players.size() )
     {
       switch( game.current_player->help_mode )
       {
