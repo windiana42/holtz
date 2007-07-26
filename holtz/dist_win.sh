@@ -2,5 +2,5 @@
 cd ..;
 DIR=holtz;
 zip -r $DIR/holtz-win32.zip $DIR/holtz.exe $DIR/AUTHORS $DIR/COPYING $DIR/skins/*.zip \
-	$DIR/help/ $DIR/sounds/*.wav $DIR/locale/*/LC_MESSAGES/*.mo;
+	$DIR/help/help_*.zip $DIR/sounds/*.wav $DIR/locale/*/LC_MESSAGES/*.mo;
 cd -;
