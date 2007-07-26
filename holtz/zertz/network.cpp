@@ -52,6 +52,7 @@ namespace zertz
 
   Network_Manager_BGP100a_Server::~Network_Manager_BGP100a_Server()
   {
+    disable_new_connections = true;
     close_connections();
 
     // self unregister
@@ -76,7 +77,6 @@ namespace zertz
 
   void Network_Manager_BGP100a_Server::close_connections()
   {
-    disable_new_connections = true;
     std::list<Message_Network<BGP::Message>*> connections;
     std::map<Message_Network<BGP::Message>*,Connection_State>::iterator it;
     for( it=msg_net_connection_state.begin();
