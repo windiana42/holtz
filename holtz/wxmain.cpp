@@ -67,6 +67,10 @@ namespace holtz
   BEGIN_EVENT_TABLE(Game_Window, wxScrolledWindow)			//**/
   EVT_LEFT_DOWN(Game_Window::on_mouse_event)				//**/
   EVT_RIGHT_DOWN(Game_Window::on_mouse_event)				//**/
+  EVT_WIZARD_CANCEL(DIALOG_WIZARD, Game_Window::on_wizard_cancel)	//**/
+  EVT_WIZARD_PAGE_CHANGING(DIALOG_WIZARD, Game_Window::on_wizard_page_changing) //**/
+  EVT_WIZARD_FINISHED(DIALOG_WIZARD, Game_Window::on_wizard_finished)	//**/
+
 #ifdef DRAW_BACKGROUND
   EVT_ERASE_BACKGROUND(Game_Window::on_erase_background)		//**/
 #endif
@@ -516,6 +520,47 @@ namespace holtz
       }
     }
   }
+
+  void Game_Window::on_wizard_page_changing( wxWizardEvent& event )
+  {
+    switch( active_game ) {
+    case ZERTZ:
+      zertz_game_dialog->on_wizard_page_changing( event );
+      break;
+    case DVONN:
+      //dvonn_game_dialog->on_wizard_page_changing( event );
+      break;
+    case NO_GAME:
+      break;
+    }
+  }
+  void Game_Window::on_wizard_finished( wxWizardEvent& event )
+  {
+    switch( active_game ) {
+    case ZERTZ:
+      zertz_game_dialog->on_wizard_finished( event );
+      break;
+    case DVONN:
+      //dvonn_game_dialog->on_wizard_finished( event );
+      break;
+    case NO_GAME:
+      break;
+    }
+  }
+  void Game_Window::on_wizard_cancel( wxWizardEvent& event )
+  {
+    switch( active_game ) {
+    case ZERTZ:
+      zertz_game_dialog->on_wizard_cancel( event );
+      break;
+    case DVONN:
+      //dvonn_game_dialog->on_wizard_cancel( event );
+      break;
+    case NO_GAME:
+      break;
+    }
+  }
+
   void Game_Window::refresh()
   {
     Refresh();

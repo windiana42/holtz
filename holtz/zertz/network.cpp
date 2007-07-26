@@ -1921,6 +1921,12 @@ namespace zertz
   // call only when can_start() == true
   void Network_Manager_BGP100a_Client::start_game()
   {
+    if( display_phase != DISPLAY_PLAYING && display_handler )
+    {
+      // client enters an existing game
+      display_handler->game_started();
+    }
+
     assert( can_start() == everyone_ready );
     display_phase = DISPLAY_PLAYING;
     game_manager.set_board  ( game );
