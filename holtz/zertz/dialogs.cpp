@@ -1629,6 +1629,7 @@ namespace zertz
 
   void Game_Dialog::game_setup()
   {
+    if( wizard ) return; // already wizard running
     // create wizard
     wizard = new Game_Setup_Wizard( &gui_manager.get_game_window(), DIALOG_WIZARD, *this );
     // init variables
@@ -2375,7 +2376,6 @@ namespace zertz
       if( wxMessageBox( msg, _("Disconnect?"), wxYES | wxNO | wxCANCEL | wxICON_QUESTION ) == wxYES )
       {
 	network_server.disconnect_id( conn_id );
-	//todo: needed?!? client_list->Delete(event.GetSelection());
       }
     }
     else
