@@ -276,7 +276,8 @@ namespace zertz
     current_undo_move = sequence.get_moves().rbegin();
     state = begin;
 
-    current_player = game->get_player(game->variant_tree.get_current_variant()->current_player_index); 
+    current_player 
+      = game->get_player(game->variant_tree.get_current_variant()->current_player_index); 
 				// get player of last move
     undo = true;
     
@@ -289,7 +290,7 @@ namespace zertz
   {
     bool ret = true;
     switch( state )
-      {
+    {
       case begin:
       {
 	assert( current_move != sequence.get_moves().end() );
@@ -355,8 +356,8 @@ namespace zertz
 	      // get position of last stone of the right type
 	      int col = game->common_stones.stone_count[set_move->stone_type] - 1;
 	      assert(col >= 0);
-	      _from = gui_manager.get_game_panel().get_stone_panel().get_field_pos( col, 
-										    set_move->stone_type );
+	      _from = gui_manager.get_game_panel().get_stone_panel()
+		.get_field_pos( col, set_move->stone_type );
 	      // remove stone from reservoir
 	      --game->common_stones.stone_count[set_move->stone_type];
 	    }
@@ -400,7 +401,8 @@ namespace zertz
 	    // ** refresh display and start animation
 	    game_window.refresh(); 
 	    ret = bitmap_move_animation.move
-	      ( gui_manager.get_game_panel().get_board_panel().get_bitmap_set().field_bitmaps[field_empty], 
+	      ( gui_manager.get_game_panel().get_board_panel().get_bitmap_set()
+		.field_bitmaps[field_empty], 
 		remove_pos, wxPoint(-1,-1), 20, 40, this, ANIMATION_DONE );
 	  }
 	  break;
@@ -583,7 +585,8 @@ namespace zertz
 	  game->variant_tree.move_a_variant_back();
 	  if( !game->variant_tree.is_first() )
 	  {
-	    game->choose_prev_player( game->variant_tree.get_current_variant()->current_player_index );
+	    game->choose_prev_player
+	      ( game->variant_tree.get_current_variant()->current_player_index );
 	  }
 	  else
 	    game->choose_prev_player( -1 );
@@ -612,12 +615,15 @@ namespace zertz
 	      std::cerr << current_player->stones.stone_count[Stones::white_stone] << std::endl;
 	      std::cerr << current_player->stones.stone_count[Stones::grey_stone] << std::endl;
 	      std::cerr << current_player->stones.stone_count[Stones::black_stone] << std::endl;
-	      std::cerr << game->get_next_player(current_player)->stones.stone_count[Stones::white_stone] 
-			<< std::endl;
-	      std::cerr << game->get_next_player(current_player)->stones.stone_count[Stones::grey_stone] 
-			<< std::endl;
-	      std::cerr << game->get_next_player(current_player)->stones.stone_count[Stones::black_stone] 
-			<< std::endl;      
+	      std::cerr 
+		<< game->get_next_player(current_player)->stones.stone_count[Stones::white_stone] 
+		<< std::endl;
+	      std::cerr 
+		<< game->get_next_player(current_player)->stones.stone_count[Stones::grey_stone] 
+		<< std::endl;
+	      std::cerr 
+		<< game->get_next_player(current_player)->stones.stone_count[Stones::black_stone] 
+		<< std::endl;      
 	    }
 #endif
 	    assert(current_player->stones.stone_count[stone] > 0 );
@@ -675,8 +681,8 @@ namespace zertz
 	      // get position of last stone of the right type
 	      int col = game->common_stones.stone_count[set_move->stone_type];
 	      assert(col >= 0);
-	      _from = gui_manager.get_game_panel().get_stone_panel().get_field_pos( col, 
-										    set_move->stone_type );
+	      _from = gui_manager.get_game_panel().get_stone_panel()
+		.get_field_pos( col, set_move->stone_type );
 	      stones = &game->common_stones;
 	    }
 	    wxPoint from( _from.first, _from.second );
@@ -718,8 +724,9 @@ namespace zertz
 	    // ** refresh display and start animation
 	    game_window.refresh(); 
 	    ret = bitmap_move_animation.move
-	      ( gui_manager.get_game_panel().get_board_panel().get_bitmap_set().field_bitmaps[field_empty], 
-		wxPoint(-1,-1), remove_pos, 20, 40, this, ANIMATION_DONE ); // move field from anywhere 
+	      ( gui_manager.get_game_panel().get_board_panel().get_bitmap_set()
+		.field_bitmaps[field_empty], wxPoint(-1,-1), remove_pos, 20, 40, 
+		this, ANIMATION_DONE ); // move field from anywhere 
 	  }
 	  break;
 	  case Move::finish_move:
@@ -819,7 +826,7 @@ namespace zertz
 	Field_Iterator to_field  ( set_move->pos, &game->board );
 	*to_field = field_empty;
 
-	// readd stone to player of common stones
+	// readd stone to player or common stones
 	++stones->stone_count[set_move->stone_type];
 
 	// ** begin new step
@@ -909,7 +916,8 @@ namespace zertz
     return ret;
   }
 
-  void Move_Sequence_Animation::on_done( wxTimerEvent &WXUNUSED(event) ) // current sub-animation done
+  // current sub-animation done
+  void Move_Sequence_Animation::on_done( wxTimerEvent &WXUNUSED(event) )
   {
     if( !undo )
       step();

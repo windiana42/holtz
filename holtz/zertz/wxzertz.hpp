@@ -240,8 +240,6 @@ namespace zertz
     inline const std::list<Player_Panel*> &get_player_panels() const { return player_panels; }
     const Player_Panel *get_player_panel( int id ) const;
     const wxBitmap &get_background() const;
-
-    inline Game &get_display_game() { return display_game; }
   private:
     void rearrange_panels();
 
@@ -257,8 +255,6 @@ namespace zertz
     std::list<Player_Panel*> player_panels;
     Vertical_Sizer player_panel_sizer;
     Stone_Panel stone_panel;
-
-    Game display_game;
   };
   
   // ============================================================================

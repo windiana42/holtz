@@ -84,13 +84,15 @@ namespace zertz
     ~Move_Sequence_Animation();
     
     // start to animate move
-    bool start( Move_Sequence sequence, Game &game, wxEvtHandler *done_handler = 0, int event_id=-1 );
+    bool start( Move_Sequence sequence, Game &game, wxEvtHandler *done_handler = 0, 
+		int event_id=-1 );
     // start to animate undo move
-    bool start_undo( Move_Sequence sequence, Game &game, wxEvtHandler *done_handler = 0, int event_id=-1 );
+    bool start_undo( Move_Sequence sequence, Game &game, wxEvtHandler *done_handler = 0, 
+		     int event_id=-1 );
 
   private:
-    bool step();		// do step (returns false if timer couldn't be set up)
-    bool step_undo();		// do step in undo-animation (returns false if timer couldn't be set up)
+    bool step();	// do step (returns false if timer couldn't be set up)
+    bool step_undo();	// do step in undo-animation (returns false if timer couldn't be set up)
     void on_done( wxTimerEvent &event ); // current sub-animation done
     void finish();
 

@@ -30,12 +30,11 @@
 // ----------------------------------------------------------------------------
 
 #include "wxzertz.hpp"
-#include "wxmain.hpp"
 #include "zertz.hpp"
 #include "dialogs.hpp"
 #include "ai.hpp"
 #include "util.hpp"
-#include "pbm.hpp"
+#include "wxmain.hpp"
 
 #include <wx/zipstrm.h>
 #include <wx/image.h>
@@ -72,17 +71,17 @@ namespace zertz
   // purist pictures 50px
 
   // field pictures
-#include "skins/purist/field_removed.xpm"
-#include "skins/purist/field_empty.xpm"
-#include "skins/purist/stone_white.xpm"
-#include "skins/purist/stone_grey.xpm"
-#include "skins/purist/stone_black.xpm"
-#include "skins/purist/click_mark.xpm"
-#include "skins/purist/field_mark.xpm"
-#include "skins/purist/stone_mark.xpm"
-#include "skins/purist/background.xpm"
+#include "skins/purist50/field_removed.xpm"
+#include "skins/purist50/field_empty.xpm"
+#include "skins/purist50/stone_white.xpm"
+#include "skins/purist50/stone_grey.xpm"
+#include "skins/purist50/stone_black.xpm"
+#include "skins/purist50/click_mark.xpm"
+#include "skins/purist50/field_mark.xpm"
+#include "skins/purist50/stone_mark.xpm"
+#include "skins/purist50/background.xpm"
   // field dimensions
-#include "skins/purist/skin.hpp"
+#include "skins/purist50/skin.hpp"
 #endif
 
 #ifdef HEX_50
@@ -264,7 +263,8 @@ namespace zertz
       {
 	wxBitmap &normal_bitmap = field_bitmap->second;
 	const Field_State_Type &type = field_bitmap->first;
-	wxImage normal_image = normal_bitmap.ConvertToImage().Rotate90( false/*counter clockwise*/ );
+	wxImage normal_image 
+	  = normal_bitmap.ConvertToImage().Rotate90( false /*counter clockwise*/ );
 	rotated.field_bitmaps.insert
 	  (std::pair<Field_State_Type,wxBitmap>(type, wxBitmap(normal_image)));
       }
@@ -339,12 +339,18 @@ namespace zertz
       if( settings.rotate_board )
       {
 	if( bitmap_handler.dimensions.rotation_symmetric )
+	{
 	  board_y += bitmap_handler.dimensions.field_width;
+	}
 	else
+	{
 	  board_y += bitmap_handler.dimensions.field_height;
+	}
       }
       else
+      {
 	board_x += bitmap_handler.dimensions.field_width;
+      }
     }
 
     if( settings.rotate_board )
@@ -357,7 +363,10 @@ namespace zertz
 	  bitmap_handler.dimensions.field_height / 2 + board_y; 
 	
 	if( settings.show_coordinates )
-	  height += bitmap_handler.dimensions.field_height;
+	{
+	  height += bitmap_handler.dimensions.field_width;
+	  width  += bitmap_handler.dimensions.field_packed_width;
+	}
       }
       else
       {
@@ -367,7 +376,10 @@ namespace zertz
 	  bitmap_handler.dimensions.field_width / 2 + board_y; 
 	
 	if( settings.show_coordinates )
-	  height += bitmap_handler.dimensions.field_width;
+	{
+	  height += bitmap_handler.dimensions.field_height;
+	  width  += bitmap_handler.dimensions.field_packed_width;
+	}
       }
     }
     else
@@ -378,7 +390,10 @@ namespace zertz
 	+ bitmap_handler.dimensions.field_height + board_y;
 
       if( settings.show_coordinates )
-	width += bitmap_handler.dimensions.field_width;
+      {
+	width  += bitmap_handler.dimensions.field_width;
+	height += bitmap_handler.dimensions.field_height;
+      }
     }
   }
 
@@ -414,7 +429,8 @@ namespace zertz
 	    Field_Pos pos;
 	    pos.x = fx;
 	    pos.y = fy;
-	    std::string coord_name = game.ruleset->get_coordinate_translator()->get_field_name( pos );
+	    std::string coord_name 
+	      = game.ruleset->get_coordinate_translator()->get_field_name( pos );
 	    wxCoord w,h;
 	    dc.GetTextExtent( str_to_wxstr(coord_name), &w, &h );
 	    std::pair<int,int> field = get_field_pos( fx, fy );
@@ -1179,8 +1195,7 @@ namespace zertz
       sequence_generator(sequence_generator),
       board_panel( settings.board_settings, game_manager, gui_manager, sequence_generator ),
       stone_panel( settings.common_stone_settings, gui_manager.get_display_game().common_stones, 
-		   game_manager, gui_manager,sequence_generator ),
-      display_game(game_manager.get_game())
+		   game_manager, gui_manager,sequence_generator )
   {
     //rearrange_panels();		// will be done with calc_dimensions
   }
@@ -1837,7 +1852,8 @@ namespace zertz
     input = new wxZipInputStream( filename, wxT("skin.ini") );
     //if( input->Eof() ) { delete input; return false; } // ini file might be empty
     wxFileConfig config( *input );
-    bitmap_handler.dimensions = Dimensions( config, bitmap_handler.normal.field_bitmaps[field_empty] );
+    bitmap_handler.dimensions 
+      = Dimensions( config, bitmap_handler.normal.field_bitmaps[field_empty] );
     delete input;
 
     bitmap_handler.setup_field_stone_bitmaps();

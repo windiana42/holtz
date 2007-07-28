@@ -105,7 +105,7 @@ namespace dvonn
   class Common_Stones : public Stones
   {
   public:
-    typedef enum Common_Stones_Type{ standard=0, custom };
+    typedef enum Common_Stones_Type{ standard=0, custom=99 };
 
     Common_Stones( Common_Stones_Type type=custom );
     Common_Stones_Type get_type() const { return type; }
@@ -187,7 +187,7 @@ namespace dvonn
   bool operator==( const Field_Pos &p1, const Field_Pos &p2 );
   bool operator!=( const Field_Pos &p1, const Field_Pos &p2 );
 
-  class Field_Iterator // obsolete?
+  class Field_Iterator 
   {
   public:
     typedef enum Direction{ invalid_direction=-1, 
@@ -306,8 +306,8 @@ namespace dvonn
     typedef enum Move_Type { no_move=0, jump_move, set_move, finish_move };
 
     virtual Move_Type get_type() const = 0;
-    virtual void do_move( Game & ) = 0;
-    virtual void undo_move( Game & ) = 0;
+    virtual void do_move( Game & ) = 0;	         // may store extra info about the move
+    virtual void undo_move( Game & ) = 0;        // mustn't destroy stored extra information
     virtual bool check_move( Game & ) const = 0; // true: move ok
     virtual bool check_previous_move( Game &, Move * ) const = 0;
 						 // true: type ok
@@ -415,7 +415,8 @@ namespace dvonn
     void undo_last_move( Game & );	// calls undo for last move and removes it
     void clear();
 
-    Move_Sequence clone() const;		// to store sequences, they must be cloned
+    Move_Sequence clone() const;	// to store sequences, they must be cloned
+    void modify_moves();		// called before changes to moves
 
     inline const std::list<Move*> &get_moves() const { return *moves; }
     inline bool is_empty() { return moves->empty(); }
@@ -480,6 +481,7 @@ namespace dvonn
     inline Variant *get_root_variant()    { return root; }
     inline const Variant *get_current_variant() const { return current_variant; }
     inline const Variant *get_root_variant()    const { return root; }
+    std::list<Move_Sequence> get_current_variant_moves();
   public:
     friend class Game;
     void add_in_current_variant( int current_player_index, const Move_Sequence &, 
@@ -494,7 +496,7 @@ namespace dvonn
   class Win_Condition
   {
   public:
-    typedef enum Win_Condition_Type{ standard=0, full_custom };
+    typedef enum Win_Condition_Type{ standard=0, full_custom=99 };
 
     Win_Condition( Win_Condition_Type type = full_custom );
     virtual ~Win_Condition();
@@ -504,7 +506,7 @@ namespace dvonn
 
     Win_Condition_Type get_type() const { return type; }
   protected:
-    Win_Condition_Type type;	// is generic win condition with number of white/grey/black/all stones
+    Win_Condition_Type type; // is generic win condition 
   };
 
   class Coordinate_Translator
@@ -521,7 +523,7 @@ namespace dvonn
   class Ruleset
   {
   public:
-    typedef enum Ruleset_Type { standard=0, custom };
+    typedef enum Ruleset_Type { standard=0, custom=99 };
     Ruleset( const Ruleset & );
     Ruleset();
     Ruleset &operator=( const Ruleset & );
@@ -590,6 +592,7 @@ namespace dvonn
 
     int get_num_possible_moves(); // number of possible moves in current situation
     //std::list<Move_Sequence> get_possible_moves(); // get possible moves in situation
+    std::list<Move_Sequence> get_played_moves();   // get moves played since start
     
     std::vector<Player>::iterator get_next_player( std::vector<Player>::iterator player );
     std::vector<Player>::iterator get_prev_player( std::vector<Player>::iterator player );

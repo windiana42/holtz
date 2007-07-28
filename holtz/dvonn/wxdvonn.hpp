@@ -114,7 +114,7 @@ namespace dvonn
 
     Field_Pos		get_field( int x, int y ) const;
     std::pair<int,int>  get_field_pos( int col, int row ) const;
-    std::pair<int,int>  get_stack_top_pos( int col, int row ) const;
+    std::pair<int,int>  get_stack_top_pos( int col, int row, int height=-1 ) const;
     Bitmap_Set         &get_bitmap_set() const;
   private:
     Settings &settings;
@@ -137,7 +137,7 @@ namespace dvonn
       bool horizontal;
       int max_stones;		// for multiple stones
       wxFont stone_font;
-      Settings( bool rotate_stones=true, bool multiple_stones=true, bool horizontal=true, 
+      Settings( bool rotate_stones=true, bool multiple_stones=false, bool horizontal=true, 
 		int max_stones=10, wxFont stone_font = wxNullFont );
     };
 
@@ -210,7 +210,8 @@ namespace dvonn
 		const Player_Panel::Settings &player_settings,
 		const Stone_Panel::Settings &common_stone_settings,
 		Arrangement_Type arrangement = arrange_standard,
-		wxString skin_file = wxT(""), wxString beep_file = wxT(""), bool play_sound = false );
+		wxString skin_file = wxT(""), wxString beep_file = wxT(""), 
+		bool play_sound = false );
       Settings();
 
       Board_Panel::Settings  board_settings;

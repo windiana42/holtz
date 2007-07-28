@@ -1,4 +1,4 @@
-INCLUDES = -I$(srcdir)/..
+INCLUDES = -I$(srcdir)/.. -I$(srcdir)
 
 noinst_LIBRARIES = libzertz.a
 libzertz_a_SOURCES = \

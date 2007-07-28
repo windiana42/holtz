@@ -156,7 +156,7 @@ namespace zertz
   class Common_Stones : public Stones
   {
   public:
-    typedef enum Common_Stones_Type{ standard=0, tournament, custom };
+    typedef enum Common_Stones_Type{ standard=0, tournament, custom=99 };
 
     Common_Stones( Common_Stones_Type type=custom );
     Common_Stones_Type get_type() const { return type; }
@@ -244,7 +244,7 @@ namespace zertz
   bool operator==( const Field_Pos &p1, const Field_Pos &p2 );
   bool operator!=( const Field_Pos &p1, const Field_Pos &p2 );
 
-  class Field_Iterator // obsolete?
+  class Field_Iterator 
   {
   public:
     typedef enum Direction{ invalid_direction=-1, 
@@ -343,8 +343,8 @@ namespace zertz
     typedef enum Move_Type { no_move=0, knock_out_move, set_move, remove, finish_move };
 
     virtual Move_Type get_type() const = 0;
-    virtual void do_move( Game & ) = 0;
-    virtual void undo_move( Game & ) = 0;
+    virtual void do_move( Game & ) = 0;	         // may store extra info about the move
+    virtual void undo_move( Game & ) = 0;        // mustn't destroy stored extra information
     virtual bool check_move( Game & ) const = 0; // true: move ok
     virtual bool check_previous_move( Game &, Move * ) const = 0;
 						 // true: type ok
@@ -546,7 +546,7 @@ namespace zertz
   class Win_Condition
   {
   public:
-    typedef enum Win_Condition_Type{ standard=0, tournament, generic, full_custom };
+    typedef enum Win_Condition_Type{ standard=0, tournament, generic, full_custom=99 };
 
     Win_Condition( Win_Condition_Type type = full_custom );
     virtual ~Win_Condition();
@@ -573,7 +573,7 @@ namespace zertz
   class Ruleset
   {
   public:
-    typedef enum Ruleset_Type { standard=0, tournament, custom };
+    typedef enum Ruleset_Type { standard=0, tournament, custom=99 };
     Ruleset( const Ruleset & );
     Ruleset();
     Ruleset &operator=( const Ruleset & );

@@ -1,18 +1,19 @@
 * BUGS: 
 
-- cleaning up left-over players when starting new game (potential crashes)
-- figure out potential problems with line_net code on the stack while
-  processing modal game setup dialog
-- failed network connection attempts are not reported nicely for client
-- player names on new game can be bogus for client
-- connection dialog on server can not be used during wizard execution 
-   (consider creating own non-modal wizard)
-
-- think about good way to handle finished games loaded as pbm file
+- load game 2nd last, undo 16 half moves
+- disabled back button causes wxAsserts
+- think about good way to handle finished games loaded as pbm file (on new game)
+  * don't offer moves
+  * allow undo / new-game for both players: extra state for finished games?
+  * finished game -> new game -> cancel -> move allowd?
+- asking queries should be deferred during game setup dialog
 - for any reason reading skin.ini files with 2 underscores in one name crashes...
 - why segfault on exit with wxWidgets 2.8?
 
 * Features:
+
+- disallow client to keep connection in setup dialog when connection was closed
+- extra page for connecting
 
 - better AI (looking for sente moves first, rate situations better)
 - save settings, last ruleset
@@ -24,6 +25,7 @@
 - show ready status, ai status and help mode for each player
 - show moves played (position tree)
 - show moves review 
+- show winning requirements
 
 - for full bgp 1.00a master support: 
  * implement move reminder

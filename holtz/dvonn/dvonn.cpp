@@ -114,8 +114,8 @@ namespace dvonn
 		  std::string host, Player_Type type, Help_Mode help_mode,
 		  Origin origin )
     : name(name), id(id), host(host), type(type), help_mode(help_mode), 
-      origin(origin), total_time(0), average_time(-1), 
-      num_measures(0), input(input), outputs(outputs), is_active(false)
+      origin(origin), total_time(0), average_time(-1), num_measures(0), 
+      input(input), outputs(outputs), is_active(false)
   {
   }
 
@@ -1053,10 +1053,24 @@ namespace dvonn
     return false;
   }
 
-  void Variant_Tree::add_in_current_variant( int current_player_index, 
-					     const Move_Sequence &sequence, unsigned possible_variants )
+  std::list<Move_Sequence> Variant_Tree::get_current_variant_moves()
   {
-    current_variant = current_variant->add_variant( current_player_index, sequence, possible_variants );
+    std::list<Move_Sequence> ret;
+    Variant *cur = get_current_variant();
+    while( cur != get_root_variant() )
+    {
+      ret.push_front(cur->move_sequence);
+      cur = cur->prev;
+    }
+    return ret;
+  }
+
+  void Variant_Tree::add_in_current_variant( int current_player_index, 
+					     const Move_Sequence &sequence, 
+					     unsigned possible_variants )
+  {
+    current_variant 
+      = current_variant->add_variant( current_player_index, sequence, possible_variants );
   }
   void Variant_Tree::move_a_variant_back()
   {
@@ -1172,21 +1186,22 @@ namespace dvonn
 	  // get move
 	  sequence = current_player->input->get_move();
 
-	  // do move
-	  do_move( sequence );
-
-	  // calculate average time
-	  long time = current_player->input->get_used_time();
-	  current_player->total_time += time;
-	  current_player->average_time = current_player->average_time * current_player->num_measures + time;
-	  ++current_player->num_measures;
-	  current_player->average_time /= current_player->num_measures;
-
 	  // report move
 	  for( output =  current_player->outputs.begin();
 	       output != current_player->outputs.end();
 	       ++output )
 	    (*output)->report_move( sequence );
+
+	  // calculate average time
+	  long time = current_player->input->get_used_time();
+	  current_player->total_time += time;
+	  current_player->average_time 
+	    = current_player->average_time * current_player->num_measures + time;
+	  ++current_player->num_measures;
+	  current_player->average_time /= current_player->num_measures;
+
+	  // do move
+	  do_move( sequence );
 
 	  // check win condition
 	  int index = 0;
@@ -1201,7 +1216,6 @@ namespace dvonn
 	    }
 	    index++;
 	  }
-	  
 
 	  if( !current_player->is_active ) // if no player is able to move
 	  {
@@ -1889,6 +1903,12 @@ namespace dvonn
   }
   */
 
+  // get moves played since start
+  std::list<Move_Sequence> Game::get_played_moves() 
+  {
+    return variant_tree.get_current_variant_moves();
+  }
+
   std::vector<Player>::iterator Game::get_next_player( std::vector<Player>::iterator player )
   {
     ++player;
@@ -1958,6 +1978,8 @@ namespace dvonn
     assert( from_stack.size() == 1 );
     assert( from_stack.back() == field_empty );
     from_stack.clear();
+    assert(num_moved_stones>0);
+    assert((int)to_stack.size() > num_moved_stones);
     for( int i=0; i<num_moved_stones; ++i )
     {
       from_stack.push_front( to_stack.back() );
@@ -2100,6 +2122,10 @@ namespace dvonn
       }
       game.board.num_empty_fields--;
       game.board.game_state = Board::jump_moves;
+    }
+    else
+    {
+      pos2 = Field_Pos(-1,-1);
     }
   }
   void Set_Move::undo_move( Game &game )
@@ -2359,7 +2385,8 @@ namespace dvonn
 	      p1.set_pos(pos);
 	      assert( Board::is_stone(*p1) );
 	      
-	      removed_stones.push_back( std::pair<Field_Pos,std::deque<Field_State_Type> >(pos,*p1) );
+	      removed_stones.push_back( std::pair<Field_Pos,std::deque<Field_State_Type> >
+					(pos,*p1) );
 	      
 	      p1->clear();
 	      p1->push_back( field_empty );
@@ -2380,7 +2407,6 @@ namespace dvonn
       p1.set_pos(i->first);
       *p1 = i->second;
     }
-    removed_stones.clear();				 // empty list
   }
   // true: move ok
   bool Finish_Move::check_move( Game &game ) const 
@@ -2496,11 +2522,14 @@ namespace dvonn
     Move::Move_Type type;
     Move *move = 0;
 
+    clear();
     eis >> num_moves;
-    for( int i = 0; i < num_moves + 1; i++ )
+    for( int i = 0; i < num_moves; i++ )
     {
       int move_type;
       eis >> move_type;
+      if( eis.did_error_occur() )
+	return false;
       type = Move::Move_Type(move_type);
       switch( type )
       {
@@ -2522,15 +2551,18 @@ namespace dvonn
   // this function takes care of the reserved memory
   void Move_Sequence::add_move( Move *move )
   {
+    modify_moves();
     moves->push_back( move );
   }
 
-  // this function takes care of the reserved memory
+  // true: add ok
+  // this function takes care of the reserved memory if add ok
   bool Move_Sequence::add_move( Game &game, Move *move )
   {
     if( !move->check_previous_move( game, get_last_move() ) )
       return false;
 
+    modify_moves();
     moves->push_back( move );
     return true;
   }
@@ -2548,6 +2580,7 @@ namespace dvonn
   {
     if( moves->size() )
     {
+      modify_moves();
       moves->back()->undo_move(game);
       delete moves->back();
       moves->pop_back();
@@ -2586,6 +2619,16 @@ namespace dvonn
     }
 
     return ret;
+  }
+
+  void Move_Sequence::modify_moves()
+  {
+    if( ref_counter->cnt > 1 )
+    {
+      --ref_counter->cnt;
+      moves = new std::list<Move*>(*moves);
+      ref_counter = new Ref_Counter();
+    }
   }
 
   Move_Sequence::Move_Sequence()
