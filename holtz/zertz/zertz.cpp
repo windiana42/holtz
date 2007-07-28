@@ -24,6 +24,8 @@
 
 namespace zertz
 {
+  using namespace holtz;
+
   // ----------------------------------------------------------------------------
   // Stones
   // ----------------------------------------------------------------------------
@@ -996,8 +998,8 @@ namespace zertz
 					     const Move_Sequence &sequence, 
 					     unsigned possible_variants )
   {
-    current_variant = current_variant->add_variant( current_player_index, sequence, 
-						    possible_variants );
+    current_variant 
+      = current_variant->add_variant( current_player_index, sequence, possible_variants );
   }
   void Variant_Tree::move_a_variant_back()
   {
@@ -1133,14 +1135,16 @@ namespace zertz
 	  // check win condition
 	  if( win_condition->did_player_win(*this,*prev_player) )
 	  {
-
 	    winner_player_index = prev_player_index;
 	    current_player->is_active = false;
 	    return finished;
 	  }
 
 	  if( !current_player->is_active ) // if no player is able to move
+	  {
+	    winner_player_index=-1;
 	    return finished;
+	  }
 
 	  return next_players_turn;
 	}
@@ -1313,6 +1317,7 @@ namespace zertz
     return ret;
   }
 
+  //! game dependent function
   bool Game::choose_next_player()		// next player is current player
   {
     prev_player = current_player;
@@ -1961,6 +1966,7 @@ namespace zertz
     game.board.field[over.x][over.y] = knocked_stone;
     game.board.field[  to.x][  to.y] = field_empty;    
   }
+
   // true: move ok
   bool Knock_Out_Move::check_move( Game &game ) const 
   {
@@ -2260,6 +2266,7 @@ namespace zertz
   void Finish_Move::do_move( Game &game )
   {
     removed_stones.clear();
+
     // **********************************
     // search for filled isolated islands
 
@@ -2388,7 +2395,6 @@ namespace zertz
       --game.current_player->stones.stone_count[ stone_type ];
       assert( game.current_player->stones.stone_count[ stone_type ] >= 0 );
     }
-    removed_stones.clear();				 // empty list
   }
   // true: move ok
   bool Finish_Move::check_move( Game &game ) const 
@@ -2509,6 +2515,8 @@ namespace zertz
     {
       int move_type;
       eis >> move_type;
+      if( eis.did_error_occur() )
+	return false;
       type = Move::Move_Type(move_type);
       switch( type )
       {
@@ -2528,7 +2536,7 @@ namespace zertz
     return true;
   }
 
-  // true: add ok
+  // this function takes care of the reserved memory
   void Move_Sequence::add_move( Move *move )
   {
     modify_moves();
@@ -2536,6 +2544,7 @@ namespace zertz
   }
 
   // true: add ok
+  // this function takes care of the reserved memory if add ok
   bool Move_Sequence::add_move( Game &game, Move *move )
   {
     if( !move->check_previous_move( game, get_last_move() ) )
@@ -2779,7 +2788,8 @@ namespace zertz
   // Generic_Win_Condition
   // ----------------------------------------------------------------------------
 
-  Generic_Win_Condition::Generic_Win_Condition( int num_white, int num_grey, int num_black, int num_all )
+  Generic_Win_Condition::Generic_Win_Condition( int num_white, int num_grey, 
+						int num_black, int num_all )
     : Win_Condition( generic ), num_white(num_white), num_grey(num_grey), num_black(num_black),
       num_all(num_all)
   {
@@ -3329,14 +3339,12 @@ namespace zertz
     {
       case move_from:
 	return from;
-	break;
       case begin:
       case move_dest:
       case stone_picked:	// I know only selected stone type
       case stone_set:
       case move_finished:
 	return Field_Pos();
-	break;
     }
     assert(false);
     return Field_Pos();

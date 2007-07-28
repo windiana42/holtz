@@ -19,6 +19,7 @@
 
 namespace holtz
 {
+//#include "wxmain.hpp"
   class Game_Window;
 }
 
@@ -83,13 +84,15 @@ namespace dvonn
     ~Move_Sequence_Animation();
     
     // start to animate move
-    bool start( Move_Sequence sequence, Game &game, wxEvtHandler *done_handler = 0, int event_id=-1 );
+    bool start( Move_Sequence sequence, Game &game, wxEvtHandler *done_handler = 0, 
+		int event_id=-1 );
     // start to animate undo move
-    bool start_undo( Move_Sequence sequence, Game &game, wxEvtHandler *done_handler = 0, int event_id=-1 );
+    bool start_undo( Move_Sequence sequence, Game &game, wxEvtHandler *done_handler = 0, 
+		     int event_id=-1 );
 
   private:
-    bool step();		// do step (returns false if timer couldn't be set up)
-    bool step_undo();		// do step in undo-animation (returns false if timer couldn't be set up)
+    bool step();	// do step (returns false if timer couldn't be set up)
+    bool step_undo();	// do step in undo-animation (returns false if timer couldn't be set up)
     void on_done( wxTimerEvent &event ); // current sub-animation done
     void finish();
 
@@ -102,17 +105,15 @@ namespace dvonn
     wxEvtHandler *done_handler;
     int event_id;
 
-    typedef enum State_Type { begin, knock_out_jump, knock_out_collects, 
-			      removing,setting_stone, finish_sequence, finish_removes, 
-			      finished };
+    typedef enum State_Type { begin, jump_move, setting_stone, setting_stone2, finish_sequence, 
+			      finish_sequence2, finished };
     State_Type state;
     std::list<Move*>::const_iterator current_move;
     std::list<Move*>::const_reverse_iterator current_undo_move;
 
-    Field_State_Type save_field;
-    std::list< std::pair<Field_Pos,Stones::Stone_Type> >::iterator current_removed_stone;
-    std::list< std::pair<Field_Pos,Stones::Stone_Type> >::iterator end_removed_stones;
-
+    std::deque<Field_State_Type> save_stack;
+    std::list< std::pair<Field_Pos,std::deque<Field_State_Type> > >::iterator current_removed_stone;
+    std::list< std::pair<Field_Pos,std::deque<Field_State_Type> > >::iterator end_removed_stones;
     std::vector<Player>::iterator current_player;	// especially needed for undo moves
     Stones *stones;
     bool undo;			// undo=true when animating undoing of move

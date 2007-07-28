@@ -175,10 +175,10 @@ namespace dvonn
 
       wxImage field_stone_image (normal.field_bitmaps[field_empty].ConvertToImage());
       wxImage stone_image (stone_bitmap->second.ConvertToImage());
-      unsigned char *field_stone_data = field_stone_image.GetData();
+      unsigned char *field_stone_data  = field_stone_image.GetData();
       unsigned char *field_stone_alpha = field_stone_image.GetAlpha();
-      unsigned char *stone_data       = stone_image.GetData();
-      unsigned char *stone_alpha      = stone_image.GetAlpha();
+      unsigned char *stone_data        = stone_image.GetData();
+      unsigned char *stone_alpha       = stone_image.GetAlpha();
       unsigned char mask_colour[3];
       mask_colour[0] = stone_image.GetMaskRed();
       mask_colour[1] = stone_image.GetMaskGreen();
@@ -213,7 +213,7 @@ namespace dvonn
 	  else
 	  {
 	    // fall-back implementation for no/partial alpha support
-	    bool masked = true;
+ 	    bool masked = true;
 	    for( int c = 0; c < 3; ++c )
 	    {
 	      if( mask_colour[c] != stone_data[(x+y*stone_image.GetWidth())*3 + c] )
@@ -277,7 +277,7 @@ namespace dvonn
       {
 	wxBitmap &normal_bitmap = stone_bitmap->second;
 	const Stones::Stone_Type &type = stone_bitmap->first;
-	wxImage normal_image = normal_bitmap.ConvertToImage().Rotate90( false /*counter clockwise*/);
+	wxImage normal_image = normal_bitmap.ConvertToImage().Rotate90( false/*counter clockwise*/ );
 	rotated.stone_bitmaps.insert
 	  (std::pair<Stones::Stone_Type,wxBitmap>(type, wxBitmap(normal_image)));
       }
@@ -293,6 +293,7 @@ namespace dvonn
 	= wxBitmap(normal.background.ConvertToImage().Rotate90(false/*counter clockwise*/));
     }
   }
+  
   // ----------------------------------------------------------------------------
   // Board_Panel
   // ----------------------------------------------------------------------------
@@ -747,14 +748,18 @@ namespace dvonn
   }
 
 
-  std::pair<int,int> Board_Panel::get_stack_top_pos( int col, int row ) const
+  std::pair<int,int> Board_Panel::get_stack_top_pos( int col, int row, int height ) const
   {
     std::pair<int,int> ret;
-    Game &game = gui_manager.get_display_game();
+    int stack_height = height;
+    if( stack_height < 0 )
+    {
+      Game &game = gui_manager.get_display_game();
 
-    Field_Pos pos(col,row);
-    Field_Iterator p1(pos, &game.board);
-    int stack_height = p1->size();
+      Field_Pos pos(col,row);
+      Field_Iterator p1(pos, &game.board);
+      stack_height = p1->size();
+    }
     
     ret = get_field_pos( col, row );
     ret.first  += bitmap_handler.dimensions.stack_shift_x * (stack_height-1);
@@ -1028,10 +1033,13 @@ namespace dvonn
     sequence_generator_hook = 0;
 
     used_time = stop_watch.Time();
-    if( game.current_player->help_mode == Player::show_hint )
+    if( game.players.size() )
     {
-      //ai->abort();
-      gui_manager.remove_hint();
+      if( game.current_player->help_mode == Player::show_hint )
+      {
+	//ai->abort();
+	gui_manager.remove_hint();
+      }
     }
 
     gui_manager.show_user_information(false,false);
@@ -1096,8 +1104,8 @@ namespace dvonn
 	
       switch( state )
       {
-	case Sequence_Generator::hold_white:
 	case Sequence_Generator::hold_red:
+	case Sequence_Generator::hold_white:
 	case Sequence_Generator::hold_black:
 	{
 	  Field_Pos pos = sequence_generator->get_selected_pos();
@@ -1229,6 +1237,9 @@ namespace dvonn
       mouse_handler( game_manager, *this, sequence_generator ),
       user_activity_allowed(false)
   {
+    // self register
+    game_manager.set_ui_manager( this );
+
     load_settings();
 
     add( &game_panel );
@@ -1306,7 +1317,7 @@ namespace dvonn
     Game &game = get_display_game();
     stone_mark_positions.clear();
     field_mark_positions.clear();
-    if( visible )
+    if( visible && game.players.size() )
     {
       switch( game.current_player->help_mode )
       {
@@ -1450,10 +1461,10 @@ namespace dvonn
     click_mark_y = y;
 
     wxClientDC dc(&game_window);
-    dc.BeginDrawing();
+    //dc.BeginDrawing(); depricated
     game_window.PrepareDC(dc);
     draw_mark(dc);
-    dc.EndDrawing();
+    //dc.EndDrawing(); depricated
   }
 
   void WX_GUI_Manager::draw_mark( wxDC &dc )
