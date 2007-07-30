@@ -91,7 +91,7 @@ namespace dvonn
 	state = Game::finished;
       }
 
-      Player *winner;
+      int winner;
       switch( state )
       {
 	case Game::finished:
@@ -100,10 +100,15 @@ namespace dvonn
 	  if( ui_manager )
 	    ui_manager->update_board( game ); // update board display
 
-	  winner = &*game.get_player(game.get_winner_index());
+	  winner = game.get_winner_index();
 
 	  if( ui_manager )
-	    ui_manager->report_winner( winner );
+	  {
+	    if( winner >= 0 )
+	      ui_manager->report_winner( &*game.get_player(winner) );
+	    else
+	      ui_manager->report_winner( 0 );
+	  }
 
 	  go_on = false;
 	}
@@ -153,11 +158,11 @@ namespace dvonn
     }
   }
 
-  void Game_Manager::force_new_game()
+  void Game_Manager::force_new_game(bool on_own)
   {
     stop_game();
     assert( game_setup_manager );
-    game_setup_manager->force_new_game();
+    game_setup_manager->force_new_game(on_own);
   }
 
   void Game_Manager::new_game_accepted()
@@ -188,7 +193,7 @@ namespace dvonn
       wxString msg = _("The idea of starting a new game was rejected. Do you want to start a new game on your own?");
       if( wxMessageBox( msg, _("New game?"), wxYES | wxNO | wxCANCEL | wxICON_QUESTION ) == wxYES )
       {
-	force_new_game();
+	force_new_game(true/*on own*/);
       }
       else
       {
@@ -571,7 +576,8 @@ namespace dvonn
   {
     return accept;
   }
-  void Standalone_Game_Setup_Manager::force_new_game() // force new game (may close connections)
+  // force new game (may close connections)
+  void Standalone_Game_Setup_Manager::force_new_game(bool /*on_own*/) 
   {
     if( display_handler )	// there should be a display handler
 				// that may display a game setup

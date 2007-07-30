@@ -1105,6 +1105,23 @@ namespace zertz
 	(players.size() > ruleset->max_players) ) 
       return wrong_number_of_players;
 
+    // check win condition
+    if( prev_player != players.end() )
+    {
+      if( win_condition->did_player_win(*this,*prev_player) )
+      {
+	winner_player_index = prev_player_index;
+	current_player->is_active = false;
+	return finished;
+      }
+    }
+
+    if( !current_player->is_active ) // if no player is able to move
+    {
+      winner_player_index=-1;
+      return finished;
+    }
+
     do
     {
       Player_Input::Player_State state = current_player->input->determine_move();
@@ -1133,11 +1150,14 @@ namespace zertz
 	  do_move( sequence );
 
 	  // check win condition
-	  if( win_condition->did_player_win(*this,*prev_player) )
+	  if( prev_player != players.end() )
 	  {
-	    winner_player_index = prev_player_index;
-	    current_player->is_active = false;
-	    return finished;
+	    if( win_condition->did_player_win(*this,*prev_player) )
+	    {
+	      winner_player_index = prev_player_index;
+	      current_player->is_active = false;
+	      return finished;
+	    }
 	  }
 
 	  if( !current_player->is_active ) // if no player is able to move

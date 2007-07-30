@@ -49,7 +49,7 @@ namespace dvonn
 
   Setup_Manager_Page::Setup_Manager_Page( wxWizard *parent, Game_Dialog &game_dialog )
     : wxWizardPage(parent), game_dialog(game_dialog), changes(true), 
-      connecting(false), connected(false)
+      connecting(false), connected(false), auto_next(false)
   {
     alone          = new wxRadioButton( this, -1, _("Play alone") );
     network_server = new wxRadioButton( this, -1, _("Setup network server") );
@@ -254,8 +254,6 @@ namespace dvonn
 	    {
 	      connecting = true;
 	      client_status->SetLabel(_("Connecting..."));
-	      wxMessageBox(_("Please wait until connection attempt succeeds or fails and try again"),
-			   _("Wait"), wxOK | wxICON_INFORMATION );
 	      ret = false;	// prevent user from continuing until connection is established
 	    }
 	  }
@@ -279,10 +277,7 @@ namespace dvonn
       network_server_val = network_server->GetValue();
       network_client_val = network_client->GetValue();
     }
-    bool can_choose = true;
-    if( game_dialog.game_setup_manager )
-      can_choose = game_dialog.game_setup_manager->can_choose_board();
-    if( !can_choose && game_dialog.game_setup_manager )
+    if( ret && game_dialog.game_setup_manager )
       if( !game_dialog.game_setup_manager->can_enter_player_setup() &&
 	  GetNext() == game_dialog.get_player_page() )
       {
@@ -298,6 +293,7 @@ namespace dvonn
   {
     if( !transfer_data_from_window(event.GetDirection()) )
       event.Veto();
+    auto_next = true;
   }
 
   void Setup_Manager_Page::on_server_port( wxSpinEvent& WXUNUSED(event) )
@@ -324,6 +320,7 @@ namespace dvonn
     network_client->SetValue(true);
     // early setup of client connection
     transfer_data_from_window(true/*forward direction*/);
+    auto_next = false;
   }
 
 
@@ -347,6 +344,24 @@ namespace dvonn
     client_status->SetLabel(_("Connected"));
     connected = true;
     connecting = false;
+    if( auto_next )
+    {
+      bool changes = this->changes;  // create local copy of member <changes>
+      // detect changes
+      if(!changes)
+      {
+	if( alone->GetValue() != alone_val ||
+	    network_server->GetValue() != network_server_val ||
+	    network_client->GetValue() != network_client_val ||
+	    hostname->IsModified() )
+	  changes = true;
+      }
+      if( !changes )
+      {
+	// switch to next page automatically
+	game_dialog.wizard->ShowPage( GetNext() );
+      }
+    }
   }
 
   bool Setup_Manager_Page::connection_closed()
@@ -356,6 +371,7 @@ namespace dvonn
       client_status->SetLabel(_("Connection Lost"));
       connected = false;
       connecting = false;
+      changes = true;		// cause a new connection attempt on <next>
       return true;
     }
     return false;
@@ -380,7 +396,7 @@ namespace dvonn
     continue_game = new wxRadioButton( this, -1, _("Continue game") );
     don_t_change  = new wxRadioButton( this, -1, _("Don't care which game to play") );
     
-#ifdef VERSION_ZERTZ
+#if defined(VERSION_ZERTZ)
     wxString new_game_choices[4];
     new_game_choices[0] = wxString(_("Standard Rules"));
     new_game_choices[1] = wxString(_("Tournament Rules"));
@@ -389,6 +405,14 @@ namespace dvonn
     new_game_choice = new wxRadioBox( this, DIALOG_NEW_GAME_CHOICE, 
 				      _("Rules for new game"), wxDefaultPosition,
 				      wxDefaultSize, 4, new_game_choices, 2, wxRA_SPECIFY_COLS );
+#elif defined(VERSION_DVONN)
+    wxString new_game_choices[3];
+    new_game_choices[0] = wxString(_("Standard Rules"));
+    new_game_choices[1] = wxString(_("Random Start Board"));
+    new_game_choices[2] = wxString(_("Rules of last game"));
+    new_game_choice = new wxRadioBox( this, DIALOG_NEW_GAME_CHOICE, 
+				      _("Rules for new game"), wxDefaultPosition,
+				      wxDefaultSize, 3, new_game_choices, 2, wxRA_SPECIFY_COLS );
 #endif
 
     wxString continue_game_choices[2];
@@ -401,9 +425,7 @@ namespace dvonn
 
     wxBoxSizer *top_sizer = new wxBoxSizer( wxVERTICAL );
     top_sizer->Add( new_game, 0, wxALL, 10 );
-#ifdef VERSION_ZERTZ
     top_sizer->Add( new_game_choice, 0, wxCENTER | wxALL, 10 );
-#endif
     top_sizer->Add( continue_game, 0, wxALL, 10 );
     top_sizer->Add( continue_game_choice, 0, wxCENTER | wxALL, 10 );
     top_sizer->Add( don_t_change, 0, wxALL, 10 );
@@ -420,7 +442,7 @@ namespace dvonn
 
   wxWizardPage *Board_Page::GetNext() const
   {
-#ifdef VERSION_ZERTZ
+#if defined(VERSION_ZERTZ)
     if( new_game->GetValue() && (new_game_choice->GetSelection() == 2) )
       return game_dialog.get_custom_board_page();
     else 
@@ -451,7 +473,7 @@ namespace dvonn
     {
       if( new_game->GetValue() )
       {
-#ifdef VERSION_ZERTZ
+#if defined(VERSION_ZERTZ)
 	switch( new_game_choice->GetSelection() )
 	{
 	  case 0: game_dialog.game = Game( Standard_Ruleset() ); break;
@@ -460,8 +482,13 @@ namespace dvonn
 	  case 3: game_dialog.game = Game( *game_dialog.game_manager.get_game().ruleset ); 
 	}
 	if( new_game_choice->GetSelection() != 2 )
-#else
-	game_dialog.game = Game( Standard_Ruleset() );
+#elif defined(VERSION_DVONN)
+	switch( new_game_choice->GetSelection() )
+	{
+	  case 0: game_dialog.game = Game( Standard_Ruleset() ); break;
+	  case 1: game_dialog.game = Game( Random_Ruleset() ); break;
+	  case 2: game_dialog.game = Game( *game_dialog.game_manager.get_game().ruleset ); 
+	}
 #endif
 	{
 	  if( game_dialog.game_setup_manager->ask_change_board( game_dialog.game ) == 
@@ -543,12 +570,19 @@ namespace dvonn
     if(can_choose)
     {
       new_game->SetValue(true);
-#ifdef VERSION_ZERTZ
+#if defined(VERSION_ZERTZ)
       switch( game_dialog.game.ruleset->get_type() )
       {
 	case Ruleset::standard:   new_game_choice->SetSelection(0); break;
 	case Ruleset::tournament: new_game_choice->SetSelection(1); break;
 	case Ruleset::custom:     new_game_choice->SetSelection(2); break;
+      }
+      new_game_choice->Enable(true);
+#elif defined(VERSION_DVONN)
+      switch( game_dialog.game.ruleset->get_type() )
+      {
+	case Ruleset::standard:   new_game_choice->SetSelection(0); break;
+	case Ruleset::custom:     new_game_choice->SetSelection(1); break;
       }
       new_game_choice->Enable(true);
 #endif
@@ -559,9 +593,7 @@ namespace dvonn
     } 
     else
     {
-#ifdef VERSION_ZERTZ
       new_game_choice->Enable(false);
-#endif
       don_t_change->SetValue(true);
       don_t_change->Enable(true);
       new_game->Enable(false);
@@ -572,7 +604,7 @@ namespace dvonn
 
   wxWizardPage *Board_Page::get_last_board_page() const
   {
-#ifdef VERSION_ZERTZ
+#if defined(VERSION_ZERTZ)
     if( new_game->GetValue() && (new_game_choice->GetSelection() == 2) )
       return game_dialog.get_custom_board_page();
     else 
@@ -600,7 +632,7 @@ namespace dvonn
   {
     wxBoxSizer *top_sizer = new wxBoxSizer( wxVERTICAL );
 
-#ifdef VERSION_ZERTZ
+#if defined(VERSION_ZERTZ)
     wxString board_choices[5];
     board_choices[0] = wxString(_("37 Rings (default)"));
     board_choices[1] = wxString(_("40 Rings"));
@@ -669,7 +701,7 @@ namespace dvonn
 
   void Custom_Board_Setup_Panel::restore()
   {
-#ifdef VERSION_ZERTZ
+#if defined(VERSION_ZERTZ)
     Ruleset *ruleset = game_dialog.game.ruleset;
     wxCommandEvent evt;
     switch( ruleset->board.board_type )
@@ -716,7 +748,7 @@ namespace dvonn
 
   Game Custom_Board_Setup_Panel::get_board()
   {
-#ifdef VERSION_ZERTZ
+#if defined(VERSION_ZERTZ)
     Board *board;
     Common_Stones *common_stones;
     Win_Condition *win_condition;
@@ -813,7 +845,7 @@ namespace dvonn
   void Custom_Board_Setup_Panel::on_change_win  ( wxCommandEvent& event )
   {
     changes = true;
-#ifdef VERSION_ZERTZ
+#if defined(VERSION_ZERTZ)
     switch( win_choice->GetSelection() )
     {
       case 0:
@@ -843,7 +875,7 @@ namespace dvonn
   void Custom_Board_Setup_Panel::on_spin_win ( wxSpinEvent& event )
   {
     changes = true;
-#ifdef VERSION_ZERTZ
+#if defined(VERSION_ZERTZ)
     win_choice->SetSelection(2);
 #endif
   }
@@ -851,7 +883,7 @@ namespace dvonn
   void Custom_Board_Setup_Panel::on_change_stones  ( wxCommandEvent& event )
   {
     changes = true;
-#ifdef VERSION_ZERTZ
+#if defined(VERSION_ZERTZ)
     switch( stones_choice->GetSelection() )
     {
       case 0:
@@ -878,7 +910,7 @@ namespace dvonn
   void Custom_Board_Setup_Panel::on_spin_stones ( wxSpinEvent& WXUNUSED(event) )
   {
     changes = true;
-#ifdef VERSION_ZERTZ
+#if defined(VERSION_ZERTZ)
     stones_choice->SetSelection(2);
 #endif
   }
@@ -1985,7 +2017,7 @@ namespace dvonn
   {
     wxBoxSizer *top_sizer = new wxBoxSizer( wxVERTICAL );
 
-#ifdef VERSION_ZERTZ
+#if defined(VERSION_ZERTZ)
     wxString orientation_choices[2];
     orientation_choices[0] = wxString(_("Horizontal"));
     orientation_choices[1] = wxString(_("Vertical"));
@@ -2006,7 +2038,7 @@ namespace dvonn
     show_coordinates = new wxCheckBox( this, -1, _("Show field coordinates") );
     top_sizer->Add( show_coordinates, 0, wxALL, 10 );
 
-#ifdef VERSION_ZERTZ
+#if defined(VERSION_ZERTZ)
     multiple_common_stones = new wxCheckBox( this, -1, _("Display all common stones individually") );
     top_sizer->Add( multiple_common_stones, 0, wxALL, 10 );
 
@@ -2087,7 +2119,7 @@ namespace dvonn
   void Display_Setup_Page::restore_settings()
   {
     show_coordinates->SetValue( dialog->game_settings.board_settings.show_coordinates );
-#ifdef VERSION_ZERTZ
+#if defined(VERSION_ZERTZ)
     orientation_choice->SetSelection( dialog->game_settings.board_settings.rotate_board ? 1 : 0 );
     switch( dialog->game_settings.arrangement )
     {
@@ -2104,7 +2136,7 @@ namespace dvonn
   {
     dialog->game_settings.board_settings.show_coordinates              
       = show_coordinates->GetValue();
-#ifdef VERSION_ZERTZ
+#if defined(VERSION_ZERTZ)
     dialog->game_settings.board_settings.rotate_board 
       = orientation_choice->GetSelection() == 0 ? false : true;
     dialog->game_settings.common_stone_settings.rotate_stones          

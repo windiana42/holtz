@@ -313,7 +313,7 @@ namespace dvonn
     }
   }
   // force new game (may close connections)
-  void Network_Manager_BGP100a_Server::force_new_game()
+  void Network_Manager_BGP100a_Server::force_new_game(bool /*on_own*/)
   {
     // reset local state
     display_phase = DISPLAY_INIT;
@@ -1802,9 +1802,12 @@ namespace dvonn
 	      game_manager.undo_denied();
 	  }
 	}
-	else
+	else			// remote requester
 	{
-	  game_manager.do_undo_moves(asking_n);
+	  if( answer )
+	  {
+	    game_manager.do_undo_moves(asking_n);
+	  }
 	}
       }
       return true;
@@ -2240,7 +2243,7 @@ namespace dvonn
     return wait_for_answer;
   }
   // force new game (may close connections)
-  void Network_Manager_BGP100a_Client::force_new_game()
+  void Network_Manager_BGP100a_Client::force_new_game(bool on_own)
   {
     // reset connection state
     conn_state.in_setup = true;
@@ -2255,6 +2258,9 @@ namespace dvonn
     display_phase = DISPLAY_INIT;
     game_phase = BGP::phase_setup;
     cleanup_players();
+    // if on my own: disconnect
+    if( on_own )
+      close_connection();
     // open new game dialog
     if( display_handler )	// there should be a display handler
 				// that may display a game setup

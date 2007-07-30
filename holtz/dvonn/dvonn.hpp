@@ -568,7 +568,7 @@ namespace dvonn
     // **********************
     // game control functions
     Game_State continue_game() throw(Exception); // start or continue game
-    void stop_game();		// stop game to allow changing the position with do_move and undo_move
+    void stop_game(); // stop game to allow changing the position with do_move and undo_move
     int get_winner_index() { return winner_player_index; } // returns -1 if no player won
     void reset_game();		// doesn't reset players
     void reset_game( const Ruleset & );	// doesn't reset players
@@ -661,7 +661,7 @@ namespace dvonn
   {
   public:
     virtual std::string encode( Move_Sequence ) = 0;
-    virtual Move_Sequence    decode( std::istream& ) = 0;
+    virtual Move_Sequence decode( std::istream& ) = 0;
     virtual ~Move_Translator() {}
   };
 
@@ -671,7 +671,7 @@ namespace dvonn
     Standard_Move_Translator( Coordinate_Translator * );
 
     virtual std::string encode( Move_Sequence );
-    virtual Move_Sequence    decode( std::istream& );
+    virtual Move_Sequence decode( std::istream& );
   private:
     Coordinate_Translator *coordinate_translator;
   };
@@ -699,6 +699,15 @@ namespace dvonn
   {
   public:
     Standard_Ruleset();
+  };
+
+  class Random_Ruleset : public Ruleset
+  {
+  public:
+    Random_Ruleset();
+    virtual Ruleset *clone() const;  // cloned ruleset has a new random board
+  private:
+    void fill_board( Board &board );
   };
 
   class No_Output : public Player_Output

@@ -43,7 +43,7 @@ namespace holtz
 
   inline int random( int min, int max )
   {
-    assert( max > min );
+    assert( max >= min );
     return (rand() % (max - min + 1)) + min;
   }
 
@@ -222,6 +222,54 @@ namespace std
   {
     return find(c.begin(),c.end(),e) != c.end();
   }
+
+  // array operator on lists
+  template<typename Element>
+  inline typename list<Element>::iterator at_iterator( list<Element> &c, unsigned idx )
+  {
+    assert( c.size() > idx );
+    typename list<Element>::iterator it = c.begin();
+    for(unsigned i=0; i<idx; ++i )
+      ++it;
+    return it;
+  }
+
+  // array operator on lists
+  /* overloading with const version doesn't seem to work well
+  template<typename Element>
+  inline typename list<Element>::const_iterator at_iterator( const list<Element> &c, unsigned idx )
+  {
+    assert( c.size() > idx );
+    typename list<Element>::const_iterator it = c.begin();
+    for(unsigned i=0; i<idx; ++i )
+      ++it;
+    return it;
+  }
+  */
+
+  // array operator on lists
+  template<typename Element>
+  inline Element &at( list<Element> &c, unsigned idx )
+  {
+    assert( c.size() > idx );
+    typename list<Element>::iterator it = c.begin();
+    for(unsigned i=0; i<idx; ++i )
+      ++it;
+    return *it;
+  }
+
+  // array operator on lists
+  /* overloading with const version doesn't seem to work well
+  template<typename Element>
+  inline Element const &at( const list<Element> &c, unsigned idx )
+  {
+    assert( c.size() > idx );
+    typename list<Element>::const_iterator it = c.begin();
+    for(unsigned i=0; i<idx; ++i )
+      ++it;
+    return *it;
+  }
+  */
 
   // tests whether map or set includes an element
   template<typename Container, typename Element>
