@@ -283,7 +283,18 @@ namespace holtz
   void Game_Window::new_zertz_game()
   {
     if( active_game != ZERTZ )
+    {
+      if( active_game != NO_GAME )
+      {
+	if( wxMessageBox(_("You are about to switch to Zertz and close your current game. Proceed?"),
+			 _("Closing Game"), wxYES | wxNO | wxCANCEL | wxICON_QUESTION ) 
+	    != wxYES )
+	{
+	  return;
+	}      
+      }
       init_zertz();
+    }
     
     switch( active_game ) {
     case ZERTZ:
@@ -300,7 +311,18 @@ namespace holtz
   void Game_Window::new_dvonn_game()
   {
     if( active_game != DVONN )
+    {
+      if( active_game != NO_GAME )
+      {
+	if( wxMessageBox(_("You are about to switch to Dvonn and close your current game. Proceed?"),
+			 _("Closing Game"), wxYES | wxNO | wxCANCEL | wxICON_QUESTION ) 
+	    != wxYES )
+	{
+	  return;
+	}      
+      }
       init_dvonn();
+    }
 
     switch( active_game ) {
     case ZERTZ:

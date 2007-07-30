@@ -190,6 +190,7 @@ namespace holtz
 	std::string line = receive_buffer.substr(0,pos);
 	receive_buffer = receive_buffer.substr(pos+1);
 	line_handler->process_line( this, line );
+	if(!line_handler) break;  // line_handler may have been unregistered
       }
     }
   }
