@@ -1,4 +1,4 @@
-SUBDIRS=skins sounds locale help zertz dvonn
+SUBDIRS=skins sounds locale help common zertz dvonn
 
 bin_PROGRAMS=		holtz
 

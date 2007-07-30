@@ -46,6 +46,7 @@ AC_OUTPUT(
 	Makefile
 	zertz/Makefile
 	dvonn/Makefile
+	common/Makefile
 	skins/Makefile
 	skins/eins/Makefile
 	sounds/Makefile
