@@ -267,9 +267,12 @@ namespace holtz
 
   void Line_Network_Server::destroy()
   {
-    server_socket->Close();
-    server_socket->Destroy();
-    server_socket = 0;
+    if( server_socket )
+    {
+      server_socket->Close();
+      server_socket->Destroy();
+      server_socket = 0;
+    }
     destroyed = true;
 
 #if wxUSE_GUI

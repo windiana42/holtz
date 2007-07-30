@@ -1176,6 +1176,26 @@ namespace dvonn
 	(players.size() > ruleset->max_players) ) 
       return wrong_number_of_players;
 
+    // check win condition
+    int index = 0;
+    std::vector<Player>::iterator player;
+    for( player = players.begin(); player != players.end(); ++player )
+    {
+      if( win_condition->did_player_win(*this,*player) )
+      {
+	winner_player_index = index;
+	current_player->is_active = false;
+	return finished;
+      }
+      index++;
+    }
+
+    if( !current_player->is_active ) // if no player is able to move
+    {
+      winner_player_index=-1;
+      return finished;
+    }
+
     do
     {
       Player_Input::Player_State state = current_player->input->determine_move();
@@ -2771,10 +2791,66 @@ namespace dvonn
   }
 
   // ----------------------------------------------------------------------------
+  // Random_Ruleset
+  // ----------------------------------------------------------------------------
+
+  Random_Ruleset::Random_Ruleset()
+    : Ruleset( custom,
+	       Board( (const int*) standard_board, 
+		      sizeof(standard_board[0]) / sizeof(standard_board[0][0]),
+		      sizeof(standard_board)    / sizeof(standard_board[0]), Board::standard ),
+	       Standard_Common_Stones(),
+	       new Standard_Win_Condition(), 0 /*coordinate translator init below */,
+	       true /*undo possible*/, 2, 2 )
+  {
+    coordinate_translator = new Standard_Coordinate_Translator(board);
+    fill_board(board);
+  }
+
+  // cloned ruleset has a new random board
+  Ruleset *Random_Ruleset::clone() const  
+  {
+    Ruleset *ret = new Random_Ruleset();
+    return ret;
+  }
+
+  void Random_Ruleset::fill_board( Board &board )
+  {
+    assert( board.get_game_state() == Board::set_moves );
+    std::list<Field_Pos> empty_fields = board.get_empty_fields();
+    assert( empty_fields.size() > 3 );
+    std::list<Field_Pos>::iterator it;
+    for( int i=0; i<3; ++i )
+    {
+      it = at_iterator(empty_fields,random(empty_fields.size()));
+      board.field[it->x][it->y].clear();
+      board.field[it->x][it->y].push_back(field_red);
+      empty_fields.erase(it);
+    }
+    while(!empty_fields.empty())
+    {
+      it = at_iterator(empty_fields,random(empty_fields.size()));
+      board.field[it->x][it->y].clear();
+      board.field[it->x][it->y].push_back(field_black);
+      empty_fields.erase(it);
+
+      if(empty_fields.empty()) break;  // should not happen for standard board
+
+      it = at_iterator(empty_fields,random(empty_fields.size()));
+      board.field[it->x][it->y].clear();
+      board.field[it->x][it->y].push_back(field_white);
+      empty_fields.erase(it);
+    }
+    board.num_empty_fields = 0;
+    board.game_state = Board::jump_moves;
+  }
+
+  // ----------------------------------------------------------------------------
   // Custom_Ruleset
   // ----------------------------------------------------------------------------
 
-  Custom_Ruleset::Custom_Ruleset( Board board, Common_Stones common_stones, Win_Condition *win_condition, 
+  Custom_Ruleset::Custom_Ruleset( Board board, Common_Stones common_stones, 
+				  Win_Condition *win_condition, 
 				  Coordinate_Translator *coordinate_translator, 
 				  bool undo_possible, unsigned min_players, unsigned max_players )
     : Ruleset( custom, board, common_stones, win_condition, coordinate_translator, undo_possible, 

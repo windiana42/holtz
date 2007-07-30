@@ -152,7 +152,7 @@ namespace dvonn
     virtual void start_game(); // call only when can_start() == true
     virtual Answer_Type ask_new_game(); // request to play new game
     virtual Answer_Type ask_undo_moves(int n=2); // request to undo n half moves
-    virtual void force_new_game(); // force new game (may close connections)
+    virtual void force_new_game(bool on_own=false); // force new game (may close connections)
     virtual void stop_game();  // stop game
     virtual void game_setup_entered();  // game setup entered 
     virtual bool is_allow_game_setup_abort(); // is it allowed to abort the game setup?
@@ -363,7 +363,7 @@ namespace dvonn
     virtual void start_game(); // call only when can_start() == true
     virtual Answer_Type ask_new_game(); // request to play new game
     virtual Answer_Type ask_undo_moves(int n=2); // request to undo n half moves
-    virtual void force_new_game(); // force new game (may close connections)
+    virtual void force_new_game(bool on_own=false); // force new game (may close connections)
     virtual void stop_game();  // stop game
     virtual void game_setup_entered();  // game setup entered
     virtual bool is_allow_game_setup_abort(); // is it allowed to abort the game setup?

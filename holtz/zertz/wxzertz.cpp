@@ -1395,7 +1395,7 @@ namespace zertz
     }
     else
     {
-      report_information( _("It seems that nobody could win the game."), _("Winner") );
+      report_information( _("Nobody could win the game - This is a Tie!"), _("No Winner") );
     }
   }
 

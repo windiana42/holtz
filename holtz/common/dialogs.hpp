@@ -104,7 +104,7 @@ namespace dvonn
     wxTextCtrl *hostname;
     wxSpinCtrl *server_port, *client_port;
     wxStaticText *client_status;
-    bool connecting; bool connected;
+    bool connecting; bool connected; bool auto_next;
     bool alone_val, network_server_val, network_client_val;
 
     friend class Game_Dialog;
