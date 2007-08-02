@@ -1,3 +1,3 @@
 EXTRA_DIST=	\
-	*.xpm skin.hpp
+	$(srcdir)/*.xpm $(srcdir)/skin.hpp
 

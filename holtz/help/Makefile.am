@@ -1,3 +1,3 @@
 helpdir = $(pkgdatadir)/help
-help_DATA = *.zip
-EXTRA_DIST = *.zip
+help_DATA = $(srcdir)/*.zip
+EXTRA_DIST = $(srcdir)/*.zip
