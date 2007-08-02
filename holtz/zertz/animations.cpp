@@ -54,7 +54,8 @@ namespace zertz
 
   bool Bitmap_Move_Animation::move( wxBitmap _bitmap, wxPoint _from, wxPoint _to, 
 				    unsigned _steps, unsigned _step_rate,
-				    wxEvtHandler *_done_handler, int _event_id )
+				    wxEvtHandler *_done_handler, 
+				    int _event_id, int _abort_id )
   {
     if( occupied )
       return false;
@@ -83,6 +84,7 @@ namespace zertz
     step_rate = _step_rate;
     done_handler = _done_handler;
     event_id = _event_id;
+    abort_id = _abort_id;
     current_step = 0;
 
     int diff_x = abs( from.x - to.x ) / (steps-1) + 1;
@@ -101,6 +103,22 @@ namespace zertz
     old_bg = 0;
 
     return step();
+  }
+
+  // abort a running animation
+  void Bitmap_Move_Animation::abort()
+  {
+    Stop();
+    if(occupied)
+    {
+      occupied = false;
+    
+      if( done_handler )
+      {
+	wxTimerEvent event( abort_id );
+	done_handler->ProcessEvent( event );
+      }
+    }
   }
 
   bool Bitmap_Move_Animation::step()
@@ -136,12 +154,14 @@ namespace zertz
       //if( current_step > 0 )
     {
       if( pos_x == bg_x )
-	background_dc[bg]->Blit( width, 0, bg_width[bg] - width, bg_height[bg], dc, bg_x + width, bg_y );
+	background_dc[bg]->Blit( width, 0, bg_width[bg] - width, bg_height[bg], 
+				 dc, bg_x + width, bg_y );
       else
 	background_dc[bg]->Blit( 0, 0, bg_width[bg] - width, bg_height[bg], dc, bg_x, bg_y );
       
       if( pos_y == bg_y )
-	background_dc[bg]->Blit( 0, height, bg_width[bg], bg_height[bg] - height, dc, bg_x, bg_y + height);
+	background_dc[bg]->Blit( 0, height, bg_width[bg], bg_height[bg] - height, 
+				 dc, bg_x, bg_y + height);
       else
 	background_dc[bg]->Blit( 0, 0, bg_width[bg], bg_height[bg] - height, dc, bg_x, bg_y );
 
@@ -214,10 +234,14 @@ namespace zertz
 
   void Bitmap_Move_Animation::Notify()
   {
-    step();
+    if(!occupied) 
+      Stop();
+    else
+      step();
   }
 
-  Move_Sequence_Animation::Move_Sequence_Animation( WX_GUI_Manager &gui_manager, Game_Window &game_window )
+  Move_Sequence_Animation::Move_Sequence_Animation( WX_GUI_Manager &gui_manager, 
+						    Game_Window &game_window )
     : gui_manager(gui_manager), game_window(game_window), bitmap_move_animation( game_window ),
       done_handler(0), state(finished)
   {
@@ -225,6 +249,9 @@ namespace zertz
     Connect( ANIMATION_DONE, wxEVT_TIMER, 
 	     (wxObjectEventFunction) (wxEventFunction) (wxTimerEventFunction) 
 	     &Move_Sequence_Animation::on_done );
+    Connect( ANIMATION_ABORTED, wxEVT_TIMER, 
+	     (wxObjectEventFunction) (wxEventFunction) (wxTimerEventFunction) 
+	     &Move_Sequence_Animation::on_aborted );
   }
 
   Move_Sequence_Animation::~Move_Sequence_Animation()
@@ -232,7 +259,8 @@ namespace zertz
   }
     
   bool Move_Sequence_Animation::start( Move_Sequence _sequence, Game &_game, 
-				       wxEvtHandler *_done_handler, int _event_id )
+				       wxEvtHandler *_done_handler, 
+				       int _event_id, int _abort_id )
   {
     if( state != finished )
       return false;
@@ -248,6 +276,7 @@ namespace zertz
     game = &_game;
     done_handler = _done_handler;
     event_id = _event_id;
+    abort_id = _abort_id;
     current_move = sequence.get_moves().begin();
     state = begin;
 
@@ -258,7 +287,8 @@ namespace zertz
   }
 
   bool Move_Sequence_Animation::start_undo( Move_Sequence _sequence, Game &_game, 
-					    wxEvtHandler *_done_handler, int _event_id )
+					    wxEvtHandler *_done_handler, 
+					    int _event_id, int _abort_id )
   {
     if( state != finished )
       return false;
@@ -273,6 +303,7 @@ namespace zertz
     game = &_game;
     done_handler = _done_handler;
     event_id = _event_id;
+    abort_id = _abort_id;
     current_undo_move = sequence.get_moves().rbegin();
     state = begin;
 
@@ -282,6 +313,11 @@ namespace zertz
     undo = true;
     
     return step_undo();
+  }
+
+  void Move_Sequence_Animation::abort()
+  {
+    bitmap_move_animation.abort();    
   }
 
   // perform animation step
@@ -328,7 +364,7 @@ namespace zertz
 	    game_window.refresh(); 
 	    ret = bitmap_move_animation.move
 	      ( gui_manager.get_game_panel().get_board_panel().get_bitmap_set().stone_bitmaps[stone],
-		from, to, 12, 35, this, ANIMATION_DONE );
+		from, to, 12, 35, this, ANIMATION_DONE, ANIMATION_ABORTED );
 	  }
 	  break;
 	  case Move::set_move:
@@ -375,7 +411,7 @@ namespace zertz
 	    game_window.refresh();
 	    ret = bitmap_move_animation.move
 	      ( gui_manager.get_game_panel().get_board_panel().get_bitmap_set().stone_bitmaps[stone],
-		from, pos, 20, 40, this, ANIMATION_DONE );
+		from, pos, 20, 40, this, ANIMATION_DONE, ANIMATION_ABORTED );
 	  }
 	  break;
 	  case Move::remove:
@@ -403,7 +439,7 @@ namespace zertz
 	    ret = bitmap_move_animation.move
 	      ( gui_manager.get_game_panel().get_board_panel().get_bitmap_set()
 		.field_bitmaps[field_empty], 
-		remove_pos, wxPoint(-1,-1), 20, 40, this, ANIMATION_DONE );
+		remove_pos, wxPoint(-1,-1), 20, 40, this, ANIMATION_DONE, ANIMATION_ABORTED );
 	  }
 	  break;
 	  case Move::finish_move:
@@ -470,7 +506,7 @@ namespace zertz
 	game_window.refresh(); 
 	ret = bitmap_move_animation.move
 	  ( gui_manager.get_game_panel().get_board_panel().get_bitmap_set().stone_bitmaps[stone],
-	    over, to, 20, 40, this, ANIMATION_DONE );
+	    over, to, 20, 40, this, ANIMATION_DONE, ANIMATION_ABORTED );
       }
       break;
       case knock_out_collects:
@@ -547,7 +583,7 @@ namespace zertz
 	  game_window.refresh(); 
 	  ret = bitmap_move_animation.move
 	    ( gui_manager.get_game_panel().get_board_panel().get_bitmap_set().stone_bitmaps[stone], 
-	      pos, to, 20, 40, this, ANIMATION_DONE );
+	      pos, to, 20, 40, this, ANIMATION_DONE, ANIMATION_ABORTED );
 	}
       }
       break;
@@ -650,7 +686,8 @@ namespace zertz
 	    game_window.refresh(); 
 	    ret = bitmap_move_animation.move
 	      ( gui_manager.get_game_panel().get_board_panel().get_bitmap_set().stone_bitmaps[stone],
-		to, over, 20, 40, this, ANIMATION_DONE ); // move in direction: <to> => <over>
+		to, over, 20, 40, this, ANIMATION_DONE, ANIMATION_ABORTED ); 
+				// move in direction: <to> => <over>
 	  }
 	  break;
 	  case Move::set_move:
@@ -699,7 +736,8 @@ namespace zertz
 	    game_window.refresh(); // remove picked stone from screen
 	    ret = bitmap_move_animation.move
 	      ( gui_manager.get_game_panel().get_board_panel().get_bitmap_set().stone_bitmaps[stone],
-		pos, from, 20, 40, this, ANIMATION_DONE ); // move in direction: <pos> => <from>
+		pos, from, 20, 40, this, ANIMATION_DONE, ANIMATION_ABORTED ); 
+				// move in direction: <pos> => <from>
 	  }
 	  break;
 	  case Move::remove:
@@ -726,7 +764,7 @@ namespace zertz
 	    ret = bitmap_move_animation.move
 	      ( gui_manager.get_game_panel().get_board_panel().get_bitmap_set()
 		.field_bitmaps[field_empty], wxPoint(-1,-1), remove_pos, 20, 40, 
-		this, ANIMATION_DONE ); // move field from anywhere 
+		this, ANIMATION_DONE, ANIMATION_ABORTED ); // move field from anywhere 
 	  }
 	  break;
 	  case Move::finish_move:
@@ -791,7 +829,8 @@ namespace zertz
 	ret = bitmap_move_animation.move
 	  ( gui_manager.get_game_panel().get_board_panel().get_bitmap_set().
 	    stone_bitmaps[Stones::Stone_Type(save_field)],
-	    to, from, 12, 35, this, ANIMATION_DONE ); // move stone back: <to> => <from>
+	    to, from, 12, 35, this, ANIMATION_DONE, ANIMATION_ABORTED ); 
+				// move stone back: <to> => <from>
       }
       break;
       case knock_out_collects:
@@ -889,7 +928,8 @@ namespace zertz
 	  game_window.refresh(); 
 	  ret = bitmap_move_animation.move
 	    ( gui_manager.get_game_panel().get_board_panel().get_bitmap_set().stone_bitmaps[stone], 
-	      to, pos, 20, 40, this, ANIMATION_DONE ); // move from <to> of player => <pos> on board
+	      to, pos, 20, 40, this, ANIMATION_DONE, ANIMATION_ABORTED ); 
+				// move from <to> of player => <pos> on board
 	}
       }
       break;
@@ -925,6 +965,18 @@ namespace zertz
       step_undo();
   }
 
+  // current sub-animation aborted
+  void Move_Sequence_Animation::on_aborted( wxTimerEvent &WXUNUSED(event) )
+  {
+    state = finished;
+    
+    if( done_handler )
+    {
+      wxTimerEvent event( abort_id );
+      done_handler->ProcessEvent( event );
+    }
+  }
+
   void Move_Sequence_Animation::finish()
   {
     state = finished;
@@ -938,5 +990,6 @@ namespace zertz
 
   //BEGIN_EVENT_TABLE(Move_Sequence_Animation, wxEvtHandler)				
   //  EVT_TIMER(ANIMATION_DONE, Move_Sequence_Animation::on_done)	//**/
+  //  EVT_TIMER(ANIMATION_ABORTED, Move_Sequence_Animation::on_aborted)	//**/
   //END_EVENT_TABLE()						//**/
 }

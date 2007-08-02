@@ -1600,6 +1600,7 @@ namespace zertz
     beep();			// tell user that his activity is recommended
     user_activity_allowed = true;
   }
+
   void WX_GUI_Manager::stop_user_activity()
   {
     show_user_information( false, false );
@@ -1610,12 +1611,18 @@ namespace zertz
     }
   }
 
+  void WX_GUI_Manager::abort_all_activity()
+  {
+    move_animation->abort();
+    stop_user_activity();
+  }
+
   void WX_GUI_Manager::do_move_slowly( Move_Sequence sequence, wxEvtHandler *done_handler, 
-				       int event_id  ) // show user how move is done
+				       int event_id, int abort_id  ) // show user how move is done
   {
     Game &game = get_display_game();
     assert( sequence.check_sequence( game ) );
-    bool ret = move_animation->start( sequence, game, done_handler, event_id );
+    bool ret = move_animation->start( sequence, game, done_handler, event_id, abort_id );
 
     if( !ret && done_handler )
     {
@@ -1625,7 +1632,7 @@ namespace zertz
   }
 
   void WX_GUI_Manager::undo_move_slowly( wxEvtHandler *done_handler, 
-					 int event_id  ) // show user how move is done
+					 int event_id, int abort_id  ) // show user how move is done
   {
     Game &game = get_display_game();
     bool ret;
@@ -1636,7 +1643,7 @@ namespace zertz
     {
       Move_Sequence sequence = game.variant_tree.get_current_variant()->move_sequence;
 
-      ret = move_animation->start_undo( sequence, game, done_handler, event_id );
+      ret = move_animation->start_undo( sequence, game, done_handler, event_id, abort_id );
     }
 
     if( !ret && done_handler )

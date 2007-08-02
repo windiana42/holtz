@@ -32,7 +32,7 @@
 #include "wxdvonn.hpp"
 #include "dvonn.hpp"
 #include "dialogs.hpp"
-//#include "ai.hpp"
+#include "ai.hpp"
 #include "util.hpp"
 #include "wxmain.hpp"
 
@@ -1007,7 +1007,7 @@ namespace dvonn
 				Sequence_Generator * &sg )
     : Generic_Mouse_Input(gui_manager.get_display_game()), 
       game_manager(game_manager), gui_manager(gui_manager), 
-    sequence_generator_hook(sg)/*, ai(0)*/
+    sequence_generator_hook(sg), ai(0)
   {
   }
   
@@ -1021,8 +1021,8 @@ namespace dvonn
     gui_manager.allow_user_activity();
     if( game.current_player->help_mode == Player::show_hint )
     {
-      //ai = game_manager.get_hint_ai();
-      //ai->determine_hints();
+      ai = game_manager.get_hint_ai();
+      ai->determine_hints();
     }
   }
   void Mouse_Handler::disable_mouse_input() 
@@ -1037,7 +1037,7 @@ namespace dvonn
     {
       if( game.current_player->help_mode == Player::show_hint )
       {
-	//ai->abort();
+	ai->abort();
 	gui_manager.remove_hint();
       }
     }
@@ -1341,7 +1341,6 @@ namespace dvonn
 	break;
 	case Player::show_hint:
 	{
-	  /*
 	  if( current_hint.valid )
 	  {
 	    const std::list<dvonn::Move*> &moves = current_hint.sequence.get_moves();
@@ -1353,86 +1352,46 @@ namespace dvonn
 		case Move::no_move:
 		case Move::finish_move:
 		  break;
-		case Move::knock_out_move:
-		  {
-		    Knock_Out_Move *knock_move = dynamic_cast<Knock_Out_Move *>(*move);
-		    stone_mark_positions.push_back
-		      ( game_panel.get_board_panel().get_field_pos( knock_move->from.x, 
-								    knock_move->from.y ) );
-		    stone_mark_positions.push_back
-		      ( game_panel.get_board_panel().get_field_pos( knock_move->to.x, 
-								    knock_move->to.y ) );
-		  }
+		case Move::jump_move:
+		{
+		  Jump_Move *jump_move = dynamic_cast<Jump_Move *>(*move);
+		  stone_mark_positions.push_back
+		    ( game_panel.get_board_panel().get_field_pos( jump_move->from.x, 
+								  jump_move->from.y ) );
+		  stone_mark_positions.push_back
+		    ( game_panel.get_board_panel().get_field_pos( jump_move->to.x, 
+								  jump_move->to.y ) );
+		}
 		break;
 		case Move::set_move:
-		  {
-		    Set_Move *set_move = dynamic_cast<Set_Move *>(*move);
-		    if( !set_move->own_stone )
-		    {
-		      int stone_count = game.common_stones.stone_count[ set_move->stone_type ];
-		      if( stone_count > 0 )
-		      {
-			stone_mark_positions.push_back
-			  ( game_panel.get_stone_panel().get_field_pos( 0, set_move->stone_type ) );
-		      }
-		    }
-		    else
-		    {
-		      std::list<Player_Panel*>::const_iterator panel;
-		      for( panel = game_panel.get_player_panels().begin(); 
-			   panel != game_panel.get_player_panels().end(); ++panel )
-		      {
-			if( (*panel)->get_id() == game.current_player->id )
-			{
-			  int stone_count = game.current_player->stones.stone_count[ set_move->stone_type ];
-			  if( stone_count > 0 )
-			  {
-			    stone_mark_positions.push_back
-			      ( (*panel)->get_stone_panel().get_field_pos( 0, set_move->stone_type ) );
-			  }
-			  break;
-			}
-		      }
-		    }
-		    stone_mark_positions.push_back
-		      ( game_panel.get_board_panel().get_field_pos( set_move->pos.x, set_move->pos.y ) );
-		  }
-		break;
-		case Move::remove:
-		  {
-		    Remove *remove = dynamic_cast<Remove *>(*move);
-		    field_mark_positions.push_back
-		      ( game_panel.get_board_panel().get_field_pos( remove->remove_pos.x,
-								    remove->remove_pos.y ) );
-		  }
+		{
+		  Set_Move *set_move = dynamic_cast<Set_Move *>(*move);
+		  stone_mark_positions.push_back
+		    ( game_panel.get_board_panel().get_field_pos( set_move->pos.x, 
+								  set_move->pos.y ) );
+		}
 		break;
 	      }
 	    }
 	  }
-	  */
 	}
 	break;
       }
 
       if( sequence_generator )
       {
-	/*
 	switch ( sequence_generator->get_required_move_type() )
 	{
-	  case Move::knock_out_move:
-	    show_status_text(_("Please do a knock out move")); // remove old status text message
+	  case Move::jump_move:
+	    show_status_text(_("Please do jump move")); // remove old status text message
 	    break;
 	  case Move::set_move:
 	    show_status_text(_("You should set a stone")); // remove old status text message
-	    break;
-	  case Move::remove:
-	    show_status_text(_("Just remove a field")); // remove old status text message
 	    break;
 	  case Move::no_move:
 	  case Move::finish_move:
 	    break;
 	}
-	*/
       }
     }
     else
@@ -1442,16 +1401,14 @@ namespace dvonn
     if( do_refresh )
       refresh();
   }
-  /*
   void WX_GUI_Manager::give_hint( AI_Result ai_result )
   {
     current_hint = ai_result;
     show_user_information( true, true );
   }
-  */
   void WX_GUI_Manager::remove_hint()
   {
-    //current_hint = AI_Result();
+    current_hint = AI_Result();
     show_user_information( true, false );
   }
 
@@ -1507,12 +1464,18 @@ namespace dvonn
     }
   }
 
+  void WX_GUI_Manager::abort_all_activity()
+  {
+    move_animation->abort();
+    stop_user_activity();
+  }
+
   void WX_GUI_Manager::do_move_slowly( Move_Sequence sequence, wxEvtHandler *done_handler, 
-				       int event_id  ) // show user how move is done
+				       int event_id, int abort_id  ) // show user how move is done
   {
     Game &game = get_display_game();
     assert( sequence.check_sequence( game ) );
-    bool ret = move_animation->start( sequence, game, done_handler, event_id );
+    bool ret = move_animation->start( sequence, game, done_handler, event_id, abort_id );
 
     if( !ret && done_handler )
     {
@@ -1522,7 +1485,7 @@ namespace dvonn
   }
 
   void WX_GUI_Manager::undo_move_slowly( wxEvtHandler *done_handler, 
-					 int event_id  ) // show user how move is done
+					 int event_id, int abort_id  ) // show user how move is done
   {
     Game &game = get_display_game();
     bool ret;
@@ -1533,7 +1496,7 @@ namespace dvonn
     {
       Move_Sequence sequence = game.variant_tree.get_current_variant()->move_sequence;
 
-      ret = move_animation->start_undo( sequence, game, done_handler, event_id );
+      ret = move_animation->start_undo( sequence, game, done_handler, event_id, abort_id );
     }
 
     if( !ret && done_handler )

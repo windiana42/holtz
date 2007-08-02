@@ -310,10 +310,11 @@ namespace zertz
     virtual void remove_hint();
     virtual void allow_user_activity();
     virtual void stop_user_activity();
+    virtual void abort_all_activity();  // stop user activity and animations
     virtual void do_move_slowly( Move_Sequence sequence, wxEvtHandler *done_handler = 0, 
-				 int event_id=-1 ); // show user how move is done
+				 int event_id=-1, int abort_id=-2 ); // show user how move is done
     virtual void undo_move_slowly( wxEvtHandler *done_handler = 0, 
-    				   int event_id=-1 ); // show user how move is undone
+    				   int event_id=-1, int abort_id=-2 );// show user how move is undone
     virtual void show_status_text( wxString text ); // shows text in status bar
     virtual void beep();
 

@@ -548,6 +548,25 @@ namespace dvonn
     return true;
   }
 
+  // checks whether field at the border of the board
+  bool Board::is_border( Field_Pos pos )
+  {
+    Field_Iterator p1( pos, this );
+
+    // search in any direction
+    int dir;
+    for( dir =  Field_Iterator::right;
+	 dir <= Field_Iterator::bottom_right; ++dir )
+    {
+      Field_Iterator p2 = p1.Next(Field_Iterator::Direction(dir));
+      if( !p2.is_valid_field() )
+	return true;
+      if( is_removed(*p2) )
+	return true;
+    }
+    return false;
+  }
+
   bool Board::is_any_move_possible()
   {
     if( game_state == set_moves )
@@ -640,15 +659,17 @@ namespace dvonn
     return p1 == p2;		// possible when "to" reachable with regular jump
   }
 
-  std::list<Jump_Move> Board::get_jump_moves( Field_Pos from )
+  std::list<Jump_Move> Board::get_jump_moves( Field_Pos from, bool check_blocked, 
+					      int additional_height )
   {
     std::list<Jump_Move> ret;
     
-    if( is_blocked(from) )
-      return ret;
+    if( check_blocked )
+      if( is_blocked(from) )
+	return ret;
     
     Field_Iterator p1( from, this );
-    int num = p1->size();	// size of stack determines jump length
+    int num = p1->size() + additional_height; // size of stack determines jump length
     
     // search in any direction
     int dir;

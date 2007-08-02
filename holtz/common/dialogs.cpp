@@ -415,12 +415,17 @@ namespace dvonn
 				      wxDefaultSize, 3, new_game_choices, 2, wxRA_SPECIFY_COLS );
 #endif
 
-    wxString continue_game_choices[2];
+    wxString continue_game_choices[3];
     continue_game_choices[0] = wxString(_("Continue last game"));
-    continue_game_choices[1] = wxString(_("Load game"));
+    continue_game_choices[1] = wxString(_("Load PBM game"));
+    int n = 2;
+#if defined(VERSION_DVONN)
+    continue_game_choices[2] = wxString(_("Load Little Golem game"));
+    n = 3;
+#endif
     continue_game_choice = new wxRadioBox( this, DIALOG_CONTINUE_GAME_CHOICE, 
 					   _("Which game to continue"), wxDefaultPosition,
-					   wxDefaultSize, 2, continue_game_choices, 1, 
+					   wxDefaultSize, n, continue_game_choices, 1, 
 					   wxRA_SPECIFY_COLS );
 
     wxBoxSizer *top_sizer = new wxBoxSizer( wxVERTICAL );
@@ -449,7 +454,11 @@ namespace dvonn
 #endif
     {
       if( continue_game->GetValue() && (continue_game_choice->GetSelection() == 1) )
-	return game_dialog.get_load_board_page();
+	return game_dialog.get_load_pbm_board_page();
+#if defined(VERSION_DVONN)
+      else if( continue_game->GetValue() && (continue_game_choice->GetSelection() == 2) )
+	return game_dialog.get_load_lg_board_page();
+#endif
       else
 	return game_dialog.get_player_page();
     }
@@ -522,7 +531,10 @@ namespace dvonn
 	}
       }
       game_dialog.get_custom_board_page()->restore();
-      game_dialog.get_load_board_page()->restore();
+      game_dialog.get_load_pbm_board_page()->restore();
+#if defined(VERSION_DVONN)
+      game_dialog.get_load_lg_board_page()->restore();
+#endif
       game_dialog.get_player_page()->players_changed();
 
       changes = false;
@@ -611,7 +623,11 @@ namespace dvonn
 #endif
     {
       if( continue_game->GetValue() && (continue_game_choice->GetSelection() == 1) )
-	return game_dialog.get_load_board_page();
+	return game_dialog.get_load_pbm_board_page();
+#if defined(VERSION_DVONN)
+      else if( continue_game->GetValue() && (continue_game_choice->GetSelection() == 2) )
+	return game_dialog.get_load_lg_board_page();
+#endif
       else
 	return game_dialog.get_board_page();
     }
@@ -998,17 +1014,16 @@ namespace dvonn
   END_EVENT_TABLE()								//**/
 
   // ----------------------------------------------------------------------------
-  // Load_Board_Page
+  // Load_PBM_Board_Page
   // ----------------------------------------------------------------------------
 
-  Load_Board_Page::Load_Board_Page( wxWizard *parent, Game_Dialog &game_dialog )
+  Load_PBM_Board_Page::Load_PBM_Board_Page( wxWizard *parent, Game_Dialog &game_dialog )
     : wxWizardPage(parent), game_dialog(game_dialog), changes(true)
   {
     wxBoxSizer *top_sizer = new wxBoxSizer( wxVERTICAL );
 
     wxBoxSizer *pbm_sizer = new wxBoxSizer( wxHORIZONTAL );
-    //pbm_choice = new wxRadioBox( this, -1 );
-    pbm_sizer->Add( new wxStaticText(this,-1,_("Directory") ), 0, 
+    pbm_sizer->Add( new wxStaticText(this,-1,_("PBM Directory") ), 0, 
 		    wxRIGHT | wxALIGN_CENTER_VERTICAL, 10 );
     pbm_directory = new wxTextCtrl( this, DIALOG_CHANGE_DIRECTORY, wxT(""), wxDefaultPosition, 
 				    wxDefaultSize, wxTE_PROCESS_ENTER );
@@ -1023,17 +1038,17 @@ namespace dvonn
     SetSizer( top_sizer );
   }
 
-  wxWizardPage *Load_Board_Page::GetPrev() const
+  wxWizardPage *Load_PBM_Board_Page::GetPrev() const
   {
     return game_dialog.get_board_page();
   }
 
-  wxWizardPage *Load_Board_Page::GetNext() const
+  wxWizardPage *Load_PBM_Board_Page::GetNext() const
   {
     return game_dialog.get_player_page();
   }
 
-  bool Load_Board_Page::transfer_data_from_window(bool direction)
+  bool Load_PBM_Board_Page::transfer_data_from_window(bool direction)
   {
     if( !direction ) return true; // always allow to go back
 
@@ -1104,23 +1119,23 @@ namespace dvonn
     return true;
   }
 
-  void Load_Board_Page::on_page_changing( wxWizardEvent& event )
+  void Load_PBM_Board_Page::on_page_changing( wxWizardEvent& event )
   {
     if( !transfer_data_from_window(event.GetDirection()) )
       event.Veto();
   }
 
-  void Load_Board_Page::restore()		// display stored game state
+  void Load_PBM_Board_Page::restore()		// display stored game state
   {
     changes = true;		// take first setting as change
 
-    if( game_dialog.valid_directory != wxT("") )
-      scan_directory( game_dialog.valid_directory );
+    if( game_dialog.valid_pbm_directory != wxT("") )
+      scan_directory( game_dialog.valid_pbm_directory );
     else
       pbm_files.clear();
   }
 
-  bool Load_Board_Page::scan_directory( wxString directory )
+  bool Load_PBM_Board_Page::scan_directory( wxString directory )
   {
     wxDir dir(directory);
 
@@ -1175,7 +1190,7 @@ namespace dvonn
 
       assert( master_content.id >= 0 );
       
-      if( master_content.from == 0 )	// display only boards that are specified from the first move on
+      if( master_content.from == 0 ) // display only boards that are specified from the first move on
       {
 	wxString board_str;
   	board_str << _("Board ") << master_content.id << wxT(" ") 
@@ -1189,9 +1204,9 @@ namespace dvonn
     return true;
   }
 
-  void Load_Board_Page::on_choose_directory( wxCommandEvent& WXUNUSED(event) )
+  void Load_PBM_Board_Page::on_choose_directory( wxCommandEvent& WXUNUSED(event) )
   {
-    wxString directory = game_dialog.valid_directory;
+    wxString directory = game_dialog.valid_pbm_directory;
     if( directory == wxT("") ) 
       directory = wxGetCwd();
 
@@ -1201,26 +1216,220 @@ namespace dvonn
       changes = true;
       if( scan_directory( dialog->GetPath() ) )
       {
-	game_dialog.valid_directory = dialog->GetPath();
-	pbm_directory->SetValue( game_dialog.valid_directory );
+	game_dialog.valid_pbm_directory = dialog->GetPath();
+	pbm_directory->SetValue( game_dialog.valid_pbm_directory );
       }
     }
   }
 
-  void Load_Board_Page::on_change_directory( wxCommandEvent& WXUNUSED(event) )
+  void Load_PBM_Board_Page::on_change_directory( wxCommandEvent& WXUNUSED(event) )
   {
     changes = true;
     if( scan_directory( pbm_directory->GetValue() ) )
     {
-      game_dialog.valid_directory = pbm_directory->GetValue();
+      game_dialog.valid_pbm_directory = pbm_directory->GetValue();
     }
   }
 
-  BEGIN_EVENT_TABLE(Load_Board_Page, wxWizardPage)				
-    EVT_WIZARD_PAGE_CHANGING(DIALOG_WIZARD,	Load_Board_Page::on_page_changing) 
-    EVT_BUTTON(DIALOG_CHOOSE_DIRECTORY,		Load_Board_Page::on_choose_directory)		
-    EVT_TEXT_ENTER(DIALOG_CHANGE_DIRECTORY,	Load_Board_Page::on_change_directory)	//**/
+  BEGIN_EVENT_TABLE(Load_PBM_Board_Page, wxWizardPage)				
+    EVT_WIZARD_PAGE_CHANGING(DIALOG_WIZARD,	Load_PBM_Board_Page::on_page_changing) 
+    EVT_BUTTON(DIALOG_CHOOSE_DIRECTORY,		Load_PBM_Board_Page::on_choose_directory)	
+    EVT_TEXT_ENTER(DIALOG_CHANGE_DIRECTORY,	Load_PBM_Board_Page::on_change_directory) //**/
   END_EVENT_TABLE()								//**/
+
+  // ----------------------------------------------------------------------------
+  // Load_LG_Board_Page
+  // ----------------------------------------------------------------------------
+#if defined(VERSION_DVONN)
+
+  Load_LG_Board_Page::Load_LG_Board_Page( wxWizard *parent, Game_Dialog &game_dialog )
+    : wxWizardPage(parent), game_dialog(game_dialog), changes(true)
+  {
+    wxBoxSizer *top_sizer = new wxBoxSizer( wxVERTICAL );
+
+    wxBoxSizer *lg_sizer = new wxBoxSizer( wxHORIZONTAL );
+    lg_sizer->Add( new wxStaticText(this,-1,_("Little Golem Directory") ), 0, 
+		    wxRIGHT | wxALIGN_CENTER_VERTICAL, 10 );
+    lg_directory = new wxTextCtrl( this, DIALOG_CHANGE_DIRECTORY, wxT(""), wxDefaultPosition, 
+				    wxDefaultSize, wxTE_PROCESS_ENTER );
+    lg_sizer->Add( lg_directory, 1, wxEXPAND | wxRIGHT | wxLEFT, 10 );
+    lg_sizer->Add( new wxButton( this, DIALOG_CHOOSE_DIRECTORY, _("Choose...") ), 0, wxLEFT, 10 );
+    top_sizer->Add( lg_sizer, 0, wxEXPAND | wxBOTTOM, 10 );
+
+    lg_game_list = new wxListBox( this,-1,wxDefaultPosition, wxSize(100,100), 0, 0, wxLB_SINGLE );
+    top_sizer->Add( lg_game_list, 1, wxEXPAND, 0 );
+
+    SetAutoLayout( true );
+    SetSizer( top_sizer );
+  }
+
+  wxWizardPage *Load_LG_Board_Page::GetPrev() const
+  {
+    return game_dialog.get_board_page();
+  }
+
+  wxWizardPage *Load_LG_Board_Page::GetNext() const
+  {
+    return game_dialog.get_player_page();
+  }
+
+  bool Load_LG_Board_Page::transfer_data_from_window(bool direction)
+  {
+    if( !direction ) return true; // always allow to go back
+
+    // check for changes
+    if( !changes )
+    {
+      if( lg_game_list_val != lg_game_list->GetSelection() )
+	changes = true;
+    }
+    // make changes
+    if( changes )
+    {
+      int index = lg_game_list->GetSelection();
+
+      // load board
+      int cnt=0;
+      std::list< std::pair<LG_Content,std::string> >::iterator i;
+      for( i = lg_files.begin(); i != lg_files.end(); ++i )
+      {
+	if( cnt == index )
+	{
+	  std::ifstream is( i->second.c_str() );
+	  int num_moves = load_littlegolem_file( is, game_dialog.game );
+	  if( num_moves < 0 ) return false;
+
+#ifndef __WXMSW__
+	  std::cout << "Loaded Littlegolem file. Moves: " << num_moves <<  std::endl;
+	  std::cout << "Number of Players: " << game_dialog.game.players.size() <<  std::endl;
+#endif
+	  break;
+	}
+	cnt++;
+      }
+
+      if( game_dialog.game_setup_manager->ask_change_board( game_dialog.game ) == 
+	  Game_Setup_Manager::deny )
+      {
+	game_dialog.board_change_denied();
+      }
+      else
+      {
+	game_dialog.get_player_page()->players_changed();
+      }
+
+      changes = false;
+      // store setting:
+      lg_game_list_val = lg_game_list->GetSelection();
+    }
+    if( game_dialog.game_setup_manager )
+      if( !game_dialog.game_setup_manager->can_enter_player_setup() &&
+	  GetNext() == game_dialog.get_player_page() )
+      {
+	wxMessageBox( _("Please wait for connection to allow player setup"), 
+		      _("Connecting"), wxOK | wxICON_INFORMATION );
+	return false;
+      }
+
+    return true;
+  }
+
+  void Load_LG_Board_Page::on_page_changing( wxWizardEvent& event )
+  {
+    if( !transfer_data_from_window(event.GetDirection()) )
+      event.Veto();
+  }
+
+  void Load_LG_Board_Page::restore()		// display stored game state
+  {
+    changes = true;		// take first setting as change
+
+    if( game_dialog.valid_lg_directory != wxT("") )
+      scan_directory( game_dialog.valid_lg_directory );
+    else
+      lg_files.clear();
+  }
+
+  bool Load_LG_Board_Page::scan_directory( wxString directory )
+  {
+    wxDir dir(directory);
+
+    if( !dir.IsOpened() ) return false;
+
+    // scan files
+    lg_files.clear();
+    wxString wx_filename;
+    bool ok = dir.GetFirst( &wx_filename, wxT("*"), wxDIR_FILES );
+    while( ok )
+    {
+      std::string filename = wxstr_to_str(directory + wxT('/') + wx_filename);
+      std::ifstream is( filename.c_str() );
+      if( is )
+      {
+	LG_Content content = scan_littlegolem_file( is );
+	if( content.moves >= 0 )
+	{
+	  lg_files.push_back( std::pair<LG_Content,std::string>( content, filename ) );
+	}
+      }
+
+      ok = dir.GetNext( &wx_filename );
+    }
+
+    // setup list box
+    lg_game_list->Clear();
+    std::list< std::pair<LG_Content,std::string> >::iterator i;
+    for( i = lg_files.begin(); i != lg_files.end(); ++i )
+    {
+      wxString board_str;
+      board_str << /*_("Event ") << */str_to_wxstr(i->first.event) << wxT(" ") 
+		<< str_to_wxstr(i->first.white_name) << wxT(":")
+		<< str_to_wxstr(i->first.black_name) << wxT(" (") 
+		<< i->first.moves << wxT(" ") << _("moves") << wxT(")");
+	/*
+	board_str.Printf( _("Board %d %s : %s (%d moves)"), master_content.id, 
+p			  str_to_wxstr(master_content.player1).c_str(), str_to_wxstr(master_content.player2).c_str(), 
+			  master_content.to );
+	*/
+      lg_game_list->Append( board_str );
+    }
+
+    return true;
+  }
+
+  void Load_LG_Board_Page::on_choose_directory( wxCommandEvent& WXUNUSED(event) )
+  {
+    wxString directory = game_dialog.valid_lg_directory;
+    if( directory == wxT("") ) 
+      directory = wxGetCwd();
+
+    wxDirDialog *dialog = new wxDirDialog( this, _("Choose a directory"), directory );
+    if( dialog->ShowModal() == wxID_OK )
+    {
+      changes = true;
+      if( scan_directory( dialog->GetPath() ) )
+      {
+	game_dialog.valid_lg_directory = dialog->GetPath();
+	lg_directory->SetValue( game_dialog.valid_lg_directory );
+      }
+    }
+  }
+
+  void Load_LG_Board_Page::on_change_directory( wxCommandEvent& WXUNUSED(event) )
+  {
+    changes = true;
+    if( scan_directory( lg_directory->GetValue() ) )
+    {
+      game_dialog.valid_lg_directory = lg_directory->GetValue();
+    }
+  }
+
+  BEGIN_EVENT_TABLE(Load_LG_Board_Page, wxWizardPage)				
+    EVT_WIZARD_PAGE_CHANGING(DIALOG_WIZARD,	Load_LG_Board_Page::on_page_changing) 
+    EVT_BUTTON(DIALOG_CHOOSE_DIRECTORY,		Load_LG_Board_Page::on_choose_directory)	
+    EVT_TEXT_ENTER(DIALOG_CHANGE_DIRECTORY,	Load_LG_Board_Page::on_change_directory) //**/
+  END_EVENT_TABLE()								//**/
+#endif	// #if defined(VERSION_DVONN)
 
   // ----------------------------------------------------------------------------
   // Player_Setup_Panel
@@ -1641,7 +1850,8 @@ namespace dvonn
 
   wxString Player_Setup_Panel::get_default_name( int player_num )
   {
-    if( game_dialog.game.players.size() >= unsigned(player_num) )
+    if( game_dialog.game.players.size() >= unsigned(player_num) &&
+	game_dialog.game_setup_manager->can_choose_board() )
     {
       std::vector<Player>::iterator i = game_dialog.game.players.begin();
       for( int n = 1; n < player_num; ++n )
@@ -1777,13 +1987,19 @@ namespace dvonn
       setup_manager_page( new Setup_Manager_Page(this, game_dialog) ),
       board_page( new Board_Page(this, game_dialog) ),
       custom_board_page( new Custom_Board_Page(this, game_dialog) ),
-      load_board_page( new Load_Board_Page(this, game_dialog) ),
+      load_pbm_board_page( new Load_PBM_Board_Page(this, game_dialog) ),
+#if defined(VERSION_DVONN)
+      load_lg_board_page( new Load_LG_Board_Page(this, game_dialog) ),
+#endif
       player_page( new Player_Page(this, game_dialog) )
   {
     best_size = bounding_size( setup_manager_page->GetBestSize(), board_page->GetBestSize() );
     best_size = bounding_size( best_size, custom_board_page->GetBestSize() );
     best_size = bounding_size( best_size, custom_board_page->GetBestSize() );
-    best_size = bounding_size( best_size, load_board_page->GetBestSize() );
+    best_size = bounding_size( best_size, load_pbm_board_page->GetBestSize() );
+#if defined(VERSION_DVONN)
+    best_size = bounding_size( best_size, load_lg_board_page->GetBestSize() );
+#endif
     best_size = bounding_size( best_size, player_page->GetBestSize() );
     SetPageSize(best_size);
   }
@@ -2003,7 +2219,10 @@ namespace dvonn
     get_player_page()->restore();	// initializes player list from players
     get_board_page()->restore();
     get_custom_board_page()->restore();
-    get_load_board_page()->restore();
+    get_load_pbm_board_page()->restore();
+#if defined(VERSION_DVONN)
+    get_load_lg_board_page()->restore();
+#endif
   }
 
   // ============================================================================

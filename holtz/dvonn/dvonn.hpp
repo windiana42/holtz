@@ -153,7 +153,8 @@ namespace dvonn
     typedef enum Help_Mode{ no_help=0, show_possible_moves, show_hint };
     typedef enum Origin{ local, remote }; // origin where player is controled
 
-    Player( std::string name="", int id=-1, Player_Input *in=0, std::list<Player_Output*> out=no_output,
+    Player( std::string name="", int id=-1, Player_Input *in=0, 
+	    std::list<Player_Output*> out=no_output,
 	    std::string host="", Player_Type type=unknown, Help_Mode help_mode = no_help, 
 	    Origin origin = local );
 
@@ -274,6 +275,7 @@ namespace dvonn
 
     static bool includes_red_stone( const std::deque<Field_State_Type> &stack );
     bool is_blocked( Field_Pos ); // checks whether field is surrounded by stones
+    bool is_border( Field_Pos );  // checks whether field at the border of the board
 
     bool is_any_move_possible(); // is any move possible by anyone
     bool is_any_move_possible( const Player &player ); // is any move possible
@@ -281,10 +283,10 @@ namespace dvonn
     //bool is_move_possible( const Player &player, Field_Pos from, Field_Pos to );
     bool is_move_possible( Field_Pos from );		   // no player check
     bool is_move_possible( Field_Pos from, Field_Pos to ); // no player check
-    // is knock out possible within these three fields
     //std::list<Set_Move> get_set_moves();
     //std::list<Jump_Move> get_jump_moves();
-    std::list<Jump_Move> get_jump_moves( Field_Pos from );
+    std::list<Jump_Move> get_jump_moves( Field_Pos from, bool check_blocked=true,
+					 int additional_height = 0 );
 
     std::list<Field_Pos> get_empty_fields();
     std::list<Field_Pos> get_movable_fields( const Player &player );

@@ -1723,7 +1723,7 @@ namespace dvonn
 	  if( answer )
 	  {
 	    possibly_interrupted_connection = asking_client;
-	    force_new_game();
+	    game_manager.force_new_game();
 	  }
 	}
       }
@@ -1963,7 +1963,7 @@ namespace dvonn
 	  sequence = move_sequence;
 	  sequence_available = true;
 	  awaiting_move = false;
-	  ui_manager.do_move_slowly( sequence, this, ANIMATION_DONE );
+	  ui_manager.do_move_slowly( sequence, this, ANIMATION_DONE, ANIMATION_DONE );
 	  // triggers continue_game() after done
 	}
 	else
@@ -2884,7 +2884,7 @@ namespace dvonn
 	    }
 	    case BGP::msg_new_game:
 	    {
-	      force_new_game();
+	      game_manager.force_new_game();
 	      break;
 	    }
 	    case BGP::msg_undo:
@@ -3603,7 +3603,7 @@ namespace dvonn
 	  sequence = move_sequence;
 	  sequence_available = true;
 	  awaiting_move = false;
-	  ui_manager.do_move_slowly( sequence, this, ANIMATION_DONE );
+	  ui_manager.do_move_slowly( sequence, this, ANIMATION_DONE, ANIMATION_DONE );
 	  // triggers continue_game() after done
 	}
 	else
