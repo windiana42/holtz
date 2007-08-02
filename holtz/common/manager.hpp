@@ -199,16 +199,17 @@ namespace dvonn
 
     // interface for giving information to the user
     virtual void show_user_information( bool visible = true, bool do_refresh = true ) = 0;
-#if !defined(VERSION_DVONN) // AI not supported, yet
     virtual void give_hint( AI_Result ai_result ) = 0;
-#endif
     virtual void remove_hint() = 0;
     virtual void allow_user_activity() = 0;
     virtual void stop_user_activity() = 0;
+    virtual void abort_all_activity() = 0;
     virtual void do_move_slowly( Move_Sequence sequence, wxEvtHandler *done_handler = 0, 
-				 int event_id=-1 ) = 0; // show user how move is done
+				 int event_id=-1, int abort_id=-1 ) = 0;
+				// show user how move is done
     virtual void undo_move_slowly( wxEvtHandler *done_handler = 0, 
-				   int event_id=-1 ) = 0; // show user how move is undone
+				   int event_id=-1, int abort_id=-1 ) = 0;
+				// show user how move is undone
     virtual void show_status_text( wxString text ) = 0; // shows text in status bar
     virtual void beep() = 0;
     virtual void refresh() = 0;

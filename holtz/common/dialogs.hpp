@@ -56,6 +56,7 @@ namespace dvonn
 #  include "dvonn/dvonn.hpp"
 #  include "dvonn/wxdvonn.hpp"
 #  include "dvonn/pbm.hpp"
+#  include "dvonn/littlegolem.hpp"
 #  define VERSION_DVONN
 #endif
 
@@ -188,10 +189,10 @@ namespace dvonn
     DECLARE_EVENT_TABLE() //**/
   };
 
-  class Load_Board_Page : public wxWizardPage
+  class Load_PBM_Board_Page : public wxWizardPage
   {
   public:
-    Load_Board_Page( wxWizard *parent, Game_Dialog & );
+    Load_PBM_Board_Page( wxWizard *parent, Game_Dialog & );
 
     virtual wxWizardPage *GetPrev() const;
     virtual wxWizardPage *GetNext() const;
@@ -207,7 +208,6 @@ namespace dvonn
     Game_Dialog &game_dialog;
     bool changes;
 
-    wxRadioBox *pbm_choice;
     wxTextCtrl *pbm_directory;
     wxListBox  *pbm_game_list;
 
@@ -218,6 +218,37 @@ namespace dvonn
     friend class Game_Dialog;
     DECLARE_EVENT_TABLE() //**/
   };
+
+#if defined(VERSION_DVONN)
+  class Load_LG_Board_Page : public wxWizardPage
+  {
+  public:
+    Load_LG_Board_Page( wxWizard *parent, Game_Dialog & );
+
+    virtual wxWizardPage *GetPrev() const;
+    virtual wxWizardPage *GetNext() const;
+    virtual bool transfer_data_from_window(bool direction);
+
+    void restore();		// display stored game state
+  private:
+    bool scan_directory( wxString directory );
+    void on_page_changing   ( wxWizardEvent& event );
+    void on_choose_directory( wxCommandEvent& event );
+    void on_change_directory( wxCommandEvent& event );
+
+    Game_Dialog &game_dialog;
+    bool changes;
+
+    wxTextCtrl *lg_directory;
+    wxListBox  *lg_game_list;
+
+    std::list< std::pair<LG_Content,std::string> > lg_files; 
+    int lg_game_list_val;
+
+    friend class Game_Dialog;
+    DECLARE_EVENT_TABLE() //**/
+  };
+#endif
 
   class Player_Setup_Panel : public wxPanel
   {
@@ -303,7 +334,10 @@ namespace dvonn
     Setup_Manager_Page  *setup_manager_page;
     Board_Page		*board_page;
     Custom_Board_Page   *custom_board_page;
-    Load_Board_Page     *load_board_page;
+    Load_PBM_Board_Page *load_pbm_board_page;
+#if defined(VERSION_DVONN)
+    Load_LG_Board_Page  *load_lg_board_page;
+#endif
     Player_Page		*player_page;
     wxSize best_size;
 
@@ -347,7 +381,11 @@ namespace dvonn
     Setup_Manager_Page  *get_setup_manager_page() {assert(wizard);return wizard->setup_manager_page;}
     Board_Page		*get_board_page()	  {assert(wizard);return wizard->board_page;}
     Custom_Board_Page   *get_custom_board_page()  {assert(wizard);return wizard->custom_board_page;}
-    Load_Board_Page     *get_load_board_page()	  {assert(wizard);return wizard->load_board_page;}
+    Load_PBM_Board_Page *get_load_pbm_board_page(){assert(wizard);return 
+								    wizard->load_pbm_board_page;}
+#if defined(VERSION_DVONN)
+    Load_LG_Board_Page  *get_load_lg_board_page() {assert(wizard);return wizard->load_lg_board_page;}
+#endif
     Player_Page		*get_player_page()	  {assert(wizard);return wizard->player_page;}
 
     Game_Manager   &game_manager;
@@ -357,7 +395,10 @@ namespace dvonn
     Game game;
     std::list<Player> players;
     Game_Setup_Manager *game_setup_manager;
-    wxString valid_directory;	// stores only a valid directory path or ""
+    wxString valid_pbm_directory;	// stores only a valid directory path or ""
+#if defined(VERSION_DVONN)
+    wxString valid_lg_directory;	// stores only a valid directory path or ""
+#endif
     wxString hostname;		// stores last chosen hostname
     int server_port;		// stores last chosen port for server
     int client_port;		// stores last chosen port for client
@@ -369,7 +410,10 @@ namespace dvonn
     friend class Board_Page;
     friend class Custom_Board_Setup_Panel;
     friend class Custom_Board_Page;
-    friend class Load_Board_Page;
+    friend class Load_PBM_Board_Page;
+#if defined(VERSION_DVONN)
+    friend class Load_LG_Board_Page;
+#endif
     friend class Player_Setup_Panel;
     friend class Player_Page;
   };

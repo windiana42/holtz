@@ -229,6 +229,8 @@ namespace holtz
     DIALOG_CHOOSE_STONE_FONT,
 
     NETWORK_TIMER,
+    ANIMATION_DONE,
+    ANIMATION_ABORTED,
     LISTBOX_DCLICK,
 
     DIALOG_OK = wxID_OK,	// the names are just for consistence

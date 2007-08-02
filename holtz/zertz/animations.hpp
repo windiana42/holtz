@@ -48,8 +48,10 @@ namespace zertz
     ~Bitmap_Move_Animation();
 
     // when to = (-1,-1) the bitmap is moved randomly out of sight to the top or left
-    bool move( wxBitmap bitmap, wxPoint from, wxPoint to, unsigned steps=15, unsigned step_rate=20,
-	       wxEvtHandler *done_handler = 0, int _event_id = -1 );
+    bool move( wxBitmap bitmap, wxPoint from, wxPoint to, unsigned steps, unsigned step_rate,
+	       wxEvtHandler *done_handler, int _event_id, int _abort_id );
+    // abort a running animation
+    void abort();
   private:
     bool step();		// do step (returns false if timer couldn't be set up)
     void finish();
@@ -62,7 +64,7 @@ namespace zertz
     unsigned steps, step_rate;
     wxPoint from, to;
     wxEvtHandler *done_handler;
-    int event_id;
+    int event_id, abort_id;
 
     int old_bg_x, old_bg_y;
     int old_x, old_y, pos_x, pos_y; // coordinates of last bitmap position
@@ -85,15 +87,17 @@ namespace zertz
     
     // start to animate move
     bool start( Move_Sequence sequence, Game &game, wxEvtHandler *done_handler = 0, 
-		int event_id=-1 );
+		int event_id = -1, int _abort_id = -2 );
     // start to animate undo move
     bool start_undo( Move_Sequence sequence, Game &game, wxEvtHandler *done_handler = 0, 
-		     int event_id=-1 );
-
+		     int event_id = -1, int _abort_id = -2 );
+    // abort a running animation
+    void abort();
   private:
     bool step();	// do step (returns false if timer couldn't be set up)
     bool step_undo();	// do step in undo-animation (returns false if timer couldn't be set up)
     void on_done( wxTimerEvent &event ); // current sub-animation done
+    void on_aborted( wxTimerEvent &event ); // current sub-animation aborted
     void finish();
 
     WX_GUI_Manager &gui_manager;
@@ -103,7 +107,7 @@ namespace zertz
     Move_Sequence sequence;
     Game *game;
     wxEvtHandler *done_handler;
-    int event_id;
+    int event_id, abort_id;
 
     typedef enum State_Type { begin, knock_out_jump, knock_out_collects, 
 			      removing,setting_stone, finish_sequence, finish_removes, 
@@ -120,11 +124,6 @@ namespace zertz
     Stones *stones;
     bool undo;			// undo=true when animating undoing of move
     //DECLARE_EVENT_TABLE();
-  };
-
-  enum
-  {
-    ANIMATION_DONE = 200
   };
 }
 

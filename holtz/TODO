@@ -1,19 +1,13 @@
 * BUGS: 
 
-- load game 2nd last, undo 16 half moves
-- disabled back button causes wxAsserts
-- think about good way to handle finished games loaded as pbm file (on new game)
-  * don't offer moves
+- think about good way to handle finished games 
   * allow undo / new-game for both players: extra state for finished games?
-  * finished game -> new game -> cancel -> move allowd?
 - asking queries should be deferred during game setup dialog
-- for any reason reading skin.ini files with 2 underscores in one name crashes...
 - why segfault on exit with wxWidgets 2.8?
 
 * Features:
 
 - disallow client to keep connection in setup dialog when connection was closed
-- extra page for connecting
 
 - better AI (looking for sente moves first, rate situations better)
 - save settings, last ruleset

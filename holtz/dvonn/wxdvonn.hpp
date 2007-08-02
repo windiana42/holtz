@@ -43,7 +43,7 @@ namespace dvonn
 #include "manager.hpp"
 #include "network.hpp"
 #include "animations.hpp"
-//#include "ai.hpp"
+#include "ai.hpp"
 
 namespace holtz
 {
@@ -268,12 +268,13 @@ namespace dvonn
   private:
     Game_Manager &game_manager;
     WX_GUI_Manager &gui_manager;
-    Sequence_Generator* &sequence_generator_hook; // storage position for access by Mouse event handler
+    Sequence_Generator* &sequence_generator_hook; 
+				// storage position for access by Mouse event handler
 
     wxStopWatch stop_watch;
     long used_time;
 
-    //    AI_Input *ai;		// for giving hints
+    AI_Input *ai;		// for giving hints
   };
 
   // ============================================================================
@@ -302,14 +303,15 @@ namespace dvonn
 
     // interface for giving information to the user
     virtual void show_user_information( bool visible = true, bool do_refresh = true );
-    //virtual void give_hint( AI_Result ai_result );
+    virtual void give_hint( AI_Result ai_result );
     virtual void remove_hint();
     virtual void allow_user_activity();
     virtual void stop_user_activity();
+    virtual void abort_all_activity();
     virtual void do_move_slowly( Move_Sequence sequence, wxEvtHandler *done_handler = 0, 
-				 int event_id=-1 ); // show user how move is done
+				 int event_id=-1, int abort_id=-2 ); // show user how move is done
     virtual void undo_move_slowly( wxEvtHandler *done_handler = 0, 
-    				   int event_id=-1 ); // show user how move is undone
+    				   int event_id=-1, int abort_id=-2 );// show user how move is undone
     virtual void show_status_text( wxString text ); // shows text in status bar
     virtual void beep();
 
@@ -353,7 +355,7 @@ namespace dvonn
     std::list< std::pair<int,int> > field_mark_positions; // permanent marks
 
     Move_Sequence_Animation *move_animation;
-    //AI_Result current_hint;	// move sequence recommented by the AI
+    AI_Result current_hint;	// move sequence recommented by the AI
 
     Mouse_Handler mouse_handler;
     bool user_activity_allowed;

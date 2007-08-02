@@ -160,6 +160,9 @@ namespace dvonn
 
   void Game_Manager::force_new_game(bool on_own)
   {
+    ai.abort();
+    if( ui_manager )
+      ui_manager->abort_all_activity(); // disable user input and animations
     stop_game();
     assert( game_setup_manager );
     game_setup_manager->force_new_game(on_own);
@@ -254,23 +257,32 @@ namespace dvonn
       : game_manager(game_manager), n(n)
     {
       // connect event functions
-      Connect( -1, wxEVT_TIMER, 
+      Connect( ANIMATION_DONE, wxEVT_TIMER, 
 	       (wxObjectEventFunction) (wxEventFunction) (wxTimerEventFunction) 
 	       &Undo_Animation::on_done );
+      Connect( ANIMATION_ABORTED, wxEVT_TIMER, 
+	       (wxObjectEventFunction) (wxEventFunction) (wxTimerEventFunction) 
+	       &Undo_Animation::on_aborted );
+    }
+    
+    void finish()
+    {
+      game_manager.get_ui_manager()->update_board( game_manager.get_game() );
+      game_manager.continue_game();
+      delete this;
     }
 
     void step()
     {
       if( n <= 0 )
       {
-	game_manager.get_ui_manager()->update_board( game_manager.get_game() );
-	game_manager.continue_game();
-	delete this;
+	finish();
       }
       else
       {
 	--n;
-	game_manager.get_ui_manager()->undo_move_slowly(this);
+	game_manager.get_ui_manager()->undo_move_slowly(this, ANIMATION_DONE, 
+							ANIMATION_ABORTED);
       }
     }
 
@@ -278,9 +290,14 @@ namespace dvonn
     {
       step();
     }    
+    void on_aborted( wxTimerEvent &event ) // current animation aborted
+    {
+      finish();
+    }    
   private:
     Game_Manager &game_manager;
     int n;
+    enum{ ANIMATION_DONE=200, ANIMATION_ABORTED };  // to avoid including wxmain.hpp
   };
 
   void Game_Manager::undo_accepted()
@@ -315,8 +332,8 @@ namespace dvonn
   void Game_Manager::do_undo_moves( int n )
   {
     if( ui_manager )
-      ui_manager->stop_user_activity(); // disable user input 
-    // !!! also for non mouse players!!!
+      ui_manager->abort_all_activity(); // disable user input and animations
+    ai.abort();
 
     bool error = false;
     for( int i=0; i<n; ++i )

@@ -122,13 +122,13 @@ namespace dvonn
   // ----------------------------------------------------------------------------
 
   Position::Position( Game &game )
-    : knock_out_possible( false ),
+    : set_moves( game.board.get_game_state() == Board::set_moves ),
       expanded(0), rating(0), handler(0)
   {
   }
 
-  Position::Position( bool knock_out_possible )
-    : knock_out_possible( knock_out_possible ),
+  Position::Position( bool set_moves )
+    : set_moves( set_moves ),
       expanded(0), rating(0), handler(0)
   {
   }
@@ -140,121 +140,56 @@ namespace dvonn
       delete *i;
   }
 
-  bool Position::add_knock_out_moves( Game &game, Move_Sequence &sequence, 
-				      Field_Iterator from, Field_Iterator over, Field_Iterator to )
+  bool Position::add_jump_moves( Game &game, Field_Pos from )
+				// caller has to ensure that at <from> is a movable stone
   {
     bool ret = true;
-/*
-    Move *move = new Knock_Out_Move( from.get_pos(), over.get_pos(), to.get_pos() );
-    assert( move->check_move( game ) );
-    bool ok = sequence.add_move( game, move );
-    assert( ok );
-    move->do_move( game );
-    from = to;			// destination field is start field for further moves
+    bool set_moves = false;
 
-    bool knock_out = false;
-    // search in any direction
-    int dir;
-    for( dir =  Field_Iterator::right;
-	 dir <= Field_Iterator::bottom_right; ++dir )
+    Field_Iterator from_field(from, &game.board);
+    assert( from_field.is_valid_field() );
+    assert( !from_field->empty() );
+    assert( Board::is_stone(from_field->back()) );
+    int stack_height = from_field->size();
+    for( int d=Field_Iterator::right; d<=Field_Iterator::bottom_right; ++d )
     {
-      over = from.Next( Field_Iterator::Direction(dir) );
-      to   = over.Next( Field_Iterator::Direction(dir) );
-      if( to.is_valid_field() )
+      Field_Iterator::Direction dir = Field_Iterator::Direction(d);
+      bool valid = true;
+      Field_Iterator to_field = from_field;
+      for( int i=0; i<stack_height; ++i )
       {
-	assert( over.is_valid_field() );
-	if( Board::is_stone(*over) )	// middle must be stone
+	to_field.Go(dir);
+	if( !to_field.is_valid_field() ) 
 	{
-	  if( Board::is_empty(*to) && Board::is_stone(*from) )
-	  {
-	    knock_out = true;
-	    ret = add_knock_out_moves( game, sequence, from, over, to ); // add recursive
-	  }
+	  valid = false;
+	  break;
 	}
       }
-      if( !ret ) 
-	break;
+      if( !valid ) continue;
+      if( !Board::is_stone(*to_field) ) continue;
+      // valid jump move
+      Move_Sequence sequence;
+      sequence.add_move( new Jump_Move( from, to_field.get_pos() ) );
+      sequence.add_move( new Finish_Move() );
+      assert( sequence.check_sequence( game ) );
+      sequence.do_sequence( game );
+      ret = add_branch( game, new Branch( sequence, Position(set_moves) ) );
+      sequence.undo_sequence( game );
+      if( !ret ) break;
     }
-    if( !knock_out )		// if no further knock out possible
-    {
-      // add finish move
-      move = new Finish_Move();
-      assert( move->check_move( game ) );
-      ok = sequence.add_move(game,move);
-      assert( ok );
-      move->do_move(game);
-      
-      bool knock_out_possible = game.board.is_knock_out_possible();
-      ret = add_branch( game, new Branch( sequence.clone(), Position(knock_out_possible) ) );
-
-      sequence.undo_last_move( game );
-    }
-    sequence.undo_last_move( game );
-    */
     return ret;
   }
-
-  bool Position::add_set_moves( Game &game, Field_Iterator to, Stones::Stone_Type type,
-				Field_Permutation &field_permutation, bool expand_first )
+  bool Position::add_set_move( Game &game, Field_Pos to )
   {
     bool ret = true;
-/*
+    bool set_moves = game.board.num_empty_fields > 2;
     Move_Sequence sequence;
-
-    Move *move = new Set_Move( to.get_pos(), type );
-    assert( move->check_move( game ) );
-    bool ok = sequence.add_move( game, move );
-    assert( ok );
-    move->do_move( game );
-
-    field_permutation.new_context();
-    bool any_removable = false;
-    Field_Pos pos;
-    for( pos = field_permutation.get_first(); !field_permutation.is_end(); 
-	 pos = field_permutation.get_next() )
-    {
-      if( game.board.is_removable(pos) )
-      {
-	any_removable = true;
-
-	move = new Remove( pos );
-	assert( move->check_move( game ) );
-	ok = sequence.add_move( game, move );
-	assert( ok );
-	move->do_move( game );
-	
-	move = new Finish_Move();
-	assert( move->check_move( game ) );
-	ok = sequence.add_move( game, move );
-	assert( ok );
-	move->do_move( game );
-	
-	bool knock_out_possible = game.board.is_knock_out_possible();
-	ret = add_branch( game, new Branch( sequence.clone(), Position(knock_out_possible) ) );
-	sequence.undo_last_move( game );
-	sequence.undo_last_move( game );
-
-	if( expand_first )
-	  break;		// first is already expanded
-      }
-      if( !ret )
-	break;
-    }
-    field_permutation.restore_context(); // only restore in second pass
-    
-    if( !any_removable && expand_first )
-    {
-      Move *move = new Finish_Move();
-      assert( move->check_move( game ) );
-      bool ok = sequence.add_move( game, move );
-      assert( ok );
-      move->do_move( game );
-
-      bool knock_out_possible = game.board.is_knock_out_possible();
-      ret = add_branch( game, new Branch( sequence.clone(), Position(knock_out_possible) ) );
-    }
+    Move *move = new Set_Move( to );
+    sequence.add_move( move );
+    assert( sequence.check_sequence( game ) );
+    sequence.do_sequence( game );
+    ret = add_branch( game, new Branch( sequence, Position(set_moves) ) );
     sequence.undo_sequence( game );
-    */
     return ret;
   }
 
@@ -267,80 +202,26 @@ namespace dvonn
     return true;
   }
 
-  void Position::calc_following_positions( Game &game, Field_Permutation &field_permutation, 
-					   std::vector<Stones::Stone_Type> &stone_types )
+  void Position::calc_following_positions( Game &game, Field_Permutation &field_permutation )
   {
     Move_Sequence current_sequence;
     following_positions.clear();
     sorted_positions.clear();
     
     bool go_on = true;
-/*
-    if( knock_out_possible )
+    if( set_moves )
     {
       Field_Pos pos;
-      Field_Iterator p1(&game.board), p2(&game.board), p3(&game.board);
-	
+      Field_Iterator p1(&game.board);
+     
       field_permutation.new_context();
       for( pos = field_permutation.get_first(); !field_permutation.is_end(); 
 	   pos = field_permutation.get_next() )
       {
 	p1.set_pos( pos );
-	// ******************************************
-	// search each pair of three fields in a row:
-
-	// search: horizontal
-	p2 = p1.Next_Right();
-	p3 = p2.Next_Right();
-	if( p3.is_valid_field() )
+	if( Board::is_empty(*p1) )
 	{
-	  assert( p2.is_valid_field() );
-	  if( Board::is_knock_out_possible(p1,p2,p3) )
-	  {
-	    if( Board::is_stone( *p1 ) )
-	      go_on = add_knock_out_moves( game, current_sequence, p1, p2, p3 );
-	    else
-	      go_on = add_knock_out_moves( game, current_sequence, p3, p2, p1 );
-	    assert( current_sequence.is_empty() );
-	  }
-	}
-
-	if( !go_on ) 
-	  break;
-
-	// search: bottom left
-	p2 = p1.Next_Bottom_Left();
-	p3 = p2.Next_Bottom_Left();
-	if( p3.is_valid_field() )
-	{
-	  assert( p2.is_valid_field() );
-	  if( Board::is_knock_out_possible(p1,p2,p3) )
-	  {
-	    if( Board::is_stone( *p1 ) )
-	      go_on = add_knock_out_moves( game, current_sequence, p1, p2, p3 );
-	    else
-	      go_on = add_knock_out_moves( game, current_sequence, p3, p2, p1 );
-	    assert( current_sequence.is_empty() );
-	  }
-	}
-
-	if( !go_on ) 
-	  break;
-
-	// search: bottom right
-	p2 = p1.Next_Bottom_Right();
-	p3 = p2.Next_Bottom_Right();
-	if( p3.is_valid_field() )
-	{
-	  assert( p2.is_valid_field() );
-	  if( Board::is_knock_out_possible(p1,p2,p3) )
-	  {
-	    if( Board::is_stone( *p1 ) )
-	      go_on = add_knock_out_moves( game, current_sequence, p1, p2, p3 );
-	    else
-	      go_on = add_knock_out_moves( game, current_sequence, p3, p2, p1 );
-	    assert( current_sequence.is_empty() );
-	  }
+	  go_on = add_set_move( game, pos );
 	}
 	if( !go_on ) 
 	  break;
@@ -351,56 +232,44 @@ namespace dvonn
     {
       Field_Pos pos;
       Field_Iterator p1(&game.board);
-     
+	
       field_permutation.new_context();
-      bool expand_first = true; // expand only one of each set moves
-      do
+      for( pos = field_permutation.get_first(); !field_permutation.is_end(); 
+	   pos = field_permutation.get_next() )
       {
-	for( pos = field_permutation.get_first(); !field_permutation.is_end(); 
-	     pos = field_permutation.get_next() )
-	{
-	  p1.set_pos( pos );
-	  if( *p1 == field_empty )
-	  {
-	    bool any = false;
-	    int start = random(3);
-	    for( int i = 0; i < 3; ++i )
-	    {
-	      if( !go_on ) 
-		break;
+	p1.set_pos( pos );
+	assert( !p1->empty() );
+	if( p1->back() != Field_State_Type(game.current_player->stone_type) ) continue;
 
-	      int type = (start + i) % 3;
-	      if( game.common_stones.stone_count[ stone_types[type] ] > 0 )
-	      {
-		go_on = add_set_moves( game, p1, stone_types[type], field_permutation,
-				       expand_first );
-		any = true;
-	      }
-	    }
-	    if( !any )
-	    {
-	      for( int i = 0; i < 3; ++i )
-	      {
-		if( !go_on ) 
-		  break;
-	      
-		int type = (start + i) % 3;
-		if( game.get_current_player().stones.stone_count[ stone_types[type] ] > 0 )
-		  go_on = add_set_moves( game, p1, stone_types[type], field_permutation,
-					 expand_first );
-	      }
-	    }
-	  }
-	  if( !go_on ) 
+	// *******************************
+	// check whether stone is movable
+	bool movable = false;
+	for( int d=Field_Iterator::right; d<=Field_Iterator::bottom_right; ++d )
+	{
+	  Field_Iterator::Direction dir = Field_Iterator::Direction(d);
+	  Field_Iterator p2 = p1;
+	  p2.Go(dir);
+	  if(!p2.is_valid_field())
+	  {
+	    movable = true;
 	    break;
+	  }
+	  if( !Board::is_stone(*p2) )
+	  {
+	    movable = true;
+	    break;
+	  }
 	}
-	expand_first = !expand_first;
-      }while( !expand_first );
+	if( movable )
+	  go_on = add_jump_moves( game, pos );
+
+	if( !go_on ) 
+	  break;
+      }
       field_permutation.restore_context();
     }
     if( go_on ) 
       expanded = true;
-*/
   }
 
   void Position::set_expanded_handler( Position_Expanded_Handler *_handler )
@@ -435,21 +304,106 @@ namespace dvonn
   }
 
   // ----------------------------------------------------------------------------
+  // Distance_Map
+  // ----------------------------------------------------------------------------
+
+  Distance_Map::Distance_Map( Board &board )
+    : board(board)
+  {
+    field.resize( board.field.size() );
+    std::vector< std::vector< Field > >::iterator x_it1;
+    std::vector< std::vector< std::deque<Field_State_Type> > >::iterator x_it2;
+    for( x_it1 = field.begin(), x_it2 = board.field.begin(); 
+	 x_it2 != board.field.end(); ++x_it1, ++x_it2 )
+    {
+      std::vector< Field > &col1 = *x_it1;
+      std::vector< std::deque<Field_State_Type> > &col2 = *x_it2;
+      col1.resize(col2.size());
+    }
+  }
+
+  void Distance_Map::find_closest_distances( bool across_empty )
+  {
+    std::multimap<int,Field_Pos> priority_list;
+    red_stones.clear();
+    white_control.clear();
+    black_control.clear();
+    int x,y;
+    for( x=0; x<board.get_x_size(); ++x )
+    {
+      for( y=0; y<board.get_y_size(); ++y )
+      {
+	Field_Pos pos(x,y);
+	Field &fld = field[x][y];
+	std::deque<Field_State_Type> &stack = board.field[x][y];
+	if( Board::is_stone(stack) )
+	{
+	  if( stack.back() == field_white )
+	    white_control.push_back(pos);
+	  else if ( stack.back() == field_black )
+	    black_control.push_back(pos);
+
+	  if( Board::includes_red_stone(stack) )
+	  {
+	    red_stones.push_back( pos );
+	    fld.distance = 0;
+	    priority_list.insert( std::pair<int,Field_Pos>(fld.distance,pos) );
+	  }
+	}
+      }
+    }
+    while( !priority_list.empty() )
+    {
+      // remove element with highest priority (closest distance)
+      int distance = priority_list.begin()->first;
+      Field_Pos front = priority_list.begin()->second;
+      priority_list.erase(priority_list.begin());
+      Field &fld = field[front.x][front.y];
+      if(!fld.optimal)
+      {
+	fld.distance = distance;
+	fld.optimal = true;
+	// insert neighboring fields in priority list
+	Field_Iterator p1(front,&board);
+	for( int d=Field_Iterator::right; d<=Field_Iterator::bottom_right; ++d )
+	{
+	  Field_Iterator::Direction dir = Field_Iterator::Direction(d);
+	  Field_Iterator p2 = p1;
+	  p2.Go(dir);
+	  if( !p2.is_valid_field() ) continue;
+	  if( Board::is_removed(*p2) ) continue;
+	  if( !across_empty && Board::is_empty(*p2) ) continue;
+	  Field_Pos pos2 = p2.get_pos();
+	  Field &fld2 = field[pos2.x][pos2.y];
+	  if( fld2.distance == -1 || fld2.distance > distance + 1 )
+	  {
+	    assert(!fld2.optimal);
+	    fld2.distance = distance + 1;
+	    priority_list.insert(std::pair<int,Field_Pos>(fld2.distance,pos2));
+	  }
+	}
+      }
+    }
+  }
+  
+  // ----------------------------------------------------------------------------
   // AI
   // ----------------------------------------------------------------------------
 
   AI::AI( const Game &game )
-    : max_time(30000), average_time(5000), num_measures(0), max_positions_expanded(150000),
+    : max_time(30000), average_time(4000), num_measures(0), max_positions_expanded(150000),
       max_depth(12),
-      rate_white(4.5), rate_grey(3.5), rate_black(2.5), rate_current_player_bonus(0.3),
-      min_depth(2), deep_knocking_possible(true), while_deep_knocking(false),
+      rate_alpha(0.85),		// exponential value degradation with distance to red stone
+      rate_beta_no_good(0.3), 	// factor if only move on own stones possible
+      rate_beta_not_now(0.85), 	// factor if stack is blocked by surrounding stones
+      rate_beta_red(1.2), 	// factor if stack can move on red stone
+      rate_beta_add_bonus(0.05), // adds to factor 1.0 for bonus conditions
+      rate_current_player_bonus(0),  // this feature is not well implemented currently
+      min_depth(2), 
+      deep_jumping_possible(false/*not implemented,yet*/), while_deep_jumping(false),
       field_permutation( game.board )
   {
-    stone_types.resize(3);
-    stone_types[0] = Stones::white_stone;
-    stone_types[1] = Stones::red_stone;
-    stone_types[2] = Stones::black_stone;
-    real_average_time = average_time;
+    real_average_time = 0;
   }
 
   AI_Result AI::get_move( const Game &game )
@@ -462,17 +416,18 @@ namespace dvonn
     if( need_stop_watch() )
       stop_watch.Start();
 
-    //while( stop_watch.Time() == 0 ); // check for stop watch to be started
     aborted = false;
     don_t_abort = true;
-    deep_knocking = false;
-    if( deep_knocking_possible )
-      deep_knocking = true;
+    deep_jumping = false;
+    if( deep_jumping_possible )
+      deep_jumping = true;
 
     current_player = save_game.current_player;
-    unsigned depth;
+    unsigned depth, end_depth = max_depth;
     max_ratings.resize(max_depth+3);
-    for( depth = 1; depth <= max_depth; ++depth )
+    if( save_game.common_stones.stone_count[Stones::red_stone] > 1 )
+      end_depth = 1;		// don't waste time for placing the first two red stones
+    for( depth = 1; depth <= end_depth; ++depth )
     {
       positions_checked = 0;
       max_depth_expanded = 0;
@@ -481,7 +436,7 @@ namespace dvonn
 
 #ifndef __WXMSW__
       std::cerr << std::endl;
-      std::cerr << "AI: depth = " << depth << (deep_knocking?" (deep knocking)":"") << std::endl;
+      std::cerr << "AI: depth = " << depth << (deep_jumping?" (deep jumping)":"") << std::endl;
 #endif
 
       max_ratings[0] = RATE_MAX * 2;
@@ -539,7 +494,7 @@ namespace dvonn
 	  (current_position.rating == -RATE_MAX) )		// or if I can give up
 	break;
 
-      if( depth >= min_depth )		// after depth 2
+      if( depth >= min_depth )	// after depth 2
 	don_t_abort = false;	// make abort possible
 
       if( should_stop(true) )
@@ -570,35 +525,148 @@ namespace dvonn
     return result;
   }
 
-  double AI::rate_player( Player &player )
+  double AI::rate_player( Game &game, Player &player, Distance_Map &distance_map )
   {
     double rate = 0;
-    /*
-    rate += player.stones.stone_count[Stones::white_stone] * rate_white;
-    rate += player.stones.stone_count[Stones::red_stone]   * rate_grey;
-    rate += player.stones.stone_count[Stones::black_stone] * rate_black;
-    */
+
+    std::list<Field_Pos> *controlled_fields = 0;
+    Field_State_Type own = Field_State_Type(player.stone_type);
+    Field_State_Type opposite;
+    if( own == field_white )
+    {
+      opposite = field_black;
+      controlled_fields = &distance_map.white_control;
+    }
+    else
+    {
+      opposite = field_white;
+      controlled_fields = &distance_map.black_control;
+    }
+
+    std::list<Field_Pos>::iterator it;
+    for( it = controlled_fields->begin(); it != controlled_fields->end(); ++it )
+    {
+      Field_Pos pos = *it;
+      int distance = distance_map.field[pos.x][pos.y].distance;
+      int stack_height = game.board.field[pos.x][pos.y].size();
+      bool movable;		// whether stone is currently(or after setting) movable
+      bool never_movable;	// whether stone will never be able to move again
+      // check potential destinations of moves
+      std::list<Jump_Move> moves1 = game.board.get_jump_moves( pos, false /*don't check blocked*/ );
+      if( game.board.get_game_state() == Board::set_moves )
+      {
+	if( game.board.is_border(pos) ) movable = true;
+	else movable = false;
+	never_movable = false;
+      }
+      else
+      {
+	movable = !moves1.empty() && !game.board.is_blocked(pos);
+	never_movable = moves1.empty();
+      }
+      bool can_move_opposite = false;
+      bool can_move_red = false;
+      bool can_move_opposite_opposite = false;
+      bool can_move_opposite_red = false;
+      bool can_block_opposite_own = false;
+      bool can_block_opposite_red = false;
+      std::list<Jump_Move>::iterator it2, it3;
+      for( it2 = moves1.begin(); it2 != moves1.end(); ++it2 )
+      {
+	Field_Pos dest1 = it2->to;
+	Field_Iterator dest1_it( dest1, &game.board );
+	if( Board::includes_red_stone(*dest1_it) )
+	  can_move_red = true;
+	if( dest1_it->back() == opposite )
+	{
+	  can_move_opposite = true;
+	  std::list<Jump_Move> moves2 
+	    = game.board.get_jump_moves( dest1, false /*don't check blocked*/ );
+	  for( it3 = moves2.begin(); it3 != moves2.end(); ++it3 )
+	  {
+	    Field_Pos dest2 = it3->to;
+	    Field_Iterator dest2_it( dest2, &game.board );
+	    if( Board::includes_red_stone(*dest2_it) )
+	      can_block_opposite_red = true;
+	    if( dest2_it->back() == own )
+	      can_block_opposite_own = true;
+	  }
+	  std::list<Jump_Move> moves3 
+	    = game.board.get_jump_moves( dest1, false /*don't check blocked*/, 
+					 stack_height /* additional height */ );
+	  for( it3 = moves3.begin(); it3 != moves3.end(); ++it3 )
+	  {
+	    Field_Pos dest2 = it3->to;
+	    Field_Iterator dest2_it( dest2, &game.board );
+	    if( Board::includes_red_stone(*dest2_it) )
+	      can_move_opposite_red = true;
+	    if( dest2_it->back() == opposite )
+	      can_move_opposite_opposite = true;
+	  }
+	}
+      }
+      // determine points for field
+      if( !never_movable )
+      {
+	int boni = 0;
+	double field_rate = (1. / stack_height) * pow(rate_alpha,distance);
+	if( !can_move_opposite && !can_move_red )
+	  field_rate *= rate_beta_no_good;
+	if( !movable )
+	  field_rate *= rate_beta_not_now;
+	if( can_move_red )
+	  field_rate *= rate_beta_red;
+	if( can_move_red && can_move_opposite )
+	  boni++;
+	if( can_move_opposite_opposite )
+	  boni++;
+	if( can_move_opposite_red )
+	  boni++;
+	if( can_block_opposite_own )
+	  boni++;
+	if( can_block_opposite_red )
+	  boni++;
+	field_rate *= 1.0 + boni * rate_beta_add_bonus;
+	rate += field_rate;
+#ifndef __WXMSW__
+	// DEBUG!!!
+	/*
+	std::cerr << "AI DEBUG: " << (own == field_white ? "[white] " : "[black] ")
+		  << rate << "(+" << field_rate << ") " 
+		  << pos.x << "/" << pos.y << " - " << stack_height << " "
+		  << (can_move_red ? "move_red ":"")
+		  << (can_move_opposite ? "move_opposite ":"")
+		  << (can_move_opposite_opposite ? "move_opposite_opposite ":"")
+		  << (can_move_opposite_red ? "move_opposite_red ":"")
+		  << (can_block_opposite_own ? "block_opposite_own ":"")
+		  << (can_block_opposite_red ? "block_opposite_red ":"")
+		  << std::endl;
+	*/
+#endif
+      }
+    }
     return rate;
   }
 
   double AI::rate_position( Game &game, Position &position )
   {
     double rating = 0;
-    if( deep_knocking && position.knock_out_possible && !while_deep_knocking )
+    if( deep_jumping && !position.set_moves && !while_deep_jumping )
     {
-      while_deep_knocking = true;
+      while_deep_jumping = true;
 
       unsigned save_cur_depth = cur_depth;
       // store recursion parameters
       unsigned save_depth = depth; 
       int save_min_max_vz = min_max_vz; 
 
-      cur_depth += 6;		// additional depth
+      cur_depth += 4;		// additional depth
       if( cur_depth > max_depth )
 	cur_depth = max_depth;
       max_ratings[depth+2] = -(RATE_MAX * 2) * min_max_vz;
-      // search for all knock_out moves
-      rating = depth_search( game, position, depth+1, max_ratings[depth+1], -min_max_vz, true );
+      // search for more jump moves
+      int new_min_max_vz = (game.current_player == game.prev_player ? min_max_vz : -min_max_vz);
+      rating = depth_search( game, position, depth+1, max_ratings[depth+1], new_min_max_vz, true );
 
       if( (rating != RATE_MAX) && (rating != -RATE_MAX) )
 	if( current_player->id == game.get_current_player().id )
@@ -610,25 +678,40 @@ namespace dvonn
       
       cur_depth = save_cur_depth;
 
-      while_deep_knocking = false;
+      while_deep_jumping = false;
     }
     else
     {
+      Distance_Map distance_map(game.board);
+      if( game.board.get_game_state() == Board::set_moves )
+	distance_map.find_closest_distances( true /*across empty fields*/);
+      else
+	distance_map.find_closest_distances( false /*across empty fields*/);
+
       std::vector<Player>::iterator player;
       for( player = game.players.begin(); player != game.players.end(); ++player )
       {
 	assert( !game.win_condition->did_player_win(game, *player) );
 	if( player->id == current_player->id )
 	{
-	  rating += rate_player(*player);
+	  rating += rate_player(game, *player, distance_map);
 	}
 	else
 	{
-	  rating -= rate_player(*player);
+	  rating -= rate_player(game, *player, distance_map);
 	}
       }
       ++positions_checked;
 #ifndef __WXMSW__
+      /*
+      // !!! DEBUG!!!
+      std::cerr << "AI DEBUG: " << rating << "(" 
+		<< (current_player->stone_type == Stones::white_stone ? "white" : "black") 
+		<< "), last player: " 
+		<< (game.current_player->stone_type == Stones::white_stone ? "white" : "black") 
+		<< std::endl;
+      */
+      // progress report
       if( positions_checked % 10000 == 0 ) 
 	std::cerr << "AI: positions = " << positions_checked << std::endl;
 #endif
@@ -647,13 +730,27 @@ namespace dvonn
     unsigned save_depth = depth; 
     double save_max = max;
     int save_min_max_vz = min_max_vz; 
-    bool save_knock_out_only = knock_out_only;
+    bool save_jump_only = jump_only;
 
     double pos_rating;
+
     // test if expanded move caused player to win:
-    if( game.win_condition->did_player_win( game, *game.current_player ) )
+    bool game_finished=false;
+    int winner_id;
+    std::vector<Player>::iterator player;
+    for( player = game.players.begin(); player != game.players.end(); ++player )
     {
-      if( game.get_current_player().id == current_player->id )
+      if( game.win_condition->did_player_win(game,*player) )
+      {
+	game_finished = true;
+	winner_id = player->id;
+	break;
+      }
+    }
+
+    if( game_finished )
+    {
+      if( game.get_current_player().id == winner_id )
 	pos_rating = RATE_MAX;
       else
 	pos_rating = -RATE_MAX;
@@ -661,16 +758,24 @@ namespace dvonn
     else
     {
       int prev_player_index = game.prev_player_index;
-      game.choose_next_player();
-      if( depth < cur_depth - 1 )
+      bool ret = game.choose_next_player();
+      if(!ret)			// no player can move -> tie
       {
-	max_ratings[depth+2] = -(RATE_MAX * 2) * min_max_vz;
-	pos_rating = depth_search( game, (*branch)->position, depth+1, 
-				   max_ratings[depth+1], -min_max_vz, knock_out_only );
+	pos_rating = 0;
       }
       else
       {
-	pos_rating = rate_position( game, (*branch)->position );
+	if( depth < cur_depth - 1 )
+	{
+	  max_ratings[depth+2] = -(RATE_MAX * 2) * min_max_vz;
+	  int new_min_max_vz = (game.current_player == game.prev_player ? min_max_vz : -min_max_vz);
+	  pos_rating = depth_search( game, (*branch)->position, depth+1, 
+				     max_ratings[depth+1], new_min_max_vz, jump_only );
+	}
+	else
+	{
+	  pos_rating = rate_position( game, (*branch)->position );
+	}
       }
       game.choose_prev_player( prev_player_index );
     }
@@ -680,7 +785,7 @@ namespace dvonn
     depth = save_depth; 
     max = save_max;
     min_max_vz = save_min_max_vz; 
-    knock_out_only = save_knock_out_only;
+    jump_only = save_jump_only;
 	  
     if( (position->rating - pos_rating) * min_max_vz > 0 )
       position->rating = pos_rating;
@@ -706,90 +811,80 @@ namespace dvonn
   }
 
   double AI::depth_search( Game &game, Position &position, unsigned depth, double max, 
-			   int min_max_vz, bool knock_out_only )
+			   int min_max_vz, bool jump_only )
   {
     // save recursive parameters for expanded()
     this->position = &position;
     this->depth = depth;
     this->max = max;
     this->min_max_vz = min_max_vz;
-    this->knock_out_only = knock_out_only;
+    this->jump_only = jump_only;
 
     position.rating = RATE_MAX * 1.5 * min_max_vz;
     bool go_on = true, stop = false;
 
-    if( knock_out_only && !position.knock_out_possible )
+    if( !position.is_expanded() )
     {
-      position.rating = rate_position( game, position );
-      if( (position.rating != RATE_MAX) && (position.rating != -RATE_MAX) )
-	if( current_player->id == game.get_current_player().id )
-	  position.rating += rate_current_player_bonus;
+      position.set_expanded_handler(this);
+      position.calc_following_positions( game, field_permutation );
+      if( !aborted && (max_depth_expanded < depth) )
+	max_depth_expanded = depth;
+
+#ifndef __WXMSW__
+      if( while_deep_jumping )
+      {
+	/*
+	  std::cout << "AI: expanded " << position.sorted_positions.size() << " positions" 
+	  << "; rating = " << position.rating
+	  << "; max = " << max
+	  << "; depth = " << depth << std::endl;
+	*/
+      }
+      /*
+	if( !jump_only && position.sorted_positions.size() > 1 )
+	std::cerr << "AI: expanded " << position.sorted_positions.size() << " positions" 
+	<< "; rating = " << position.rating
+	<< "; max = " << max
+	<< std::endl;
+      */
+#endif
     }
     else
     {
-      if( !position.is_expanded() )
-      {
-	position.set_expanded_handler(this);
-	position.calc_following_positions( game, field_permutation, stone_types );
-	if( !aborted && (max_depth_expanded < depth) )
-	  max_depth_expanded = depth;
-
 #ifndef __WXMSW__
-	if( while_deep_knocking )
-	{
-	  /*
-	  std::cout << "AI: expanded " << position.sorted_positions.size() << " positions" 
-		    << "; rating = " << position.rating
-		    << "; max = " << max
-		    << "; depth = " << depth << std::endl;
-	  */
-	}
-	/*
-	if( !knock_out_only && position.sorted_positions.size() > 1 )
-	  std::cerr << "AI: expanded " << position.sorted_positions.size() << " positions" 
-		    << "; rating = " << position.rating
-		    << "; max = " << max
-		    << std::endl;
-	*/
+      /*
+	if( !jump_only )
+	std::cerr << "AI: work on " << position.sorted_positions.size() << " positions" << std::endl;
+      */
 #endif
+      assert( position.sorted_positions.size() == position.following_positions.size() );
+      std::multimap<double,std::list<Branch*>::iterator> copy_sorted_positions;
+      copy_sorted_positions = position.sorted_positions;	// copy sorted positions
+      position.sorted_positions.clear();
+
+      std::multimap<double,std::list<Branch*>::iterator>::iterator i;
+      for( i = copy_sorted_positions.begin(); i != copy_sorted_positions.end(); ++i )
+      {
+	std::list<Branch*>::iterator &branch = i->second;
+	(*branch)->sequence.do_sequence(game);
+	go_on = expanded( game, branch );
+	(*branch)->sequence.undo_sequence(game);
+
+	if( should_stop(false) )
+	  stop = true;
+
+	if( !go_on || stop )
+	{
+	  ++i;
+	  break;
+	}
       }
-      else
+      // copy rest of positions with bad rating (RATE_MAX)
+      for( ; i != copy_sorted_positions.end(); ++i )
       {
-#ifndef __WXMSW__
-	/*
-	if( !knock_out_only )
-	  std::cerr << "AI: work on " << position.sorted_positions.size() << " positions" << std::endl;
-	*/
-#endif
-	assert( position.sorted_positions.size() == position.following_positions.size() );
-	std::multimap<double,std::list<Branch*>::iterator> copy_sorted_positions;
-	copy_sorted_positions = position.sorted_positions;	// copy sorted positions
-	position.sorted_positions.clear();
-
-	std::multimap<double,std::list<Branch*>::iterator>::iterator i;
-	for( i = copy_sorted_positions.begin(); i != copy_sorted_positions.end(); ++i )
-	{
-	  std::list<Branch*>::iterator &branch = i->second;
-	  (*branch)->sequence.do_sequence(game);
-	  go_on = expanded( game, branch );
-	  (*branch)->sequence.undo_sequence(game);
-
-	  if( should_stop(false) )
-	    stop = true;
-
-	  if( !go_on || stop )
-	  {
-	    ++i;
-	    break;
-	  }
-	}
-	// copy rest of positions with bad rating (RATE_MAX)
-	for( ; i != copy_sorted_positions.end(); ++i )
-	{
-	  std::list<Branch*>::iterator &branch = i->second;
-	  position.sorted_positions.insert
-	    ( Position::sorted_positions_element_type( RATE_MAX, branch ) );
-	}
+	std::list<Branch*>::iterator &branch = i->second;
+	position.sorted_positions.insert
+	  ( Position::sorted_positions_element_type( RATE_MAX, branch ) );
       }
       if( position.is_expanded() )
       {
@@ -833,8 +928,9 @@ namespace dvonn
       std::cerr << "Error: stop watch failed!" << std::endl;
 #endif
     }
-    
-    time += (real_average_time - average_time) * 2;
+
+    if( num_measures > 0 )
+      time += (real_average_time - average_time) * 2;
     if( depth_finished )
     {
       if( time > average_time/2 ) 
@@ -965,7 +1061,7 @@ namespace dvonn
 	     (wxObjectEventFunction) (wxEventFunction) (AI_Event_Function) 
 	     &AI_Input::on_finished );
 
-    Connect( ANIMATION_DONE, wxEVT_TIMER, 
+    Connect( -1, wxEVT_TIMER, 
 	     (wxObjectEventFunction) (wxEventFunction) (wxTimerEventFunction) 
 	     &AI_Input::on_animation_done );
   }
@@ -1046,19 +1142,18 @@ namespace dvonn
       {
 	if( give_hints )
 	  ui_manager->remove_hint();
-	ui_manager->do_move_slowly( sequence, this, ANIMATION_DONE );
+	ui_manager->do_move_slowly( sequence, this, 
+				    -1 /*done event id*/, -1 /*abort event id*/ );
       }
     }
   }
 
   void AI_Input::on_report_hint( AI_Event &event )
   {
-    /*
     if( thread_active && (event.thread == thread) && give_hints && ui_manager )
     {
       ui_manager->give_hint( event.ai_result );
     }
-    */
   }
 
   void AI_Input::on_finished( AI_Event &event )

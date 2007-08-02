@@ -445,7 +445,7 @@ namespace zertz
     stone_types[0] = Stones::white_stone;
     stone_types[1] = Stones::grey_stone;
     stone_types[2] = Stones::black_stone;
-    real_average_time = average_time;
+    real_average_time = 0;
   }
 
   AI_Result AI::get_move( const Game &game )
@@ -827,8 +827,9 @@ namespace zertz
       std::cerr << "Error: stop watch failed!" << std::endl;
 #endif
     }
-    
-    time += (real_average_time - average_time) * 2;
+
+    if( num_measures > 0 )
+      time += (real_average_time - average_time) * 2;
     if( depth_finished )
     {
       if( time > average_time/2 ) 
@@ -960,7 +961,7 @@ namespace zertz
 	     (wxObjectEventFunction) (wxEventFunction) (AI_Event_Function) 
 	     &AI_Input::on_finished );
 
-    Connect( ANIMATION_DONE, wxEVT_TIMER, 
+    Connect( -1, wxEVT_TIMER, 
 	     (wxObjectEventFunction) (wxEventFunction) (wxTimerEventFunction) 
 	     &AI_Input::on_animation_done );
   }
@@ -1041,7 +1042,8 @@ namespace zertz
       {
 	if( give_hints )
 	  ui_manager->remove_hint();
-	ui_manager->do_move_slowly( sequence, this, ANIMATION_DONE );
+	ui_manager->do_move_slowly( sequence, this, 
+				    -1 /*done event id*/, -1 /*abort event id*/ );
       }
     }
   }
