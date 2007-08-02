@@ -1,3 +1,3 @@
 soundsdir = $(pkgdatadir)/sounds
-sounds_DATA = *.wav
-EXTRA_DIST = *.wav
+sounds_DATA = $(srcdir)/*.wav
+EXTRA_DIST = $(srcdir)/*.wav
