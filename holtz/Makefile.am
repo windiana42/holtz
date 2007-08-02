@@ -6,7 +6,8 @@ holtz_SOURCES= \
 	util.cpp util.hpp \
 	wxmain.cpp wxmain.hpp \
 	wxholtz.cpp wxholtz.hpp \
-	line_net.cpp line_net.hpp
+	line_net.cpp line_net.hpp \
+	msg_net_templ.cpp msg_net.hpp
 
 holtz_LDADD = dvonn/libdvonn.a zertz/libzertz.a
 
