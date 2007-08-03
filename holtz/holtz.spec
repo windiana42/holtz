@@ -2,11 +2,11 @@
 %define  rel     %{?CUSTOM_RELEASE} %{!?CUSTOM_RELEASE:%RELEASE}
 
 Name: holtz
-Version: 1.1.11
+Version: 1.2.0
 Release: %rel
 
-Summary: Holtz is an implementation of the abstract board game Zertz which is similar sophisticated than chess
-Copyright: GPL
+Summary: Holtz is an implementation of the two player abstract board games Zertz and Dvonn
+License: GPL
 Group: Recreation/
 Vendor: Martin Trautmann <martintrautmann@gmx.de>
 Packager: Martin Trautmann <martintrautmann@gmx.de>
@@ -18,7 +18,10 @@ Prefix: %_prefix
 BuildRoot: %_tmppath/%name-%version-root
 
 %description
-Holtz - the game
+Holtz is an implementation of the two player abstract board games Zertz and Dvonn from the gipf probject (www.gipf.com).
+Zertz is about placing and collecting stones, making sacrifices, and a continuously shriking board. 
+Dvonn is about controlling stacks of stones which can jump on other stacks to capture them and keeping 
+contact to the three dvonn stones.
 
 %prep
 %setup -q
@@ -51,7 +54,8 @@ rm -rf $RPM_BUILD_ROOT
 %doc AUTHORS COPYING README NEWS ChangeLog TODO Rules.german Rules.english
 %prefix/bin/*
 %prefix/share/locale/*/LC_MESSAGES/
-%prefix/share/holtz/
+%prefix/share/holtz/skins/*
+%prefix/share/holtz/help/*
 
 #%changelog
 #* first version

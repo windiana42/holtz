@@ -17,30 +17,36 @@ AC_PROG_RANLIB
 #esac
 
 wxstatic_Enabled="no"
+unicode_Enabled="yes"
 
 AC_ARG_ENABLE(wxstatic,AC_HELP_STRING([--enable-wxstatic=VAL],
 	[VAL=yes: Link WX libraries static; 
 	 VAL=no: Link WX as shared library]),
 	[wxstatic_Enabled="$enableval"])
 
-AC_ARG_ENABLE(gtk1,AC_HELP_STRING([--enable-gtk1=VAL],
-	[VAL=yes: call wx-config --gtk1 ...; 
+AC_ARG_ENABLE(unicode,AC_HELP_STRING([--enable-unicode=VAL],
+	[VAL=yes: call wx-config --unicode ...; 
 	 VAL=no: use default wxGTK Version]),
-	[gtk1_Enabled="$enableval"])
+	[unicode_Enabled="$enableval"])
 
 GTKVER=
-
-if test "$gtk1_Enabled" = "yes"; then
-  GTKVER=--gtk1
-fi
+STATIC=
+UNICODE=
 
 if test "$wxstatic_Enabled" = "yes" ; then
-  export LIBS="$LIBS `wx-config $GTKVER --static --libs`";
-  export CXXFLAGS="$CXXFLAGS `wx-config $GTKVER --static --cxxflags`"
+  STATIC=--static=yes
 else
-  export LIBS="$LIBS `wx-config $GTKVER --libs`";
-  export CXXFLAGS="$CXXFLAGS `wx-config $GTKVER --cxxflags`"
+  STATIC=--static=no
 fi
+
+if test "$unicode_Enabled" = "yes" ; then
+  UNICODE=--unicode=yes
+else
+  UNICODE=--unicode=no
+fi
+
+export LIBS="$LIBS `wx-config $GTKVER $STATIC $UNICODE --libs`";
+export CXXFLAGS="$CXXFLAGS `wx-config $GTKVER $STATIC $UNICODE --cxxflags`"
 
 AC_OUTPUT(
 	Makefile
