@@ -25,6 +25,25 @@
 //#define HEX_100
 #define EINS
 
+#ifndef DEFAULT_DATA_DIR
+#define DEFAULT_DATA_DIR "./"	// will be overridden by Makefile.am
+#endif
+#ifndef DEFAULT_DATA_DIR2
+#define DEFAULT_DATA_DIR2 "./"	// will be overridden by Makefile.am
+#endif
+#ifndef DEFAULT_SKIN_FILE
+#define DEFAULT_SKIN_FILE DEFAULT_DATA_DIR "skins/dvonn50.zip"
+#endif
+#ifndef DEFAULT_BEEP_FILE
+#define DEFAULT_BEEP_FILE DEFAULT_DATA_DIR "sounds/beep.wav"
+#endif
+#ifndef DEFAULT_SKIN_FILE2
+#define DEFAULT_SKIN_FILE2 DEFAULT_DATA_DIR2 "skins/dvonn50.zip"
+#endif
+#ifndef DEFAULT_BEEP_FILE2
+#define DEFAULT_BEEP_FILE2 DEFAULT_DATA_DIR2 "sounds/beep.wav"
+#endif
+
 // ----------------------------------------------------------------------------
 // headers
 // ----------------------------------------------------------------------------

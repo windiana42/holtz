@@ -22,16 +22,6 @@
 #ifndef __WXDVONN__
 #define __WXDVONN__
 
-#ifndef DEFAULT_DATA_DIR
-#define DEFAULT_DATA_DIR "./"
-#endif
-#ifndef DEFAULT_SKIN_FILE
-#define DEFAULT_SKIN_FILE DEFAULT_DATA_DIR "skins/dvonn50.zip"
-#endif
-#ifndef DEFAULT_BEEP_FILE
-#define DEFAULT_BEEP_FILE DEFAULT_DATA_DIR "sounds/beep.wav"
-#endif
-
 #include "dvonn.hpp"
 #include "wxholtz.hpp"
 

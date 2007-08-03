@@ -25,6 +25,25 @@
 //#define HEX_100
 #define EINS
 
+#ifndef DEFAULT_DATA_DIR
+#define DEFAULT_DATA_DIR "./"	// will be overridden by Makefile.am
+#endif
+#ifndef DEFAULT_DATA_DIR2
+#define DEFAULT_DATA_DIR2 "./"
+#endif
+#ifndef DEFAULT_SKIN_FILE
+#define DEFAULT_SKIN_FILE DEFAULT_DATA_DIR "skins/zertz60.zip"
+#endif
+#ifndef DEFAULT_BEEP_FILE
+#define DEFAULT_BEEP_FILE DEFAULT_DATA_DIR "sounds/beep.wav"
+#endif
+#ifndef DEFAULT_SKIN_FILE2
+#define DEFAULT_SKIN_FILE2 DEFAULT_DATA_DIR2 "skins/zertz60.zip"
+#endif
+#ifndef DEFAULT_BEEP_FILE2
+#define DEFAULT_BEEP_FILE2 DEFAULT_DATA_DIR2 "sounds/beep.wav"
+#endif
+
 // ----------------------------------------------------------------------------
 // headers
 // ----------------------------------------------------------------------------
@@ -1701,6 +1720,20 @@ namespace zertz
 	}
       }
     }
+    if( !ok && (std::string(DEFAULT_SKIN_FILE) != DEFAULT_SKIN_FILE2) )
+    {
+      buf = str_to_wxstr(DEFAULT_SKIN_FILE2);
+      if( wxFileExists(buf) )
+      {
+	if( load_skin( buf ) )
+	{
+	  cfg->Write( wxT("/zertz/skin_file"), buf);
+	  cfg->Flush();
+	  game_settings.skin_file = buf;
+	  ok = true;
+	}
+      }
+    }
     if( !ok )
     {
       buf = wxFileSelector( _("Choose a skin File"), wxT(""), 
@@ -1749,6 +1782,20 @@ namespace zertz
     if( !ok )
     {
       buf = str_to_wxstr(DEFAULT_BEEP_FILE);
+      if( wxFileExists(buf) )
+      {
+	if( load_beep(buf) )
+	{
+	  cfg->Write( wxT("/zertz/beep_file"), buf);
+	  cfg->Flush();
+	  game_settings.beep_file = buf;
+	  ok = true;
+	}
+      }
+    }
+    if( !ok && (std::string(DEFAULT_BEEP_FILE) != DEFAULT_BEEP_FILE2) )
+    {
+      buf = str_to_wxstr(DEFAULT_BEEP_FILE2);
       if( wxFileExists(buf) )
       {
 	if( load_beep(buf) )
