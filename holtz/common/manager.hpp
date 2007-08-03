@@ -45,13 +45,13 @@ namespace dvonn
 
 #if defined(VERSION_ZERTZ)
 #  undef VERSION_ZERTZ
-#  include "zertz/zertz.hpp"
 #  include "zertz/ai.hpp"
+#  include "zertz/zertz.hpp"
 #  define VERSION_ZERTZ
 #elif defined(VERSION_DVONN)
 #  undef VERSION_DVONN
-#  include "dvonn/dvonn.hpp"
 #  include "dvonn/ai.hpp"
+#  include "dvonn/dvonn.hpp"
 #  define VERSION_DVONN
 #endif
 

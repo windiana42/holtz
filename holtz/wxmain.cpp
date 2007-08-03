@@ -21,6 +21,8 @@
 // ----------------------------------------------------------------------------
 // headers
 // ----------------------------------------------------------------------------
+#include "zertz/network.hpp" //workaround for cygwin
+#include "dvonn/network.hpp" //workaround for cygwin
 
 #include "wxmain.hpp"
 
