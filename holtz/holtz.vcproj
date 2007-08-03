@@ -92,7 +92,7 @@
 				AdditionalIncludeDirectories="&quot;$(ProjectDir)&quot;;&quot;$(WXWIN)\include&quot;;&quot;$(WXWIN)\contrib\include&quot;;&quot;$(WXWIN)\lib\vc_lib\mswud&quot;"
 				PreprocessorDefinitions="NDEBUG;wxUSE_GUI=1;wxUSE_UNICODE=1;__WXMSW__;WIN32;_WINDOWS;__WINDOWS__;__WIN95__;__WIN32__;WINVER=0x0400;STRICT"
 				StringPooling="TRUE"
-				RuntimeLibrary="2"
+				RuntimeLibrary="0"
 				EnableFunctionLevelLinking="TRUE"
 				RuntimeTypeInfo="TRUE"
 				UsePrecompiledHeader="2"
@@ -253,6 +253,21 @@
 					</FileConfiguration>
 				</File>
 				<File
+					RelativePath=".\dvonn\bgp.cpp">
+					<FileConfiguration
+						Name="Debug|Win32">
+						<Tool
+							Name="VCCLCompilerTool"
+							ObjectFile="$(IntDir)/$(InputName)2.obj"/>
+					</FileConfiguration>
+					<FileConfiguration
+						Name="Release|Win32">
+						<Tool
+							Name="VCCLCompilerTool"
+							ObjectFile="$(IntDir)/$(InputName)2.obj"/>
+					</FileConfiguration>
+				</File>
+				<File
 					RelativePath=".\dvonn\dialogs.cpp">
 					<FileConfiguration
 						Name="Debug|Win32">
@@ -353,6 +368,10 @@
 					RelativePath=".\zertz\zertz.cpp">
 				</File>
 			</Filter>
+			<Filter
+				Name="common"
+				Filter="">
+			</Filter>
 		</Filter>
 		<Filter
 			Name="Header"
@@ -380,6 +399,9 @@
 				</File>
 				<File
 					RelativePath=".\dvonn\animations.hpp">
+				</File>
+				<File
+					RelativePath=".\dvonn\bgp.hpp">
 				</File>
 				<File
 					RelativePath=".\dvonn\dialogs.hpp">
@@ -432,6 +454,22 @@
 				</File>
 				<File
 					RelativePath=".\zertz\zertz.hpp">
+				</File>
+			</Filter>
+			<Filter
+				Name="common"
+				Filter="">
+				<File
+					RelativePath=".\common\bgp.hpp">
+				</File>
+				<File
+					RelativePath=".\common\dialogs.hpp">
+				</File>
+				<File
+					RelativePath=".\common\manager.hpp">
+				</File>
+				<File
+					RelativePath=".\common\network.hpp">
 				</File>
 			</Filter>
 		</Filter>

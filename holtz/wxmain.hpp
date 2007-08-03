@@ -23,8 +23,8 @@ namespace holtz
 }
 
 #include "zertz/manager.hpp"
-#include "zertz/dialogs.hpp"
 #include "dvonn/manager.hpp"
+#include "zertz/dialogs.hpp"
 #include "dvonn/dialogs.hpp"
 
 #include <wx/wx.h>

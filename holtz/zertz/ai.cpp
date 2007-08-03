@@ -13,6 +13,7 @@
  * WARRANTY OF DESIGN, MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  * 
  */
+#include "network.hpp" // workaround for cygwin 
 
 #include "ai.hpp"
 
