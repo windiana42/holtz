@@ -8,3 +8,5 @@ libzertz_a_SOURCES = \
 	pbm.hpp pbm.cpp \
 	network.hpp network.cpp bgp.hpp bgp.cpp
 
+libzertz_a_AM_CXXFLAGS= \
+	-DDEFAULT_DATA_DIR=\"$(pkgdatadir)/\"

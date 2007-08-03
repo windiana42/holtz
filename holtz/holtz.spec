@@ -12,7 +12,7 @@ Vendor: Martin Trautmann <martintrautmann@gmx.de>
 Packager: Martin Trautmann <martintrautmann@gmx.de>
 Url: http://holtz.sourceforge.net/
 
-Source: ftp://download.sourceforge.net/pub/sourceforge/holtz/%name-%version.tar.gz
+Source: %name-%version.tar.gz
 
 Prefix: %_prefix
 BuildRoot: %_tmppath/%name-%version-root
@@ -55,6 +55,7 @@ rm -rf $RPM_BUILD_ROOT
 %prefix/bin/*
 %prefix/share/locale/*/LC_MESSAGES/
 %prefix/share/holtz/skins/*
+%prefix/share/holtz/sounds/*
 %prefix/share/holtz/help/*
 
 #%changelog
