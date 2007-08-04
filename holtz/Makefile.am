@@ -23,4 +23,8 @@ EXTRA_DIST=	\
 	Rules.german Rules.english holtz.rc holtz.ico holtz.sln holtz.vcproj icon.xpm holtz.spec 
 
 .rc.o:
+if INCLUDE_RC_FILE
 	windres -I$(srcdir) `wx-config --cflags` -o $@ $<	
+else
+	echo "No windows evironment, so ignore resource file $<"
+endif
