@@ -7,14 +7,20 @@ AC_PROG_RANLIB
 
 #AC_CANONICAL_HOST
 
-#case $host_os in
-#*cygwin* ) export CXXFLAGS="$CXXFLAGS -mno-cygwin -D__CYGWIN__";
-#	   export LIBS="$LIBS -lwinmm";
-#	   AC_CHECK_LIB(winmm, PlaySound);;
-#*mingw*  ) export LIBS="$LIBS -lwinmm";
-#	   AC_CHECK_LIB(winmm, PlaySound);;	   
-#       * ) AC_CHECK_HEADER( unistd.h, export CXXFLAGS="$CXXFLAGS -D__UNIX__" );;
-#esac
+case $host_os in
+*cygwin* ) 
+	AM_CONDITIONAL([INCLUDE_RC_FILE],[test true]);;
+#	export CXXFLAGS="$CXXFLAGS -mno-cygwin -D__CYGWIN__";
+#	export LIBS="$LIBS -lwinmm";
+#	AC_CHECK_LIB(winmm, PlaySound);;
+*mingw*  ) 
+	AM_CONDITIONAL([INCLUDE_RC_FILE],[test true]);;
+#	export LIBS="$LIBS -lwinmm";
+#	AC_CHECK_LIB(winmm, PlaySound);;	   
+* ) 
+	AM_CONDITIONAL([INCLUDE_RC_FILE],[test false]);;
+#	AC_CHECK_HEADER( unistd.h, export CXXFLAGS="$CXXFLAGS -D__UNIX__" );;
+esac
 
 wxstatic_Enabled="no"
 unicode_Enabled="yes"
