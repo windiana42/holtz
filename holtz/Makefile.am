@@ -17,7 +17,6 @@ holtz_LDADD = dvonn/libdvonn.a zertz/libzertz.a
 
 holtz_CXXFLAGS= \
 	-DDEFAULT_DATA_DIR=\"$(pkgdatadir)/\"
-#	-DDEFAULT_DATA_DIR=wxT\(\"$(pkgdatadir)/\"\)
 
 EXTRA_DIST=	\
 	Rules.german Rules.english holtz.rc holtz.ico holtz.sln holtz.vcproj icon.xpm holtz.spec 

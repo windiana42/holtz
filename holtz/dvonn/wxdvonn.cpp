@@ -29,7 +29,7 @@
 #define DEFAULT_DATA_DIR "./"	// will be overridden by Makefile.am
 #endif
 #ifndef DEFAULT_DATA_DIR2
-#define DEFAULT_DATA_DIR2 "./"	// will be overridden by Makefile.am
+#define DEFAULT_DATA_DIR2 "./"
 #endif
 #ifndef DEFAULT_SKIN_FILE
 #define DEFAULT_SKIN_FILE DEFAULT_DATA_DIR "skins/dvonn50.zip"
@@ -1550,6 +1550,9 @@ namespace dvonn
     wxString buf;
     if( cfg->Read( wxT("/dvonn/skin_file"), &buf) )
     {
+#ifndef __WXMSW__
+      std::cerr << "Trying to load: " << wxstr_to_str(buf) << std::endl;
+#endif
       if( wxFileExists(buf) )
       {
 	if( load_skin( buf ) )
@@ -1562,6 +1565,26 @@ namespace dvonn
     if( !ok )
     {
       buf = str_to_wxstr(DEFAULT_SKIN_FILE);
+#ifndef __WXMSW__
+      std::cerr << "Trying to load: " << wxstr_to_str(buf) << std::endl;
+#endif
+      if( wxFileExists(buf) )
+      {
+	if( load_skin( buf ) )
+	{
+	  cfg->Write( wxT("/dvonn/skin_file"), buf);
+	  cfg->Flush();
+	  game_settings.skin_file = buf;
+	  ok = true;
+	}
+      }
+    }
+    if( !ok && (std::string(DEFAULT_SKIN_FILE) != DEFAULT_SKIN_FILE2) )
+    {
+      buf = str_to_wxstr(DEFAULT_SKIN_FILE2);
+#ifndef __WXMSW__
+      std::cerr << "Trying to load: " << wxstr_to_str(buf) << std::endl;
+#endif
       if( wxFileExists(buf) )
       {
 	if( load_skin( buf ) )
@@ -1609,6 +1632,9 @@ namespace dvonn
     ok = false;
     if( cfg->Read( wxT("/dvonn/beep_file"), &buf) )
     {
+#ifndef __WXMSW__
+      std::cerr << "Trying to load: " << wxstr_to_str(buf) << std::endl;
+#endif
       if( wxFileExists(buf) )
       {
 	if( load_beep(buf) )
@@ -1621,6 +1647,26 @@ namespace dvonn
     if( !ok )
     {
       buf = str_to_wxstr(DEFAULT_BEEP_FILE);
+#ifndef __WXMSW__
+      std::cerr << "Trying to load: " << wxstr_to_str(buf) << std::endl;
+#endif
+      if( wxFileExists(buf) )
+      {
+	if( load_beep(buf) )
+	{
+	  cfg->Write( wxT("/dvonn/beep_file"), buf);
+	  cfg->Flush();
+	  game_settings.beep_file = buf;
+	  ok = true;
+	}
+      }
+    }
+    if( !ok && (std::string(DEFAULT_BEEP_FILE) != DEFAULT_BEEP_FILE2) )
+    {
+      buf = str_to_wxstr(DEFAULT_BEEP_FILE2);
+#ifndef __WXMSW__
+      std::cerr << "Trying to load: " << wxstr_to_str(buf) << std::endl;
+#endif
       if( wxFileExists(buf) )
       {
 	if( load_beep(buf) )
@@ -1634,12 +1680,18 @@ namespace dvonn
     }
     if( !ok )
     {
-      if( load_beep(buf) )
+      buf = wxFileSelector( _("Choose a sound file as move reminder"), wxT(""),
+			    wxT(""), wxT(""), _("Sound Files (*.wav)|*.wav"),
+			    wxOPEN );
+      if( wxFileExists(buf) )
       {
-	cfg->Write( wxT("/dvonn/beep_file"), buf );
-	cfg->Flush();
-	game_settings.beep_file = buf;
-	ok = true;
+	if( load_beep(buf) )
+	{
+	  cfg->Write( wxT("/dvonn/beep_file"), buf );
+	  cfg->Flush();
+	  game_settings.beep_file = buf;
+	  ok = true;
+	}
       }
     }
     if( !ok )		// disable sound if there is no valid sound file
