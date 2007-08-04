@@ -7,9 +7,12 @@ AC_PROG_RANLIB
 
 #AC_CANONICAL_HOST
 
-case $host_os in
+WXLIBS=adv # this adds additional libs (ex: for sound in the advanced package of wxWidgets)
+
+case $OSTYPE in #$OSTYPE replaces former $host_os
 *cygwin* )
-	echo "Build System = Cygwin:"; 
+	echo "Build System = Cygwin:";
+	WXLIBS=; # adv doesn't seem to do good for cygwin version
 	AM_CONDITIONAL([INCLUDE_RC_FILE],[test 1 -eq 1]);;
 #	export CXXFLAGS="$CXXFLAGS -mno-cygwin -D__CYGWIN__"; # set true
 #	export LIBS="$LIBS -lwinmm";
@@ -40,20 +43,20 @@ AC_ARG_ENABLE(unicode,AC_HELP_STRING([--enable-unicode=VAL],
 GTKVER=
 STATIC=
 UNICODE=
-WXLIBS=adv # this adds additional libs (ex: for sound in the advanced package of wxWidgets)
 
 if test "$wxstatic_Enabled" = "yes" ; then
-  STATIC=--static=yes
+  STATIC="--static=yes"
 else
-  STATIC=--static=no
+  STATIC="--static=no"
 fi
 
 if test "$unicode_Enabled" = "yes" ; then
-  UNICODE=--unicode=yes
+  UNICODE="--unicode=yes"
 else
-  UNICODE=--unicode=no
+  UNICODE="--unicode=no"
 fi
 
+echo "wx-config $GTKVER $STATIC $UNICODE --libs $WXLIBS"
 export LIBS="$LIBS `wx-config $GTKVER $STATIC $UNICODE --libs $WXLIBS`";
 export CXXFLAGS="$CXXFLAGS `wx-config $GTKVER $STATIC $UNICODE --cxxflags $WXLIBS`"
 
