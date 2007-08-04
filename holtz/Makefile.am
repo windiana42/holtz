@@ -9,6 +9,10 @@ holtz_SOURCES= \
 	line_net.cpp line_net.hpp \
 	msg_net_templ.cpp msg_net.hpp
 
+if INCLUDE_RC_FILE
+holtz_SOURCES += holtz.rc
+endif
+
 holtz_LDADD = dvonn/libdvonn.a zertz/libzertz.a
 
 holtz_CXXFLAGS= \
@@ -18,3 +22,5 @@ holtz_CXXFLAGS= \
 EXTRA_DIST=	\
 	Rules.german Rules.english holtz.rc holtz.ico holtz.sln holtz.vcproj icon.xpm holtz.spec 
 
+.rc.o:
+	windres -I$(srcdir) `wx-config --cflags` -o $@ $<	
