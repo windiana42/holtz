@@ -36,6 +36,13 @@
 #include <wx/filesys.h>
 #include <wx/fs_zip.h>
 
+#ifndef DEFAULT_DATA_DIR
+#define DEFAULT_DATA_DIR "./"	// will be overridden by Makefile.am
+#endif
+#ifndef DEFAULT_DATA_DIR2
+#define DEFAULT_DATA_DIR2 "./"
+#endif
+
 namespace holtz
 {
   // ----------------------------------------------------------------------------
@@ -135,26 +142,29 @@ namespace holtz
   bool wxHoltz::init_help(wxLocale& loc)
   {
     // try to load the HTML help file, in decreasing order:
-    // - help/help_la_co.htb
-    // - help/help_la.htb
-    // - data_dir/help/help_la_co.htb
-    // - data_dir/help/help_la.htb
-    // - help/help_en.htb
-    // - data_dir/help/help_en.htb
+    // - data_dir1/help/help_la_co.*
+    // - data_dir1/help/help_la.*
+    // - data_dir2/help/help_la_co.*
+    // - data_dir2/help/help_la.*
+    // - data_dir1/help/help_en.*
+    // - data_dir2/help/help_en.*
     // where 'la' is the language, and 'co' the country of the currently used locale
     // if all fails, return false
     wxString language = loc.GetCanonicalName();
-    if(!get_help_controller().Initialize(wxT("help/help_") + language))
-      if(language.Len() <= 2 || 
-	 !get_help_controller().Initialize(wxT("help/help_") + language.Left(2)))
-	if(!get_help_controller().Initialize(wxString(wxT(DEFAULT_DATA_DIR)) 
+    if(!get_help_controller().Initialize(wxString(wxT(DEFAULT_DATA_DIR)) 
+					 + wxT("help/help_") + language))
+      if(language.Len() <= 2 
+	 || !get_help_controller().Initialize(wxString(wxT(DEFAULT_DATA_DIR)) 
+					      + wxT("help/help_") + language.Left(2)))
+	if(!get_help_controller().Initialize(wxString(wxT(DEFAULT_DATA_DIR2)) 
 					     + wxT("help/help_") + language))
 	  if(language.Len() <= 2 
-	     || !get_help_controller().Initialize(wxString(wxT(DEFAULT_DATA_DIR)) 
+	     || !get_help_controller().Initialize(wxString(wxT(DEFAULT_DATA_DIR2)) 
 						  + wxT("help/help_") 
 						  + language.Left(2)))
-	    if(!get_help_controller().Initialize(wxT("help/help_en")))
-	      if(!get_help_controller().Initialize(wxString(wxT(DEFAULT_DATA_DIR)) 
+	    if(!get_help_controller().Initialize(wxString(wxT(DEFAULT_DATA_DIR)) 
+						 + wxT("help/help_en")))
+	      if(!get_help_controller().Initialize(wxString(wxT(DEFAULT_DATA_DIR2)) 
 						   + wxT("help/help_en")))
 		return false;
     return true;
