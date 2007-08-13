@@ -2820,7 +2820,7 @@ namespace dvonn
 	       Board( (const int*) standard_board, 
 		      sizeof(standard_board[0]) / sizeof(standard_board[0][0]),
 		      sizeof(standard_board)    / sizeof(standard_board[0]), Board::standard ),
-	       Standard_Common_Stones(),
+	       Custom_Common_Stones(0,0,0),
 	       new Standard_Win_Condition(), 0 /*coordinate translator init below */,
 	       true /*undo possible*/, 2, 2 )
   {

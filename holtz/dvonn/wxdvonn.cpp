@@ -1056,7 +1056,8 @@ namespace dvonn
     {
       if( game.current_player->help_mode == Player::show_hint )
       {
-	ai->abort();
+	if( ai )
+	  ai->abort();
 	gui_manager.remove_hint();
       }
     }
@@ -1487,6 +1488,7 @@ namespace dvonn
   {
     move_animation->abort();
     stop_user_activity();
+    refresh();
   }
 
   void WX_GUI_Manager::do_move_slowly( Move_Sequence sequence, wxEvtHandler *done_handler, 

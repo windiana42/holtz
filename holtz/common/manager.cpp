@@ -134,12 +134,13 @@ namespace dvonn
     if( new_game_requested )
     {
       if( ui_manager )
+      {
 	ui_manager->report_error(_("Already new game requested"),_("New game"));
+      }
     }
     else
     {
-      if( ui_manager )
-	ui_manager->stop_user_activity();
+      stop_game();
       if( game_setup_manager )
       {
 	new_game_requested = true;
@@ -147,22 +148,27 @@ namespace dvonn
 	{
 	  case Game_Setup_Manager::accept: new_game_accepted(); break;
 	  case Game_Setup_Manager::deny:   new_game_denied(); break;
-	  case Game_Setup_Manager::wait_for_answer: break;
+	  case Game_Setup_Manager::wait_for_answer: 
+	    if( ui_manager )
+	    {
+	      ui_manager->show_status_text(_("Asking other Users..."));
+	    }
+	    break;
 	}
       }
       else if( game_setup_display_handler )
       {
-	stop_game();
 	game_setup_display_handler->game_setup();
+      } 
+      else
+      {
+	continue_game();
       }
     }
   }
 
   void Game_Manager::force_new_game(bool on_own)
   {
-    ai.abort();
-    if( ui_manager )
-      ui_manager->abort_all_activity(); // disable user input and animations
     stop_game();
     assert( game_setup_manager );
     game_setup_manager->force_new_game(on_own);
@@ -170,6 +176,10 @@ namespace dvonn
 
   void Game_Manager::new_game_accepted()
   {
+    if( ui_manager )
+    {
+      ui_manager->show_status_text(wxT(""));
+    }
     if( !new_game_requested )
     {
       if( ui_manager )
@@ -185,6 +195,10 @@ namespace dvonn
 
   void Game_Manager::new_game_denied()
   {
+    if( ui_manager )
+    {
+      ui_manager->show_status_text(wxT(""));
+    }
     if( !new_game_requested )
     {
       if( ui_manager )
@@ -219,6 +233,7 @@ namespace dvonn
     }
     else
     {
+      stop_game();
       // determine number of moves to undo
       const Game &game = get_game();
       if( !game.variant_tree.is_first() )
@@ -243,7 +258,12 @@ namespace dvonn
 	{
 	  case Game_Setup_Manager::accept: undo_accepted(); break;
 	  case Game_Setup_Manager::deny:   undo_denied(); break;
-	  case Game_Setup_Manager::wait_for_answer: break;
+	  case Game_Setup_Manager::wait_for_answer: 
+	    if( ui_manager )
+	    {
+	      ui_manager->show_status_text(_("Asking other Users..."));
+	    }
+	    break;
 	}
       }
     }
@@ -302,6 +322,10 @@ namespace dvonn
 
   void Game_Manager::undo_accepted()
   {
+    if( ui_manager )
+    {
+      ui_manager->show_status_text(wxT(""));
+    }
     if( !undo_requested )
     {
       if( ui_manager )
@@ -316,6 +340,10 @@ namespace dvonn
 
   void Game_Manager::undo_denied()
   {
+    if( ui_manager )
+    {
+      ui_manager->show_status_text(wxT(""));
+    }
     if( !undo_requested )
     {
       if( ui_manager )
@@ -326,6 +354,7 @@ namespace dvonn
       undo_requested = false;
       if( ui_manager )
 	ui_manager->report_information(_("Requested undo was denied"),_("Undo denied"));
+      continue_game();
     }
   }
 
@@ -361,19 +390,25 @@ namespace dvonn
 
   void Game_Manager::stop_game()
   {
+    ai.abort();
+    if( ui_manager )
+      ui_manager->abort_all_activity(); // disable user input and animations
+
     game_stopped = true;
     game.stop_game();
   }
   
   void Game_Manager::set_board  ( const Game& new_game )
   {
-    stop_game();
+    //stop_game();
+    assert(game_stopped);
     game = new_game;
   }
 
   void Game_Manager::set_players( const std::list<Player>& players )
   {
-    stop_game();
+    //stop_game();
+    assert(game_stopped);
     game.set_players( list_to_vector(players) );
   }
 
