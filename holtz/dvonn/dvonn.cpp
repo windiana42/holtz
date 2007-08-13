@@ -1455,8 +1455,11 @@ namespace dvonn
       {
 	next_player = true; // player can't move
 	++players_skipped;
-	if( players_skipped >= players.size() )
-	  return false; // no player may move
+	if( players_skipped >= players.size() + 1 ) 
+ 	  return false; // no player may move; skip=2+1 chooses other
+			// player which is important for deficiency of
+			// network protocol to allow only current
+			// player to undo moves
       }
     }while( next_player );
     current_player->is_active = true;
