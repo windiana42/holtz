@@ -2761,7 +2761,7 @@ p			  str_to_wxstr(master_content.player1).c_str(), str_to_wxstr(master_content.
     // set sizer
     SetAutoLayout( true );     // tell dialog to use sizer
     SetSizer( top_sizer );      // actually set the sizer
-    SetSize(wxSize(160,160));
+    SetSize(wxSize(200,160));
     //top_sizer->Fit( this );            // set size to minimum size as calculated by the sizer
     //top_sizer->SetSizeHints( this );   // set size hints to honour mininum size     
   }
