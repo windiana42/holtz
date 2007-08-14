@@ -525,7 +525,8 @@ namespace dvonn
 		BGP::Msg_Accept msg;
 		connection->send_message(&msg);
 		// set timeout
-		conn_state.timer.start(response_timeout);
+		if( does_include(msg_net_connection_state,connection) ) // already deleted?
+		  conn_state.timer.start(response_timeout);
 	      } else {
 		// protocol mismatch => list supported protocols
 		std::list<BGP::Protocol> supported_protocols;
@@ -534,7 +535,8 @@ namespace dvonn
 		BGP::Msg_List_Protocols msg(supported_protocols);
 		connection->send_message(&msg);
 		// set timeout
-		conn_state.timer.start(response_timeout);
+		if( does_include(msg_net_connection_state,connection) ) // already deleted?
+		  conn_state.timer.start(response_timeout);
 	      }
 	      break;
 	    }
@@ -1026,12 +1028,15 @@ namespace dvonn
     id_connection[conn_state.id] = connection;
     if( connection_handler )
       connection_handler->new_connection(conn_state.name,conn_state.id);
-    // set timeout for response
-    conn_state.timer.init(this,connection);
-    conn_state.timer.start(response_timeout);
-    // register as handler (this may cause immediate reception of data!)
-    connection->set_handler(this);
-    // wait for helo
+    if( does_include(msg_net_connection_state,connection) ) // already deleted?
+    {
+      // set timeout for response
+      conn_state.timer.init(this,connection);
+      conn_state.timer.start(response_timeout);
+      // register as handler (this may cause immediate reception of data!)
+      connection->set_handler(this);
+      // wait for helo
+    }
   }
 
   //----------------

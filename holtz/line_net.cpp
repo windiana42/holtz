@@ -101,10 +101,15 @@ namespace holtz
     {
       do_send();
       if( send_buffer.size() && socket->Error())	// critical or non-critical error
+      {
+	socket->SetFlags(flags); // restore flags
 	wxTheApp->Yield(true);	// allow to process on_lost events
+	if(!socket) return;
+	socket->SetFlags(wxSOCKET_WAITALL);
+      }
     }
-    // restore flags
-    socket->SetFlags(flags);
+    if(!socket) return;
+    socket->SetFlags(flags); // restore flags
   }
 
   std::string Line_Network::get_remote_host()	// returns "" if not connected
@@ -113,7 +118,8 @@ namespace holtz
 
     wxIPV4address address;
     if( !socket->GetPeer(address) ) return "";
-    return wxstr_to_str(address.Hostname());
+    //return wxstr_to_str(address.Hostname()); takes time and doesn't always give good answer
+    return wxstr_to_str(address.IPAddress());
   }
 
   int Line_Network::get_remote_port()		// returns 0 if not bound
@@ -178,7 +184,9 @@ namespace holtz
 
     char buffer[2048];
     do{
+      assert(socket);
       socket->Read(buffer, 2048);
+      assert(socket);
       receive_buffer.append(buffer, socket->LastCount());
     }while( socket->LastCount() > 0 );
     
@@ -209,6 +217,13 @@ namespace holtz
 
     const char* buf = send_buffer.c_str();
     socket->Write(buf, send_buffer.size());
+    if( !socket )  // may be Write yields => recheck socket
+    {
+      if( line_handler )
+	line_handler->on_error(this);
+      send_buffer = "";
+      return;
+    }
     if( socket->Error() && (socket->LastError() != wxSOCKET_WOULDBLOCK) )
     {
 #ifndef __WXMSW__
@@ -228,7 +243,9 @@ namespace holtz
   {
     line_handler = handler;
     if( handler )
+    {
       on_input();
+    }
   }
 
   // ----------------------------------------------------------------------------
@@ -319,7 +336,11 @@ namespace holtz
       case wxSOCKET_CONNECTION:
       {
 	wxSocketBase *socket = server_socket->Accept(false);
-	if( socket )
+	if( server_socket->Error() )
+	{
+	  socket = 0;
+	}
+	else if( socket )
 	{
 	  Line_Network *line_network = new Line_Network( socket, 0, auto_flush );
 	  server_handler->new_connection( line_network );
