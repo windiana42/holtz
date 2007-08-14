@@ -161,7 +161,7 @@ namespace holtz
     Message_Network<Message> *network = 
       new Message_Network<Message>( line_network, 0 /*no handler yet*/ );
     server_handler->new_connection( network );  // will call set_handler
-    line_network->set_handler(network);		// line_network buffers input data
+    //line_network->set_handler(network);		// server_handler will call set_handler
   }
 }
 
