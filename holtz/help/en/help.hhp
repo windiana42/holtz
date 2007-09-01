@@ -1,4 +1,5 @@
 [OPTIONS]
+Compatibility=1.1 or later
 Compiled file=help.chm
 Contents file=help.hhc
 Default Window=helpHelp
@@ -24,6 +25,7 @@ helprule.htm
 helpab.htm
 helpteam.htm
 helplic.htm
+helpdsum.htm
 
 [INFOTYPES]
 
