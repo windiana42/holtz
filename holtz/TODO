@@ -1,5 +1,8 @@
 * BUGS: 
 
+- Server crashes on windows
+- Client name/ip not valid for server in linux
+
 - think about good way to handle finished games 
   * allow undo / new-game for both players: extra state for finished games?
 - asking queries should be deferred during game setup dialog
