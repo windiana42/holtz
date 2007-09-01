@@ -22,12 +22,13 @@
 		</OBJECT>
 	<UL>
 		<LI> <OBJECT type="text/sitemap">
-			<param name="Name" value="Summary">
+			<param name="Name" value="Z&egrave;rtz">
 			<param name="Local" value="helprsum.htm">
 			</OBJECT>
 		<LI> <OBJECT type="text/sitemap">
-			<param name="Name" value="Details">
-			<param name="Local" value="helprdet.htm">
+			<param name="Name" value="Dvonn">
+			<param name="Local" value="helpdsum.htm">
+			<param name="URL" value="helpdsum.htm">
 			</OBJECT>
 	</UL>
 	<LI> <OBJECT type="text/sitemap">
