@@ -1488,7 +1488,7 @@ p			  str_to_wxstr(master_content.player1).c_str(), str_to_wxstr(master_content.
     button_sizer->Add(ready_button, 0, wxALL, 10);
     top_sizer->Add( button_sizer, 0, wxALIGN_CENTER );
 
-    status_display = new wxStaticText(this,-1,_(""));
+    status_display = new wxStaticText(this,-1,wxT(""));
     top_sizer->Add(status_display, 0, wxALIGN_CENTER | wxALL, 10);
 
     // set help texts
@@ -2419,7 +2419,7 @@ p			  str_to_wxstr(master_content.player1).c_str(), str_to_wxstr(master_content.
 
     //wxBoxSizer *player_font_sizer = new wxBoxSizer( wxHORIZONTAL );
     font_sizer->Add( new wxStaticText(this,-1,_("Font for player names") ), 0, wxALL, 10 );
-    player_font_name = new wxStaticText(this,-1,_(""));
+    player_font_name = new wxStaticText(this,-1,wxT(""));
     player_font_name->SetSize(wxSize(200,-1));
     font_sizer->Add( player_font_name, 0, wxALL, 10 );
     font_sizer->Add( new wxButton( this, DIALOG_CHOOSE_PLAYER_FONT, _("Choose...") ), 0, wxALL, 10 );
@@ -2427,7 +2427,7 @@ p			  str_to_wxstr(master_content.player1).c_str(), str_to_wxstr(master_content.
 
     //wxBoxSizer *coord_font_sizer = new wxBoxSizer( wxHORIZONTAL );
     font_sizer->Add( new wxStaticText(this,-1,_("Font for coordinates") ), 0, wxALL, 10 );
-    coord_font_name = new wxStaticText(this,-1,_(""));
+    coord_font_name = new wxStaticText(this,-1,wxT(""));
     coord_font_name->SetSize(wxSize(200,-1));
     font_sizer->Add( coord_font_name, 0, wxALL, 10 );
     font_sizer->Add( new wxButton( this, DIALOG_CHOOSE_COORD_FONT, _("Choose...") ), 0, wxALL, 10 );
@@ -2435,7 +2435,7 @@ p			  str_to_wxstr(master_content.player1).c_str(), str_to_wxstr(master_content.
 
     //wxBoxSizer *stone_font_sizer = new wxBoxSizer( wxHORIZONTAL );
     font_sizer->Add( new wxStaticText(this,-1,_("Font for text on stones") ), 0, wxALL, 10 );
-    stone_font_name = new wxStaticText(this,-1,_(""));
+    stone_font_name = new wxStaticText(this,-1,wxT(""));
     stone_font_name->SetSize(wxSize(200,-1));
     font_sizer->Add( stone_font_name, 0, wxALL, 10 );
     font_sizer->Add( new wxButton( this, DIALOG_CHOOSE_STONE_FONT, _("Choose...") ), 0, wxALL, 10 );
@@ -2663,7 +2663,7 @@ p			  str_to_wxstr(master_content.player1).c_str(), str_to_wxstr(master_content.
     look_feel_page = new Look_Feel_Page( notebook, this, gui_manager );
 
     notebook->AddPage( display_page, _("Arrangement") );
-    notebook->AddPage( look_feel_page, _("Look & Feel") );
+    notebook->AddPage( look_feel_page, _("Look && Feel") );
 
     top_sizer->Add( notebook, 0, wxEXPAND | wxALL, 10 );
 

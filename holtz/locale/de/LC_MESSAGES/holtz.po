@@ -2,692 +2,1069 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Holtz\n"
 "POT-Creation-Date: \n"
-"PO-Revision-Date: 2003-04-12 22:28+0100\n"
-"Last-Translator: Florian Fischer <florianfischer@gmx.de>\n"
+"PO-Revision-Date: 2007-09-01 23:34-0100\n"
+"Last-Translator: Martin Trautmann <windiana@users.sourceforge.net>\n"
 "Language-Team: Florian Fischer, Martin Trautmann <martintrautmann@gmx.de>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=iso-8859-1\n"
 "Content-Transfer-Encoding: 8bit\n"
 
-#: holtz/network.cpp:354
-msgid "Too many players!"
-msgstr "Zu viele Spieler!"
-
-#: holtz/network.cpp:354
-#: holtz/network.cpp:856
-msgid "Add failed"
-msgstr "Hinzufügen ist fehlgeschlagen"
-
-#: holtz/network.cpp:839
-msgid "Player added successfully"
-msgstr "Spieler erfolgreich hinzugefügt"
-
-#: holtz/network.cpp:856
-msgid "Adding of Player denied!"
-msgstr "Spieler hinzufügen verweigert!"
-
-#: holtz/network.cpp:1162
-msgid "Standard Rules"
-msgstr "Standard Regeln"
-
-#: holtz/network.cpp:1166
-msgid "Tournaments Rules"
-msgstr "Turnier Regeln"
-
-#: holtz/network.cpp:1171
-#: holtz/network.cpp:1179
-msgid "Custom rules"
-msgstr "Eigene Regeln"
-
-#: holtz/network.cpp:1174
-msgid "Custom rules on 37 ring board"
-msgstr "Eigene Regeln auf einem Feld aus 37 Ringen"
-
-#: holtz/network.cpp:1175
-msgid "Custom rules on 40 ring board"
-msgstr "Eigene Regeln auf einem Feld aus 40 Ringen"
-
-#: holtz/network.cpp:1176
-msgid "Custom rules on 44 ring board"
-msgstr "Eigene Regeln auf einem Feld aus 44 Ringen"
-
-#: holtz/network.cpp:1177
-msgid "Custom rules on 48 ring board"
-msgstr "Eigene Regeln auf einem Feld aus 48 Ringen"
-
-#: holtz/network.cpp:1178
-msgid "Custom rules on 61 ring board"
-msgstr "Eigene Regeln auf einem Feld aus 61 Ringen"
-
-#: holtz/network.cpp:1184
-#, c-format
-msgid "Host %s requests to change ruleset to %s.\n"
-"Allow Change of Ruleset?"
-msgstr "Spieler an Rechner %s hat vorgeschlagen mit %s zu spielen.\n"
-"Akzeptieren?"
-
-#: holtz/dialogs.cpp:54
-#: holtz/dialogs.cpp:244
-#: holtz/dialogs.cpp:254
-#: holtz/dialogs.cpp:279
-#: holtz/dialogs.cpp:606
-#: holtz/network.cpp:1186
-msgid "Ruleset"
-msgstr "Regeln"
-
-#: holtz/network.cpp:1363
-msgid "Server disconnected"
-msgstr "Server hat Verbindung unterbrochen"
-
-#: holtz/network.cpp:1363
-msgid "Disconnection"
-msgstr "Verbindungsabbau"
-
-#: holtz/wxholtz.cpp:246
+#: holtz/wxmain.cpp:122
 msgid "No help file found."
 msgstr "Die Hilfedatei wurde nicht gefunden."
 
-#: holtz/wxholtz.cpp:251
+#: holtz/wxmain.cpp:127
 msgid "Holtz"
 msgstr "Holtz"
 
-#: holtz/wxholtz.cpp:314
-#: holtz/wxholtz.cpp:2422
-msgid "Choose a skin File"
-msgstr "Wähle eine Skin-Datei"
+#: holtz/wxmain.cpp:301
+msgid "You are about to switch to Zertz and close your current game. Proceed?"
+msgstr "Du bist gerade dabei nach Zèrtz zu wechseln und das aktuelle Spiel zu schließen. Weiter?"
 
-#: holtz/wxholtz.cpp:315
-#: holtz/wxholtz.cpp:2423
-msgid "Skin Files (*.zip)|*.zip"
-msgstr "Skin-Datei (*.zip)|*.zip"
+#: holtz/wxmain.cpp:302
+#: holtz/wxmain.cpp:330
+msgid "Closing Game"
+msgstr "Spiel beenden"
 
-#: holtz/wxholtz.cpp:874
-#: holtz/wxholtz.cpp:1100
-#: holtz/wxholtz.cpp:1236
-msgid "Fatal Error!"
-msgstr "Fataler Fehler"
+#: holtz/wxmain.cpp:329
+msgid "You are about to switch to Dvonn and close your current game. Proceed?"
+msgstr "Du bist gerade dabei nach Dvonn zu wechseln und das aktuelle Spiel zu schließen. Weiter?"
 
-#: holtz/wxholtz.cpp:876
-#: holtz/wxholtz.cpp:1102
-#: holtz/wxholtz.cpp:1238
-msgid "Click Error"
-msgstr "Klick Fehler"
-
-#: holtz/wxholtz.cpp:879
-#: holtz/wxholtz.cpp:1105
-#: holtz/wxholtz.cpp:1241
-msgid "You must do the knock out move!"
-msgstr "Du musst einen Schlagzug ausführen!"
-
-#: holtz/wxholtz.cpp:882
-#: holtz/wxholtz.cpp:1108
-#: holtz/wxholtz.cpp:1244
-msgid "You have to set a stone!"
-msgstr "Du musst einen Stein setzen!"
-
-#: holtz/wxholtz.cpp:885
-#: holtz/wxholtz.cpp:1111
-#: holtz/wxholtz.cpp:1247
-msgid "You have to remove an empty border field!"
-msgstr "Du musst ein leeres Randfeld entfernen!"
-
-#: holtz/wxholtz.cpp:888
-#: holtz/wxholtz.cpp:1114
-#: holtz/wxholtz.cpp:1250
-msgid "Field can't be removed without moving another stone!"
-msgstr "Feld kann nicht entfernt werden, ohne einen Stein zu verschieben!"
-
-#: holtz/wxholtz.cpp:891
-#: holtz/wxholtz.cpp:1117
-#: holtz/wxholtz.cpp:1253
-msgid "You can't move to that field!"
-msgstr "Du darfst nicht auf das Feld ziehen!"
-
-#: holtz/wxholtz.cpp:894
-#: holtz/wxholtz.cpp:1120
-#: holtz/wxholtz.cpp:1256
-msgid "Please set the stone on an empty field!"
-msgstr "Setze den Stein bitte auf ein leeres Feld!"
-
-#: holtz/wxholtz.cpp:897
-#: holtz/wxholtz.cpp:1123
-#: holtz/wxholtz.cpp:1259
-msgid "You must pick a common stone!"
-msgstr "Du musst einen Stein aus dem allgemeinen Vorrat nehmen!"
-
-#: holtz/wxholtz.cpp:900
-#: holtz/wxholtz.cpp:1126
-#: holtz/wxholtz.cpp:1262
-msgid "Its not the turn of that player!"
-msgstr "Dieser Spieler ist nicht am Zug!"
-
-#: holtz/wxholtz.cpp:903
-#: holtz/wxholtz.cpp:1129
-#: holtz/wxholtz.cpp:1265
-msgid "You can't do that at the moment!"
-msgstr "Du darfst das gerade nicht tun!"
-
-#: holtz/wxholtz.cpp:906
-#: holtz/wxholtz.cpp:1132
-#: holtz/wxholtz.cpp:1268
-msgid "You must knock out once more with the same stone!"
-msgstr "Du musst nocheinmal mit dem selben Stein weiterschlagen!"
-
-#: holtz/wxholtz.cpp:1294
-#: holtz/wxholtz.cpp:1330
-msgid "[AI] "
-msgstr "[KI]"
-
-#: holtz/wxholtz.cpp:1620
-msgid "Please do a knock out move"
-msgstr "Bitte mache einen Schlagzug"
-
-#: holtz/wxholtz.cpp:1623
-msgid "You should set a stone"
-msgstr "Du solltest einen Stein setzten"
-
-#: holtz/wxholtz.cpp:1626
-msgid "Just remove a field"
-msgstr "Entferne einfach noch ein Randfeld"
-
-#: holtz/wxholtz.cpp:1693
-#, c-format
-msgid "New game requested from %s.\n"
-"Do you really want to start a new game?"
-msgstr "Spieler an Rechner %s will ein neues Spiel anfangen. Willst Du das auch?"
-
-#: holtz/wxholtz.cpp:1694
-#: holtz/wxholtz.cpp:1745
-#: holtz/wxholtz.cpp:1749
-#: holtz/wxholtz.cpp:1769
-#: holtz/wxholtz.cpp:1773
-msgid "Network Message"
-msgstr "Netzwerk Nachricht"
-
-#: holtz/wxholtz.cpp:1745
-msgid "Can't listen port"
-msgstr "Kann diesen Port nicht übernehmen"
-
-#: holtz/wxholtz.cpp:1749
-msgid "Illegal port"
-msgstr "Unmöglicher Port"
-
-#: holtz/wxholtz.cpp:1769
-msgid "Connection to Server failed"
-msgstr "Verbindung zu Server fehlgeschlagen"
-
-#: holtz/wxholtz.cpp:1773
-msgid "Illegal hostname"
-msgstr "Unmöglicher Rechnername"
-
-#: holtz/wxholtz.cpp:1847
-msgid "Exception caught!"
-msgstr "Ausnahme gefangen!"
-
-#: holtz/wxholtz.cpp:1849
-msgid "Exception!"
-msgstr "Ausnahme!"
-
-#: holtz/wxholtz.cpp:1862
-#, c-format
-msgid "And the Winner is: %s"
-msgstr "%s hat gewonnen!"
-
-#: holtz/wxholtz.cpp:1863
-msgid "Winner"
-msgstr "Gewinner"
-
-#: holtz/wxholtz.cpp:1867
-msgid "Nobody won the game!"
-msgstr "Das Spiel ging unentschieden aus!"
-
-#: holtz/wxholtz.cpp:1867
-msgid "Players tied"
-msgstr "Unentschieden"
-
-#: holtz/wxholtz.cpp:2321
+#: holtz/wxmain.cpp:624
 msgid "Welcome to Holtz!"
 msgstr "Willkommen bei Holtz!"
 
-#: holtz/wxholtz.cpp:2336
-msgid "&New Game...\tCtrl-N"
-msgstr "&Neu...\tCtrl-N"
+#: holtz/wxmain.cpp:638
+msgid "New &Zertz Game...\tCtrl-Z"
+msgstr "Neues &Zèrtz Spiel...\tCtrl-Z"
 
-#: holtz/wxholtz.cpp:2336
-msgid "Start a new game"
-msgstr "Starte ein neues Spiel"
+#: holtz/wxmain.cpp:639
+msgid "Start a new Zertz game"
+msgstr "Starte ein neues Zèrtz Spiel"
 
-#: holtz/wxholtz.cpp:2337
-msgid "Stand&alone Game...\tCtrl-A"
-msgstr "&Alleine spielen...\tCtrl-A"
+#: holtz/wxmain.cpp:640
+msgid "New &Dvonn Game...\tCtrl-D"
+msgstr "Neues &Dvonn Spiel...\tCtrl-D"
 
-#: holtz/wxholtz.cpp:2338
-msgid "Start a game without network access"
-msgstr "Starte ein Spiel ohne Netzwerk"
+#: holtz/wxmain.cpp:641
+msgid "Start a new Dvonn game"
+msgstr "Starte ein neues Dvonn Spiel"
 
-#: holtz/wxholtz.cpp:2339
-msgid "Ne&twork Game...\tCtrl-T"
-msgstr "Ne&tzwerkspiel starten...\tCtrl-T"
-
-#: holtz/wxholtz.cpp:2339
-msgid "Start a network game"
-msgstr "Starte ein Netzwerkspiel"
-
-#: holtz/wxholtz.cpp:2341
+#: holtz/wxmain.cpp:643
 msgid "E&xit\tAlt-X"
 msgstr "Beenden\tAlt-X"
 
-#: holtz/wxholtz.cpp:2341
+#: holtz/wxmain.cpp:643
 msgid "Quit Holtz"
 msgstr "Holtz beenden"
 
-#: holtz/wxholtz.cpp:2345
-msgid "S&ettings...\tCtrl-E"
-msgstr "&Optionen...\tCtrl-O"
+#: holtz/wxmain.cpp:647
+msgid "Display s&ettings...\tCtrl-E"
+msgstr "Anzeige &Einstellungen...\tCtrl-E"
 
-#: holtz/wxholtz.cpp:2345
-msgid "Change settings"
+#: holtz/wxmain.cpp:648
+msgid "Change display settings"
 msgstr "Einstellungen ändern"
 
-#: holtz/wxholtz.cpp:2346
-msgid "Choose &Skin...\tCtrl-S"
-msgstr "Skin auswählen...\tCtrl-S"
+#: holtz/wxmain.cpp:652
+msgid "&Undo move\tCtrl-U"
+msgstr "&Zug zurücknehmen\tCtrl-Z"
 
-#: holtz/wxholtz.cpp:2346
-msgid "Choose skin package file"
-msgstr "Wähle ein Skin Paket aus"
+#: holtz/wxmain.cpp:652
+msgid "Try to undo move"
+msgstr "Versuche Zug zurückzunehmen"
 
-#: holtz/wxholtz.cpp:2347
-msgid "Choose &Beep Sound...\tCtrl-B"
-msgstr "Wähle Piep-Ton...\tCtrl-B"
-
-#: holtz/wxholtz.cpp:2347
-msgid "Choose beep wav file"
-msgstr "Wähle eine .wav Datei als Piep-Ton"
-
-#: holtz/wxholtz.cpp:2348
-msgid "&Play Sound\tCtrl-P"
-msgstr "Spiele Töne\tCtrl-P"
-
-#: holtz/wxholtz.cpp:2348
-msgid "Switch Sounds on/off"
-msgstr "Schalte Töne an/aus"
-
-#: holtz/wxholtz.cpp:2353
+#: holtz/wxmain.cpp:656
 msgid "Contents\tF1"
 msgstr "Inhalt\tF1"
 
-#: holtz/wxholtz.cpp:2353
+#: holtz/wxmain.cpp:656
 msgid "Show help file"
 msgstr "Hilfedatei anzeigen"
 
-#: holtz/wxholtz.cpp:2354
+#: holtz/wxmain.cpp:657
 msgid "License"
 msgstr "Lizenz"
 
-#: holtz/wxholtz.cpp:2354
+#: holtz/wxmain.cpp:657
 msgid "Information about the Holtz license"
 msgstr "Informationen über die Lizenz von Holtz"
 
-#: holtz/wxholtz.cpp:2355
+#: holtz/wxmain.cpp:658
 msgid "About"
 msgstr "Über"
 
-#: holtz/wxholtz.cpp:2355
+#: holtz/wxmain.cpp:658
 msgid "Show about dialog"
 msgstr "Zeige about Dialog"
 
-#: holtz/wxholtz.cpp:2359
+#: holtz/wxmain.cpp:662
 msgid "&File"
 msgstr "&Datei"
 
-#: holtz/wxholtz.cpp:2360
+#: holtz/wxmain.cpp:663
 msgid "&Settings"
 msgstr "&Einstellungen"
 
-#: holtz/wxholtz.cpp:2361
+#: holtz/wxmain.cpp:664
+msgid "&Game"
+msgstr "&Spiel"
+
+#: holtz/wxmain.cpp:665
 msgid "&Help"
 msgstr "&Hilfe"
 
-#: holtz/wxholtz.cpp:2431
-msgid "Choose a beep File"
-msgstr "Wähle Piep-Ton"
+#: holtz/wxmain.cpp:746
+msgid "Holtz is an implementation of the Gipf Project Games\n"
+msgstr "Holtz ist eine Implementierung der Gipf Project Spiele\n"
 
-#: holtz/wxholtz.cpp:2432
-msgid "Audio (*.wav)|*.wav"
-msgstr "Audio (*.wav)|*.wav"
+#: holtz/wxmain.cpp:747
+msgid "Zertz and Dvonn (www.gipf.com).\n"
+msgstr "Zertz und Dvonn (www.gipf.com).\n"
 
-#: holtz/wxholtz.cpp:2472
-msgid "Holtz is game about making sacrifices.\n"
-msgstr "Holtz ist ein Spiel um taktische Opferzüge.\n"
+#: holtz/wxmain.cpp:748
+msgid "GPLed by Martin Trautmann (2007)\n"
+msgstr "GPLt von Martin Trautmann (2007)\n"
 
-#: holtz/wxholtz.cpp:2473
-msgid "GPLed by Martin Trautmann (2003)\n"
-msgstr "GPLed by Martin Trautmann (2003)\n"
-
-#: holtz/wxholtz.cpp:2474
-msgid "Based on ZÃ¨rtz (r) and (c) by Don & Co NV, 2001."
-msgstr "Based on Zèrtz (r) and (c) by Don & Co NV, 2001."
-
-#: holtz/wxholtz.cpp:2476
+#: holtz/wxmain.cpp:750
 msgid "About Holtz"
 msgstr "Über Holtz"
 
-#: holtz/dialogs.cpp:39
-msgid "Player 1"
-msgstr "Spieler 1"
+#: holtz/dvonn/wxdvonn.cpp:623
+#: holtz/zertz/wxzertz.cpp:562
+#: holtz/zertz/wxzertz.cpp:890
+#: holtz/zertz/wxzertz.cpp:1038
+msgid "Fatal Error!"
+msgstr "Fataler Fehler!"
 
-#: holtz/dialogs.cpp:40
-msgid "AI"
-msgstr "KI"
+#: holtz/dvonn/wxdvonn.cpp:624
+#: holtz/zertz/wxzertz.cpp:563
+#: holtz/zertz/wxzertz.cpp:891
+#: holtz/zertz/wxzertz.cpp:1039
+msgid "Click Error"
+msgstr "Klick Fehler"
 
-#: holtz/dialogs.cpp:45
-msgid "No help"
-msgstr "Keine Hilfe"
+#: holtz/dvonn/wxdvonn.cpp:627
+msgid "You have to move a stack!"
+msgstr "Du musst einen Stapel bewegen!"
 
-#: holtz/dialogs.cpp:46
-msgid "Show possible moves"
-msgstr "Zeige mögliche Züge"
+#: holtz/dvonn/wxdvonn.cpp:630
+#: holtz/zertz/wxzertz.cpp:569
+#: holtz/zertz/wxzertz.cpp:897
+#: holtz/zertz/wxzertz.cpp:1045
+msgid "You have to set a stone!"
+msgstr "Du musst einen Stein setzen!"
 
-#: holtz/dialogs.cpp:47
-msgid "Show Hint"
-msgstr "Empfehle einen Zug"
+#: holtz/dvonn/wxdvonn.cpp:633
+msgid "You can't move the stack to that field!"
+msgstr "Du darfst den Stapel nicht auf dieses Feld ziehen!"
 
-#: holtz/dialogs.cpp:48
-msgid "Help mode"
-msgstr "Hilfe Modus"
+#: holtz/dvonn/wxdvonn.cpp:636
+msgid "Stack is controled by other player!"
+msgstr "Stapel wird vom gegnerischen Spieler kontrolliert!"
 
-#: holtz/dialogs.cpp:51
-msgid "Standard"
-msgstr "Standard"
+#: holtz/dvonn/wxdvonn.cpp:639
+#: holtz/zertz/wxzertz.cpp:590
+#: holtz/zertz/wxzertz.cpp:918
+#: holtz/zertz/wxzertz.cpp:1066
+msgid "You can't do that at the moment!"
+msgstr "Du darfst das gerade nicht tun!"
 
-#: holtz/dialogs.cpp:52
-msgid "Tournament"
-msgstr "Turnier"
+#: holtz/dvonn/wxdvonn.cpp:1007
+#: holtz/zertz/wxzertz.cpp:1095
+#: holtz/zertz/wxzertz.cpp:1131
+msgid "[AI] "
+msgstr "[KI]"
 
-#: holtz/dialogs.cpp:53
+#: holtz/dvonn/wxdvonn.cpp:1310
+#: holtz/zertz/wxzertz.cpp:1413
+#, c-format
+msgid "And the winner is: %s"
+msgstr "%s hat gewonnen!"
+
+#: holtz/dvonn/wxdvonn.cpp:1311
+#: holtz/dvonn/wxdvonn.cpp:1315
+#: holtz/zertz/wxzertz.cpp:1414
+msgid "Winner"
+msgstr "Gewinner"
+
+#: holtz/dvonn/wxdvonn.cpp:1315
+msgid "It seems that nobody could win the game."
+msgstr "Niemand konnte das Spiel für sich entscheiden."
+
+#: holtz/dvonn/wxdvonn.cpp:1406
+msgid "Please do jump move"
+msgstr "Bitte mache einen Hüpfzug"
+
+#: holtz/dvonn/wxdvonn.cpp:1409
+#: holtz/zertz/wxzertz.cpp:1550
+msgid "You should set a stone"
+msgstr "Du solltest einen Stein setzten"
+
+#: holtz/dvonn/wxdvonn.cpp:1603
+#: holtz/zertz/wxzertz.cpp:1750
+msgid "Choose a skin File"
+msgstr "Wähle eine Skin-Datei"
+
+#: holtz/dvonn/wxdvonn.cpp:1604
+#: holtz/zertz/wxzertz.cpp:1751
+msgid "Skin Files (*.zip)|*.zip"
+msgstr "Skin-Datei (*.zip)|*.zip"
+
+#: holtz/dvonn/wxdvonn.cpp:1685
+#: holtz/zertz/wxzertz.cpp:1832
+msgid "Choose a sound file as move reminder"
+msgstr "Wähle eine Klang Datei als Zugaufforderung"
+
+#: holtz/dvonn/wxdvonn.cpp:1686
+#: holtz/zertz/wxzertz.cpp:1833
+msgid "Sound Files (*.wav)|*.wav"
+msgstr "Audio Dateien (*.wav)|*.wav"
+
+#: holtz/zertz/wxzertz.cpp:566
+#: holtz/zertz/wxzertz.cpp:894
+#: holtz/zertz/wxzertz.cpp:1042
+msgid "You must do the knock out move!"
+msgstr "Du musst einen Schlagzug ausführen!"
+
+#: holtz/zertz/wxzertz.cpp:572
+#: holtz/zertz/wxzertz.cpp:900
+#: holtz/zertz/wxzertz.cpp:1048
+msgid "You have to remove an empty border field!"
+msgstr "Du musst ein leeres Randfeld entfernen!"
+
+#: holtz/zertz/wxzertz.cpp:575
+#: holtz/zertz/wxzertz.cpp:903
+#: holtz/zertz/wxzertz.cpp:1051
+msgid "Field can't be removed without moving another stone!"
+msgstr "Feld kann nicht entfernt werden, ohne einen Stein zu verschieben!"
+
+#: holtz/zertz/wxzertz.cpp:578
+#: holtz/zertz/wxzertz.cpp:906
+#: holtz/zertz/wxzertz.cpp:1054
+msgid "You can't move to that field!"
+msgstr "Du darfst nicht auf das Feld ziehen!"
+
+#: holtz/zertz/wxzertz.cpp:581
+#: holtz/zertz/wxzertz.cpp:909
+#: holtz/zertz/wxzertz.cpp:1057
+msgid "Please set the stone on an empty field!"
+msgstr "Setze den Stein bitte auf ein leeres Feld!"
+
+#: holtz/zertz/wxzertz.cpp:584
+#: holtz/zertz/wxzertz.cpp:912
+#: holtz/zertz/wxzertz.cpp:1060
+msgid "You must pick a common stone!"
+msgstr "Du musst einen Stein aus dem allgemeinen Vorrat nehmen!"
+
+#: holtz/zertz/wxzertz.cpp:587
+#: holtz/zertz/wxzertz.cpp:915
+#: holtz/zertz/wxzertz.cpp:1063
+msgid "Its not the turn of that player!"
+msgstr "Dieser Spieler ist nicht am Zug!"
+
+#: holtz/zertz/wxzertz.cpp:593
+#: holtz/zertz/wxzertz.cpp:921
+#: holtz/zertz/wxzertz.cpp:1069
+msgid "You must knock out once more with the same stone!"
+msgstr "Du musst nocheinmal mit dem selben Stein weiterschlagen!"
+
+#: holtz/zertz/wxzertz.cpp:1418
+msgid "Nobody could win the game - This is a Tie!"
+msgstr "Das Spiel ging unentschieden aus!"
+
+#: holtz/zertz/wxzertz.cpp:1418
+msgid "No Winner"
+msgstr "Kein Gewinner"
+
+#: holtz/zertz/wxzertz.cpp:1547
+msgid "Please do a knock out move"
+msgstr "Bitte mache einen Schlagzug"
+
+#: holtz/zertz/wxzertz.cpp:1553
+msgid "Just remove a field"
+msgstr "Entferne einfach noch ein Randfeld"
+
+#: holtz/common/dialogs.cpp:54
+msgid "Play alone"
+msgstr "Alleine spielen"
+
+#: holtz/common/dialogs.cpp:55
+msgid "Setup network server"
+msgstr "Server starten"
+
+#: holtz/common/dialogs.cpp:56
+#: holtz/common/dialogs.cpp:2874
+msgid "Connect to server"
+msgstr "Zu Server verbinden"
+
+#: holtz/common/dialogs.cpp:57
+msgid "Keep last game connection"
+msgstr "Alte Netzwerkverbindung aufrecht halten"
+
+#: holtz/common/dialogs.cpp:77
+msgid "Connect"
+msgstr "Verbinden"
+
+#: holtz/common/dialogs.cpp:87
+#: holtz/common/dialogs.cpp:97
+msgid "Port"
+msgstr "Port"
+
+#: holtz/common/dialogs.cpp:92
+msgid "Hostname"
+msgstr "Hostname"
+
+#: holtz/common/dialogs.cpp:175
+msgid "Please wait until connection attempt succeeds or fails and try again"
+msgstr "Bitte warte bis der aktuelle Netzwerkverbindungsversuch gelingt oder fehl schlägt und versuche es erneut"
+
+#: holtz/common/dialogs.cpp:176
+msgid "Wait"
+msgstr "Bitte warten"
+
+#: holtz/common/dialogs.cpp:235
+msgid "Can't listen port"
+msgstr "Kann diesen Port nicht übernehmen"
+
+#: holtz/common/dialogs.cpp:235
+#: holtz/common/dialogs.cpp:263
+msgid "Network Message"
+msgstr "Netzwerk Nachricht"
+
+#: holtz/common/dialogs.cpp:256
+msgid "Connecting..."
+msgstr "Verbinde..."
+
+#: holtz/common/dialogs.cpp:263
+msgid "Connection to Server failed"
+msgstr "Verbindung zu Server fehlgeschlagen"
+
+#: holtz/common/dialogs.cpp:284
+#: holtz/common/dialogs.cpp:549
+#: holtz/common/dialogs.cpp:993
+#: holtz/common/dialogs.cpp:1116
+#: holtz/common/dialogs.cpp:1335
+msgid "Please wait for connection to allow player setup"
+msgstr "Bitte warte bis die Netzwerkverbindung es erlaubt zur Spielerauswahl überzugehen"
+
+#: holtz/common/dialogs.cpp:285
+#: holtz/common/dialogs.cpp:550
+#: holtz/common/dialogs.cpp:994
+#: holtz/common/dialogs.cpp:1117
+#: holtz/common/dialogs.cpp:1336
+msgid "Connecting"
+msgstr "Verbindungsabbau"
+
+#: holtz/common/dialogs.cpp:344
+msgid "Connected"
+msgstr "Verbunden"
+
+#: holtz/common/dialogs.cpp:371
+msgid "Connection Lost"
+msgstr "Verbindung fehlgeschlagen"
+
+#: holtz/common/dialogs.cpp:395
+msgid "Start new game"
+msgstr "Starte ein neues Spiel"
+
+#: holtz/common/dialogs.cpp:396
+msgid "Continue game"
+msgstr "Spiel fortsetzen"
+
+#: holtz/common/dialogs.cpp:397
+msgid "Don't care which game to play"
+msgstr "Egal welches Spiel"
+
+#: holtz/common/dialogs.cpp:401
+#: holtz/common/dialogs.cpp:410
+msgid "Standard Rules"
+msgstr "Standard Regeln"
+
+#: holtz/common/dialogs.cpp:402
+msgid "Tournament Rules"
+msgstr "Turnier Regeln"
+
+#: holtz/common/dialogs.cpp:403
+#: holtz/common/dialogs.cpp:668
+#: holtz/common/dialogs.cpp:694
 msgid "Custom"
 msgstr "Selbst definiert"
 
-#: holtz/dialogs.cpp:65
-#: holtz/dialogs.cpp:173
+#: holtz/common/dialogs.cpp:404
+#: holtz/common/dialogs.cpp:412
+msgid "Rules of last game"
+msgstr "Regeln wie im letzten Spiel"
+
+#: holtz/common/dialogs.cpp:406
+#: holtz/common/dialogs.cpp:414
+msgid "Rules for new game"
+msgstr "Wählen Sie die Regeln für das neue Spiel."
+
+#: holtz/common/dialogs.cpp:411
+msgid "Random Start Board"
+msgstr "Zufällige Anfangsposition"
+
+#: holtz/common/dialogs.cpp:419
+msgid "Continue last game"
+msgstr "Letztes Spiel fortsetzen"
+
+#: holtz/common/dialogs.cpp:420
+msgid "Load PBM game"
+msgstr "PBM Spiel laden"
+
+#: holtz/common/dialogs.cpp:423
+msgid "Load Little Golem game"
+msgstr "Little Golem Spiel laden"
+
+#: holtz/common/dialogs.cpp:427
+msgid "Which game to continue"
+msgstr "Welches Spiel fortsetzen"
+
+#: holtz/common/dialogs.cpp:653
+msgid "37 Rings (default)"
+msgstr "37 Ringe (Standard)"
+
+#: holtz/common/dialogs.cpp:654
+msgid "40 Rings"
+msgstr "40 Ringe"
+
+#: holtz/common/dialogs.cpp:655
+msgid "44 Rings"
+msgstr "44 Ringe"
+
+#: holtz/common/dialogs.cpp:656
+msgid "48 Rings"
+msgstr "48 Ringe"
+
+#: holtz/common/dialogs.cpp:657
+msgid "61 Rings"
+msgstr "61 Ringe"
+
+#: holtz/common/dialogs.cpp:659
+msgid "Choose Board"
+msgstr "Feld auswählen"
+
+#: holtz/common/dialogs.cpp:666
+#: holtz/common/dialogs.cpp:692
+msgid "Standard"
+msgstr "Standard"
+
+#: holtz/common/dialogs.cpp:667
+#: holtz/common/dialogs.cpp:693
+msgid "Tournament"
+msgstr "Turnier"
+
+#: holtz/common/dialogs.cpp:669
+msgid "Win condition"
+msgstr "Gewinnbedingung"
+
+#: holtz/common/dialogs.cpp:675
+#: holtz/common/dialogs.cpp:701
+msgid "White marbles"
+msgstr "Weiße Steine"
+
+#: holtz/common/dialogs.cpp:678
+#: holtz/common/dialogs.cpp:704
+msgid "Grey marbles"
+msgstr "Graue Steine"
+
+#: holtz/common/dialogs.cpp:681
+#: holtz/common/dialogs.cpp:707
+msgid "Black marbles"
+msgstr "Schwarze Steine"
+
+#: holtz/common/dialogs.cpp:684
+msgid "Each colour"
+msgstr "Von jeder Farbe"
+
+#: holtz/common/dialogs.cpp:695
+msgid "Common marbles"
+msgstr "Allgemeine Steine"
+
+#: holtz/common/dialogs.cpp:958
+msgid "Ruleset"
+msgstr "Regeln"
+
+#: holtz/common/dialogs.cpp:1026
+msgid "PBM Directory"
+msgstr "PBM Verzeichnis"
+
+#: holtz/common/dialogs.cpp:1031
+#: holtz/common/dialogs.cpp:1262
+#: holtz/common/dialogs.cpp:2404
+#: holtz/common/dialogs.cpp:2410
+#: holtz/common/dialogs.cpp:2425
+#: holtz/common/dialogs.cpp:2433
+#: holtz/common/dialogs.cpp:2441
+msgid "Choose..."
+msgstr "Durchsuchen..."
+
+#: holtz/common/dialogs.cpp:1201
+msgid "Board "
+msgstr "Spiel"
+
+#: holtz/common/dialogs.cpp:1204
+#: holtz/common/dialogs.cpp:1394
+msgid "moves"
+msgstr "Züge"
+
+#: holtz/common/dialogs.cpp:1218
+#: holtz/common/dialogs.cpp:1412
+msgid "Choose a directory"
+msgstr "Wähle ein Verzeichnis"
+
+#: holtz/common/dialogs.cpp:1257
+msgid "Little Golem Directory"
+msgstr "Little Golem Verzeichnis"
+
+#: holtz/common/dialogs.cpp:1449
+msgid "Player 1"
+msgstr "Spieler 1"
+
+#: holtz/common/dialogs.cpp:1451
+msgid "AI"
+msgstr "KI"
+
+#: holtz/common/dialogs.cpp:1456
+msgid "No help"
+msgstr "Keine Hilfe"
+
+#: holtz/common/dialogs.cpp:1457
+msgid "Show possible moves"
+msgstr "Zeige mögliche Züge"
+
+#: holtz/common/dialogs.cpp:1458
+msgid "Show Hint"
+msgstr "Empfehle einen Zug"
+
+#: holtz/common/dialogs.cpp:1459
+msgid "Help mode"
+msgstr "Hilfe Modus"
+
+#: holtz/common/dialogs.cpp:1468
+#: holtz/common/dialogs.cpp:1564
 msgid "Add player"
 msgstr "Spieler hinzufügen"
 
-#: holtz/dialogs.cpp:76
+#: holtz/common/dialogs.cpp:1479
 msgid "Up"
 msgstr "Hoch"
 
-#: holtz/dialogs.cpp:77
+#: holtz/common/dialogs.cpp:1480
 msgid "Down"
 msgstr "Runter"
 
-#: holtz/dialogs.cpp:78
+#: holtz/common/dialogs.cpp:1481
 msgid "Remove"
 msgstr "Entfernen"
 
-#: holtz/dialogs.cpp:85
+#: holtz/common/dialogs.cpp:1487
 msgid "Ready"
 msgstr "Fertig"
 
-#: holtz/dialogs.cpp:87
-#: holtz/dialogs.cpp:486
-#: holtz/dialogs.cpp:646
-#: holtz/dialogs.cpp:871
-msgid "Cancel"
-msgstr "Abbrechen"
-
-#: holtz/dialogs.cpp:93
+#: holtz/common/dialogs.cpp:1499
 msgid "Type the new player's name here."
 msgstr "Geben Sie den Namen des neuen Spielers hier ein."
 
-#: holtz/dialogs.cpp:94
+#: holtz/common/dialogs.cpp:1500
 msgid "Shows all players which will be part of the new game."
 msgstr "Zeigt alle Spieler an, die am neuen Spiel teilnehmen werden."
 
-#: holtz/dialogs.cpp:95
+#: holtz/common/dialogs.cpp:1501
 msgid "Select what kind of help you want for the new player."
 msgstr "Wählen Sie hier aus, welche Art Hilfe für den neuen Spieler angezeigt werden soll."
 
-#: holtz/dialogs.cpp:96
-msgid "Select the ruleset for the new game."
-msgstr "Wählen Sie die Regeln für das neue Spiel."
-
-#: holtz/dialogs.cpp:97
+#: holtz/common/dialogs.cpp:1502
 msgid "Add the new player to the game."
 msgstr "Fügen Sie den neuen Spieler zum Spiel hinzu."
 
-#: holtz/dialogs.cpp:98
+#: holtz/common/dialogs.cpp:1503
 msgid "Check this box if the new player should be computer-controlled, uncheck if it is a human player."
 msgstr "Wählen Sie hier aus, ob der neue Spieler vom Computer (\"KI\") gesteuert werden soll, oder nicht (d.h. es ist ein menschlicher Spieler)."
 
-#: holtz/dialogs.cpp:99
+#: holtz/common/dialogs.cpp:1504
 msgid "Move the currently selected player upwards. (The upmost player begins the game.)"
 msgstr "Bewegt den derzeit ausgewählten Spieler nach oben. (Der erste Spieler in der Liste beginnt das Spiel.)"
 
-#: holtz/dialogs.cpp:100
+#: holtz/common/dialogs.cpp:1505
 msgid "Move the currently selected player downwards. (The upmost player begins the game.)"
 msgstr "Bewegt den derzeit ausgewählten Spieler nach unten. (Der erste Spieler in der Liste beginnt das Spiel.)"
 
-#: holtz/dialogs.cpp:101
+#: holtz/common/dialogs.cpp:1506
 msgid "Remove the currently selected player from the new game."
 msgstr "Entfernt den derzeit ausgewählten Spieler aus dem Spiel."
 
-#: holtz/dialogs.cpp:102
-msgid "Click this button as soon as you are happy with the settings. \n"
+#: holtz/common/dialogs.cpp:1507
+msgid ""
+"Click this button as soon as you are happy with the settings. \n"
 "Network games start when all players have clicked 'Ready'."
-msgstr "Klicken Sie hierauf, wenn Sie mit den Einstellungen zufrieden sind und das Spiel beginnen soll. \n"
+msgstr ""
+"Klicken Sie hierauf, wenn Sie mit den Einstellungen zufrieden sind und das Spiel beginnen soll. \n"
 "Netzwerkspiele starten erst, wenn alle Mitspieler 'Fertig' sind."
 
-#: holtz/dialogs.cpp:125
-msgid "Game will start when all players are ready"
-msgstr "Spiel wird starten, wenn alle Spieler fertig sind"
-
-#: holtz/dialogs.cpp:173
+#: holtz/common/dialogs.cpp:1564
 msgid "Could not add player"
 msgstr "Konnte Spieler nicht hinzufügen"
 
-#: holtz/dialogs.cpp:178
-#: holtz/dialogs.cpp:308
+#: holtz/common/dialogs.cpp:1584
+msgid "Could not remove player!"
+msgstr "Konnte Spieler nicht entfernen!"
+
+#: holtz/common/dialogs.cpp:1585
+msgid "Remove player"
+msgstr "Spieler entfernen"
+
+#: holtz/common/dialogs.cpp:1605
+#: holtz/common/dialogs.cpp:1622
+msgid "Could not move player!"
+msgstr "Kann Spieler nicht verschieben!"
+
+#: holtz/common/dialogs.cpp:1605
+#: holtz/common/dialogs.cpp:1622
+msgid "Move player"
+msgstr "Verschiebe Spieler"
+
+#: holtz/common/dialogs.cpp:1738
+msgid "Change for this player denied!"
+msgstr "Änderung an diesem Spieler wurde zurückgewiesen!"
+
+#: holtz/common/dialogs.cpp:1738
+msgid "Denied"
+msgstr "Abgelehnt"
+
+#: holtz/common/dialogs.cpp:1832
+msgid "Please add more players"
+msgstr "Bitte mehr Spieler hinzufügen"
+
+#: holtz/common/dialogs.cpp:1836
+msgid "Please remove some players"
+msgstr "Bitte Spieler entfernen"
+
+#: holtz/common/dialogs.cpp:1842
+msgid "Wait for others to become ready"
+msgstr "Bitte warte bis alle Spieler fertig sind"
+
+#: holtz/common/dialogs.cpp:1847
+msgid "Click on ready when ready"
+msgstr "Klicke auf Fertig wenn Du bereit bist"
+
+#: holtz/common/dialogs.cpp:1852
+msgid "Please continue"
+msgstr "Du kannst jetzt weiter klicken"
+
+#: holtz/common/dialogs.cpp:1871
 #, c-format
 msgid "Player %d"
 msgstr "Spieler %d"
 
-#: holtz/dialogs.cpp:193
-msgid "Could not remove player!"
-msgstr "Konnte Spieler nicht entfernen!"
+#: holtz/common/dialogs.cpp:1904
+msgid "Player setup"
+msgstr "Spielerauswahl"
 
-#: holtz/dialogs.cpp:194
-msgid "Remove player"
-msgstr "Spieler entfernen"
+#: holtz/common/dialogs.cpp:1934
+msgid "Some more players are needed!"
+msgstr "Weitere Spieler benötigt!"
 
-#: holtz/dialogs.cpp:209
-#: holtz/dialogs.cpp:225
-msgid "Could not move player!"
-msgstr "Kann Spieler nicht verschieben!"
+#: holtz/common/dialogs.cpp:1934
+#: holtz/common/dialogs.cpp:1938
+#: holtz/common/dialogs.cpp:1941
+msgid "Can't start"
+msgstr "Kann nicht starten"
 
-#: holtz/dialogs.cpp:209
-#: holtz/dialogs.cpp:225
-msgid "Move player"
-msgstr "Verschiebe Spieler"
+#: holtz/common/dialogs.cpp:1938
+msgid "Too many players!"
+msgstr "Zu viele Spieler!"
 
-#: holtz/dialogs.cpp:244
-#: holtz/dialogs.cpp:254
-#: holtz/dialogs.cpp:279
-msgid "Could not change Ruleset!"
-msgstr "Konnte Regeln nicht ändern!"
+#: holtz/common/dialogs.cpp:1941
+msgid "Please wait until everyone is ready"
+msgstr "Bitte warte bis alle Spieler fertig sind"
 
-#: holtz/dialogs.cpp:383
-msgid "Change for this player denied!"
-msgstr "Änderung an diesem Spieler wurde zurückgewiesen!"
+#: holtz/common/dialogs.cpp:1993
+msgid "Setup game"
+msgstr "Spiel vorbereiten"
 
-#: holtz/dialogs.cpp:383
-msgid "Denied"
-msgstr "Abgelehnt"
+#: holtz/common/dialogs.cpp:2075
+msgid " asks to use another board. Accept?"
+msgstr " fragt ob andere Spielaufstellung gespielt werden soll. Annehmen?"
 
-#: holtz/dialogs.cpp:433
-msgid "Change of ruleset denied!"
-msgstr "Änderung der Regeln abgelehnt!"
+#: holtz/common/dialogs.cpp:2076
+msgid "Accept board?"
+msgstr "Spielaufstellung annehmen?"
 
-#: holtz/dialogs.cpp:433
-msgid "Ruleset denied"
-msgstr "Regeln abgelehnt"
+#: holtz/common/dialogs.cpp:2088
+msgid "Board changed. Do you want to view the new settings?"
+msgstr "Spielaufstellung hat sich geändert. Soll diese im Dialog übernommen werden?"
 
-#: holtz/dialogs.cpp:469
-msgid "37 Rings (default)"
-msgstr "37 Ringe (Standard)"
+#: holtz/common/dialogs.cpp:2089
+msgid "View board?"
+msgstr "Spielaufstellung ansehen?"
 
-#: holtz/dialogs.cpp:470
-msgid "40 Rings"
-msgstr "40 Ringe"
+#: holtz/common/dialogs.cpp:2101
+msgid "Board change denied!"
+msgstr "Änderung der Spielaufstellung wurde zurückgewießen!"
 
-#: holtz/dialogs.cpp:471
-msgid "44 Rings"
-msgstr "44 Ringe"
+#: holtz/common/dialogs.cpp:2102
+msgid "Change denied!"
+msgstr "Änderung abgelehnt!"
 
-#: holtz/dialogs.cpp:472
-msgid "48 Rings"
-msgstr "48 Ringe"
+#: holtz/common/dialogs.cpp:2147
+msgid "Connection was closed! This may be caused intentinally by your fellow players or be a result of technical problems of the connection."
+msgstr "Netzwerkverbindung ist abgebrochen! Dies kann absichtlich von einem Mitspieler oder durch technische Probleme verursacht worden sein."
 
-#: holtz/dialogs.cpp:473
-msgid "61 Rings"
-msgstr "61 Ringe"
+#: holtz/common/dialogs.cpp:2147
+msgid "disconnect"
+msgstr "Verbindung getrennt"
 
-#: holtz/dialogs.cpp:475
-msgid "Choose Board"
-msgstr "Feld auswählen"
+#: holtz/common/dialogs.cpp:2162
+msgid " asks to play new game. Accept?"
+msgstr " will ein neues Spiel beginnen. Annehmen?"
 
-#: holtz/dialogs.cpp:484
-#: holtz/dialogs.cpp:644
-msgid "Apply"
-msgstr "Ü&bernehmen"
+#: holtz/common/dialogs.cpp:2163
+#: holtz/common/manager.cpp:211
+msgid "New game?"
+msgstr "Neues Spiel?"
 
-#: holtz/dialogs.cpp:485
-#: holtz/dialogs.cpp:645
-msgid "Restore"
-msgstr "&Zurücksetzen"
+#: holtz/common/dialogs.cpp:2173
+#, c-format
+msgid "%s asks undo one half move. Accept?"
+msgstr "%s will einen Halbzug rückgängig machen. Annehmen?"
 
-#: holtz/dialogs.cpp:594
-msgid "Game setup"
-msgstr "Spieleinstellungen"
+#: holtz/common/dialogs.cpp:2175
+#, c-format
+msgid "%s asks undo %d half moves. Accept?"
+msgstr "%s will %d Halbzüge rückgängig machen. Annehmen?"
 
-#: holtz/dialogs.cpp:605
-#: holtz/dialogs.cpp:732
-msgid "Players"
-msgstr "Spieler"
+#: holtz/common/dialogs.cpp:2177
+msgid "Allow undo?"
+msgstr "Rückgängig machen lassen?"
 
-#: holtz/dialogs.cpp:631
+#: holtz/common/dialogs.cpp:2206
+msgid "Closing the player setup now would leave the game in a bad state. Please go back to make changes to the game setup or finish the current setup. You can also start another game from the File menu."
+msgstr "Den Spielerdialog zu schließen würde die Netzwerkverbindung in einen ungünstigen Zustand versetzen. Bitte schließe die eine Einstellungen ab oder gehe zurück um falsche Einstellungen zu ändern.  Du kannst auch ein anderes Spiel im Datei Menü öffnen."
+
+#: holtz/common/dialogs.cpp:2207
+msgid "Please don't close"
+msgstr "Bitte nicht schließen"
+
+#: holtz/common/dialogs.cpp:2248
 msgid "Horizontal"
 msgstr "Horizontal"
 
-#: holtz/dialogs.cpp:632
+#: holtz/common/dialogs.cpp:2249
 msgid "Vertical"
 msgstr "Vertikal"
 
-#: holtz/dialogs.cpp:634
-msgid "Board Orientation"
-msgstr "Feldausrichtung"
+#: holtz/common/dialogs.cpp:2250
+msgid "Board orientation"
+msgstr "Spielfeldausrichtung"
 
-#: holtz/dialogs.cpp:638
+#: holtz/common/dialogs.cpp:2256
+msgid "Board and common stones left"
+msgstr "Spielbrett und allgemeine Steine links"
+
+#: holtz/common/dialogs.cpp:2257
+msgid "Board left all stones right"
+msgstr "Spielbrett links und alle Steine rechts"
+
+#: holtz/common/dialogs.cpp:2258
+msgid "Panels arrangement"
+msgstr "Darstellungsanordnung"
+
+#: holtz/common/dialogs.cpp:2264
 msgid "Show field coordinates"
 msgstr "Feldbezeichnungen anzeigen"
 
-#: holtz/dialogs.cpp:642
-#: holtz/dialogs.cpp:867
-msgid "OK"
-msgstr "OK"
+#: holtz/common/dialogs.cpp:2268
+msgid "Display all common stones individually"
+msgstr "Zeige alle allgemeinen Steine einzeln"
 
-#: holtz/dialogs.cpp:653
+#: holtz/common/dialogs.cpp:2271
+msgid "Display all player stones individually"
+msgstr "Zeige alle Spielersteine einzeln"
+
+#: holtz/common/dialogs.cpp:2275
 msgid "Select the orientation in which the board is displayed on-screen."
 msgstr "Wählen Sie hier die Ausrichtung des Feldes."
 
-#: holtz/dialogs.cpp:654
+#: holtz/common/dialogs.cpp:2279
 msgid "If checked, the field coordinates (a1...g4) will be displayed next to the board. This can be useful for discussing the game."
 msgstr "Wenn markiert, werden die Feldbezeichnungen (a1...g4) angezeigt. Diese sind nützlich, um über den Spielverlauf zu diskutieren."
 
-#: holtz/dialogs.cpp:655
-msgid "Accepts the changes made in this dialog and returns to the game."
-msgstr "Übernimmt die im Dialog vorgenommenen Änderungen und kehrt zum Spiel zurück."
+#: holtz/common/dialogs.cpp:2300
+msgid "default family"
+msgstr "Standard Schriftart"
 
-#: holtz/dialogs.cpp:656
-msgid "Accepts the changes made in this dialog and leaves the dialog opened."
-msgstr "Übernimmt die im Dialog vorgenommenen Änderungen und lässt den Dialog geöffnet."
+#: holtz/common/dialogs.cpp:2301
+msgid "decorative family"
+msgstr "Dekorative Schriftart"
 
-#: holtz/dialogs.cpp:657
-msgid "Reverts the changes made in this dialog (since the last 'Apply') and leaves it opened."
-msgstr "Setzt die seit dem letzten 'Übernehmen' vorgenommenen Änderungen wieder zurück. "
+#: holtz/common/dialogs.cpp:2302
+msgid "roman family"
+msgstr "Serifen Schriftart"
 
-#: holtz/dialogs.cpp:658
-msgid "Closes the dialog without accepting the changes."
-msgstr "Schließt den Dialog und verwirft die vorgenommenen Änderungen."
+#: holtz/common/dialogs.cpp:2303
+msgid "script family"
+msgstr "Schreibschrift"
 
-#: holtz/dialogs.cpp:724
+#: holtz/common/dialogs.cpp:2304
+msgid "swiss family"
+msgstr "Serifenlose Schriftart"
+
+#: holtz/common/dialogs.cpp:2305
+msgid "modern family"
+msgstr "Moderne Schriftart"
+
+#: holtz/common/dialogs.cpp:2306
+msgid "teletype family"
+msgstr "Teletype Schriftart"
+
+#: holtz/common/dialogs.cpp:2307
+msgid "<unknown font>"
+msgstr "<unbekannte Schriftart>"
+
+#: holtz/common/dialogs.cpp:2314
+msgid "slant"
+msgstr "schräg"
+
+#: holtz/common/dialogs.cpp:2315
+msgid "italic"
+msgstr "kursiv"
+
+#: holtz/common/dialogs.cpp:2325
+msgid "light"
+msgstr "dünn"
+
+#: holtz/common/dialogs.cpp:2333
+msgid "bold"
+msgstr "fett"
+
+#: holtz/common/dialogs.cpp:2400
+msgid "Skin file"
+msgstr "Skin Datei"
+
+#: holtz/common/dialogs.cpp:2406
+msgid "Beep file"
+msgstr "Klang Datei"
+
+#: holtz/common/dialogs.cpp:2415
+msgid "Play sounds"
+msgstr "Klang abspielen"
+
+#: holtz/common/dialogs.cpp:2421
+msgid "Font for player names"
+msgstr "Schriftart für Spielernamen"
+
+#: holtz/common/dialogs.cpp:2429
+msgid "Font for coordinates"
+msgstr "Schriftart für Koordinaten"
+
+#: holtz/common/dialogs.cpp:2437
+msgid "Font for text on stones"
+msgstr "Schriftart für Text auf Steinen"
+
+#: holtz/common/dialogs.cpp:2544
+msgid "Choose a skin file"
+msgstr "Wähle eine Skin Datei"
+
+#: holtz/common/dialogs.cpp:2545
+msgid "Skin files (*.zip)|*.zip"
+msgstr "Skin-Datei (*.zip)|*.zip"
+
+#: holtz/common/dialogs.cpp:2565
+msgid "Choose a beep file"
+msgstr "Wähle einen Klang"
+
+#: holtz/common/dialogs.cpp:2566
+msgid "Beep sounds (*.wav)|*.wav"
+msgstr "Audio Datei (*.wav)|*.wav"
+
+#: holtz/common/dialogs.cpp:2655
 msgid "Settings"
 msgstr "Optionen"
 
-#: holtz/dialogs.cpp:752
-msgid "Network client setup"
-msgstr "Netzwerk Client Übersicht"
+#: holtz/common/dialogs.cpp:2665
+msgid "Arrangement"
+msgstr "Anordnung"
 
-#: holtz/dialogs.cpp:767
+#: holtz/common/dialogs.cpp:2666
+msgid "Look && Feel"
+msgstr "Aussehen"
+
+#: holtz/common/dialogs.cpp:2671
+#: holtz/common/dialogs.cpp:2887
+msgid "OK"
+msgstr "OK"
+
+#: holtz/common/dialogs.cpp:2673
+msgid "Apply"
+msgstr "Ü&bernehmen"
+
+#: holtz/common/dialogs.cpp:2674
+msgid "Restore"
+msgstr "&Zurücksetzen"
+
+#: holtz/common/dialogs.cpp:2675
+#: holtz/common/dialogs.cpp:2891
+msgid "Cancel"
+msgstr "Abbrechen"
+
+#: holtz/common/dialogs.cpp:2681
+msgid "Accepts the changes made in this dialog and returns to the game."
+msgstr "Übernimmt die im Dialog vorgenommenen Änderungen und kehrt zum Spiel zurück."
+
+#: holtz/common/dialogs.cpp:2682
+msgid "Accepts the changes made in this dialog and leaves the dialog opened."
+msgstr "Übernimmt die im Dialog vorgenommenen Änderungen und lässt den Dialog geöffnet."
+
+#: holtz/common/dialogs.cpp:2683
+msgid "Reverts the changes made in this dialog (since the last 'Apply') and leaves it opened."
+msgstr "Setzt die seit dem letzten 'Übernehmen' vorgenommenen Änderungen wieder zurück. "
+
+#: holtz/common/dialogs.cpp:2684
+msgid "Closes the dialog without accepting the changes."
+msgstr "Schließt den Dialog und verwirft die vorgenommenen Änderungen."
+
+#: holtz/common/dialogs.cpp:2742
+msgid "Network clients"
+msgstr "Netzwerk Clients"
+
+#: holtz/common/dialogs.cpp:2747
+msgid "allow new connections"
+msgstr "erlaube neue Verbindungen"
+
+#: holtz/common/dialogs.cpp:2759
 msgid "Disconnect All"
 msgstr "Alle Verbindungen trennen"
 
-#: holtz/dialogs.cpp:773
+#: holtz/common/dialogs.cpp:2765
 msgid "Lists all connected client computers. Double-click one of the clients to throw him out of the game."
 msgstr "Zeigt alle verbundenen Client-Rechner. Doppelklicken Sie auf einen der Rechner, um ihn aus dem Spiel zu werfen."
 
-#: holtz/dialogs.cpp:774
+#: holtz/common/dialogs.cpp:2766
 msgid "Disconnect all client computers from the game."
 msgstr "Entfernt alle verbundenen Client-Rechner aus diesem Spiel."
 
-#: holtz/dialogs.cpp:818
+#: holtz/common/dialogs.cpp:2827
 #, c-format
 msgid "Do you really want to disconnect %s?"
 msgstr "Willst Du wirklich die Verbidnung zu %s trennen?"
 
-#: holtz/dialogs.cpp:819
+#: holtz/common/dialogs.cpp:2828
 msgid "Disconnect?"
 msgstr "Verbindung trennen?"
 
-#: holtz/dialogs.cpp:828
+#: holtz/common/dialogs.cpp:2836
 #, c-format
 msgid "Can't disconnect host %s yet!"
 msgstr "Kann Verbindung zu %s nicht trennen!"
 
-#: holtz/dialogs.cpp:829
+#: holtz/common/dialogs.cpp:2837
 msgid "Can't disconnect!"
 msgstr "Kann Verbindung nicht trennen!"
 
-#: holtz/dialogs.cpp:850
+#: holtz/common/dialogs.cpp:2870
 msgid "Network Game"
 msgstr "Netzwerkspiel"
 
-#: holtz/dialogs.cpp:853
+#: holtz/common/dialogs.cpp:2873
 msgid "Setup server"
 msgstr "Server starten"
 
-#: holtz/dialogs.cpp:854
-msgid "Connect to server"
-msgstr "Zu Server verbinden"
-
-#: holtz/dialogs.cpp:878
+#: holtz/common/dialogs.cpp:2899
 msgid "Select this option to setup a new server, so that other players on the network can join your game."
 msgstr "Wählen Sie diese Option, um einen neuen 'Server' zu starten, so dass andere Spieler im Netzwerk an Ihrem Spiel teilnehmen können."
 
-#: holtz/dialogs.cpp:879
+#: holtz/common/dialogs.cpp:2900
 msgid "Select this option to connect to someone else's server and join his game."
 msgstr "Wählen Sie diese Option, um zu einem 'Server' auf einem anderen Rechner im Netzwerk zu verbinden und an dessen Spiel teilzunehmen."
 
-#: holtz/dialogs.cpp:880
+#: holtz/common/dialogs.cpp:2901
 msgid "Enter the IP address or hostname of the computer you want to connect to. (If you are setting up a server, this field has no meaning.)"
 msgstr "Geben Sie hier die IP-Adresse oder den Rechnernamen des Computers ein, zu dem Sie verbinden wollen. (Wenn Sie einen 'Server' starten, ist das Feld bedeutungslos.)"
 
-#: holtz/dialogs.cpp:881
+#: holtz/common/dialogs.cpp:2902
 msgid "Enter the port number of your (or the other person's) server. You can usually leave this unchanged."
 msgstr "Geben Sie die Port-Nummer Ihres (oder des zu verbindenden) Servers ein. Dieser Wert muss normalerweise nicht geändert werden."
 
-#: holtz/dialogs.cpp:882
+#: holtz/common/dialogs.cpp:2903
 msgid "Start up the network connection using the given options."
 msgstr "Startet die Netzwerkverbindung mit den angegebenen Einstellungen."
+
+#: holtz/common/manager.cpp:90
+msgid "Exception caught!"
+msgstr "Ausnahme gefangen!"
+
+#: holtz/common/manager.cpp:90
+msgid "Exception!"
+msgstr "Ausnahme!"
+
+#: holtz/common/manager.cpp:138
+msgid "Already new game requested"
+msgstr "Neues Spiel wurde bereits angefordert"
+
+#: holtz/common/manager.cpp:138
+msgid "New game"
+msgstr "Neues Spiel"
+
+#: holtz/common/manager.cpp:154
+#: holtz/common/manager.cpp:264
+msgid "Asking other Users..."
+msgstr "Frage Mitspieler..."
+
+#: holtz/common/manager.cpp:186
+msgid "Unrequested new_game accepted?!?"
+msgstr "Unangefordertes Neues Spiel akzeptiert?!?"
+
+#: holtz/common/manager.cpp:186
+#: holtz/common/manager.cpp:205
+msgid "Why new_game"
+msgstr "Warum neues Spiel"
+
+#: holtz/common/manager.cpp:205
+msgid "Unrequested new game denied?!?"
+msgstr "Unangefordertes neues Spiel wurde abgelehnt?!?"
+
+#: holtz/common/manager.cpp:210
+msgid "The idea of starting a new game was rejected. Do you want to start a new game on your own?"
+msgstr "Neues Spiel wurde abgelehnt. Möchtest Du unabhängig von Deinen Mitspielern ein neues Spiel starten?"
+
+#: holtz/common/manager.cpp:227
+msgid "Can't undo move since game is stopped."
+msgstr "Kann keinen Zug zurücknehmen da das Spiel angehalten ist."
+
+#: holtz/common/manager.cpp:227
+#: holtz/common/manager.cpp:232
+#: holtz/common/manager.cpp:384
+msgid "Undo failed"
+msgstr "Rückgängig ist fehlgeschlagen"
+
+#: holtz/common/manager.cpp:232
+msgid "Already undo requested"
+msgstr "Rückgängigmachen wurde bereits angefordert"
+
+#: holtz/common/manager.cpp:332
+msgid "Unrequested undo accepted?!?"
+msgstr "Unangefordertes Zurücknehmen wurde angenommen?!?"
+
+#: holtz/common/manager.cpp:332
+#: holtz/common/manager.cpp:350
+msgid "Why undo"
+msgstr "Warum Rückgängig?"
+
+#: holtz/common/manager.cpp:350
+msgid "Unrequested undo denied?!?"
+msgstr "Unangefordertes Zurücknehmen wurde abgelehnt?!?"
+
+#: holtz/common/manager.cpp:356
+msgid "Requested undo was denied"
+msgstr "Rückgängig machen wurde abgelehnt"
+
+#: holtz/common/manager.cpp:356
+msgid "Undo denied"
+msgstr "Rückgängig abgelehnt"
+
+#: holtz/common/manager.cpp:384
+msgid "Undo move failed"
+msgstr "Rückgängig machen fehlgeschlagen"
 

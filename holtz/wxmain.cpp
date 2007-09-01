@@ -743,9 +743,9 @@ namespace holtz
   void Main_Frame::on_about(wxCommandEvent& WXUNUSED(event))
   {
     wxString msg;
-    msg =  _("Holtz is a game about making sacrifices.\n");
-    msg += _("GPLed by Martin Trautmann (2003)\n");
-    msg += _("Based on Zertz (r) and (c) by Don & Co NV, 2001.");
+    msg =  _("Holtz is an implementation of the Gipf Project Games\n");
+    msg += _("Zertz and Dvonn (www.gipf.com).\n");
+    msg += _("GPLed by Martin Trautmann (2007)\n");
 
     wxMessageBox(msg, _("About Holtz"), wxOK | wxICON_INFORMATION, this);
   }
