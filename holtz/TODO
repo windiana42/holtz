@@ -3,7 +3,7 @@
 - think about good way to handle finished games 
   * allow undo / new-game for both players: extra state for finished games?
 - asking queries should be deferred during game setup dialog
-- why segfault on exit with wxWidgets 2.8?
+- why segfault on exit with wxWidgets 2.8 under linux?
 
 * Features:
 
@@ -27,3 +27,4 @@
  (I will implement this if someone wants to develop his own bgp 1.00a
  client which is facilitated by just dealing with boards - please
  contact: martintrautmann@gmx.net)
+

@@ -210,6 +210,7 @@ namespace zertz
     std::string str; int board_num;
 
     bool ok = false;
+
     is >> str;
     while( is )
     {
@@ -293,6 +294,7 @@ namespace zertz
       ruleset->max_players = 2;	// exact 2 players
       game.reset_game( *ruleset );
       delete ruleset;
+      game.players.clear();
       ++num_moves_read;		// initializing game counts as move "0"
       ++from;			// start from real move "1"
     }
@@ -314,8 +316,8 @@ namespace zertz
 #endif
 
     std::string name;
-    is >> name; game.add_player( Player( name, 50, 0 ) );
-    is >> name; game.add_player( Player( name, 51, 0 ) );
+    is >> name; if(from==1) game.add_player( Player( name, 50, 0 ) );
+    is >> name; if(from==1) game.add_player( Player( name, 51, 0 ) );
 
 #ifndef __WXMSW__
     std::cout << "Players: " << game.players.size() <<  std::endl;

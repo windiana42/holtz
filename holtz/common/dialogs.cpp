@@ -1090,6 +1090,8 @@ namespace dvonn
 	}
 #ifndef __WXMSW__
 	std::cout << "Number of Players: " << game_dialog.game.players.size() <<  std::endl;
+	if( game_dialog.game.players.size() )
+	  std::cout << "First Player: " << game_dialog.game.players.front().name << std::endl;
 #endif
       }while( (max_move >= 0) && (num_moves > 0) );
 
@@ -1130,7 +1132,10 @@ namespace dvonn
     changes = true;		// take first setting as change
 
     if( game_dialog.valid_pbm_directory != wxT("") )
-      scan_directory( game_dialog.valid_pbm_directory );
+      {
+	pbm_directory->SetValue( game_dialog.valid_pbm_directory );
+	scan_directory( game_dialog.valid_pbm_directory );
+      }
     else
       pbm_files.clear();
   }
@@ -1210,7 +1215,8 @@ namespace dvonn
     if( directory == wxT("") ) 
       directory = wxGetCwd();
 
-    wxDirDialog *dialog = new wxDirDialog( this, _("Choose a directory"), directory );
+    wxDirDialog *dialog = new wxDirDialog( this, _("Choose a directory"), directory, 
+					   wxDD_DIR_MUST_EXIST | wxDD_CHANGE_DIR );
     if( dialog->ShowModal() == wxID_OK )
     {
       changes = true;
@@ -1403,7 +1409,8 @@ p			  str_to_wxstr(master_content.player1).c_str(), str_to_wxstr(master_content.
     if( directory == wxT("") ) 
       directory = wxGetCwd();
 
-    wxDirDialog *dialog = new wxDirDialog( this, _("Choose a directory"), directory );
+    wxDirDialog *dialog = new wxDirDialog( this, _("Choose a directory"), directory, 
+					   wxDD_DIR_MUST_EXIST | wxDD_CHANGE_DIR );
     if( dialog->ShowModal() == wxID_OK )
     {
       changes = true;
