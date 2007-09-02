@@ -2,9 +2,9 @@
   StartPage("Rules", "");
 ?>
 
-<h2>Rule summary</h2>
+<h2>Z&egrave;rtz Rule summary</h2>
 
-The Holtz game is originally meant to be played on a hexagonal board composed of 37 fields, by two players. <br>
+The Z&egrave;rtz game is originally meant to be played on a hexagonal board composed of 37 fields, by two players. <br>
 There are five white, seven gray and nine black stones which may be placed on the fields. 
 <h3>Moves</h3>
 The players move alternately. They can choose between two kinds of moves:

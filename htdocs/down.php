@@ -5,7 +5,7 @@
 <h2>Downloads of Holtz source and binaries</h2>
 
 Note: If you download any source version, you have to download 
-<a href="http://wxwindows.org">wxWindows</a> first <br>
+<a href="http://wxwidgets.org">wxWidgets</a> first <br>
 <br>
 <?php 
 $fp = fopen('http://sourceforge.net/project/showfiles.php?group_id=74242', 'r') 
