@@ -48,4 +48,4 @@ The goal is to control as many pieces as possible by stacking them on top of eac
   </ul>
 </ol>
 
-<?php EndPage(); ?>
+<?php EndPage(1, "dvonn.jpg", "dvonn-board-big.png"); ?>

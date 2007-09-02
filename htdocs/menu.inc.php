@@ -15,7 +15,7 @@ function PrintMenuItem($itemtext, $itemlink, $activeitem, $last = 0)
 function PrintMenu($activepage) {
   print "<div align=\"center\"><table cellpadding=0 border=0 cellspacing=0><tr>";
   print "<td><img alt=\"left\" src=\"line-20-left.gif\">";
-  PrintMenuItem("Home page", "index.php", $activepage);
+  PrintMenuItem("Home", "index.php", $activepage);
   PrintMenuItem("Z&egrave;rtz", "zertz.php", $activepage);
   PrintMenuItem("Dvonn", "dvonn.php", $activepage);
   PrintMenuItem("Screenshots", "helpprog.php", $activepage);
@@ -24,8 +24,22 @@ function PrintMenu($activepage) {
   print "</tr></table></div>";
 }
 
-function PrintSidebar() {
-  print "<img src=\"sidebar.png\" alt=\"Holtz/Dvonn/Zertz logo\">\n";
+function PrintSidebar($sidebarImg, $bigImg) {
+  if($sidebarImg != "") {
+    print "<table height=\"100%\"><tr><td valign=\"top\">";
+    if($bigImg != "") { 
+      print "<a href=\"$bigImg\">";
+    }
+    print "<img src=\"$sidebarImg\">";
+    if($bigImg != "") {
+      print "</a>";
+    }
+    print "</td></tr>\n";
+    print "<tr><td valign=\"bottom\"><img src=\"sidebar.png\" alt=\"Holtz/Dvonn/Zertz logo\"></td></tr></table>\n";
+  }
+  else {
+    print "<img src=\"sidebar.png\" alt=\"Holtz/Dvonn/Zertz logo\">\n";
+  }
 /*
   print "<table cellpadding=0 border=0 cellspacing=0>";
   // /////// make a box ////////
@@ -69,10 +83,10 @@ function StartPage($title, $menuname, $showSidebar = 1) {
 <?php
 }
 
-function EndPage($showSidebar = 1) {
+function EndPage($showSidebar = 1, $sidebarImg = "", $bigImg = "") {
 ?>
       </td>
-      <?php if($showSidebar) { ?><td valign="middle" width="230"><?php PrintSidebar(); } ?>
+      <?php if($showSidebar) { ?><td valign="middle" width="230"><?php PrintSidebar($sidebarImg, $bigImg); } ?>
     </tr>
     <tr><td colspan=2><hr>by Martin Trautmann<br>
       <i>Hosted by <A href="http://sourceforge.net"> 

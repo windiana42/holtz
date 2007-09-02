@@ -50,4 +50,4 @@ The tournament rules are a slight variation of the rules to make the game  more 
     alternatively three stones of each type.
 </ul>
 
-<?php EndPage(); ?>
+<?php EndPage(1, "zertz.jpg", "zertz-board-big.png"); ?>
