@@ -4,7 +4,7 @@
 
 function PrintMenuItem($itemtext, $itemlink, $activeitem, $last = 0)
 {
-  print "<td background=\"line-20-bg.gif\" valign=\"middle\" align=\"center\">&nbsp;&nbsp;";
+  print "<td style=\"background-image:url(line-20-bg.gif)\" valign=\"middle\" align=\"center\">&nbsp;&nbsp;";
   if($activeitem == $itemtext) print "<span class=\"active\">$itemtext</span>";
   else print "<a href=\"$itemlink\">$itemtext</a>";
   print "&nbsp;&nbsp;";
@@ -64,6 +64,7 @@ function PrintSidebar($sidebarImg, $bigImg) {
 
 function StartPage($title, $menuname, $showSidebar = 1) {
 ?>
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
 <html>
 <head>
   <meta name="author" content="Martin Trautmann, Florian Fischer">
