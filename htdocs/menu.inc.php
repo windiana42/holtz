@@ -56,12 +56,12 @@ function StartPage($title, $menuname, $showSidebar = 1) {
   <meta name="keywords" content="Zertz, zertz, Zèrtz, Z&egrave;ertz, zèrtz, z&egrave;ertz, Dvonn, dvonn, Holtz, holtz,
 	abstract strategy game, strategy game, abstract game, Denkspiel, Brettspiel, board game">
   <meta http-equiv="content-type" content="text/html; charset=ISO-8859-1">
-  <title>Holtz:: <?php print $title; ?></title>
+  <title><?php print $title; ?></title>
   <link rel="stylesheet" href="holtz.css">
 </head>
 <body background="bg-wood.jpg">
   <table border=0 cellpadding=2 cellspacing=15 width="100%">
-    <tr><td colspan=2 align="center"><h1>Holtz:: <?php print $title; ?></h1>
+    <tr><td colspan=2 align="center"><h1><?php print $title; ?></h1>
       <?php PrintMenu($menuname); ?>
     </tr>
     <tr>
