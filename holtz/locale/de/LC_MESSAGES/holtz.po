@@ -2,7 +2,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Holtz\n"
 "POT-Creation-Date: \n"
-"PO-Revision-Date: 2007-09-01 23:34-0100\n"
+"PO-Revision-Date: 2007-09-01 23:54-0100\n"
 "Last-Translator: Martin Trautmann <windiana@users.sourceforge.net>\n"
 "Language-Team: Florian Fischer, Martin Trautmann <martintrautmann@gmx.de>\n"
 "MIME-Version: 1.0\n"
@@ -68,7 +68,7 @@ msgstr "Einstellungen ändern"
 
 #: holtz/wxmain.cpp:652
 msgid "&Undo move\tCtrl-U"
-msgstr "&Zug zurücknehmen\tCtrl-Z"
+msgstr "Z&ug zurücknehmen\tCtrl-U"
 
 #: holtz/wxmain.cpp:652
 msgid "Try to undo move"
@@ -651,7 +651,7 @@ msgstr "Klicke auf Fertig wenn Du bereit bist"
 
 #: holtz/common/dialogs.cpp:1852
 msgid "Please continue"
-msgstr "Du kannst jetzt weiter klicken"
+msgstr "Du kannst jetzt fertigstellen"
 
 #: holtz/common/dialogs.cpp:1871
 #, c-format
