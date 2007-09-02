@@ -15,7 +15,7 @@ function PrintMenuItem($itemtext, $itemlink, $activeitem, $last = 0)
 function PrintMenu($activepage) {
   print "<div align=\"center\"><table cellpadding=0 border=0 cellspacing=0><tr>";
   print "<td><img alt=\"left\" src=\"line-20-left.gif\">";
-  PrintMenuItem("Home page", "zertz.php", $activepage);
+  PrintMenuItem("Home page", "index.php", $activepage);
   PrintMenuItem("News", "news.php", $activepage);
   PrintMenuItem("Downloads", "http://sourceforge.net/project/showfiles.php?group_id=74242", $activepage);
   PrintMenuItem("Information", "help.php", $activepage);
