@@ -25,6 +25,7 @@ or on any network (e.g. the Internet).<br>
 There are various hints and help texts for beginners.<br>
 
 Holtz is available for Windows and Linux for free. Download
-and try it now!
+and try it now!<br>
+Holtz was developed using the <a href="http://www.wxwindows.org">wxWindows</a> GUI library.
 
 <?php EndPage(); ?>

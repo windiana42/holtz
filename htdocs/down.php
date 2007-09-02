@@ -5,17 +5,21 @@
 <h2>Downloads of Holtz source and binaries</h2>
 
 Note: If you download any source version, you have to download 
-<a href="http://wxwindows.org">wxWindows</a> first
-
+<a href="http://wxwindows.org">wxWindows</a> first <br>
+<br>
 <?php 
 $fp = fopen('http://sourceforge.net/project/showfiles.php?group_id=74242', 'r') 
   or die("Cannot read Project: Files page???");
-$fcontents = fread($fp, 100000); 
+$fcontents = "";
+while( strlen($fcontents < 50000) && !feof($fp) ) {
+  $fcontents = $fcontents.fread($fp, 10000); 
+}
 fclose($fp);
-$pos = strpos($fcontents, "Below is a list");
-$pos = strpos($fcontents, "<table", $pos); 
+$pos = strpos($fcontents, "Latest File Releases");
+$pos = strpos($fcontents, "<table"/*, $pos*/); 
 
-$endpos = strpos($fcontents, "Project Totals", $pos);
+$endpos = strpos($fcontents, "</table", $pos);
+//$endpos = strpos($fcontents, "Project Totals", $pos);
 /* it doesn't work (but why)
 $endpos = strpos($fcontents, "</table", $endpos);
 print "endpos: $endpos <br>\n";
@@ -26,9 +30,4 @@ $data = substr($fcontents, $pos, $endpos - $pos);
 print $data;
 print "</table>";
 ?>
-<!--
-<h2>Not yet implemented</h2>
-Sorry, downloads are not yet available through this home page. Use
-the Project Page or the Released Files link instead. 
--->
 <?php EndPage(); ?>
