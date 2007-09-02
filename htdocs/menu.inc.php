@@ -38,7 +38,7 @@ function PrintSidebar($sidebarImg, $bigImg) {
     print "<tr><td valign=\"bottom\"><img src=\"sidebar.png\" alt=\"Holtz/Dvonn/Zertz logo\"></td>\n";
   }
   else {
-    print "<td valign=\"middle\" width=\"230\"><img src=\"sidebar.png\" alt=\"Holtz/Dvonn/Zertz logo\"></td>\n";
+    print "<td valign=\"middle\" width=\"230\"><img src=\"sidebar.png\" alt=\"Holtz/Dvonn/Zertz logo\"></td></tr><tr><td>&nbsp;</td>\n";
   }
 /*
   print "<table cellpadding=0 border=0 cellspacing=0>";
