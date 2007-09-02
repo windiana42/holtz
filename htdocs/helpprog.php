@@ -3,9 +3,9 @@
 ?>
 
 <img align="right" src="screen-local.jpg">
-<h2>Playing Holtz locally</h2>
-Holtz can be played locally against human or (more likely) computer players. 
-Holtz is easy to learn, because there are lots of hints for beginners: the
+<h2>Playing Z&egrave;rtz locally</h2>
+Z&egrave;rtz can be played locally against human or (more likely) computer players. 
+Z&egrave;rtz is easy to learn, because there are lots of hints for beginners: the
 status bar always tells you what to do now, or you can optionally show the
 possible moves. You can even have the computer suggest a move for you. <br>
 
@@ -22,8 +22,8 @@ to see what he's doing.
 
 <p>&nbsp;</p>
 <img align="left" src="screen-network.jpg">
-<h2>Playing Holtz over a network</h2>
-Want to play Holtz with friends living elsewhere? No problem, network playing
+<h2>Playing Z&egrave;rtz or Dvonn over a network</h2>
+Want to play Z&egrave;rtz or Dvonn with friends living elsewhere? No problem, network playing
 is an important part of Holtz. Simply connect to your friend's computer using
 any TCP/IP-based network (e.g. the Internet) and play together. By the way, Holtz 
 is not limited to the traditional 'one-player-per-computer' mode. You can 

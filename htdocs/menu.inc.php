@@ -25,6 +25,7 @@ function PrintMenu($activepage) {
 }
 
 function PrintSidebar() {
+  print "<img src=\"sidebar.png\" alt=\"Holtz/Dvonn/Zertz logo\">\n";
 /*
   print "<table cellpadding=0 border=0 cellspacing=0>";
   // /////// make a box ////////
@@ -52,7 +53,7 @@ function StartPage($title, $menuname, $showSidebar = 1) {
 <html>
 <head>
   <meta name="author" content="Martin Trautmann, Florian Fischer">
-  <meta name="keywords" content="Zertz, zertz, Zèrtz, Z&egrave;ertz, zèrtz, z&egrave;ertz, Holtz, holtz,
+  <meta name="keywords" content="Zertz, zertz, Zèrtz, Z&egrave;ertz, zèrtz, z&egrave;ertz, Dvonn, dvonn, Holtz, holtz,
 	abstract strategy game, strategy game, abstract game, Denkspiel, Brettspiel, board game">
   <meta http-equiv="content-type" content="text/html; charset=ISO-8859-1">
   <title>Holtz:: <?php print $title; ?></title>
@@ -71,7 +72,7 @@ function StartPage($title, $menuname, $showSidebar = 1) {
 function EndPage($showSidebar = 1) {
 ?>
       </td>
-      <?php if($showSidebar) { ?><td valign="top" width="230"><?php PrintSidebar(); } ?>
+      <?php if($showSidebar) { ?><td valign="middle" width="230"><?php PrintSidebar(); } ?>
     </tr>
     <tr><td colspan=2><hr>by Martin Trautmann<br><i>Hosted by <A href="http://sourceforge.net"> 
       <img src="http://sourceforge.net/sflogo.php?group_id=74242&amp;type=5" 
