@@ -1,26 +1,199 @@
 <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
 <html>
 <head>
-
-  
   <title>Procedures</title>
 </head>
-
-
 <body bgcolor="#ffffff">
 
-
-
-<h2>Procedures and tips</h2>
-
+<h2>Working with the Holtz program</h2>
 
 <h3>Starting a new game</h3>
 
-<p>Choose XXX</p>
-<p>Select YYY</p>
-<p>Off you go!</p>
-<h3>Playing</h3>
-<h3>Networking</h3>
-<br>
+You can choose to start either a Z&egrave;rtz or Dvonn game from
+the File menu. This leads to a wizard interface for choosing the
+settings and players of the new game:<br>
+&nbsp;<br>
+<img src="scr_shot_game_setup_01.jpg"><br>
+&nbsp;<br>
+
+On the first page of the game setup wizard you can choose either to
+&quot;Play Alone&quot; or to play with friends over a <a
+href="helpover.htm#network">network connection</a>. If you already
+started a new game and enter the game setup wizard once more, you can
+also select &quot;Keep last game connection&quot;. This keeps the
+configuration from the last game and keeps network connections alive. 
+All other options will interrupt existing network connections.<br>
+
+&nbsp;<br>
+<img src="scr_shot_game_setup_02.jpg"><br>
+&nbsp;<br>
+
+The second page of the game setup wizard offers several options to
+define the game to be played. You can either select &quot;Start new
+game&quot; or &quot;Continue game&quot;. The new game options between
+Z&egrave;rtz and Dvonn differ slightly. <br> 
+
+Dvonn offers to play with &quot;Standard Rules&quot; or &quot;Random
+Start Board&quot;. The latter chooses purely random positions for all
+pieces which skips the part of placing pieces and lets you start right
+away with stacking pieces.<br>
+
+Zertz offers to play with &quot;Standard Rules&quot;, &quot;Tournament
+Rules&quot;, or to select &quot;custom&quot; settings which will be
+set on the next page of the wizard.<br>
+
+For &quot;Continue game&quot; it is possible to continue the
+last game or to load games from PBM or Little Golem. In case of PBM
+you should copy all emails in a folder. When Holtz scans the folder it
+can assemble a board setting from several email files. Little Golem
+offers the download of TXT files for Dvonn which can also be placed in
+a folder and loaded in Holtz.<br>
+
+&nbsp;<br>
+<img src="scr_shot_game_setup_04.jpg"><br>
+&nbsp;<br>
+
+Custom settings for a Z&egrave;rtz offer to choose boards with
+different numbers of rings, to choose the win condition as a set of
+marbels required to win, and to choose the commonly available marbles.<br>
+
+&nbsp;<br>
+<img src="scr_shot_game_setup_03.jpg"><br>
+&nbsp;<br>
+
+The last page of the game wizard is a dialog to setup the players
+participating in the game. You can enter the player name on the top
+and hit &quot;Add Player&quot; to add a new player to the list. The
+checkbox &quot;AI&quot; determines whether newly added players are
+controlled by an AI strategy. The radio buttons under &quot;Help
+mode&quot; also have effect on newly added players and can activate
+helps like to show possible moves or to show hint moves.<br> 
+
+Players in the list can be moved up and down or removed with the
+buttons on the right. In network games the &quot;Ready&quot; button
+signals the end of making changes and the text line on the bottom
+gives instructions on adding more players, or pushing the &quot;Ready&quot;
+button. &quot;Please continue&quot; tells that all settings are ok and
+a game can be started by pushing the &quot;Finish&quot; button.<br>
+
+<h3>Playing Z&egrave;rtz</h3>
+&nbsp;<br>
+<img src="scr_shot_zertz_01.jpg"><br>
+&nbsp;<br>
+
+The status bar of Holtz tells you at any time which kind of move you
+should play. In order to make a set move you can click on a marble to
+set which must be one of the common marbles if possible and one of the
+private marbles otherwise. After selecting the marble you can place it
+by clicking on an empty ring. Don't forget to remove one of the
+outermost rings after each set move if possible. In order to make a
+jump move you can click on a marble on the board and on the
+destination field for the jump. If this marble can jump further, the
+marble will stay selected and you just need to click to further
+destination fields.<br>
+
+While the game is not finished the player to make a move is marked in
+red. Marbles captured by a player are displayed below his name.<br>
+
+
+<h3>Playing Dvonn</h3>
+&nbsp;<br>
+<img src="scr_shot_dvonn_01.jpg"><br>
+&nbsp;<br>
+
+In the phase of placing pieces every player just clicks on the
+destination field to place a piece. The player to make a move is
+marked in red. After the three DVONN pieces the first player to set
+his own piece is black. The last piece on the board is placed
+automatically and doesn't count as a move. If you are annoyed by move
+reminder sounds, you can disable them with the <a
+href="helpover.htm#settings">settings dialog</a>. <br>
+
+&nbsp;<br>
+<img src="scr_shot_dvonn_02.jpg"><br>
+&nbsp;<br>
+
+In the phase of stacking pieces every player can click on pieces or
+stacks controlled by him and move them by clicking on the destination
+field. A stack can only move in a straight line on an occupied field. 
+The distance of the jump is determined by the number pieces in the
+stack to be moved. The size of stacks with more than one piece is
+written on the top. The screenshot above shows how the help mode &quot;show
+possible moves&quot; marks possible moves during this phase.<br>
+
+<a name="settings"><h3>Settings</h3></a> 
+
+After a game is started, a settings dialog can be opened from the
+&quot;Settings&quot; Menu:<br>
+
+&nbsp;<br>
+<img src="scr_shot_settings_01.jpg"><br>
+&nbsp;<br>
+
+The arrangement tab allows to define whether coordinates should be
+shown around the board. For Z&egrave;rtz it also allows to choose
+arrangement options for the game panels. An interesting alternative to
+the default settings might be to show the board
+&quot;horizontally&quot; and to choose &quot;board and common stones
+left&quot;. In case you like to have a better view on the precise
+count of marbles, you can disable the checkboxes for displaying them
+individually.<br>
+
+&nbsp;<br>
+<img src="scr_shot_settings_02.jpg"><br>
+&nbsp;<br>
+
+The &quot;Look &amp; Feel&quot; tab offers the choice of a different
+skin file. Holtz ships with several skins in different
+sizes to take account for different screen resolutions. Despite the
+identical skin format, most of the skins, are rather useful for
+Z&egrave;rtz than for Dvonn.<br> 
+
+A beep file can be chosen as move reminder. But you can also
+deactivate it by disabling the checkbox in front of &quot;Play
+sounds&quot;. For player names, coordinates, and for text on stones,
+different fonts may be chosen.<br>
+
+If you invest lots of time in choosing your display settings, please
+bear in mind that only skin file, beep file, and play sounds is saved
+and restored the next time you run Holtz.<br>
+
+<a name="network"><h3>Networking</h3></a>
+
+&nbsp;<br>
+<img src="scr_shot_network.jpg"><br>
+&nbsp;<br>
+
+In order to play Z&egrave;rtz or Dvonn over the network, one player
+can setup the game as server and other players can connect to it as
+clients. <br>
+For setting up a server you can just choose a port and
+continue with the next page to setup a game to play. You may have to
+figure out how to deal with your firewall to allow accepting
+connections on the specified port. <br>
+Clients have to enter the hostname
+and port of the server to connect. You can click the
+&quot;Connect&quot; button to establish a connection and see with the
+text on the left whether the connection attempt succeeds. Hitting the
+&quot;Next&quot; button without connecting first will also trigger a
+connect and switch to the next page in case the connection succeeds. 
+Clients have only a limited game setup wizard which just allows to add
+his players and wait for the server to choose a game to play. <br>
+
+&nbsp;<br>
+<img src="scr_shot_network02.png"><br>
+&nbsp;<br>
+
+When starting a network server, an additional dialog is displayed
+containing all active connections. Don't close this dialog if you want
+to see what clients are connected or if you want to change whether new
+clients can connect to the server. If you don't disallow further
+connections it is also possible to connect with a client during the
+game and just view the moves played.<br>
+
+During network games only the player to move can ask to undo moves or
+to start a new game without aborting the connection. In case of
+finished games it is the player who didn't do the last move.<br>
+
 </body>
 </html>
