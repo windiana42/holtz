@@ -10,27 +10,29 @@
 	http://www.gipf.com/zertz/index.html</a>
     </li>
     <li>
-      Play Z&egrave;rtz via EMail: 
+      Official Dvonn Homepage: 
+      <a href="http://www.gipf.com/dvonn/index.html" target="_blank">
+	http://www.gipf.com/dvonn/index.html</a>
+    </li>
+    <li>
+      Play Z&egrave;rtz or Dvonn via EMail: 
       <a href="http://www.gamerz.net/pbmserv/" target="_blank">
 	http://www.gamerz.net/pbmserv/</a>
     </li>
     <li>
-      A newsgroup: 
+      Play Dvonn at Little Golem:
+      <a href="http://www.littlegolem.net/" target="_blank">
+	http://www.littlegolem.net/</a>
+    </li>
+    <li>
+      A Z&egrave;rtz newsgroup: 
       <a href="http://groups.yahoo.com/group/zertz" target="_blank">
 	http://groups.yahoo.com/group/zertz</a>
     </li>
-  </ul>
-  <h2> Other Z&egrave;rtz implementations </h2>
-  <ul>
     <li>
-      ZF1: 
-      <a href="http://home.t-online.de/home/320018940973/assimilate.de/ZF1/index.html" target="_blank">
-	http://home.t-online.de/home/320018940973/assimilate.de/ZF1/index.html</a>
-    </li>
-    <li>
-      MKZertz: 
-      <a href="http://www.mklabs.de/MKZertzDownload/MKZertz.zip" target="_blank">
-	http://www.mklabs.de/MKZertzDownload/MKZertz.zip</a>
+      ZF1 (Z&egrave;rtz for One): 
+      <a href="http://www.assimilate.de/zf1/" target="_blank">
+	http://www.assimilate.de/zf1/</a>
     </li>
   </ul>
     
