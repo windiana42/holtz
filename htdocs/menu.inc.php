@@ -26,7 +26,7 @@ function PrintMenu($activepage) {
 
 function PrintSidebar($sidebarImg, $bigImg) {
   if($sidebarImg != "") {
-    print "<table height=\"100%\"><tr><td valign=\"top\">";
+    print "<td valign=\"top\">";
     if($bigImg != "") { 
       print "<a href=\"$bigImg\">";
     }
@@ -35,10 +35,10 @@ function PrintSidebar($sidebarImg, $bigImg) {
       print "</a>";
     }
     print "</td></tr>\n";
-    print "<tr><td valign=\"bottom\"><img src=\"sidebar.png\" alt=\"Holtz/Dvonn/Zertz logo\"></td></tr></table>\n";
+    print "<tr><td valign=\"bottom\"><img src=\"sidebar.png\" alt=\"Holtz/Dvonn/Zertz logo\"></td>\n";
   }
   else {
-    print "<img src=\"sidebar.png\" alt=\"Holtz/Dvonn/Zertz logo\">\n";
+    print "<td valign=\"middle\" width=\"230\"><img src=\"sidebar.png\" alt=\"Holtz/Dvonn/Zertz logo\"></td>\n";
   }
 /*
   print "<table cellpadding=0 border=0 cellspacing=0>";
@@ -79,14 +79,14 @@ function StartPage($title, $menuname, $showSidebar = 1) {
       <?php PrintMenu($menuname); ?>
     </tr>
     <tr>
-      <td valign="top" width="*" <?php if(!$showSidebar) print "colspan=2"; ?>>
+      <td valign="top" width="*" <?php if($showSidebar) print "rowspan=2"; else print "colspan=2"; ?>>
 <?php
 }
 
 function EndPage($showSidebar = 1, $sidebarImg = "", $bigImg = "") {
 ?>
       </td>
-      <?php if($showSidebar) { ?><td valign="middle" width="230"><?php PrintSidebar($sidebarImg, $bigImg); } ?>
+      <?php if($showSidebar) { ?><?php PrintSidebar($sidebarImg, $bigImg); } ?>
     </tr>
     <tr><td colspan=2><hr>by Martin Trautmann<br>
       <i>Hosted by <A href="http://sourceforge.net"> 
