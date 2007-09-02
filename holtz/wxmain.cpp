@@ -112,6 +112,7 @@ namespace holtz
     // that's better, we don't use other image formats:
     wxImage::AddHandler(new wxXPMHandler);
     wxImage::AddHandler(new wxPNGHandler);
+    wxImage::AddHandler(new wxJPEGHandler);
     // for html help
     wxHelpControllerHelpProvider* provider = new wxHelpControllerHelpProvider;
     provider->SetHelpController(&get_help_controller());

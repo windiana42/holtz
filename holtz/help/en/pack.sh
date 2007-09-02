@@ -1,2 +1,3 @@
 #!/bin/sh
-zip ../help_en.zip help* *.jpg *.png
+rm ../help_en.zip
+zip ../help_en.zip help*.htm *.jpg *.png
