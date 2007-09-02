@@ -1,5 +1,5 @@
 <?php require("menu.inc.php"); 
-  StartPage("News", "News");
+  StartPage("Holtz:: News", "News");
 ?>
 
 <h2>News on Holtz</h2>

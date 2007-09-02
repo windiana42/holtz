@@ -1,5 +1,5 @@
 <?php require("menu.inc.php"); 
-  StartPage("The program", "", 0);
+  StartPage("Holtz:: The program", "", 0);
 ?>
 
 <img align="right" src="screen-local.jpg">
