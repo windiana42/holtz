@@ -16,10 +16,10 @@ function PrintMenu($activepage) {
   print "<div align=\"center\"><table cellpadding=0 border=0 cellspacing=0><tr>";
   print "<td><img alt=\"left\" src=\"line-20-left.gif\">";
   PrintMenuItem("Home page", "index.php", $activepage);
-  PrintMenuItem("News", "news.php", $activepage);
+  PrintMenuItem("Z&egrave;rtz", "zertz.php", $activepage);
+  PrintMenuItem("Dvonn", "dvonn.php", $activepage);
+  PrintMenuItem("Screenshots", "helpprog.php", $activepage);
   PrintMenuItem("Downloads", "http://sourceforge.net/project/showfiles.php?group_id=74242", $activepage);
-  PrintMenuItem("Information", "help.php", $activepage);
-  PrintMenuItem("Project Page", "http://sourceforge.net/projects/holtz/", $activepage);
   PrintMenuItem("Links", "links.php", $activepage, 1);
   print "</tr></table></div>";
 }
@@ -74,9 +74,11 @@ function EndPage($showSidebar = 1) {
       </td>
       <?php if($showSidebar) { ?><td valign="middle" width="230"><?php PrintSidebar(); } ?>
     </tr>
-    <tr><td colspan=2><hr>by Martin Trautmann<br><i>Hosted by <A href="http://sourceforge.net"> 
+    <tr><td colspan=2><hr>by Martin Trautmann<br>
+      <i>Hosted by <A href="http://sourceforge.net"> 
       <img src="http://sourceforge.net/sflogo.php?group_id=74242&amp;type=5" 
         width="105" height="31" border="0" align="middle" alt="SourceForge.net Logo"></A></i>
+      &nbsp;&nbsp;&nbsp; -- &nbsp;<a href="http://sourceforge.net/projects/holtz/">Project Page</a>
     </tr>
   </table>
 </body>
