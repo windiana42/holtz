@@ -228,8 +228,10 @@ namespace dvonn
       return;
     }
 
-    if( ui_manager )
-      ui_manager->abort_all_activity(); // disable user input and animations
+    if( game_stopped )
+      if( ui_manager )
+	ui_manager->stop_animations(); // stop animations to enable quick multiple undos
+				       // (this can modify game_stopped )
 
     if( game_stopped )
     {
@@ -240,7 +242,7 @@ namespace dvonn
     {
       // determine number of moves to undo
       const Game &game = get_game();
-      if( !game.variant_tree.is_first() )
+      if( !game.variant_tree.is_first() )  // is there any move to undo?
       {
 	stop_game();
 	const Variant *variant = game.variant_tree.get_current_variant();
