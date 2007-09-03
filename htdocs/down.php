@@ -18,5 +18,6 @@ Available formats:
 <li>RPM source package (holtz-1.2.0-1.src.rpm) - to compile a package for your RPM distribution, requires: wxWidgets 2.8</li>
 <li>Source (holtz-1.2.0.tar.gz) - source prepared with autotools, requires: wxWidgets 2.8</li>
 </ul>
-
+<br>
+Descriptions of reproducable bugs and compiled packages for other distributions are always welcome.
 <?php EndPage(); ?>
