@@ -19,5 +19,7 @@ Available formats:
 <li>Source (holtz-1.2.0.tar.gz) - source prepared with autotools, requires: wxWidgets 2.8</li>
 </ul>
 <br>
-Descriptions of reproducable bugs and compiled packages for other distributions are always welcome.
+Descriptions of reproducable bugs and compiled packages for other distributions/Operation 
+Systems are always welcome.
+ 
 <?php EndPage(); ?>
