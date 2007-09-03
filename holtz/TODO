@@ -1,33 +1,36 @@
 * BUGS: 
 
-- Server crashes on windows
 - Client name/ip not valid for server in linux
 
-- think about good way to handle finished games 
-  * allow undo / new-game for both players: extra state for finished games?
 - asking queries should be deferred during game setup dialog
 - why segfault on exit with wxWidgets 2.8 under linux?
 
+- DVONN AI considers some positions falsely as win
+
 * Features:
+
+- think about good way to handle finished games 
+  * allow undo / new-game for both players: extra state for finished games?
 
 - disallow client to keep connection in setup dialog when connection was closed
 
-- better AI (looking for sente moves first, rate situations better)
+- better AI 
 - save settings, last ruleset
 - save game, load game
 - fully customize board 
 - customize AI
-- connect dialog resizable
-- show ready status in connect dialog
-- show ready status, ai status and help mode for each player
-- show moves played (position tree)
+- connections dialog resizable
+- show ready status in connections dialog
+- show ready status, ai status and help mode for each player in player list
+- show moves played (position tree) / allow jump to old position (in other branch)
+- allow analysis mode in network connections to make trial moves
 - show moves review 
 - show winning requirements
 
 - for full bgp 1.00a master support: 
  * implement move reminder
  * implement board transmition as alternative to setup+moves
- (I will implement this if someone wants to develop his own bgp 1.00a
- client which is facilitated by just dealing with boards - please
- contact: martintrautmann@gmx.net)
+ (I will implement this feature if someone wants to develop his own
+ bgp 1.00a client which is facilitated by just dealing with boards - please
+ contact: windiana@users.sourceforge.net)
 

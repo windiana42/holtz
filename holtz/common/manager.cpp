@@ -221,23 +221,28 @@ namespace dvonn
 
   void Game_Manager::undo_move()
   {
+    if( undo_requested )
+    {
+      if( ui_manager )
+	ui_manager->report_error(_("Already undo requested"),_("Undo failed"));
+      return;
+    }
+
+    if( ui_manager )
+      ui_manager->abort_all_activity(); // disable user input and animations
+
     if( game_stopped )
     {
       if( ui_manager )
 	ui_manager->report_error(_("Can't undo move since game is stopped."),_("Undo failed"));
     }
-    else if( undo_requested )
-    {
-      if( ui_manager )
-	ui_manager->report_error(_("Already undo requested"),_("Undo failed"));
-    }
     else
     {
-      stop_game();
       // determine number of moves to undo
       const Game &game = get_game();
       if( !game.variant_tree.is_first() )
       {
+	stop_game();
 	const Variant *variant = game.variant_tree.get_current_variant();
 
 	int num_undo = 1;
