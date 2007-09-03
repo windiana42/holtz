@@ -203,6 +203,7 @@ namespace dvonn
     virtual void remove_hint() = 0;
     virtual void allow_user_activity() = 0;
     virtual void stop_user_activity() = 0;
+    virtual void stop_animations() = 0;
     virtual void abort_all_activity() = 0;
     virtual void do_move_slowly( Move_Sequence sequence, wxEvtHandler *done_handler = 0, 
 				 int event_id=-1, int abort_id=-1 ) = 0;

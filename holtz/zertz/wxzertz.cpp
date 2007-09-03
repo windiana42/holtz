@@ -1631,9 +1631,14 @@ namespace zertz
     }
   }
 
-  void WX_GUI_Manager::abort_all_activity()
+  void WX_GUI_Manager::stop_animations()
   {
     move_animation->abort();
+  }
+
+  void WX_GUI_Manager::abort_all_activity()
+  {
+    stop_animations();
     stop_user_activity();
     refresh();
   }
