@@ -35,6 +35,8 @@
 #include <wx/zipstrm.h>
 #include <wx/filesys.h>
 #include <wx/fs_zip.h>
+#include <wx/filefn.h>
+#include <wx/stdpaths.h>
 
 #ifndef DEFAULT_DATA_DIR
 #define DEFAULT_DATA_DIR "./"	// will be overridden by Makefile.am
@@ -89,6 +91,23 @@ namespace holtz
   // implementation
   // ============================================================================
 
+  /* for translation selection dialog
+  // language data
+  static const wxLanguage langIds[] =
+  {
+    wxLANGUAGE_USER_DEFINED,
+    wxLANGUAGE_GERMAN
+  };
+
+  // note that it makes no sense to translate these strings, they are
+  // shown before we set the locale anyhow
+  const wxString langNames[] =
+    {
+      wxT("English"),
+      wxT("Deutsch")
+    };
+  */
+
   // ----------------------------------------------------------------------------
   // the application class
   // ----------------------------------------------------------------------------
@@ -99,8 +118,10 @@ namespace holtz
     randomize();		// initialize random
 
     wxLocale *loc = new wxLocale();
-    loc->Init(wxLANGUAGE_DEFAULT); 
-    loc->AddCatalog(wxT("holtz"));      
+
+    loc->Init(wxLANGUAGE_DEFAULT); // get default language from OS
+    wxLocale::AddCatalogLookupPathPrefix(wxT("locale")); // enable translation lookup from ./locale/
+    loc->AddCatalog(wxT("holtz")); // load translation file holtz.mo if available
 
     SetAppName(wxT("Holtz"));
     SetVendorName(wxT("Martin Trautmann"));
