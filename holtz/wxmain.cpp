@@ -219,22 +219,26 @@ namespace holtz
 
   Game_Window::~Game_Window()
   {
+    close_game();
+  }
+  void Game_Window::close_game()
+  {
     switch( active_game ) {
     case ZERTZ:
       if( zertz_game_manager )
 	zertz_game_manager->stop_game();
       active_game = NO_GAME;
-      delete zertz_game_manager;
+      delete zertz_game_dialog; // still needs game manager
       delete zertz_gui_manager;
-      delete zertz_game_dialog;
+      delete zertz_game_manager;
       break;
     case DVONN:
       if( dvonn_game_manager )
 	dvonn_game_manager->stop_game();
       active_game = NO_GAME;
-      delete dvonn_game_manager;
+      delete dvonn_game_dialog; // still needs game manager
       delete dvonn_gui_manager;
-      delete dvonn_game_dialog;
+      delete dvonn_game_manager;
       break;
     case NO_GAME:
       break;
@@ -262,23 +266,7 @@ namespace holtz
 
   void Game_Window::init_zertz() 
   {
-    switch( active_game ) {
-    case ZERTZ:
-      active_game = NO_GAME;
-      delete zertz_game_manager;
-      delete zertz_gui_manager;
-      delete zertz_game_dialog;
-      break;
-    case DVONN:
-      active_game = NO_GAME;
-      delete dvonn_game_manager;
-      delete dvonn_gui_manager;
-      delete dvonn_game_dialog;
-      break;
-    case NO_GAME:
-      break;
-    }
-
+    close_game();
     zertz_game_manager = new zertz::Game_Manager();
     zertz_gui_manager  = new zertz::WX_GUI_Manager( *zertz_game_manager, *this );
     zertz_game_dialog  = new zertz::Game_Dialog( this, *zertz_game_manager, *zertz_gui_manager );
@@ -289,23 +277,7 @@ namespace holtz
 
   void Game_Window::init_dvonn() 
   {
-    switch( active_game ) {
-    case ZERTZ:
-      active_game = NO_GAME;
-      delete zertz_game_manager;
-      delete zertz_gui_manager;
-      delete zertz_game_dialog;
-      break;
-    case DVONN:
-      active_game = NO_GAME;
-      delete dvonn_game_manager;
-      delete dvonn_gui_manager;
-      delete dvonn_game_dialog;
-      break;
-    case NO_GAME:
-      break;
-    }
-
+    close_game();
     dvonn_game_manager = new dvonn::Game_Manager();
     dvonn_gui_manager  = new dvonn::WX_GUI_Manager( *dvonn_game_manager, *this );
     dvonn_game_dialog  = new dvonn::Game_Dialog( this, *dvonn_game_manager, *dvonn_gui_manager );

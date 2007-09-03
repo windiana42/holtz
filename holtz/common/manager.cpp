@@ -475,19 +475,6 @@ namespace dvonn
   void Standalone_Game_Setup_Manager::set_display_handler( Game_Setup_Display_Handler *handler )
   {
     display_handler = handler;
-    /* handler will request this information anyway
-    if( display_handler )
-    {
-      // tell handler all players
-      std::list<Player>::iterator player;
-      for( player = players.begin(); player != players.end(); ++player )
-      {
-	display_handler->player_added(*player);
-      }
-
-      display_handler->set_board( game );
-    }
-    */
   }
 
   Standalone_Game_Setup_Manager::Answer_Type 
