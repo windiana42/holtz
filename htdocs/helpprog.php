@@ -8,6 +8,9 @@
   <img src="scr_shot_dvonn_01.jpg"><br>
   <p>Stacking phase with help mode &quot;show possible moves&quot; activated:</p>
   <img src="scr_shot_dvonn_02.jpg"><br>
+  <p>The graphics of Holtz can be modified using skin files. The green and red dots 
+  mark a hint move given by the AI.</p>
+  <img src="scr_shot_zertz_02.jpg"><br>
   <p>The Z&egrave;rtz game is highly configurable:</p>
   <img src="scr_shot_game_setup_04.jpg"><br>
   <p>Play Z&egrave;rtz or Dvonn over the network:</p>
