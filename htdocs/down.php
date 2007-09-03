@@ -6,7 +6,7 @@
 
 Note: If you download any source version, you have to download 
 <a href="http://wxwidgets.org">wxWidgets</a> first. The source is only 
-tested with wxWidgets 2.8<br>
+tested with wxWidgets 2.8.<br>
 <br>
 Downloads can be found on the <a href="http://sourceforge.net/project/showfiles.php?group_id=74242">
 download page</a> of the holtz project hosted by sourceforge. <br>
