@@ -2,7 +2,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Holtz\n"
 "POT-Creation-Date: \n"
-"PO-Revision-Date: 2007-09-01 23:54-0100\n"
+"PO-Revision-Date: 2007-09-03 13:48-0100\n"
 "Last-Translator: Martin Trautmann <windiana@users.sourceforge.net>\n"
 "Language-Team: Florian Fischer, Martin Trautmann <martintrautmann@gmx.de>\n"
 "MIME-Version: 1.0\n"
@@ -36,7 +36,7 @@ msgstr "Willkommen bei Holtz!"
 
 #: holtz/wxmain.cpp:638
 msgid "New &Zertz Game...\tCtrl-Z"
-msgstr "Neues &Zèrtz Spiel...\tCtrl-Z"
+msgstr "Neues &Zèrtz Spiel...\tStrg-Z"
 
 #: holtz/wxmain.cpp:639
 msgid "Start a new Zertz game"
@@ -44,7 +44,7 @@ msgstr "Starte ein neues Zèrtz Spiel"
 
 #: holtz/wxmain.cpp:640
 msgid "New &Dvonn Game...\tCtrl-D"
-msgstr "Neues &Dvonn Spiel...\tCtrl-D"
+msgstr "Neues &Dvonn Spiel...\tStrg-D"
 
 #: holtz/wxmain.cpp:641
 msgid "Start a new Dvonn game"
@@ -60,7 +60,7 @@ msgstr "Holtz beenden"
 
 #: holtz/wxmain.cpp:647
 msgid "Display s&ettings...\tCtrl-E"
-msgstr "Anzeige &Einstellungen...\tCtrl-E"
+msgstr "Anzeige &Einstellungen...\tStrg-E"
 
 #: holtz/wxmain.cpp:648
 msgid "Change display settings"
@@ -68,7 +68,7 @@ msgstr "Einstellungen ändern"
 
 #: holtz/wxmain.cpp:652
 msgid "&Undo move\tCtrl-U"
-msgstr "Z&ug zurücknehmen\tCtrl-U"
+msgstr "Z&ug zurücknehmen\tStrg-U"
 
 #: holtz/wxmain.cpp:652
 msgid "Try to undo move"
@@ -300,7 +300,7 @@ msgstr "Zu Server verbinden"
 
 #: holtz/common/dialogs.cpp:57
 msgid "Keep last game connection"
-msgstr "Alte Netzwerkverbindung aufrecht halten"
+msgstr "Spieler oder Netzwerkverbindung beibehalten"
 
 #: holtz/common/dialogs.cpp:77
 msgid "Connect"
