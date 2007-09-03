@@ -19,7 +19,7 @@ function PrintMenu($activepage) {
   PrintMenuItem("Z&egrave;rtz", "zertz.php", $activepage);
   PrintMenuItem("Dvonn", "dvonn.php", $activepage);
   PrintMenuItem("Screenshots", "helpprog.php", $activepage);
-  PrintMenuItem("Downloads", "http://sourceforge.net/project/showfiles.php?group_id=74242", $activepage);
+  PrintMenuItem("Downloads", "down.php", $activepage);
   PrintMenuItem("Links", "links.php", $activepage, 1);
   print "</tr></table></div>";
 }

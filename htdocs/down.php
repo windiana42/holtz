@@ -5,29 +5,17 @@
 <h2>Downloads of Holtz source and binaries</h2>
 
 Note: If you download any source version, you have to download 
-<a href="http://wxwidgets.org">wxWidgets</a> first <br>
+<a href="http://wxwidgets.org">wxWidgets</a> first. The source is only 
+tested with wxWidgets 2.8<br>
 <br>
-<?php 
-$fp = fopen('http://sourceforge.net/project/showfiles.php?group_id=74242', 'r') 
-  or die("Cannot read Project: Files page???");
-$fcontents = "";
-while( strlen($fcontents < 50000) && !feof($fp) ) {
-  $fcontents = $fcontents.fread($fp, 10000); 
-}
-fclose($fp);
-$pos = strpos($fcontents, "Latest File Releases");
-$pos = strpos($fcontents, "<table"/*, $pos*/); 
+Downloads can be found on the <a href="http://sourceforge.net/project/showfiles.php?group_id=74242">
+download page</a> of the holtz project hosted by sourceforge. <br>
+<br>
+Available formats:
+<ul>
+<li>Source (.tar.gz) - source prepared with autotools, prerequisites: wxWidgets 2.8</li>
+<li>Linux binary package (.rpm) - compiled with OpenSuse 10.2, wxWidgets is statically linked</li>
+<li>Windows binary (.zip) - just extract and run</li>
+</ul>
 
-$endpos = strpos($fcontents, "</table", $pos);
-//$endpos = strpos($fcontents, "Project Totals", $pos);
-/* it doesn't work (but why)
-$endpos = strpos($fcontents, "</table", $endpos);
-print "endpos: $endpos <br>\n";
-$endpos = strpos($fcontents, ">", $endpos) + 1;
-print "endpos: $endpos <br>\n";
-*/
-$data = substr($fcontents, $pos, $endpos - $pos);
-print $data;
-print "</table>";
-?>
 <?php EndPage(); ?>
