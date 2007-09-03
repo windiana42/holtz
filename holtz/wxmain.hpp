@@ -88,6 +88,7 @@ namespace holtz
 
     void load_settings();
 
+    void close_game();
     void init_zertz();
     void init_dvonn();
 
