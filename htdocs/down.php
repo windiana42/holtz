@@ -13,9 +13,10 @@ download page</a> of the holtz project hosted by sourceforge. <br>
 <br>
 Available formats:
 <ul>
-<li>Source (.tar.gz) - source prepared with autotools, prerequisites: wxWidgets 2.8</li>
-<li>Linux binary package (.rpm) - compiled with OpenSuse 10.2, wxWidgets is statically linked</li>
-<li>Windows binary (.zip) - just extract and run</li>
+<li>Windows binary (holtz-win32.zip) - just extract and run</li>
+<li>Linux binary package (holtz-1.2.0-1.rpm) - compiled with OpenSuse 10.2, wxWidgets is statically linked</li>
+<li>RPM source package (holtz-1.2.0-1.src.rpm) - to compile a package for your RPM distribution, requires: wxWidgets 2.8</li>
+<li>Source (holtz-1.2.0.tar.gz) - source prepared with autotools, requires: wxWidgets 2.8</li>
 </ul>
 
 <?php EndPage(); ?>
