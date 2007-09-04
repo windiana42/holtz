@@ -343,12 +343,12 @@ namespace dvonn
     // ----------------------------------------------------------------------------
     // <common_stones> : is one of
     // ----------------------------------------------------------------------------
-    // ALL:
-    //   stones_standard
     // ZERTZ:
-    //   stones_tournament
+    //   stones_basic
+    //   stones_standard
     //   stones_custom <white_stones> <grey_stones> <black_stones>
     // DVONN:
+    //   stones_standard
     //   stones_custom <red_stones> <white_stones> <black_stones>
 
     bool read_common_stones( std::escape_istream &eis, Common_Stones &common_stones )
@@ -357,15 +357,15 @@ namespace dvonn
       eis >> type;
       switch(Common_Stones_Type(type))
       {
+#if defined(VERSION_ZERTZ)
+	case stones_basic:
+	{
+	  common_stones = Basic_Common_Stones();
+	  return true;
+	}
 	case stones_standard:
 	{
 	  common_stones = Standard_Common_Stones();
-	  return true;
-	}
-#if defined(VERSION_ZERTZ)
-	case stones_tournament:
-	{
-	  common_stones = Tournament_Common_Stones();
 	  return true;
 	}
 	case stones_custom:
@@ -376,6 +376,11 @@ namespace dvonn
 	  return true;
 	}
 #elif defined(VERSION_DVONN)
+	case stones_standard:
+	{
+	  common_stones = Standard_Common_Stones();
+	  return true;
+	}
 	case stones_custom:
 	{
 	  int red_stones, white_stones, black_stones;
@@ -408,11 +413,12 @@ namespace dvonn
     // ----------------------------------------------------------------------------
     // <win_condition> : is one of
     // ----------------------------------------------------------------------------
-    // ALL:
-    //   win_standard
     // ZERTZ:
-    //   win_tournament
+    //   win_basic
+    //   win_standard
     //   win_generic <white_stones> <grey_stones> <black_stones> <all_stones> 
+    // DVONN:
+    //   win_standard
 
     bool read_win_condition( std::escape_istream &eis, Win_Condition *&win_condition )
     {
@@ -420,15 +426,15 @@ namespace dvonn
       eis >> type;
       switch(Win_Condition_Type(type))
       {
+#if defined(VERSION_ZERTZ)
+	case win_basic:
+	{
+	  win_condition = new Basic_Win_Condition();
+	  return true;
+	}
 	case win_standard:
 	{
 	  win_condition = new Standard_Win_Condition();
-	  return true;
-	}
-#if defined(VERSION_ZERTZ)
-	case win_tournament:
-	{
-	  win_condition = new Tournament_Win_Condition();
 	  return true;
 	}
 	case win_generic:
@@ -442,6 +448,11 @@ namespace dvonn
 	  return true;
 	}
 #elif defined(VERSION_DVONN)
+	case win_standard:
+	{
+	  win_condition = new Standard_Win_Condition();
+	  return true;
+	}
 #endif
       }
       return false;
@@ -470,11 +481,14 @@ namespace dvonn
     // ----------------------------------------------------------------------------
     // <ruleset> : is one of
     // ----------------------------------------------------------------------------
-    // ALL:
+    // ZERTZ:
+    //   ruleset_basic
+    //   ruleset_standard
+    //   ruleset_tournament
+    //   ruleset_custom <start_board> <common_stones> <win_condition> <min_players> <max_players>
+    // DVONN:
     //   ruleset_standard
     //   ruleset_custom <start_board> <common_stones> <win_condition> <min_players> <max_players>
-    // ZERTZ:
-    //   ruleset_tournament
 
     bool read_ruleset( std::escape_istream &eis, Ruleset &ruleset )
     {
@@ -482,18 +496,28 @@ namespace dvonn
       eis >> type;
       switch(Ruleset_Type(type))
       {
+#if defined(VERSION_ZERTZ)
+	case ruleset_basic:
+	{
+	  ruleset = Basic_Ruleset();
+	  return true;
+	}
 	case ruleset_standard:
 	{
 	  ruleset = Standard_Ruleset();
 	  return true;
 	}
-#if defined(VERSION_ZERTZ)
 	case ruleset_tournament:
 	{
 	  ruleset = Tournament_Ruleset();
 	  return true;
 	}
 #elif defined(VERSION_DVONN)
+	case ruleset_standard:
+	{
+	  ruleset = Standard_Ruleset();
+	  return true;
+	}
 #endif
 	case ruleset_custom:
 	{
@@ -527,8 +551,12 @@ namespace dvonn
 
     void write_ruleset( std::escape_ostream &eos, const Ruleset &ruleset )
     {
-      eos << ruleset.get_type();
-      if( ruleset.get_type() == Ruleset::custom )
+      Ruleset::Ruleset_Type type = ruleset.get_type();
+#if defined(VERSION_ZERTZ)	// ensure backward compatibility with holtz-1.2.0
+      if( type == Ruleset::tournament ) type = Ruleset::custom;
+#endif
+      eos << type;
+      if( type == Ruleset::custom )
       {
 	write_board( eos, ruleset.board );
 	write_common_stones( eos, ruleset.common_stones );

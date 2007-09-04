@@ -44,8 +44,8 @@ namespace zertz
   class Variant;
   class Variant_Tree;
   class Game;
-  class Standard_Win_Condition;
-  class Standard_Ruleset;
+  class Basic_Win_Condition;
+  class Basic_Ruleset;
   class No_Output;
   class Stream_Output;
   class Stream_Input;
@@ -156,7 +156,7 @@ namespace zertz
   class Common_Stones : public Stones
   {
   public:
-    typedef enum Common_Stones_Type{ standard=0, tournament, custom=99 };
+    typedef enum Common_Stones_Type{ basic=0, standard, custom=99 };
 
     Common_Stones( Common_Stones_Type type=custom );
     Common_Stones_Type get_type() const { return type; }
@@ -164,16 +164,16 @@ namespace zertz
     Common_Stones_Type type;
   };
 
+  class Basic_Common_Stones : public Common_Stones
+  {
+  public:
+    Basic_Common_Stones();
+  };
+
   class Standard_Common_Stones : public Common_Stones
   {
   public:
     Standard_Common_Stones();
-  };
-
-  class Tournament_Common_Stones : public Common_Stones
-  {
-  public:
-    Tournament_Common_Stones();
   };
 
   class Custom_Common_Stones : public Common_Stones
@@ -546,7 +546,7 @@ namespace zertz
   class Win_Condition
   {
   public:
-    typedef enum Win_Condition_Type{ standard=0, tournament, generic, full_custom=99 };
+    typedef enum Win_Condition_Type{ basic=0, standard, generic, full_custom=99 };
 
     Win_Condition( Win_Condition_Type type = full_custom );
     virtual ~Win_Condition();
@@ -573,7 +573,7 @@ namespace zertz
   class Ruleset
   {
   public:
-    typedef enum Ruleset_Type { standard=0, tournament, custom=99 };
+    typedef enum Ruleset_Type { basic=0, standard, tournament, custom=99 };
     Ruleset( const Ruleset & );
     Ruleset();
     Ruleset &operator=( const Ruleset & );
@@ -740,20 +740,20 @@ namespace zertz
     int num_all;		// number of stones of each colour to win
   };
 
+  class Basic_Win_Condition : public Generic_Win_Condition
+  {
+  public:
+    virtual Win_Condition *clone() { return new Basic_Win_Condition(); }
+
+    Basic_Win_Condition();
+  };
+
   class Standard_Win_Condition : public Generic_Win_Condition
   {
   public:
     virtual Win_Condition *clone() { return new Standard_Win_Condition(); }
 
     Standard_Win_Condition();
-  };
-
-  class Tournament_Win_Condition : public Generic_Win_Condition
-  {
-  public:
-    virtual Win_Condition *clone() { return new Tournament_Win_Condition(); }
-
-    Tournament_Win_Condition();
   };
 
   class Custom_Ruleset : public Ruleset
@@ -763,6 +763,12 @@ namespace zertz
     Custom_Ruleset( Board, Common_Stones, Win_Condition *, Coordinate_Translator *, 
 		    bool undo_possible = true, 
 		    unsigned min_players = 2, unsigned max_players = 4 );
+  };
+
+  class Basic_Ruleset : public Ruleset
+  {
+  public:
+    Basic_Ruleset();
   };
 
   class Standard_Ruleset : public Ruleset

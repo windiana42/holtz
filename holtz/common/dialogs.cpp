@@ -397,14 +397,15 @@ namespace dvonn
     don_t_change  = new wxRadioButton( this, -1, _("Don't care which game to play") );
     
 #if defined(VERSION_ZERTZ)
-    wxString new_game_choices[4];
-    new_game_choices[0] = wxString(_("Standard Rules"));
-    new_game_choices[1] = wxString(_("Tournament Rules"));
-    new_game_choices[2] = wxString(_("Custom"));
-    new_game_choices[3] = wxString(_("Rules of last game"));
+    wxString new_game_choices[5];
+    new_game_choices[0] = wxString(_("Basic Rules"));
+    new_game_choices[1] = wxString(_("Standard Rules"));
+    new_game_choices[2] = wxString(_("Tournament Rules"));
+    new_game_choices[3] = wxString(_("Custom"));
+    new_game_choices[4] = wxString(_("Rules of last game"));
     new_game_choice = new wxRadioBox( this, DIALOG_NEW_GAME_CHOICE, 
 				      _("Rules for new game"), wxDefaultPosition,
-				      wxDefaultSize, 4, new_game_choices, 2, wxRA_SPECIFY_COLS );
+				      wxDefaultSize, 5, new_game_choices, 2, wxRA_SPECIFY_COLS );
 #elif defined(VERSION_DVONN)
     wxString new_game_choices[3];
     new_game_choices[0] = wxString(_("Standard Rules"));
@@ -448,7 +449,7 @@ namespace dvonn
   wxWizardPage *Board_Page::GetNext() const
   {
 #if defined(VERSION_ZERTZ)
-    if( new_game->GetValue() && (new_game_choice->GetSelection() == 2) )
+    if( new_game->GetValue() && (new_game_choice->GetSelection() == 3) )
       return game_dialog.get_custom_board_page();
     else 
 #endif
@@ -485,12 +486,13 @@ namespace dvonn
 #if defined(VERSION_ZERTZ)
 	switch( new_game_choice->GetSelection() )
 	{
-	  case 0: game_dialog.game = Game( Standard_Ruleset() ); break;
-	  case 1: game_dialog.game = Game( Tournament_Ruleset() ); break;
-	  case 2: /*game will be set up in next page*/ break;
-	  case 3: game_dialog.game = Game( *game_dialog.game_manager.get_game().ruleset ); 
+	  case 0: game_dialog.game = Game( Basic_Ruleset() ); break;
+	  case 1: game_dialog.game = Game( Standard_Ruleset() ); break;
+	  case 2: game_dialog.game = Game( Tournament_Ruleset() ); break;
+	  case 3: /*game will be set up in next page*/ break;
+	  case 4: game_dialog.game = Game( *game_dialog.game_manager.get_game().ruleset ); 
 	}
-	if( new_game_choice->GetSelection() != 2 )
+	if( new_game_choice->GetSelection() != 3 )
 #elif defined(VERSION_DVONN)
 	switch( new_game_choice->GetSelection() )
 	{
@@ -585,9 +587,10 @@ namespace dvonn
 #if defined(VERSION_ZERTZ)
       switch( game_dialog.game.ruleset->get_type() )
       {
-	case Ruleset::standard:   new_game_choice->SetSelection(0); break;
-	case Ruleset::tournament: new_game_choice->SetSelection(1); break;
-	case Ruleset::custom:     new_game_choice->SetSelection(2); break;
+	case Ruleset::basic:      new_game_choice->SetSelection(0); break;
+	case Ruleset::standard:   new_game_choice->SetSelection(1); break;
+	case Ruleset::tournament: new_game_choice->SetSelection(2); break;
+	case Ruleset::custom:     new_game_choice->SetSelection(3); break;
       }
       new_game_choice->Enable(true);
 #elif defined(VERSION_DVONN)
@@ -617,7 +620,7 @@ namespace dvonn
   wxWizardPage *Board_Page::get_last_board_page() const
   {
 #if defined(VERSION_ZERTZ)
-    if( new_game->GetValue() && (new_game_choice->GetSelection() == 2) )
+    if( new_game->GetValue() && (new_game_choice->GetSelection() == 3) )
       return game_dialog.get_custom_board_page();
     else 
 #endif
@@ -663,8 +666,8 @@ namespace dvonn
 
     wxBoxSizer *win_condition_sizer = new wxBoxSizer( wxHORIZONTAL );
     wxString win_choices[3];
-    win_choices[0] = wxString(_("Standard"));
-    win_choices[1] = wxString(_("Tournament"));
+    win_choices[0] = wxString(_("Basic"));
+    win_choices[1] = wxString(_("Standard"));
     win_choices[2] = wxString(_("Custom"));
     win_choice = new wxRadioBox( this, DIALOG_WIN_CHOICE, _("Win condition"), wxDefaultPosition,
 				 wxDefaultSize, 
@@ -689,8 +692,8 @@ namespace dvonn
 
     wxBoxSizer *common_stones_sizer = new wxBoxSizer( wxHORIZONTAL );
     wxString stones_choices[3];
-    stones_choices[0] = wxString(_("Standard"));
-    stones_choices[1] = wxString(_("Tournament"));
+    stones_choices[0] = wxString(_("Basic"));
+    stones_choices[1] = wxString(_("Standard"));
     stones_choices[2] = wxString(_("Custom"));
     stones_choice = new wxRadioBox( this, DIALOG_STONES_CHOICE, _("Common marbles"), 
 				    wxDefaultPosition, wxDefaultSize, 
@@ -731,8 +734,8 @@ namespace dvonn
     }
     switch( ruleset->win_condition->get_type() )
     {
-      case Win_Condition::standard:    win_choice->SetSelection(0); on_change_win(evt); break;
-      case Win_Condition::tournament:  win_choice->SetSelection(1); on_change_win(evt); break;
+      case Win_Condition::basic:     win_choice->SetSelection(0); on_change_win(evt); break;
+      case Win_Condition::standard:  win_choice->SetSelection(1); on_change_win(evt); break;
       case Win_Condition::generic:     
       {
 	win_choice->SetSelection(2);
@@ -747,8 +750,8 @@ namespace dvonn
     }
     switch( ruleset->common_stones.get_type() )
     {
-      case Common_Stones::standard:   stones_choice->SetSelection(0); on_change_stones(evt); break;
-      case Common_Stones::tournament: stones_choice->SetSelection(1); on_change_stones(evt); break;
+      case Common_Stones::basic:    stones_choice->SetSelection(0); on_change_stones(evt); break;
+      case Common_Stones::standard: stones_choice->SetSelection(1); on_change_stones(evt); break;
       case Common_Stones::custom:
       {
 	stones_choice->SetSelection(2);
@@ -809,10 +812,10 @@ namespace dvonn
     switch( win_choice->GetSelection() )
     {
       case 0:
-	win_condition = new Standard_Win_Condition();
+	win_condition = new Basic_Win_Condition();
 	break;
       case 1:
-	win_condition = new Tournament_Win_Condition();
+	win_condition = new Standard_Win_Condition();
 	break;
       case 2:
 	win_condition = new Generic_Win_Condition( win_white->GetValue(), 
@@ -827,10 +830,10 @@ namespace dvonn
     switch( stones_choice->GetSelection() )
     {
       case 0:
-	common_stones = new Standard_Common_Stones();
+	common_stones = new Basic_Common_Stones();
 	break;
       case 1:
-	common_stones = new Tournament_Common_Stones();
+	common_stones = new Standard_Common_Stones();
 	break;
       case 2:
 	common_stones = new Custom_Common_Stones( stones_white->GetValue(), 
@@ -866,20 +869,20 @@ namespace dvonn
     {
       case 0:
       {
+	Basic_Win_Condition basic;
+	win_white->SetValue( basic.num_white );
+	win_grey ->SetValue( basic.num_grey );
+	win_black->SetValue( basic.num_black );
+	win_all  ->SetValue( basic.num_all );
+      }
+      break;
+      case 1:
+      {
 	Standard_Win_Condition standard;
 	win_white->SetValue( standard.num_white );
 	win_grey ->SetValue( standard.num_grey );
 	win_black->SetValue( standard.num_black );
 	win_all  ->SetValue( standard.num_all );
-      }
-      break;
-      case 1:
-      {
-	Tournament_Win_Condition tournament;
-	win_white->SetValue( tournament.num_white );
-	win_grey ->SetValue( tournament.num_grey );
-	win_black->SetValue( tournament.num_black );
-	win_all  ->SetValue( tournament.num_all );
       }
       break;
       case 2:
@@ -904,7 +907,7 @@ namespace dvonn
     {
       case 0:
       {
-	Standard_Common_Stones common_stones;
+	Basic_Common_Stones common_stones;
 	stones_white->SetValue( common_stones.stone_count[ Stones::white_stone ] );
 	stones_grey ->SetValue( common_stones.stone_count[ Stones::grey_stone  ] );
 	stones_black->SetValue( common_stones.stone_count[ Stones::black_stone ] );
@@ -912,7 +915,7 @@ namespace dvonn
       break;
       case 1:
       {
-	Tournament_Common_Stones common_stones;
+	Standard_Common_Stones common_stones;
 	stones_white->SetValue( common_stones.stone_count[ Stones::white_stone ] );
 	stones_grey ->SetValue( common_stones.stone_count[ Stones::grey_stone  ] );
 	stones_black->SetValue( common_stones.stone_count[ Stones::black_stone ] );
@@ -1749,7 +1752,7 @@ p			  str_to_wxstr(master_content.player1).c_str(), str_to_wxstr(master_content.
     int new_type = 0;
     switch( type )
     {
-      case Ruleset::standard:
+      case Ruleset::standard: !!! obsolete
 	new_type = 0;
 	break;
       case Ruleset::tournament:
@@ -1770,7 +1773,7 @@ p			  str_to_wxstr(master_content.player1).c_str(), str_to_wxstr(master_content.
     int new_type = 0;
     switch( type )
     {
-      case Ruleset::standard:
+      case Ruleset::standard: !!! obsolete
 	new_type = 0;
 	break;
       case Ruleset::tournament:

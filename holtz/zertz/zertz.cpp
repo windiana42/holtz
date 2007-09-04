@@ -64,11 +64,11 @@ namespace zertz
   }
 
   // ----------------------------------------------------------------------------
-  // Standard_Common_Stones
+  // Basic_Common_Stones
   // ----------------------------------------------------------------------------
 
-  Standard_Common_Stones::Standard_Common_Stones()
-    : Common_Stones( standard )
+  Basic_Common_Stones::Basic_Common_Stones()
+    : Common_Stones( basic )
   {
     stone_count[ Stones::white_stone ] = 5;
     stone_count[ Stones::grey_stone ]  = 7;
@@ -76,11 +76,11 @@ namespace zertz
   }
 
   // ----------------------------------------------------------------------------
-  // Tournament_Common_Stones
+  // Standard_Common_Stones
   // ----------------------------------------------------------------------------
 
-  Tournament_Common_Stones::Tournament_Common_Stones()
-    : Common_Stones( tournament )
+  Standard_Common_Stones::Standard_Common_Stones()
+    : Common_Stones( standard )
   {
     stone_count[ Stones::white_stone ] =  6;
     stone_count[ Stones::grey_stone ]  =  8;
@@ -2853,23 +2853,39 @@ namespace zertz
   }
 
   // ----------------------------------------------------------------------------
+  // Basic_Win_Condition
+  // ----------------------------------------------------------------------------
+
+  Basic_Win_Condition::Basic_Win_Condition()
+    : Generic_Win_Condition(3,4,5,2)
+  {
+    type = basic;
+  }
+
+  // ----------------------------------------------------------------------------
   // Standard_Win_Condition
   // ----------------------------------------------------------------------------
 
   Standard_Win_Condition::Standard_Win_Condition()
-    : Generic_Win_Condition(3,4,5,2)
+    : Generic_Win_Condition(4,5,6,3)
   {
     type = standard;
   }
 
   // ----------------------------------------------------------------------------
-  // Tournament_Win_Condition
+  // Basic_Ruleset
   // ----------------------------------------------------------------------------
 
-  Tournament_Win_Condition::Tournament_Win_Condition()
-    : Generic_Win_Condition(4,5,6,3)
+  Basic_Ruleset::Basic_Ruleset()
+    : Ruleset( basic,
+	       Board( (const int*) standard_board, 
+		      sizeof(standard_board[0]) / sizeof(standard_board[0][0]),
+		      sizeof(standard_board)    / sizeof(standard_board[0]), Board::s37_rings ),
+	       Basic_Common_Stones(),
+	       new Basic_Win_Condition(), 0 /*coordinate translator init below */,
+	       true /*undo possible*/, 2, 2 )
   {
-    type = tournament;
+    coordinate_translator = new Standard_Coordinate_Translator(board);
   }
 
   // ----------------------------------------------------------------------------
@@ -2893,12 +2909,12 @@ namespace zertz
   // ----------------------------------------------------------------------------
 
   Tournament_Ruleset::Tournament_Ruleset()
-    : Ruleset( tournament, 
-	       Board( (const int*) standard_board, 
-		      sizeof(standard_board[0]) / sizeof(standard_board[0][0]),
-		      sizeof(standard_board)    / sizeof(standard_board[0]), Board::s37_rings ),
-	       Tournament_Common_Stones(),
-	       new Tournament_Win_Condition(), 0 /*coordinate translator init below */,
+    : Ruleset( tournament,
+	       Board( (const int*) board_48, 
+		      sizeof(board_48[0]) / sizeof(board_48[0][0]),
+		      sizeof(board_48)    / sizeof(board_48[0]), Board::s48_rings ),
+	       Standard_Common_Stones(),
+	       new Standard_Win_Condition(), 0 /*coordinate translator init below */,
 	       false /*no undo possible*/, 2, 2 )  
   {
     coordinate_translator = new Standard_Coordinate_Translator(board);

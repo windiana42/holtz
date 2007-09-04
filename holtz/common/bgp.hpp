@@ -258,9 +258,12 @@ namespace dvonn
     // ----------------------------------------------------------------------------
     enum Ruleset_Type
     {
-      ruleset_standard=0,	// = standard rules
 #if defined(VERSION_ZERTZ)
+      ruleset_basic=0,		// = basic rules
+      ruleset_standard,		// = standard rules
       ruleset_tournament,	// = tournament rules
+#else
+      ruleset_standard=0,	// = standard rules
 #endif
       ruleset_custom=99		// ruleset_custom <start_board> <common_stones> <win_condition>
 				//   <min_players> <max_players>
@@ -358,11 +361,13 @@ namespace dvonn
     // ----------------------------------------------------------------------------
     enum Common_Stones_Type
     {
-      stones_standard=0,	// stones_standard
-				// = 5 white, 7 grey, 9 black
 #if defined(VERSION_ZERTZ)
-      stones_tournament,	// stones_tournament
+      stones_basic=0,		// stones_basic
+				// = 5 white, 7 grey, 9 black
+      stones_standard,		// stones_standard
 				// = 6 white, 8 grey, 10 black
+#else
+      stones_standard=0,	// stones_standard
 #endif
       stones_custom=99		// stones_custom <white_stones> <grey_stones> <black_stones>
     };
@@ -372,12 +377,15 @@ namespace dvonn
     // ----------------------------------------------------------------------------
     enum Win_Condition_Type
     {
-      win_standard=0,		// win_standard
-				// = 3 white, 4 grey, 5 black, 2 each
 #if defined(VERSION_ZERTZ)
-      win_tournament,		// win_tournament
+      win_basic=0,		// win_basic
+				// = 3 white, 4 grey, 5 black, 2 each
+      win_standard,		// win_standard
 				// = 4 white, 5 grey, 6 black, 3 each
-      win_generic		// win_generic <white_stones> <grey_stones> <black_stones> <all_stones> 
+      win_generic		// win_generic <white_stones> <grey_stones> <black_stones>
+				//   <all_stones> 
+#else
+      win_standard=0		// win_standard
 #endif
     };
 

@@ -30,6 +30,8 @@
 #  define GAME_NAME GAME_NAME_DVONN
 #endif
 
+#define PROTOCOL_NUMBER 1.00
+
 #include <iostream>
 #include <algorithm>
 
@@ -514,8 +516,8 @@ namespace dvonn
 	    {
 	      BGP::Msg_Helo *det_msg = static_cast<BGP::Msg_Helo*>(message);
 	      BGP::Protocol protocol = det_msg->get_protocol();
-	      // supported protocols: BGP 1.00a
-	      if( protocol.name == "BGP" && protocol.number== 1.00 &&
+	      // supported protocols: BGP 1.0Xa
+	      if( protocol.name == "BGP" && is_equal(protocol.number, PROTOCOL_NUMBER) &&
 		  protocol.letter == 'a' )
 	      {
 		// accept protocol
@@ -530,7 +532,7 @@ namespace dvonn
 	      } else {
 		// protocol mismatch => list supported protocols
 		std::list<BGP::Protocol> supported_protocols;
-		supported_protocols.push_back(BGP::Protocol("BGP",1.00,'a'));
+		supported_protocols.push_back(BGP::Protocol("BGP",PROTOCOL_NUMBER,'a'));
 		// send response
 		BGP::Msg_List_Protocols msg(supported_protocols);
 		connection->send_message(&msg);
@@ -611,7 +613,7 @@ namespace dvonn
 	    }
 	    case BGP::msg_get_setup:
 	    {
-	      // not necessary for BGP1.00a!
+	      // not necessary for BGP1.0Xa!
 	      // send response
 	      BGP::Msg_Deny msg;
 	      connection->send_message(&msg);
@@ -619,7 +621,7 @@ namespace dvonn
 	    }
 	    case BGP::msg_get_situation:
 	    {
-	      // not necessary for BGP1.00a!
+	      // not necessary for BGP1.0Xa!
 	      // send response
 	      BGP::Msg_Deny msg;
 	      connection->send_message(&msg);
@@ -2421,12 +2423,12 @@ namespace dvonn
 	      BGP::Msg_List_Protocols *det_msg = static_cast<BGP::Msg_List_Protocols*>(message);
 	      std::list<BGP::Protocol> protocols = det_msg->get_protocols();
 	      bool match = false;
-	      // supported protocols: BGP 1.00a
+	      // supported protocols: BGP 1.0Xa
 	      for( std::list<BGP::Protocol>::iterator it=protocols.begin(); 
 		   it!=protocols.end(); ++it )
 	      {
 		BGP::Protocol &protocol = *it;
-		if( protocol.name == "BGP" && protocol.number== 1.00 &&
+		if( protocol.name == "BGP" && is_equal(protocol.number,PROTOCOL_NUMBER) &&
 		    protocol.letter == 'a' )
 		{
 		  match = true;
@@ -2691,7 +2693,7 @@ namespace dvonn
 	      BGP::Msg_Tell_Game *det_msg = static_cast<BGP::Msg_Tell_Game*>(message);
 	      if( det_msg->get_game() == GAME_NAME )
 	      {
-		// BGP 1.00a : just request final setup and enter solitary player setup phase
+		// BGP 1.0Xa : just request final setup and enter solitary player setup phase
 		conn_state.state = BGP_SETUP;
 		conn_state.in_setup = true;
 		// send requests
@@ -3113,7 +3115,7 @@ namespace dvonn
     {
       conn_state.state = BGP_HANDSHAKE;
       // send request
-      BGP::Msg_Helo msg(BGP::Protocol("BGP",1.00,'a'), connection->get_local_host());
+      BGP::Msg_Helo msg(BGP::Protocol("BGP",PROTOCOL_NUMBER,'a'), connection->get_local_host());
       connection->send_message(&msg);
       // setup timeout
       start_timer(response_timeout);
