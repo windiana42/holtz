@@ -82,6 +82,11 @@ namespace holtz
     return wxString(str.c_str(), wxConvUTF8);
 #endif
   }
+
+  inline bool is_equal( float v1, float v2 )
+  {
+    return fabs(v1 - v2) < 1e-6;
+  }
 }
 namespace std
 {
