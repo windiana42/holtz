@@ -1,0 +1,8 @@
+1.2.1:
+- changed Zertz ruleset names to 
+  Basic Ruleset: win=3/4/5/2 stones=5/7/9 rings=37 
+  Standard Ruleset: win=4/5/6/3 stones=6/8/10 rings=37 
+  Tournament Ruleset: win=4/5/6/3 stones=6/8/10 rings=48 
+1.2.0:
+- Dvonn and Zertz support
+- more robust network protocol
