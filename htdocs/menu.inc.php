@@ -30,7 +30,7 @@ function PrintSidebar($sidebarImg, $bigImg) {
     if($bigImg != "") { 
       print "<a href=\"$bigImg\">";
     }
-    print "<img src=\"$sidebarImg\">";
+    print "<img src=\"$sidebarImg\" alt=\"sidebar\">";
     if($bigImg != "") {
       print "</a>";
     }

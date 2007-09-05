@@ -29,6 +29,7 @@ Systems are always welcome.<br>
 <ul><li>Basic Rules: Win Condition 3/4/5/2 marbles, board with 37 rings</li>
 <li>Standard Rules: Win Condition 4/5/6/3 marbles, board with 37 rings</li>
 <li>Tournament Rules: Win Condition 4/5/6/3 marbles, board with 48 rings</li>
+</ul>
 </li>
 </ul>
 
