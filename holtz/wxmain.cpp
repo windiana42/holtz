@@ -122,7 +122,7 @@ namespace holtz
     loc->Init(wxLANGUAGE_DEFAULT); // get default language from OS
     wxLocale::AddCatalogLookupPathPrefix(wxT("locale")); // enable translation lookup from ./locale/
     loc->AddCatalog(wxT("holtz")); // load translation file holtz.mo if available
-    loc->AddCatalog(wxT("hotkey")); // load translation file hotkey.mo if available
+    loc->AddCatalog(wxT("holtz-hotkey")); // load translation file holtz-hotkey.mo if available
 
     SetAppName(wxT("Holtz"));
     SetVendorName(wxT("Martin Trautmann"));
