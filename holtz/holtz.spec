@@ -1,4 +1,4 @@
-%define  RELEASE 1
+%define  RELEASE 2
 %define  rel     %{?CUSTOM_RELEASE} %{!?CUSTOM_RELEASE:%RELEASE}
 
 Name: holtz
