@@ -1,5 +1,5 @@
 <?php require("menu.inc.php"); 
-  StartPage("Holtz:: Downloads", "Downloads");
+  StartPage("Holtz:: Download", "Downloads");
 ?>
 
 <h2>Downloads of Holtz source and binaries</h2>
