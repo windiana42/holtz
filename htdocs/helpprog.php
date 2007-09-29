@@ -1,5 +1,5 @@
 <?php require("menu.inc.php"); 
-  StartPage("Holtz:: The program", "", 0);
+  StartPage("Holtz:: Screenshots", "", 0);
 ?>
 
   <p>Z&egrave;rtz screen:</p>

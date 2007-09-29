@@ -1,5 +1,5 @@
 <?php require("menu.inc.php"); 
-  StartPage("Welcome!", "Home page");
+  StartPage("Holtz:: Home", "Home page");
 ?>
 
 <h2>Introduction</h2>
