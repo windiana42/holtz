@@ -89,6 +89,8 @@ function EndPage($showSidebar = 1, $sidebarImg = "", $bigImg = "") {
       </td>
       <?php if($showSidebar) { ?><?php PrintSidebar($sidebarImg, $bigImg); } ?>
     </tr>
+    <tr><td colspan=2><a href="index.php">Home</a></td>
+    </tr>
     <tr><td colspan=2><hr>by Martin Trautmann<br>
       <i>Hosted by <A href="http://sourceforge.net"> 
       <img src="http://sourceforge.net/sflogo.php?group_id=74242&amp;type=5" 
