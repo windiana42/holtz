@@ -2,7 +2,7 @@
   StartPage("Holtz:: Download", "Downloads");
 ?>
 
-<h2>Downloads of Holtz source and binaries</h2>
+<h2>Download the Holtz program (source or binary)</h2>
 
 Note: If you download any source version, you have to download 
 <a href="http://wxwidgets.org">wxWidgets</a> first. The source is only 
