@@ -68,7 +68,7 @@ function StartPage($title, $menuname, $showSidebar = 1) {
 <html>
 <head>
   <meta name="author" content="Martin Trautmann, Florian Fischer">
-  <meta name="keywords" content="Zertz, Dvonn, Holtz, Linux, Windows,
+  <meta name="keywords" content="Zertz, Dvonn, Holtz, Linux, Windows, program, Programm,
 	abstract strategy game, strategy game, abstract game, Denkspiel, Brettspiel, board game">
   <meta http-equiv="content-type" content="text/html; charset=ISO-8859-1">
   <title><?php print $title; ?></title>
