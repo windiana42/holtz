@@ -1,0 +1,2 @@
+User-agent: *
+Sitemap: http://holtz.sourceforge.net/sitemap.xml
