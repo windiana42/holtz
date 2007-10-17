@@ -332,6 +332,7 @@ namespace dvonn
     if( ui_manager )
     {
       ui_manager->show_status_text(wxT(""));
+      ui_manager->clear_target_variant();
     }
     if( !undo_requested )
     {
@@ -433,7 +434,7 @@ namespace dvonn
   // ----------------------------------------------------------------------------
 
   Game_UI_Manager::Game_UI_Manager( const Game &game )
-    : display_game(game)
+    : display_game(game), target_variant(0)
   {
   }
   Game_UI_Manager::~Game_UI_Manager()

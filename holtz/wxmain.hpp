@@ -95,6 +95,7 @@ namespace holtz
     void new_zertz_game();
     void new_dvonn_game();
     void undo_move();
+    void variants();
     void settings_dialog();
 
     void show_status_text( wxString text ); // shows text in status bar
@@ -121,13 +122,15 @@ namespace holtz
 
     Game_Type active_game;
 
-    zertz::Game_Manager   *zertz_game_manager;
-    zertz::WX_GUI_Manager *zertz_gui_manager;
-    zertz::Game_Dialog    *zertz_game_dialog;
+    zertz::Game_Manager		*zertz_game_manager;
+    zertz::Game_Variants_Frame	*zertz_variants_frame;
+    zertz::WX_GUI_Manager	*zertz_gui_manager;
+    zertz::Game_Dialog		*zertz_game_dialog;
 
-    dvonn::Game_Manager   *dvonn_game_manager;
-    dvonn::WX_GUI_Manager *dvonn_gui_manager;
-    dvonn::Game_Dialog    *dvonn_game_dialog;
+    dvonn::Game_Manager		*dvonn_game_manager;
+    dvonn::Game_Variants_Frame	*dvonn_variants_frame;
+    dvonn::WX_GUI_Manager	*dvonn_gui_manager;
+    dvonn::Game_Dialog		*dvonn_game_dialog;
 
     // any class wishing to process wxWindows events must use this macro
     DECLARE_EVENT_TABLE();
@@ -151,6 +154,7 @@ namespace holtz
     void on_new_zertz_game(wxCommandEvent& event);
     void on_new_dvonn_game(wxCommandEvent& event);
     void on_undo_move(wxCommandEvent& event);
+    void on_variants(wxCommandEvent& event);
     void on_quit(wxCommandEvent& event);
     void on_settings(wxCommandEvent& event);
     void on_help_contents(wxCommandEvent& event);
@@ -183,6 +187,7 @@ namespace holtz
     HOLTZ_NEW_DVONN_GAME,
     HOLTZ_SETTINGS,
     HOLTZ_UNDO,
+    HOLTZ_VARIANTS,
     HOLTZ_QUIT,
     HOLTZ_HELP_CONTENTS,
     HOLTZ_HELP_LICENSE,

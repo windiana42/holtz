@@ -516,6 +516,7 @@ namespace zertz
   Board::Board( const std::vector< std::vector<Field_State_Type> > field, Board_Type board_type )
     : board_type(board_type), field(field)
   {
+    // !!! checks for rectangularity
   }
 
   Board::Board()
@@ -852,15 +853,15 @@ namespace zertz
   // ----------------------------------------------------------------------------
   
   Variant::Variant( int current_player_index, const Move_Sequence &move_sequence, 
-		    unsigned possible_variants, Variant *prev )
+		    unsigned possible_variants, unsigned id, Variant *prev )
     : current_player_index(current_player_index), move_sequence(move_sequence), 
-      possible_variants(possible_variants), prev(prev)
+      possible_variants(possible_variants), id(id), prev(prev)
   {
   }
 
-  Variant::Variant()			// for root variant
+  Variant::Variant( unsigned id )      // for root variant
     : possible_variants(unsigned(-1)), // don't know number of possible variants
-      prev(0)
+      id(id), prev(0)
   {
   }
 
@@ -874,10 +875,23 @@ namespace zertz
 
   Variant *Variant::add_variant( int current_player_index, 
 				 const Move_Sequence &move_sequence,
-				 unsigned possible_variants )
+				 unsigned possible_variants, unsigned id )
   {
-    variants.push_back( new Variant( current_player_index, move_sequence, possible_variants, this ) );
-    return variants.back();
+    // check whether variant already exists
+    std::list<Variant*>::iterator it;
+    for( it = variants.begin(); it != variants.end(); ++it )
+    {
+      Variant *variant = *it;
+      if( variant->move_sequence == move_sequence )
+      {
+	return variant;
+      }
+    }
+    Variant *variant = new Variant( current_player_index, move_sequence, possible_variants, id, 
+				    this );
+    variants.push_back( variant );
+    id_variant_map[id] = variant;
+    return variant;
   }
 
   bool Variant::is_prev( Variant *variant ) const
@@ -896,7 +910,8 @@ namespace zertz
 
   Variant *Variant::clone( Variant *search, Variant *&clone_dest ) const
   {
-    Variant *variant_clone = new Variant( current_player_index, move_sequence, possible_variants );
+    Variant *variant_clone 
+      = new Variant( current_player_index, move_sequence, possible_variants, id );
     
     std::list<Variant*>::const_iterator sub_variant;
     for( sub_variant = variants.begin(); sub_variant != variants.end(); ++sub_variant )
@@ -904,6 +919,7 @@ namespace zertz
       Variant *sub_variant_clone = (*sub_variant)->clone( search, clone_dest );
       sub_variant_clone->prev = variant_clone;
       variant_clone->variants.push_back( sub_variant_clone );
+      variant_clone->id_variant_map[sub_variant_clone->id] = sub_variant_clone;
     }
 
     if( search )
@@ -922,8 +938,9 @@ namespace zertz
   // ----------------------------------------------------------------------------
 
   Variant_Tree::Variant_Tree()
+    : unique_id(1)
   {
-    root = new Variant();
+    root = new Variant(unique_id++);
     current_variant = root;
   }
 
@@ -947,6 +964,8 @@ namespace zertz
     assert( current_variant != 0 );
     assert( current_variant->is_prev(root) );
 
+    unique_id = src.unique_id;
+
     return *this;
   }
 
@@ -968,24 +987,30 @@ namespace zertz
 
     assert( variant->prev );
 
-    std::list<Variant*>::iterator i;
-    for( i = variant->prev->variants.begin(); i != variant->prev->variants.end(); ++i )
-    {
-      if( *i == variant )
+    if( does_include(variant->prev->id_variant_map,variant->id) )
       {
-	variant->prev->variants.erase( i );
-	delete variant;
-	return true;
+	variant->prev->id_variant_map.erase(variant->id);
+
+	std::list<Variant*>::iterator i;
+	for( i = variant->prev->variants.begin(); i != variant->prev->variants.end(); ++i )
+	  {
+	    if( *i == variant )
+	      {
+		variant->prev->variants.erase( i );
+		delete variant;
+		return true;
+	      }
+	  }
+	assert(false);
       }
-    }
     
     return false;
   }
 
-  std::list<Move_Sequence> Variant_Tree::get_current_variant_moves()
+  std::list<Move_Sequence> Variant_Tree::get_current_variant_moves() const
   {
     std::list<Move_Sequence> ret;
-    Variant *cur = get_current_variant();
+    const Variant *cur = get_current_variant();
     while( cur != get_root_variant() )
     {
       ret.push_front(cur->move_sequence);
@@ -994,12 +1019,53 @@ namespace zertz
     return ret;
   }
 
+  std::list<unsigned> Variant_Tree::get_variant_id_path( const Variant *dest_variant ) const
+  {
+    std::list<unsigned> ret;
+    const Variant *cur = dest_variant;
+    while( cur != get_root_variant() )
+    {
+      ret.push_front(cur->id);
+      cur = cur->prev;
+    }
+    return ret;
+  }
+
+  const Variant *Variant_Tree::get_variant( const std::list<unsigned> variant_id_path ) const
+  {
+    const Variant *cur = get_root_variant();
+    for( std::list<unsigned>::const_iterator it=variant_id_path.begin(); 
+	 it!=variant_id_path.end(); ++it )
+      {
+	unsigned id = *it;
+	if( !does_include(cur->id_variant_map,id) ) return 0;
+	cur = cur->id_variant_map.find(id)->second;
+      }
+    
+    return cur;
+  }
+
+  Variant *Variant_Tree::get_variant( const std::list<unsigned> variant_id_path )
+  {
+    Variant *cur = get_root_variant();
+    for( std::list<unsigned>::const_iterator it=variant_id_path.begin(); 
+	 it!=variant_id_path.end(); ++it )
+      {
+	unsigned id = *it;
+	if( !does_include(cur->id_variant_map,id) ) return 0;
+	cur = cur->id_variant_map.find(id)->second;
+      }
+    
+    return cur;
+  }
+
   void Variant_Tree::add_in_current_variant( int current_player_index, 
 					     const Move_Sequence &sequence, 
 					     unsigned possible_variants )
   {
     current_variant 
-      = current_variant->add_variant( current_player_index, sequence, possible_variants );
+      = current_variant->add_variant( current_player_index, sequence, possible_variants,
+				      unique_id++ );
   }
   void Variant_Tree::move_a_variant_back()
   {
@@ -1010,7 +1076,7 @@ namespace zertz
   void Variant_Tree::clear()
   {
     delete root;
-    root = new Variant();
+    root = new Variant(unique_id++);
     current_variant = root;
   }
 
@@ -1955,14 +2021,14 @@ namespace zertz
   {
   }
 
+  // ----------------------------------------------------------------------------
+  // Knock_Out_Move
+  // ----------------------------------------------------------------------------
+
   Move::Move_Type Knock_Out_Move::get_type() const
   {
     return knock_out_move;
   }
-
-  // ----------------------------------------------------------------------------
-  // Knock_Out_Move
-  // ----------------------------------------------------------------------------
 
   void Knock_Out_Move::do_move( Game &game )
   {
@@ -2692,6 +2758,149 @@ namespace zertz
     }
   }
 
+  bool operator==( const Move &m1, const Move &m2 )
+  {
+    if( (int)m1.get_type() != (int)m2.get_type() ) return false;
+    switch( m1.get_type() )
+    {
+      case Move::no_move: break;
+      case Move::knock_out_move: 
+      {
+	const Knock_Out_Move *det_m1 = static_cast<const Knock_Out_Move*>(&m1);
+	const Knock_Out_Move *det_m2 = static_cast<const Knock_Out_Move*>(&m2);
+	return *det_m1 == *det_m2;
+      }
+      case Move::set_move: 
+      {
+	const Set_Move *det_m1 = static_cast<const Set_Move*>(&m1);
+	const Set_Move *det_m2 = static_cast<const Set_Move*>(&m2);
+	return *det_m1 == *det_m2;
+      }
+      case Move::remove: 
+      {
+	const Remove *det_m1 = static_cast<const Remove*>(&m1);
+	const Remove *det_m2 = static_cast<const Remove*>(&m2);
+	return *det_m1 == *det_m2;
+      }
+      case Move::finish_move: 
+      {
+	const Finish_Move *det_m1 = static_cast<const Finish_Move*>(&m1);
+	const Finish_Move *det_m2 = static_cast<const Finish_Move*>(&m2);
+	return *det_m1 == *det_m2;
+      }
+    }
+    return true;
+  }
+  bool operator<( const Move &m1, const Move &m2 )
+  {
+    if( (int)m1.get_type() < (int)m2.get_type() ) return true;
+    if( (int)m1.get_type() > (int)m2.get_type() ) return false;
+
+    switch( m1.get_type() )
+    {
+      case Move::no_move: break;
+      case Move::knock_out_move: 
+      {
+	const Knock_Out_Move *det_m1 = static_cast<const Knock_Out_Move*>(&m1);
+	const Knock_Out_Move *det_m2 = static_cast<const Knock_Out_Move*>(&m2);
+	return *det_m1 < *det_m2;
+      }
+      case Move::set_move: 
+      {
+	const Set_Move *det_m1 = static_cast<const Set_Move*>(&m1);
+	const Set_Move *det_m2 = static_cast<const Set_Move*>(&m2);
+	return *det_m1 < *det_m2;
+      }
+      case Move::remove: 
+      {
+	const Remove *det_m1 = static_cast<const Remove*>(&m1);
+	const Remove *det_m2 = static_cast<const Remove*>(&m2);
+	return *det_m1 < *det_m2;
+      }
+      case Move::finish_move: 
+      {
+	const Finish_Move *det_m1 = static_cast<const Finish_Move*>(&m1);
+	const Finish_Move *det_m2 = static_cast<const Finish_Move*>(&m2);
+	return *det_m1 < *det_m2;
+      }
+    }
+    return false;
+  }
+  bool operator==( const Knock_Out_Move &m1, const Knock_Out_Move &m2 )
+  {
+    if( m1.from != m2.from ) return false;
+    if( m1.to != m2.to ) return false;
+    return true;
+  }
+  bool operator<( const Knock_Out_Move &m1, const Knock_Out_Move &m2 )
+  {
+    if( m1.from.x < m2.from.x ) return true;
+    if( m1.from.x > m2.from.x ) return false;
+    if( m1.from.y < m2.from.y ) return true;
+    if( m1.from.y > m2.from.y ) return false;
+    if( m1.to.x < m2.to.x ) return true;
+    if( m1.to.x > m2.to.x ) return false;
+    if( m1.to.y < m2.to.y ) return true;
+    if( m1.to.y > m2.to.y ) return false;
+    return false;
+  }
+  bool operator==( const Set_Move &m1, const Set_Move &m2 )
+  {
+    if( m1.pos != m2.pos ) return false;
+    if( m1.stone_type != m2.stone_type ) return false;
+    return true;
+  }
+  bool operator<( const Set_Move &m1, const Set_Move &m2 )
+  {
+    if( m1.pos.x < m2.pos.x ) return true;
+    if( m1.pos.x > m2.pos.x ) return false;
+    if( m1.pos.y < m2.pos.y ) return true;
+    if( m1.pos.y > m2.pos.y ) return false;
+    if( (int)m1.stone_type < (int)m2.stone_type ) return true;
+    if( (int)m1.stone_type > (int)m2.stone_type ) return false;
+    return false;
+  }
+  bool operator==( const Remove &m1, const Remove &m2 )
+  {
+    if( m1.remove_pos != m2.remove_pos ) return false;
+    return true;
+  }
+  bool operator<( const Remove &m1, const Remove &m2 )
+  {
+    if( m1.remove_pos.x < m2.remove_pos.x ) return true;
+    if( m1.remove_pos.x > m2.remove_pos.x ) return false;
+    if( m1.remove_pos.y < m2.remove_pos.y ) return true;
+    if( m1.remove_pos.y > m2.remove_pos.y ) return false;
+    return false;
+  }
+  bool operator==( const Move_Sequence &s1, const Move_Sequence &s2 )
+  {
+    std::list<Move*>::const_iterator it1, it2;
+    for( it1 = s1.get_moves().begin(), it2 = s2.get_moves().begin();
+	 it1 != s1.get_moves().end(); ++it1, ++it2 )
+    {
+      if( it2 == s2.get_moves().end() ) return false;
+      if( !(**it1 == **it2) ) return false;
+    }
+    return true;
+  }
+  bool operator<( const Move_Sequence &s1, const Move_Sequence &s2 )
+  {
+    if( s1.get_moves().size() < s2.get_moves().size() ) return true;
+    if( s1.get_moves().size() > s2.get_moves().size() ) return false;
+
+    std::list<Move*>::const_iterator it1, it2;
+    for( it1 = s1.get_moves().begin(), it2 = s2.get_moves().begin();
+	 it1 != s1.get_moves().end(); ++it1, ++it2 )
+    {
+      assert( it2 != s2.get_moves().end() );
+      if( (**it1 < **it2) ) return true;
+      if( !(**it1 == **it2) ) return false; // => **it1 > **it2
+    }
+
+    return false;
+  }
+
   // ----------------------------------------------------------------------------
   // Standard_Move_Translator
   // ----------------------------------------------------------------------------
@@ -2703,7 +2912,83 @@ namespace zertz
 
   std::string Standard_Move_Translator::encode( Move_Sequence sequence )
   {
-    return "not implemented yet";
+    std::string ret;
+    std::list<Move*>::const_iterator move_it;
+    bool first_knock_out = true;
+    for( move_it = sequence.get_moves().begin(); move_it != sequence.get_moves().end(); move_it++ )
+    {
+      Move *move = *move_it;
+      switch( move->get_type() )
+      {
+	case Move::no_move:
+	  break;
+	case Move::knock_out_move:
+	{
+	  Knock_Out_Move *det_move = static_cast<Knock_Out_Move*>(move);
+	  if( first_knock_out )
+	  {
+	    first_knock_out = false;
+	    ret += "x ";
+	    ret += coordinate_translator->get_field_name(det_move->from);
+	  }
+	  switch( det_move->knocked_stone )
+	  {
+	    case field_removed:
+	    case field_empty:
+	      break;
+	    case field_white: ret += 'W'; break;
+	    case field_grey:  ret += 'G'; break;
+	    case field_black: ret += 'B'; break;
+	  }
+	  ret += coordinate_translator->get_field_name(det_move->to);
+	}
+	break;
+	case Move::set_move:
+	{
+	  Set_Move *det_move = static_cast<Set_Move*>(move);
+	  switch( det_move->stone_type )
+	  {
+	    case Stones::invalid_stone: break;
+	    case Stones::white_stone:   ret += 'W'; break;
+	    case Stones::grey_stone:    ret += 'G'; break;
+	    case Stones::black_stone:   ret += 'B'; break;
+	  }
+	  ret += coordinate_translator->get_field_name(det_move->pos);
+	}
+	break;
+	case Move::remove:
+	{
+	  Remove *det_move = static_cast<Remove*>(move);
+	  ret += ',';
+	  ret += coordinate_translator->get_field_name(det_move->remove_pos);
+	}
+	break;
+	case Move::finish_move:
+	{
+	  Finish_Move *det_move = static_cast<Finish_Move*>(move);
+	  if( !det_move->removed_stones.empty() )
+	    ret += " x ";
+	  std::list< std::pair<Field_Pos,Stones::Stone_Type> >::iterator removed_it;
+	  for( removed_it = det_move->removed_stones.begin();
+	       removed_it != det_move->removed_stones.end(); ++removed_it )
+	  {
+	    Field_Pos pos = removed_it->first;
+	    Stones::Stone_Type stone_type = removed_it->second;
+	    switch( stone_type )
+	    {
+	      case Stones::invalid_stone: break;
+	      case Stones::white_stone:   ret += 'W'; break;
+	      case Stones::grey_stone:    ret += 'G'; break;
+	      case Stones::black_stone:   ret += 'B'; break;
+	    }
+	    ret += coordinate_translator->get_field_name(pos);
+	  }
+	}
+	break;
+      }
+    }
+
+    return ret;
   }
 
   Move_Sequence Standard_Move_Translator::decode( std::istream &is )
@@ -2924,7 +3209,8 @@ namespace zertz
   // Custom_Ruleset
   // ----------------------------------------------------------------------------
 
-  Custom_Ruleset::Custom_Ruleset( Board board, Common_Stones common_stones, Win_Condition *win_condition, 
+  Custom_Ruleset::Custom_Ruleset( Board board, Common_Stones common_stones, 
+				  Win_Condition *win_condition, 
 				  Coordinate_Translator *coordinate_translator, 
 				  bool undo_possible, unsigned min_players, unsigned max_players )
     : Ruleset( custom, board, common_stones, win_condition, coordinate_translator, undo_possible, 
@@ -2992,7 +3278,7 @@ namespace zertz
   // ----------------------------------------------------------------------------
 
   Sequence_Generator::Sequence_Generator( Game &game, bool easy_multiple_knock )
-    : game(game), state(begin), easy_multiple_knock(easy_multiple_knock)
+    : game(game), auto_undo(true), state(begin), easy_multiple_knock(easy_multiple_knock)
   {
   }
 
@@ -3388,11 +3674,13 @@ namespace zertz
 
   void Sequence_Generator::reset()
   {
-    sequence.undo_sequence(game);
+    if( auto_undo )
+      sequence.undo_sequence(game);
     sequence.clear();
     while( to.size() > 0 ) 
       to.pop();
     state = begin;
+    auto_undo = true;
   }
 
   // ----------------------------------------------------------------------------
@@ -3415,8 +3703,8 @@ namespace zertz
 
   Move_Sequence Generic_Mouse_Input::get_move()
   {
-    disable_mouse_input();
     Move_Sequence sequence = sequence_generator.get_sequence();
+    disable_mouse_input();
     sequence_generator.reset();
     return sequence;
   }

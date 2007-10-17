@@ -1,8 +1,8 @@
-%define  RELEASE 2
+%define  RELEASE 1
 %define  rel     %{?CUSTOM_RELEASE} %{!?CUSTOM_RELEASE:%RELEASE}
 
 Name: holtz
-Version: 1.2.1
+Version: 1.2.2
 Release: %rel
 
 Summary: Holtz is an implementation of the two player abstract board games Zertz and Dvonn
