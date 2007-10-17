@@ -34,6 +34,7 @@
 #include <wx/dir.h>
 #include <wx/fontdlg.h>
 #include <wx/sizer.h>
+#include <wx/treectrl.h>
 #include <fstream>
 
 #if defined(VERSION_ZERTZ)
@@ -1201,7 +1202,16 @@ namespace dvonn
       if( master_content.from == 0 ) // display only boards that are specified from the first move on
       {
 	wxString board_str;
-  	board_str << _("Board ") << master_content.id << wxT(" ") 
+#if defined(VERSION_DVONN)
+	board_str << _("Board");
+#elif defined(VERSION_ZERTZ)
+	switch( master_content.ruleset_type )
+	{
+	  case PBM_Content::standard:   board_str << _("Zertz"); break;
+	  case PBM_Content::tournament: board_str << _("Zertz+11"); break;
+	}
+#endif
+  	board_str << wxT(" ") << master_content.id << wxT(" ") 
 		  << str_to_wxstr(master_content.player1) << wxT(":")
 		  << str_to_wxstr(master_content.player2) << wxT(" (") 
 		  << master_content.to << wxT(" ") << _("moves") << wxT(")");
@@ -2915,5 +2925,210 @@ p			  str_to_wxstr(master_content.player1).c_str(), str_to_wxstr(master_content.
   BEGIN_EVENT_TABLE(Network_Connection_Dialog, wxDialog)		//**/
   //  EVT_BUTTON(DIALOG_OK,     Network_Connection_Dialog::OnOK)		//**/
   //  EVT_BUTTON(DIALOG_CANCEL, Network_Connection_Dialog::OnCancel)	//**/
+  END_EVENT_TABLE()							//**/
+
+  // ============================================================================
+  // Game_Variants_Panel
+  // ============================================================================
+
+  Game_Variants_Panel::Game_Variants_Panel( wxWindow *parent )
+    : wxPanel(parent,-1), current_tree_version(1)
+  {
+    wxBoxSizer *top_sizer = new wxBoxSizer( wxVERTICAL );
+
+    tree = new wxTreeCtrl( this,-1,wxDefaultPosition,wxDefaultSize,
+			   wxTR_HAS_BUTTONS | wxTR_HIDE_ROOT | wxTR_SINGLE | wxTR_LINES_AT_ROOT );
+    selected_variant_id = tree->GetRootItem();
+    top_sizer->Add(tree, 1, wxEXPAND, 0);
+
+    // set sizer
+    SetAutoLayout( true );     // tell dialog to use sizer
+    SetSizer( top_sizer );      // actually set the sizer
+  }
+
+  void recursive_add_variant( wxTreeCtrl *tree, 
+			      wxTreeItemId cur_item, Variant_Tree_Item_Data *cur_data,
+			      const Variant_Tree *var_tree, const Variant *add_variant, 
+			      const Variant *sel_variant, wxTreeItemId *sel_variant_id,
+			      Coordinate_Translator *coordinate_translator,
+			      unsigned tree_version )
+  {
+    wxTreeItemId new_item;
+    Variant_Tree_Item_Data *new_data;
+    // check whether variant already exists
+    if( does_include(cur_data->varid_treeid_map,add_variant->id) )
+    {
+      new_item = cur_data->varid_treeid_map[add_variant->id];
+      new_data = static_cast<Variant_Tree_Item_Data*>(tree->GetItemData(new_item));
+      new_data->tree_version = tree_version;
+    }
+    else
+    {
+      // create new tree item for variant
+      Standard_Move_Translator move_translator(coordinate_translator);
+      std::string name = move_translator.encode(add_variant->move_sequence);
+      new_data = new Variant_Tree_Item_Data(tree_version,var_tree->get_variant_id_path(add_variant));
+      new_item = tree->AppendItem(cur_item,str_to_wxstr(name),-1,-1,new_data);
+      cur_data->varid_treeid_map[add_variant->id] = new_item;
+    }
+    // check whether variant is selected
+    if( sel_variant == add_variant )
+      *sel_variant_id = new_item;
+    // add child variants
+    std::list<Variant*>::const_iterator it;
+    for( it = add_variant->variants.begin(); it != add_variant->variants.end(); ++it )
+      {
+	Variant *new_variant = *it;
+	recursive_add_variant( tree, new_item, new_data, var_tree, new_variant, sel_variant, 
+			       sel_variant_id, coordinate_translator, tree_version );
+      }
+  }
+
+  void recursive_find_old_variants( wxTreeCtrl *tree, wxTreeItemId cur_item, unsigned tree_version,
+				    std::list<wxTreeItemId> *delete_list )
+  {
+    wxTreeItemIdValue cookie;
+    // depth first search for all items in tree
+    wxTreeItemId id = tree->GetFirstChild(cur_item,cookie);
+    while( id.IsOk() )
+    {
+      recursive_find_old_variants( tree, id, tree_version, delete_list );
+      id = tree->GetNextChild(cur_item,cookie);
+    }
+    // work on items in depth first order
+    Variant_Tree_Item_Data *cur_data 
+      = static_cast<Variant_Tree_Item_Data*>(tree->GetItemData(cur_item));
+    if( cur_data->tree_version != tree_version )
+    {
+      delete_list->push_back(cur_item);
+    }
+  }
+
+  void Game_Variants_Panel::reset()
+  {
+    current_tree_version++;
+    tree->DeleteAllItems();
+    selected_variant_id = tree->GetRootItem(); // selected_variant_id.IsOk() should be false now
+  }
+
+  void Game_Variants_Panel::show_variant_tree(const Variant_Tree &new_variant_tree,
+					      Coordinate_Translator *coordinate_translator)
+  {
+    current_tree_version++;
+    variant_tree = new_variant_tree;
+
+    // unselect current selected variant
+    if( selected_variant_id.IsOk() )
+      tree->SetItemBackgroundColour(selected_variant_id,wxNullColour);
+
+    // get or create root
+    Variant_Tree_Item_Data *root_data = 0;
+    wxTreeItemId root = tree->GetRootItem();
+    selected_variant_id = root; // default value if current_variant wasn't found
+    if( root.IsOk() )
+    {
+      root_data = static_cast<Variant_Tree_Item_Data*>(tree->GetItemData(root));
+      root_data->tree_version = current_tree_version;
+    }
+    else
+    {
+      root_data = new Variant_Tree_Item_Data(current_tree_version);
+      root = tree->AddRoot(wxT("variants"),-1,-1,root_data);
+    }
+    // add leaves of root (each recursively)
+    const Variant *add_variant = variant_tree.get_root_variant();
+    std::list<Variant*>::const_iterator it;
+    for( it = add_variant->variants.begin(); it != add_variant->variants.end(); ++it )
+      {
+	Variant *new_variant = *it;
+	recursive_add_variant( tree, root, root_data, &variant_tree, new_variant, 
+			       variant_tree.get_current_variant(), &selected_variant_id,
+			       coordinate_translator, current_tree_version );
+      }
+
+    if( selected_variant_id.IsOk() )
+    {
+      // expand current variant excluding current variant
+      wxTreeItemId cur_item = root;
+      Variant_Tree_Item_Data *cur_data = root_data;
+      Variant_Tree_Item_Data *sel_data 
+	= static_cast<Variant_Tree_Item_Data*>(tree->GetItemData(selected_variant_id));
+      std::list<unsigned>::const_iterator it2;
+      for( it2 = sel_data->variant_id_path.begin(); it2 != sel_data->variant_id_path.end(); ++it2 )
+      {
+	unsigned id = *it2;
+	tree->Expand(cur_item); 
+	cur_item = cur_data->varid_treeid_map[id];
+	cur_data = static_cast<Variant_Tree_Item_Data*>(tree->GetItemData(cur_item));
+      }
+      // mark current variant
+      tree->SetItemBackgroundColour(selected_variant_id,*wxRED);
+      //tree->SelectItem(selected_variant_id); currently selection is always vetoed
+      tree->ScrollTo(selected_variant_id);
+    }
+    // delete outdated tree items
+    std::list<wxTreeItemId> delete_list;
+    recursive_find_old_variants( tree, root, current_tree_version, &delete_list );
+    for( std::list<wxTreeItemId>::iterator it=delete_list.begin(); it!=delete_list.end(); ++it )
+    {
+      if( selected_variant_id == *it )
+	selected_variant_id = tree->GetRootItem();
+      tree->Delete(*it);
+    }
+  }
+
+  void Game_Variants_Panel::on_activated( wxTreeEvent& event )
+  {
+    Variant_Tree_Item_Data *item_data 
+      = static_cast<Variant_Tree_Item_Data*>(tree->GetItemData( event.GetItem() ));
+    if( item_data != 0 )
+      {
+	if( allow_selection && notifiee )
+	  {
+	    notifiee->selected_variant( item_data->variant_id_path );
+	  }
+      }
+    else
+      {
+	std::cerr << "Internal Error: clicked on TreeCtrlItem with invalid data associated" 
+		  << std::endl;
+      }
+  }
+  void Game_Variants_Panel::on_changing( wxTreeEvent& event )
+  {
+    event.Veto();
+  }
+
+  BEGIN_EVENT_TABLE(Game_Variants_Panel, wxPanel)			//**/
+    EVT_TREE_ITEM_ACTIVATED(-1, Game_Variants_Panel::on_activated)	//**/
+    EVT_TREE_SEL_CHANGING(-1, Game_Variants_Panel::on_changing)		//**/
+  END_EVENT_TABLE()							//**/
+
+  // ============================================================================
+  // Game_Variants_Frame
+  // ============================================================================
+
+  Game_Variants_Frame::Game_Variants_Frame( wxWindow *parent )
+    : wxFrame(parent,-1,_("Variants"),wxDefaultPosition,wxDefaultSize,
+	      wxFRAME_FLOAT_ON_PARENT | wxDEFAULT_FRAME_STYLE)
+  {
+    wxBoxSizer *top_sizer = new wxBoxSizer( wxVERTICAL );
+    
+    game_variants = new Game_Variants_Panel(this);
+    top_sizer->Add(game_variants, 1, wxEXPAND, 0);
+
+    // set sizer
+    SetAutoLayout( true );     // tell dialog to use sizer
+    SetSizer( top_sizer );      // actually set the sizer
+  }
+
+  void Game_Variants_Frame::on_close( wxCloseEvent &event )
+  {
+    Show(false);
+    event.Veto();		// don't destroy frame
+  }
+
+  BEGIN_EVENT_TABLE(Game_Variants_Frame, wxFrame)			//**/
+  EVT_CLOSE(Game_Variants_Frame::on_close)		//**/
   END_EVENT_TABLE()							//**/
 }

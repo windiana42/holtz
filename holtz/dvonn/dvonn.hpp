@@ -49,11 +49,13 @@ namespace dvonn
   class No_Output;
   class Stream_Output;
   class Stream_Input;
+  class AI_Input;
   class Sequence_Generator;
   class Generic_Mouse_Input;
   class Coordinate_Translator;
   class Standard_Coordinate_Translator;
   class Move_Translator;
+  class Standard_Move_Translator;
   
   typedef enum Field_State_Type{ field_removed=-1, field_empty=0, 
 				 field_red=1, field_white=2, field_black=3 };
@@ -158,7 +160,7 @@ namespace dvonn
 	    std::string host="", Player_Type type=unknown, Help_Mode help_mode = no_help, 
 	    Origin origin = local );
 
-    std::string name; int id; 
+    std::string name; int id;
     std::string host; 
     Player_Type type;
     Help_Mode help_mode;
@@ -418,11 +420,11 @@ namespace dvonn
     void clear();
 
     Move_Sequence clone() const;	// to store sequences, they must be cloned
-    void modify_moves();		// called before changes to moves
 
     inline const std::list<Move*> &get_moves() const { return *moves; }
     inline bool is_empty() { return moves->empty(); }
   private:
+    void modify_moves();	// called before <moves> is modified
     std::list<Move*> *moves;
 
     Ref_Counter *ref_counter;
@@ -438,31 +440,46 @@ namespace dvonn
   inline std::istream &operator>>( std::istream &is, Move_Sequence &s )
   { std::escape_istream eis(is); s.input(eis); return is; }
 
+  bool operator==( const Move &m1, const Move &m2 );
+  bool operator<( const Move &m1, const Move &m2 );
+  bool operator==( const Jump_Move &m1, const Jump_Move &m2 );
+  bool operator<( const Jump_Move &m1, const Jump_Move &m2 );
+  bool operator==( const Set_Move &m1, const Set_Move &m2 );
+  bool operator<( const Set_Move &m1, const Set_Move &m2 );
+  inline bool operator==( const Finish_Move &m1, const Finish_Move &m2 ) { return true; }
+  inline bool operator<( const Finish_Move &m1, const Finish_Move &m2 ) { return false; }
+  bool operator==( const Move_Sequence &s1, const Move_Sequence &s2 );
+  bool operator<( const Move_Sequence &s1, const Move_Sequence &s2 );
+
   // with this class a variant tree could be built that stores different
   // move possibilities
   class Variant
   {
   public:
     Variant( int current_player_index, const Move_Sequence &, 
-	     unsigned possible_variants, Variant *prev = 0 );
+	     unsigned possible_variants, unsigned id, Variant *prev = 0 );
     ~Variant();
 
     Variant *add_variant( int current_player_index,  
-			  const Move_Sequence &, unsigned possible_variants );
+			  const Move_Sequence &, unsigned possible_variants,
+			  unsigned id );
     bool is_prev( Variant * ) const;	// checks all previous variants
     Variant *clone( Variant *search = 0, Variant *&clone = default_clone ) const;
 				// clone variant with all subvariants
-				// optional: search for variant and store clone adresse of it in clone
+				// optional: search for variant and store 
+				// clone adresse of it in clone
 
     int current_player_index;	// player of the move sequence (0=first player,1=second player,...)
     Move_Sequence move_sequence;
     unsigned possible_variants;	// number of possible variants in the situation after this move 
+    unsigned id;		// id to identify variant through multiple copies of variant_tree
 
     Variant *prev;
     std::list<Variant*> variants;
+    std::map<unsigned,Variant*> id_variant_map;
   private:
     friend class Variant_Tree;
-    Variant();			// for root variant
+    Variant( unsigned id );	// for root variant
 
     static Variant *default_clone; // just as unused default argument in clone method
   };
@@ -483,16 +500,22 @@ namespace dvonn
     inline Variant *get_root_variant()    { return root; }
     inline const Variant *get_current_variant() const { return current_variant; }
     inline const Variant *get_root_variant()    const { return root; }
-    std::list<Move_Sequence> get_current_variant_moves();
+    std::list<Move_Sequence> get_current_variant_moves() const;
+    std::list<unsigned> get_variant_id_path( const Variant *dest_variant ) const;
+    const Variant *get_variant( const std::list<unsigned> variant_id_path ) const;
+    Variant *get_variant( const std::list<unsigned> variant_id_path );
   public:
     friend class Game;
     void add_in_current_variant( int current_player_index, const Move_Sequence &, 
 				 unsigned possible_variants );
     void move_a_variant_back();
     void clear();
+    void set_unique_id(unsigned id) { unique_id = id; }
+    unsigned get_unique_id() { return unique_id; }
   private:
     Variant *root;
     Variant *current_variant;
+    unsigned unique_id;
   };
 
   class Win_Condition
@@ -773,9 +796,12 @@ namespace dvonn
     { return move_done; }
     inline const Move_Sequence &get_sequence() const 
     { return sequence; }
+    inline void set_sequence( const Move_Sequence &seq )
+    { sequence = seq; auto_undo=false; state = move_finished; }
   private:
     Move_Sequence sequence;
     Game &game;
+    bool auto_undo;
 
     typedef enum Internal_State{ begin, move_from, move_finished };
     Internal_State state;

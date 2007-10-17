@@ -51,7 +51,7 @@ namespace zertz
 
     std::string str; 
 
-    bool ok = false, new_game = false;
+    bool ok = false, new_game = false, zertz_p11 = false;
     is >> str;
     while( is )
     {
@@ -75,6 +75,17 @@ namespace zertz
 	      ok = true;
 	      break;
 	    }
+	  } 
+	  else if( str == "Zertz+11" )
+	  {
+	    is >> str; 
+	    if( str == "Board" )
+	    {
+	      is >> ret.id;
+	      ok = true;
+	      zertz_p11 = true;
+	      break;
+	    }
 	  }
 	}
       }
@@ -88,8 +99,9 @@ namespace zertz
 	if( str == "new" )
 	{
 	  is >> str;
-	  if( str == "Zertz" )
+	  if( str == "Zertz" || str == "Zertz+11" )
 	  {
+	    if( str == "Zertz+11" ) zertz_p11 = true;
 	    is >> str;
 	    if( str == "board" )
 	    {
@@ -142,6 +154,12 @@ namespace zertz
 #ifndef __WXMSW__
     std::cout << "  \"Player 2\" found" << std::endl;
 #endif
+
+    // store ruleset type
+    if( zertz_p11 )
+      ret.ruleset_type = PBM_Content::tournament;
+    else
+      ret.ruleset_type = PBM_Content::standard;
 
     // get player names
     is >> ret.player1;
@@ -207,9 +225,10 @@ namespace zertz
 
   int load_pbm_file( std::istream &is, Game &game, int from, int to )
   {
+    //!!! ToDo: distinguish Zertz and Zertz+11 boards with same number
     std::string str; int board_num;
 
-    bool ok = false;
+    bool ok = false, zertz_p11 = false;
 
     is >> str;
     while( is )
@@ -235,6 +254,17 @@ namespace zertz
 	      break;
 	    }
 	  }
+	  else if( str == "Zertz+11" )
+	  {
+	    is >> str; 
+	    if( str == "Board" )
+	    {
+	      is >> board_num;
+	      ok = true;
+	      zertz_p11 = true;
+	      break;
+	    }
+	  }
 	}
       }
       // check for "A new Zertz board (<board_num>)"
@@ -247,8 +277,9 @@ namespace zertz
 	if( str == "new" )
 	{
 	  is >> str;
-	  if( str == "Zertz" )
+	  if( str == "Zertz" || str == "Zertz+11" )
 	  {
+	    if( str == "Zertz+11" ) zertz_p11 = true;
 	    is >> str;
 	    if( str == "board" )
 	    {
@@ -289,7 +320,11 @@ namespace zertz
     int num_moves_read = 0;
     if( from == 0 )		// if this is the first call of load_game setup a new game
     {
-      Ruleset *ruleset = new Tournament_Ruleset();
+      Ruleset *ruleset;
+      if( zertz_p11 )
+        ruleset = new Tournament_Ruleset();
+      else
+        ruleset = new Standard_Ruleset();
       ruleset->min_players = 2;	// exact 2 players
       ruleset->max_players = 2;	// exact 2 players
       game.reset_game( *ruleset );

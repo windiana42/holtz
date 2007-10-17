@@ -43,7 +43,6 @@ namespace holtz
 
 namespace zertz
 {
-
 //#include "dialogs.hpp"
   // classes defined in dialogs.hpp
   class Game_Dialog;
@@ -52,7 +51,7 @@ namespace zertz
 
 namespace zertz
 {
-  using namespace holtz; 
+  using namespace holtz;
 
   // ============================================================================
   // generic classes
@@ -251,23 +250,28 @@ namespace zertz
   // help classes
   // ============================================================================
 
-  class Mouse_Handler : public Generic_Mouse_Input
+  class Mouse_Handler : public Generic_Mouse_Input, wxEvtHandler
   {
   public:
     Mouse_Handler( Game_Manager &, WX_GUI_Manager &, Sequence_Generator* & );
-    
+
+    // inherited from Generic_Mouse_Input
     virtual void init_mouse_input();
     virtual void disable_mouse_input();
     virtual long get_used_time();
+
+    void on_animation_done( wxTimerEvent& );
   private:
     Game_Manager &game_manager;
     WX_GUI_Manager &gui_manager;
-    Sequence_Generator* &sequence_generator_hook; // storage position for access by Mouse event handler
-
+    Sequence_Generator* &sequence_generator_hook; // storage position for access 
+						  // by Mouse event handler
     wxStopWatch stop_watch;
     long used_time;
 
     AI_Input *ai;		// for giving hints
+
+    DECLARE_EVENT_TABLE()
   };
 
   // ============================================================================
@@ -278,12 +282,16 @@ namespace zertz
    *  standard GUI implementation for wxWindows
    */
   
-  class WX_GUI_Manager : public Game_UI_Manager, public Horizontal_Sizer
+  class WX_GUI_Manager : public Game_UI_Manager, public Horizontal_Sizer, 
+			 public Variants_Display_Notifiee
   {
   public:
-    WX_GUI_Manager( Game_Manager&, Game_Window & );
+    WX_GUI_Manager( Game_Manager&, Game_Window&, Variants_Display_Manager& );
     ~WX_GUI_Manager();
     virtual void calc_dimensions();
+
+    // interface inherited from Variants_Display_Notifiee
+    virtual void selected_variant( std::list<unsigned> variant_id_path );
 
     // interface for game_manager
     virtual void setup_game_display(); // setup all windows to display game
@@ -337,6 +345,7 @@ namespace zertz
     friend class Game_Manager;
     Game_Manager &game_manager;
     Game_Window  &game_window;
+    Variants_Display_Manager &variants_display_manager;
 
     Bitmap_Handler bitmap_handler;
     Game_Panel::Settings game_settings;

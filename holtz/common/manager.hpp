@@ -182,6 +182,29 @@ namespace dvonn
     int num_undo_moves;
   };
 
+  class Variants_Display_Notifiee
+  {
+  public:
+    virtual ~Variants_Display_Notifiee() {}
+    virtual void selected_variant( std::list<unsigned> variant_id_path ) = 0;
+  };
+
+  class Variants_Display_Manager
+  {
+  public:
+    Variants_Display_Manager() : notifiee(0), allow_selection(false) {}
+    virtual ~Variants_Display_Manager() {}
+
+    virtual void reset() = 0;
+    virtual void show_variant_tree(const Variant_Tree &,
+				   Coordinate_Translator *) = 0;
+    void set_notifiee(Variants_Display_Notifiee* _notifiee) { notifiee = _notifiee; }
+    void set_allow_selection( bool allow ) { allow_selection = allow; }
+  protected:
+    Variants_Display_Notifiee* notifiee;
+    bool allow_selection;
+  };
+
   /*! abstract class Game_UI_Manager
    *  interface for user interfaces
    */
@@ -217,12 +240,18 @@ namespace dvonn
 
     // interface for information access
     virtual Player_Input *get_user_input() = 0;
-    inline Game &get_display_game() { return display_game; }
+    Game &get_display_game() { return display_game; }
+    Variant *get_target_variant() { return target_variant; } 
+				// attention: this pointer is only
+				// valid for current display_game (exchanged every move)
+    void clear_target_variant() { target_variant = 0; }
 
     Game_UI_Manager( const Game &game );
     virtual ~Game_UI_Manager();
   protected:
     Game display_game;
+
+    Variant *target_variant;
   };
 
   /*! class Standalone_Game_Setup_Manager

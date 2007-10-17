@@ -1026,22 +1026,50 @@ namespace dvonn
 				Sequence_Generator * &sg )
     : Generic_Mouse_Input(gui_manager.get_display_game()), 
       game_manager(game_manager), gui_manager(gui_manager), 
-    sequence_generator_hook(sg), ai(0)
+      sequence_generator_hook(sg), ai(0)
   {
   }
   
   void Mouse_Handler::init_mouse_input() 
   {
     Game &game = gui_manager.get_display_game();
-    sequence_generator.reset();
-    sequence_generator_hook = &sequence_generator;
 
-    stop_watch.Start();
-    gui_manager.allow_user_activity();
-    if( game.current_player->help_mode == Player::show_hint )
+    Variant *target = gui_manager.get_target_variant();
+    Variant *prev = 0;
+    bool found = false;
+    while( target )
     {
-      ai = game_manager.get_hint_ai();
-      ai->determine_hints();
+      if( target == game.variant_tree.get_current_variant() && prev != 0 )
+      {
+	std::cout << "Found target variant: id=" << gui_manager.get_target_variant()->id 
+		  << ", sequence=" << prev->move_sequence << std::endl;
+	found = true;
+	sequence_generator.reset();
+	sequence_generator.set_sequence( prev->move_sequence );
+	gui_manager.do_move_slowly( prev->move_sequence, this, 
+				    -1 /*done event id*/, -1 /*abort event id*/ );
+	break;
+      }
+      if( target == game.variant_tree.get_root_variant() ) break;
+      prev = target;
+      target = target->prev;
+    }
+    if( !found )
+    {
+      if( gui_manager.get_target_variant() )
+	std::cout << "Target variant is off-track: id=" << gui_manager.get_target_variant()->id 
+		  << ", current id=" << game.variant_tree.get_current_variant()->id << std::endl;
+
+      sequence_generator.reset();
+      sequence_generator_hook = &sequence_generator;
+      gui_manager.clear_target_variant();
+      stop_watch.Start();
+      gui_manager.allow_user_activity();
+      if( game.current_player->help_mode == Player::show_hint )
+      {
+	ai = game_manager.get_hint_ai();
+	ai->determine_hints();
+      }
     }
   }
   void Mouse_Handler::disable_mouse_input() 
@@ -1064,10 +1092,20 @@ namespace dvonn
 
     gui_manager.show_user_information(false,false);
   }
+
   long Mouse_Handler::get_used_time()
   {
     return used_time;
   }
+
+  void Mouse_Handler::on_animation_done( wxTimerEvent& )
+  {
+    game_manager.continue_game();
+  }
+
+  BEGIN_EVENT_TABLE(Mouse_Handler, wxEvtHandler)				
+    EVT_TIMER(-1, Mouse_Handler::on_animation_done)	//**/
+  END_EVENT_TABLE()					//**/
 
   // ----------------------------------------------------------------------------
   // Game Panel
@@ -1244,9 +1282,11 @@ namespace dvonn
   // WX_GUI_Manager
   // ----------------------------------------------------------------------------
 
-  WX_GUI_Manager::WX_GUI_Manager( Game_Manager& game_manager, Game_Window &game_window )
+  WX_GUI_Manager::WX_GUI_Manager( Game_Manager& game_manager, Game_Window &game_window, 
+				  Variants_Display_Manager& variants_display_manager )
     : Game_UI_Manager( game_manager.get_game() ),
       game_manager(game_manager), game_window(game_window),
+      variants_display_manager(variants_display_manager),
       game_settings( Board_Panel::Settings(),
 		     Player_Panel::Settings(),
 		     Stone_Panel::Settings() ),
@@ -1259,6 +1299,7 @@ namespace dvonn
   {
     // self register
     game_manager.set_ui_manager( this );
+    variants_display_manager.set_notifiee( this );
 
     load_settings();
 
@@ -1279,6 +1320,63 @@ namespace dvonn
     game_window.init_scrollbars();
   }
 
+  void WX_GUI_Manager::selected_variant( std::list<unsigned> variant_id_path )
+  {
+    target_variant = display_game.variant_tree.get_variant(variant_id_path);
+    std::list<unsigned> cur_id_path = display_game.variant_tree.get_variant_id_path
+      (display_game.variant_tree.get_current_variant());
+
+    std::list<unsigned>::iterator it1, it2;
+    it1=variant_id_path.begin(); 
+    it2=cur_id_path.begin();
+    unsigned n=0;
+    for( ; it1!=variant_id_path.end() && it2 !=cur_id_path.end(); ++it1, ++it2 )
+    {
+      if( *it1 == *it2 )
+	++n;			// identical prefix
+      else
+	break;
+    }
+    // debug
+    std::cout << "Root Variant: " << display_game.variant_tree.get_root_variant() << std::endl;
+    {
+      std::cout << "Selected Variant: ";
+      std::list<unsigned>::iterator dit; 
+      Variant *cur_variant = display_game.variant_tree.get_root_variant();
+      for( dit=variant_id_path.begin(); dit != variant_id_path.end(); ++dit )
+      {
+	cur_variant = cur_variant->id_variant_map[*dit];
+	std::cout << cur_variant << "(" << cur_variant->id << "); ";
+      }
+      std::cout << std::endl;
+    }
+    {
+      std::cout << "Current Variant: ";
+      std::list<unsigned>::iterator dit; 
+      Variant *cur_variant = display_game.variant_tree.get_root_variant();
+      for( dit=cur_id_path.begin(); dit != cur_id_path.end(); ++dit )
+      {
+	cur_variant = cur_variant->id_variant_map[*dit];
+	std::cout << cur_variant << "(" << cur_variant->id << "); ";
+      }
+      std::cout << std::endl;
+    }
+    std::cout << "Target Variant = " << get_target_variant() << ", undo " 
+	      << cur_id_path.size() - n << " moves" <<  std::endl;
+    if( variant_id_path.size() == n ) // exact match
+    {
+      std::cout << "Exact Target Variant Match!" << std::endl;
+      target_variant = 0;
+    }
+    // perform undo first
+    int n_undo = cur_id_path.size() - n;
+    if( n_undo > 0 )
+      game_manager.do_undo_moves( n_undo );
+    else
+      if( target_variant !=0 )
+	game_manager.continue_game();
+  }
+
   void WX_GUI_Manager::setup_game_display() // setup all windows to display game
   {
     game_panel.remove_players();
@@ -1293,13 +1391,19 @@ namespace dvonn
 
   void WX_GUI_Manager::set_board( const Game &new_game )
   {
-    display_game = new_game;
-    refresh();
+    variants_display_manager.reset();
+    update_board( new_game );
   }
 
   void WX_GUI_Manager::update_board( const Game &new_game )
   {
-    set_board( new_game );
+    std::list<unsigned> variant_id_path;
+    if( target_variant )
+      variant_id_path = display_game.variant_tree.get_variant_id_path(target_variant);
+    display_game = new_game;
+    if( target_variant )
+      target_variant = display_game.variant_tree.get_variant(variant_id_path);
+    refresh();
   }
 
   void WX_GUI_Manager::report_winner( Player *player )
@@ -1312,7 +1416,7 @@ namespace dvonn
     }
     else
     {
-      report_information( _("It seems that nobody could win the game."), _("Winner") );
+      report_information( _("Nobody could win the game - This is a Tie!"), _("No Winner") );
     }
   }
 
@@ -1421,11 +1525,13 @@ namespace dvonn
     if( do_refresh )
       refresh();
   }
+
   void WX_GUI_Manager::give_hint( AI_Result ai_result )
   {
     current_hint = ai_result;
     show_user_information( true, true );
   }
+
   void WX_GUI_Manager::remove_hint()
   {
     current_hint = AI_Result();
@@ -1472,10 +1578,13 @@ namespace dvonn
   {
     show_user_information( true );
     beep();			// tell user that his activity is recommended
+    variants_display_manager.set_allow_selection(true);
     user_activity_allowed = true;
   }
+
   void WX_GUI_Manager::stop_user_activity()
   {
+    variants_display_manager.set_allow_selection(false);
     show_user_information( false, false );
     if( user_activity_allowed )
     {
@@ -1832,6 +1941,8 @@ namespace dvonn
   void WX_GUI_Manager::refresh()
   {
     game_window.refresh();
+    variants_display_manager.show_variant_tree(display_game.variant_tree,
+					       display_game.coordinate_translator);
   }
 }
 

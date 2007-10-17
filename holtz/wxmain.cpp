@@ -67,6 +67,7 @@ namespace holtz
   EVT_MENU(HOLTZ_NEW_ZERTZ_GAME,  Main_Frame::on_new_zertz_game)	//**/
   EVT_MENU(HOLTZ_NEW_DVONN_GAME,  Main_Frame::on_new_dvonn_game)	//**/
   EVT_MENU(HOLTZ_UNDO,		  Main_Frame::on_undo_move)		//**/
+  EVT_MENU(HOLTZ_VARIANTS,	  Main_Frame::on_variants)		//**/
   EVT_MENU(HOLTZ_SETTINGS,	  Main_Frame::on_settings)		//**/
   EVT_MENU(HOLTZ_QUIT,		  Main_Frame::on_quit)			//**/
   EVT_MENU(HOLTZ_HELP_CONTENTS,	  Main_Frame::on_help_contents)		//**/
@@ -212,8 +213,8 @@ namespace holtz
     : wxScrolledWindow( parent_frame ),
       parent_frame(*parent_frame),
       active_game(NO_GAME),
-      zertz_game_manager(0), zertz_gui_manager(0), zertz_game_dialog(0),
-      dvonn_game_manager(0), dvonn_gui_manager(0), dvonn_game_dialog(0)
+      zertz_game_manager(0), zertz_variants_frame(0), zertz_gui_manager(0), zertz_game_dialog(0),
+      dvonn_game_manager(0), dvonn_variants_frame(0), dvonn_gui_manager(0), dvonn_game_dialog(0)
   {
     SetBackgroundColour(*wxWHITE);
   }
@@ -232,6 +233,8 @@ namespace holtz
       delete zertz_game_dialog; // still needs game manager
       delete zertz_gui_manager;
       delete zertz_game_manager;
+      zertz_variants_frame->Destroy();
+      zertz_variants_frame = 0;
       break;
     case DVONN:
       if( dvonn_game_manager )
@@ -240,6 +243,8 @@ namespace holtz
       delete dvonn_game_dialog; // still needs game manager
       delete dvonn_gui_manager;
       delete dvonn_game_manager;
+      dvonn_variants_frame->Destroy();
+      dvonn_variants_frame = 0;
       break;
     case NO_GAME:
       break;
@@ -268,9 +273,11 @@ namespace holtz
   void Game_Window::init_zertz() 
   {
     close_game();
-    zertz_game_manager = new zertz::Game_Manager();
-    zertz_gui_manager  = new zertz::WX_GUI_Manager( *zertz_game_manager, *this );
-    zertz_game_dialog  = new zertz::Game_Dialog( this, *zertz_game_manager, *zertz_gui_manager );
+    zertz_game_manager   = new zertz::Game_Manager();
+    zertz_variants_frame = new zertz::Game_Variants_Frame( this );
+    zertz_gui_manager    = new zertz::WX_GUI_Manager( *zertz_game_manager, *this, 
+						      *zertz_variants_frame->get_game_variants() );
+    zertz_game_dialog    = new zertz::Game_Dialog( this, *zertz_game_manager, *zertz_gui_manager );
 
     active_game = ZERTZ;
     refresh();
@@ -279,9 +286,11 @@ namespace holtz
   void Game_Window::init_dvonn() 
   {
     close_game();
-    dvonn_game_manager = new dvonn::Game_Manager();
-    dvonn_gui_manager  = new dvonn::WX_GUI_Manager( *dvonn_game_manager, *this );
-    dvonn_game_dialog  = new dvonn::Game_Dialog( this, *dvonn_game_manager, *dvonn_gui_manager );
+    dvonn_game_manager   = new dvonn::Game_Manager();
+    dvonn_variants_frame = new dvonn::Game_Variants_Frame( this );
+    dvonn_gui_manager    = new dvonn::WX_GUI_Manager( *dvonn_game_manager, *this, 
+						      *dvonn_variants_frame->get_game_variants() );
+    dvonn_game_dialog    = new dvonn::Game_Dialog( this, *dvonn_game_manager, *dvonn_gui_manager );
 
     active_game = DVONN;
     refresh();
@@ -351,6 +360,22 @@ namespace holtz
       break;
     case DVONN:
       dvonn_game_manager->undo_move();
+      break;
+    case NO_GAME:
+      break;
+    }
+  }
+
+  void Game_Window::variants()
+  {
+    switch( active_game ) {
+    case ZERTZ:
+      zertz_variants_frame->Show(true);
+      zertz_gui_manager->refresh();
+      break;
+    case DVONN:
+      dvonn_variants_frame->Show(true);
+      dvonn_gui_manager->refresh();
       break;
     case NO_GAME:
       break;
@@ -645,6 +670,8 @@ namespace holtz
     // the "Setting" item should be in the help menu
     game_menu = new wxMenu;
     game_menu->Append(HOLTZ_UNDO, _("&Undo move\tCtrl-U"),  _("Try to undo move"));
+    game_menu->Append(HOLTZ_VARIANTS, _("Show &Variants\tCtrl-V"),  
+		      _("Show window with variant tree"));
 
     // the "About" item should be in the help menu
     wxMenu *help_menu = new wxMenu;
@@ -717,6 +744,11 @@ namespace holtz
   void Main_Frame::on_undo_move(wxCommandEvent& WXUNUSED(event))
   {
     game_window.undo_move();
+  }
+
+  void Main_Frame::on_variants(wxCommandEvent& WXUNUSED(event))
+  {
+    game_window.variants();
   }
 
   void Main_Frame::on_quit(wxCommandEvent& WXUNUSED(event))

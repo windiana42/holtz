@@ -55,6 +55,7 @@ namespace zertz
   class Coordinate_Translator;
   class Standard_Coordinate_Translator;
   class Move_Translator;
+  class Standard_Move_Translator;
   
   typedef enum Field_State_Type{ field_removed=-1, field_empty=0, 
 				 field_white=1, field_grey=2, field_black=3 };
@@ -264,6 +265,7 @@ namespace zertz
     static Direction get_far_direction( Field_Pos from, Field_Pos to );
     static Field_Pos get_next( Field_Pos p1, Direction dir );
 
+    // the following functions may move out of the board area => check validity
     Field_Iterator Next_Left() const;
     Field_Iterator Next_Right() const;
     Field_Iterator Next_Top_Left() const;
@@ -462,13 +464,15 @@ namespace zertz
     std::escape_ostream &output( std::escape_ostream & ) const;
     bool input( std::escape_istream & );
 
+    // this function takes care of the reserved memory
     void add_move( Move * );		// add move unchecked
+    // this function takes care of the reserved memory
     bool add_move( Game&, Move * );	// true: adding move ok (only relative check)
     Move *get_last_move();
     void undo_last_move( Game & );	// calls undo for last move and removes it
     void clear();
 
-    Move_Sequence clone() const;		// to store sequences, they must be cloned
+    Move_Sequence clone() const;	// to store sequences, they must be cloned
 
     inline const std::list<Move*> &get_moves() const { return *moves; }
     inline bool is_empty() { return moves->empty(); }
@@ -489,33 +493,53 @@ namespace zertz
   inline std::istream &operator>>( std::istream &is, Move_Sequence &s )
   { std::escape_istream eis(is); s.input(eis); return is; }
 
+  bool operator==( const Move &m1, const Move &m2 );
+  bool operator<( const Move &m1, const Move &m2 );
+  bool operator==( const Knock_Out_Move &m1, const Knock_Out_Move &m2 );
+  bool operator<( const Knock_Out_Move &m1, const Knock_Out_Move &m2 );
+  bool operator==( const Set_Move &m1, const Set_Move &m2 );
+  bool operator<( const Set_Move &m1, const Set_Move &m2 );
+  bool operator==( const Remove &m1, const Remove &m2 );
+  bool operator<( const Remove &m1, const Remove &m2 );
+  inline bool operator==( const Finish_Move &m1, const Finish_Move &m2 ) { return true; }
+  inline bool operator<( const Finish_Move &m1, const Finish_Move &m2 ) { return false; }
+  bool operator==( const Move_Sequence &s1, const Move_Sequence &s2 );
+  bool operator<( const Move_Sequence &s1, const Move_Sequence &s2 );
+
+  // with this class a variant tree could be built that stores different
+  // move possibilities
   class Variant
   {
   public:
     Variant( int current_player_index, const Move_Sequence &, 
-	     unsigned possible_variants, Variant *prev = 0 );
+	     unsigned possible_variants, unsigned id, Variant *prev = 0 );
     ~Variant();
 
     Variant *add_variant( int current_player_index,  
-			  const Move_Sequence &, unsigned possible_variants );
+			  const Move_Sequence &, unsigned possible_variants,
+			  unsigned id );
     bool is_prev( Variant * ) const;	// checks all previous variants
     Variant *clone( Variant *search = 0, Variant *&clone = default_clone ) const;
 				// clone variant with all subvariants
-				// optional: search for variant and store clone adresse of it in clone
+				// optional: search for variant and store 
+				// clone adresse of it in clone
 
     int current_player_index;	// player of the move sequence (0=first player,1=second player,...)
     Move_Sequence move_sequence;
     unsigned possible_variants;	// number of possible variants in the situation after this move 
+    unsigned id;		// id to identify variant through multiple copies of variant_tree
 
     Variant *prev;
     std::list<Variant*> variants;
+    std::map<unsigned,Variant*> id_variant_map;
   private:
     friend class Variant_Tree;
-    Variant();			// for root variant
+    Variant( unsigned id );	// for root variant
 
     static Variant *default_clone; // just as unused default argument in clone method
   };
 
+  // encapsulates a variant tree
   class Variant_Tree
   {
   public:
@@ -531,16 +555,22 @@ namespace zertz
     inline Variant *get_root_variant()    { return root; }
     inline const Variant *get_current_variant() const { return current_variant; }
     inline const Variant *get_root_variant()    const { return root; }
-    std::list<Move_Sequence> get_current_variant_moves();
+    std::list<Move_Sequence> get_current_variant_moves() const;
+    std::list<unsigned> get_variant_id_path( const Variant *dest_variant ) const;
+    const Variant *get_variant( const std::list<unsigned> variant_id_path ) const;
+    Variant *get_variant( const std::list<unsigned> variant_id_path );
   public:
     friend class Game;
     void add_in_current_variant( int current_player_index, const Move_Sequence &, 
 				 unsigned possible_variants );
     void move_a_variant_back();
     void clear();
+    void set_unique_id(unsigned id) { unique_id = id; }
+    unsigned get_unique_id() { return unique_id; }
   private:
     Variant *root;
     Variant *current_variant;
+    unsigned unique_id;
   };
 
   class Win_Condition
@@ -711,7 +741,7 @@ namespace zertz
   {
   public:
     virtual std::string encode( Move_Sequence ) = 0;
-    virtual Move_Sequence    decode( std::istream& ) = 0;
+    virtual Move_Sequence decode( std::istream& ) = 0;
     virtual ~Move_Translator() {}
   };
 
@@ -721,7 +751,7 @@ namespace zertz
     Standard_Move_Translator( Coordinate_Translator * );
 
     virtual std::string encode( Move_Sequence );
-    virtual Move_Sequence    decode( std::istream& );
+    virtual Move_Sequence decode( std::istream& );
   private:
     Coordinate_Translator *coordinate_translator;
   };
@@ -782,12 +812,13 @@ namespace zertz
   public:
     Tournament_Ruleset();
   };
-  
+
   class No_Output : public Player_Output
   {
   public:
     virtual void report_move( const Move_Sequence & );
   };
+
   class Stream_Output : public Player_Output
   {
   public:
@@ -851,11 +882,15 @@ namespace zertz
     { return move_done; }
     inline const Move_Sequence &get_sequence() const 
     { return sequence; }
+    inline void set_sequence( const Move_Sequence &seq )
+    { sequence = seq; auto_undo=false; state = move_finished; }
   private:
     Move_Sequence sequence;
     Game &game;
+    bool auto_undo;
 
-    typedef enum Internal_State{ begin, move_from, move_dest, stone_picked, stone_set, move_finished };
+    typedef enum Internal_State{ begin, move_from, move_dest, stone_picked, stone_set, 
+				 move_finished };
     Internal_State state;
 
     Stones::Stone_Type picked_stone;
@@ -864,7 +899,8 @@ namespace zertz
 
     Move *move_done;
 
-    bool easy_multiple_knock;	// true: don't have to click on stone again for following knock out moves
+    bool easy_multiple_knock;	// true: don't have to click on stone again for following 
+				// knock out moves
   };
 
   class Generic_Mouse_Input : public Player_Input

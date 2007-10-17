@@ -25,9 +25,12 @@ namespace zertz
 {
   struct PBM_Content
   {
+    enum Ruleset_Type {standard, tournament};
+
     int id;
     int from, to;
     std::string player1, player2;
+    Ruleset_Type ruleset_type;
   };
 
   bool operator<  ( const PBM_Content&, const PBM_Content& );

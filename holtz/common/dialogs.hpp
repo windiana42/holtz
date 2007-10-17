@@ -63,6 +63,7 @@ namespace dvonn
 #include <wx/wx.h>
 #include <wx/wizard.h>
 #include <wx/spinctrl.h>
+#include <wx/treectrl.h>
 #include <list>
 #include <map>
 #include <string>
@@ -548,6 +549,60 @@ namespace dvonn
     wxTextCtrl *hostname;
     wxSpinCtrl *port;
   private:
+    DECLARE_EVENT_TABLE()
+  };
+
+  // ============================================================================
+  // Game_Variants_Panel
+  // ============================================================================
+
+  class Variant_Tree_Item_Data : public wxTreeItemData
+  {
+  public:
+    Variant_Tree_Item_Data() : tree_version(0) {}
+    Variant_Tree_Item_Data(unsigned ver, 
+			   std::list<unsigned> variant_id_path = std::list<unsigned>()) 
+      : tree_version(ver), variant_id_path(variant_id_path) {}
+
+    unsigned tree_version;
+    std::list<unsigned> variant_id_path;
+    std::map<unsigned,wxTreeItemId> varid_treeid_map;
+  };
+
+  class Game_Variants_Panel : public wxPanel, public Variants_Display_Manager
+  {
+  public:
+    Game_Variants_Panel( wxWindow *parent );
+
+    // functions inherited from Variants_Display_Manager
+    virtual void reset();
+    virtual void show_variant_tree(const Variant_Tree &,
+				   Coordinate_Translator *);
+
+    void on_activated( wxTreeEvent& );
+    void on_changing( wxTreeEvent& );
+  private:
+    unsigned current_tree_version;
+    Variant_Tree variant_tree;
+    wxTreeCtrl *tree;
+    wxTreeItemId selected_variant_id;
+
+    DECLARE_EVENT_TABLE()
+  };
+
+  // ============================================================================
+  // Game_Variants_Frame
+  // ============================================================================
+
+  class Game_Variants_Frame : public wxFrame
+  {
+  public:
+    Game_Variants_Frame( wxWindow *parent );
+
+    Game_Variants_Panel *get_game_variants() { return game_variants; }
+    void on_close( wxCloseEvent &event );
+  private:
+    Game_Variants_Panel *game_variants;
     DECLARE_EVENT_TABLE()
   };
 }
