@@ -147,10 +147,10 @@ namespace dvonn
     void start_game();
     void continue_game();
     void new_game();		// request to start new game
-    void force_new_game(bool on_own=false); // start a new game (may disconnect game connection)
+    void force_new_game( bool on_own=false ); // start a new game (may disconnect game connection)
     void new_game_accepted();
     void new_game_denied();
-    void undo_move();
+    void undo_moves( int num_undo=-1 );
     void undo_accepted();
     void undo_denied();
     void do_undo_moves( int n=2 );

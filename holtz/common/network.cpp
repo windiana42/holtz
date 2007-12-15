@@ -2907,6 +2907,10 @@ namespace dvonn
 		  break;
 		}
 	      }
+	      if( does_include(own_player_ids,game.get_current_player().id) )
+		conn_state.state = BGP_MY_TURN;
+	      else
+		conn_state.state = BGP_OTHERS_TURN;
 	      // report to game manager
 	      game_manager.do_undo_moves(n);
 	      break;
@@ -2968,6 +2972,10 @@ namespace dvonn
 	      for(int i=0; i<asking_n; ++i)
 		if(!game.undo_move())
 		  break;
+	      if( does_include(own_player_ids,game.get_current_player().id) )
+		conn_state.state = BGP_MY_TURN;
+	      else
+		conn_state.state = BGP_OTHERS_TURN;
 	      // report to game manager
 	      game_manager.undo_accepted();
 	      break;
