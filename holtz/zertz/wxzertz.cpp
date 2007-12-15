@@ -1474,7 +1474,7 @@ namespace zertz
     // perform undo first
     int n_undo = cur_id_path.size() - n;
     if( n_undo > 0 )
-      game_manager.do_undo_moves( n_undo );
+      game_manager.undo_moves( n_undo );
     else
       if( target_variant !=0 )
 	game_manager.continue_game();

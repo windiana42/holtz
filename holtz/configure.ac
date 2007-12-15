@@ -7,7 +7,9 @@ AC_PROG_RANLIB
 
 #AC_CANONICAL_HOST
 
-WXLIBS=adv # this adds additional libs (ex: for sound in the advanced package of wxWidgets)
+WXLIBS=
+#I thought this would be right, but it actually doesn't work:
+#WXLIBS=adv # this adds additional libs (ex: for sound in the advanced package of wxWidgets)
 
 case $OSTYPE in #$OSTYPE replaces former $host_os
 *cygwin* )

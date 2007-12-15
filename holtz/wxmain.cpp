@@ -356,10 +356,12 @@ namespace holtz
   {
     switch( active_game ) {
     case ZERTZ:
-      zertz_game_manager->undo_move();
+      zertz_gui_manager->clear_target_variant();
+      zertz_game_manager->undo_moves();
       break;
     case DVONN:
-      dvonn_game_manager->undo_move();
+      dvonn_gui_manager->clear_target_variant();
+      dvonn_game_manager->undo_moves();
       break;
     case NO_GAME:
       break;

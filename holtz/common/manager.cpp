@@ -219,7 +219,7 @@ namespace dvonn
     }
   }
 
-  void Game_Manager::undo_move()
+  void Game_Manager::undo_moves(int num_undo)
   {
     if( undo_requested )
     {
@@ -245,16 +245,19 @@ namespace dvonn
       if( !game.variant_tree.is_first() )  // is there any move to undo?
       {
 	stop_game();
-	const Variant *variant = game.variant_tree.get_current_variant();
-
-	int num_undo = 1;
-	while( (variant->prev != game.variant_tree.get_root_variant()) &&
-	       ( (game.get_player(variant->current_player_index)->origin==Player::remote) ||
-		 (game.get_player(variant->current_player_index)->type==Player::ai) ||
-		 (variant->prev->possible_variants==1) ) )
+	if( num_undo < 0 ) // for num_undo < 0, num_undo is automatically determined
 	{
-	  variant = variant->prev;
-	  num_undo++;
+	  const Variant *variant = game.variant_tree.get_current_variant();
+
+	  num_undo = 1;
+	  while( (variant->prev != game.variant_tree.get_root_variant()) &&
+		 ( (game.get_player(variant->current_player_index)->origin==Player::remote) ||
+		   (game.get_player(variant->current_player_index)->type==Player::ai) ||
+		   (variant->prev->possible_variants==1) ) )
+	  {
+	    variant = variant->prev;
+	    num_undo++;
+	  }
 	}
 
 	// ask for undo
@@ -332,7 +335,6 @@ namespace dvonn
     if( ui_manager )
     {
       ui_manager->show_status_text(wxT(""));
-      ui_manager->clear_target_variant();
     }
     if( !undo_requested )
     {

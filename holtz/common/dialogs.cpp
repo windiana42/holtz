@@ -3063,7 +3063,7 @@ p			  str_to_wxstr(master_content.player1).c_str(), str_to_wxstr(master_content.
       }
       // mark current variant
       tree->SetItemBackgroundColour(selected_variant_id,*wxRED);
-      //tree->SelectItem(selected_variant_id); currently selection is always vetoed
+      //tree->SelectItem(selected_variant_id); //currently selection is always vetoed
       tree->ScrollTo(selected_variant_id);
     }
     // delete outdated tree items
