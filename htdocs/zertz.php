@@ -32,7 +32,7 @@ The players move alternately. They can choose between two kinds of moves:
 However, if a knock-out move is possible, it must be performed. 
 
 <h3>Goal of the game</h3>
-The goal is to get eithe three white, four gray, or five black stones. 
+The goal is to get either three white, four gray, or five black stones. 
 You also win if you have got two stones of each colour.
 
 <h3>Additional rules</h3>
