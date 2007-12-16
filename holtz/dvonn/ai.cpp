@@ -1129,6 +1129,13 @@ namespace dvonn
     thread = 0;
   }
 
+  void AI_Input::destroy_ai()
+  {
+    abort();
+    //!! intentional memory leak since waiting until thread is actually destroyed is not that easy
+    //wxPostDelete(this); // initiate deletion after thread was deleted
+  }
+
   void AI_Input::on_report_move( AI_Event &event )
   {
     if( thread_active && (event.thread == thread) )

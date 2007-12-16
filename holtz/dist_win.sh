@@ -1,7 +1,7 @@
 #!/bin/bash
 DIR=holtz-win32;
 i="msvc";
-VERSION=1.2.1
+VERSION=1.2.2
 
 FILES="";
 echo Building zip-package for $i;

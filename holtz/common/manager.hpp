@@ -141,6 +141,7 @@ namespace dvonn
   {
   public:
     Game_Manager( Game_UI_Manager *ui_manager = 0 );
+    ~Game_Manager();
     void set_ui_manager( Game_UI_Manager * );
     Game_UI_Manager *get_ui_manager() { return ui_manager; }
 
@@ -176,7 +177,7 @@ namespace dvonn
     Game game;
     bool valid_game, game_stopped;
     
-    AI_Input ai;		// may be replaced by multiple AIs
+    AI_Input *ai;		// may be replaced by multiple AIs
 
     bool undo_requested, new_game_requested;
     int num_undo_moves;

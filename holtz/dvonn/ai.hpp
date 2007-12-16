@@ -234,6 +234,7 @@ namespace dvonn
     virtual long get_used_time();
     void determine_hints();
     void abort();
+    void destroy_ai();
 
     void on_report_move( AI_Event & );
     void on_report_hint( AI_Event & );
