@@ -600,6 +600,8 @@ namespace dvonn
     Game_Variants_Frame( wxWindow *parent );
 
     Game_Variants_Panel *get_game_variants() { return game_variants; }
+    void show_frame();
+
     void on_close( wxCloseEvent &event );
   private:
     Game_Variants_Panel *game_variants;
