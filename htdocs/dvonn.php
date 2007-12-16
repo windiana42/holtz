@@ -27,7 +27,7 @@ The goal is to control as many pieces as possible by stacking them on top of eac
     <li>A piece or stack must always be moved as a whole and moves as many spaces 
               as there are pieces in the stack. They can be moved in any direction, but only along straight lines.</li>
     <li>A move may never end in an empty space, but you can move across empty spaces.</li>
-    <li>Only pieces or stacks that are not surrounded on all 6 sides can be moved.&nbsp;</li>
+    <li>Only pieces or stacks that are not surrounded on all 6 sides can be moved.</li>
     <li>Single DVONN pieces can not be moved, but stacks containing a DVONN piece can. </li>
   </ul></li>
   <li><b>Losing pieces</b>
@@ -42,9 +42,10 @@ The goal is to control as many pieces as possible by stacking them on top of eac
   </ul></li>
   <li><b>The End</b>
   <ul>
-    <li>The players must play as for long as they can. If one player 
-              can't make a move any more, the other must still continue while he can.</li>
-    <li>The player who has captured the most pieces in all of his stacks (color does not matter) wins.&nbsp;</li>
+    <li>The players must play as long as they can. If one player 
+        can't make a move any more, the other must still continue while he can.</li>
+    <li>The player wins who controls the most pieces with a piece of his color on top of any stack. 
+	All pieces in the stack are counted independent of their color.</li>
   </ul></li>
 </ol>
 
