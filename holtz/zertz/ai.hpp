@@ -31,7 +31,8 @@ namespace zertz
   class Position_Expanded_Handler
   {
   public:
-    virtual bool expanded( Game &, std::list<Branch*>::iterator ) = 0; // return false: don't continue
+    virtual bool expanded( Game &, std::list<Branch*>::iterator ) = 0;
+				// return false: don't continue
     virtual ~Position_Expanded_Handler();
   };
 
@@ -217,6 +218,7 @@ namespace zertz
     virtual long get_used_time();
     void determine_hints();
     void abort();
+    void destroy_ai();
 
     void on_report_move( AI_Event & );
     void on_report_hint( AI_Event & );

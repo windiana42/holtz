@@ -1,8 +1,9 @@
 * BUGS: 
 
-- Client name/ip not valid for server in linux
+- client name/ip not valid for server in linux
 - asking queries should be deferred during game setup dialog
 - DVONN AI considers some positions falsely as win or does intentionally bad moves (min/max mistake)
+- fix memory leak in ai.cpp -> AI_Input::destroy_ai
 
 * Features:
 

@@ -47,14 +47,18 @@ namespace dvonn
   Game_Manager::Game_Manager( Game_UI_Manager *ui_manager )
     : game_setup_manager(0), game_setup_display_handler(0), ui_manager(ui_manager), 
       game(Standard_Ruleset()), valid_game(false), game_stopped(true), 
-      ai(*this, ui_manager), undo_requested(false), new_game_requested(false)
+      ai(new AI_Input(*this, ui_manager)), undo_requested(false), new_game_requested(false)
   {
+  }
+  Game_Manager::~Game_Manager()
+  {
+    ai->destroy_ai(); // use pending delete because AI thread has to terminate first
   }
 
   void Game_Manager::set_ui_manager( Game_UI_Manager *new_ui_manager )
   {
     ui_manager = new_ui_manager;
-    ai.set_ui_manager(ui_manager);
+    ai->set_ui_manager(ui_manager);
   }
   
   void Game_Manager::start_game()
@@ -372,7 +376,7 @@ namespace dvonn
   {
     if( ui_manager )
       ui_manager->abort_all_activity(); // disable user input and animations
-    ai.abort();
+    ai->abort();
 
     bool error = false;
     for( int i=0; i<n; ++i )
@@ -400,7 +404,7 @@ namespace dvonn
 
   void Game_Manager::stop_game()
   {
-    ai.abort();
+    ai->abort();
     if( ui_manager )
       ui_manager->abort_all_activity(); // disable user input and animations
 
@@ -424,11 +428,11 @@ namespace dvonn
 
   AI_Input *Game_Manager::get_hint_ai()
   {
-    return &ai;
+    return ai;
   }
   AI_Input *Game_Manager::get_player_ai()
   {
-    return &ai;
+    return ai;
   }
 
   // ----------------------------------------------------------------------------

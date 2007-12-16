@@ -2953,7 +2953,7 @@ p			  str_to_wxstr(master_content.player1).c_str(), str_to_wxstr(master_content.
     wxBoxSizer *top_sizer = new wxBoxSizer( wxVERTICAL );
 
     tree = new wxTreeCtrl( this,-1,wxDefaultPosition,wxDefaultSize,
-			   wxTR_HAS_BUTTONS | /*wxTR_HIDE_ROOT |*/ wxTR_SINGLE | wxTR_LINES_AT_ROOT );
+			   wxTR_HAS_BUTTONS | wxTR_SINGLE | wxTR_LINES_AT_ROOT );
     selected_variant_id = tree->GetRootItem();
     top_sizer->Add(tree, 1, wxEXPAND, 0);
 
@@ -3052,7 +3052,7 @@ p			  str_to_wxstr(master_content.player1).c_str(), str_to_wxstr(master_content.
     else
     {
       root_data = new Variant_Tree_Item_Data(current_tree_version);
-      root = tree->AddRoot(wxT("start"),-1,-1,root_data);
+      root = tree->AddRoot(_("start"),-1,-1,root_data);
     }
     // add leaves of root (each recursively)
     const Variant *add_variant = variant_tree.get_root_variant();
