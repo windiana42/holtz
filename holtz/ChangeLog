@@ -3,6 +3,8 @@
 - Fixed bug in loading PBM games
 - Fixed bug in configure.ac causing compile problems with wxWidgets library
 - RPM is dynamically linked to wxGTK
+- Backward compatibility with wxWidgets 2.6 when using "./configure --enable-wx_2_6"
+- Spec files for several RPM based distributions used with opensuse build service
 1.2.1:
 - changed Zertz ruleset names to 
   Basic Ruleset: win=3/4/5/2 stones=5/7/9 rings=37 

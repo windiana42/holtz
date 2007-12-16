@@ -29,6 +29,7 @@ case $OSTYPE in #$OSTYPE replaces former $host_os
 #	AC_CHECK_HEADER( unistd.h, export CXXFLAGS="$CXXFLAGS -D__UNIX__" );;
 esac
 
+wx_2_6_Enabled="no"
 wxstatic_Enabled="no"
 unicode_Enabled="yes"
 
@@ -38,13 +39,19 @@ AC_ARG_ENABLE(wxstatic,AC_HELP_STRING([--enable-wxstatic=VAL],
 	[wxstatic_Enabled="$enableval"])
 
 AC_ARG_ENABLE(unicode,AC_HELP_STRING([--enable-unicode=VAL],
-	[VAL=yes: call wx-config --unicode ...; 
+	[VAL=yes: Link to unicode version of wxWidgets (wx-config --unicode); 
 	 VAL=no: use default wxGTK Version]),
 	[unicode_Enabled="$enableval"])
+
+AC_ARG_ENABLE(wx_2_6,AC_HELP_STRING([--enable-wx_2_6=VAL],
+	[VAL=yes: Make code wxWidgets 2.6 compatible; 
+	 VAL=no: use default wxGTK Version]),
+	[wx_2_6_Enabled="$enableval"])
 
 GTKVER=
 STATIC=
 UNICODE=
+BACKCOMPATIBILITY=
 
 if test "$wxstatic_Enabled" = "yes" ; then
   STATIC="--static=yes"
@@ -58,9 +65,14 @@ else
   UNICODE="--unicode=no"
 fi
 
-echo "wx-config $GTKVER $STATIC $UNICODE --libs $WXLIBS"
+if test "$wx_2_6_Enabled" = "yes" ; then
+  BACKCOMPATIBILITY="-DBACKCOMPATIBLE_WX_2_6"
+  echo "Activating backward compatibility for wxWidgets 2.6";
+fi
+
+echo "wx-config $GTKVER $STATIC $UNICODE --libs $WXLIBS";
 export LIBS="$LIBS `wx-config $GTKVER $STATIC $UNICODE --libs $WXLIBS`";
-export CXXFLAGS="$CXXFLAGS `wx-config $GTKVER $STATIC $UNICODE --cxxflags $WXLIBS`"
+export CXXFLAGS="$CXXFLAGS $BACKCOMPATIBILITY `wx-config $GTKVER $STATIC $UNICODE --cxxflags $WXLIBS`";
 
 AC_OUTPUT(
 	Makefile

@@ -272,7 +272,11 @@ namespace dvonn
       game_dialog.game_setup_manager->set_display_handler( &game_dialog );
       game_dialog.get_data_from_setup_manager();
       changes = false;
+#ifdef BACKCOMPATIBLE_WX_2_6
+      hostname->SetValue(hostname->GetValue());
+#else
       hostname->SetModified(false);
+#endif
       // store setting:
       alone_val = alone->GetValue();
       network_server_val = network_server->GetValue();
@@ -1066,7 +1070,7 @@ namespace dvonn
     if( changes )
     {
       int index = pbm_game_list->GetSelection();
-      int board_num = int( pbm_game_list->GetClientData(index) );
+      int board_num = int(intptr_t( pbm_game_list->GetClientData(index) ));
 
       // load board
       int current_move = 0, max_move, num_moves;
@@ -1228,8 +1232,12 @@ namespace dvonn
     if( directory == wxT("") ) 
       directory = wxGetCwd();
 
+#ifdef BACKCOMPATIBLE_WX_2_6
+    wxDirDialog *dialog = new wxDirDialog( this, _("Choose a directory"), directory );
+#else
     wxDirDialog *dialog = new wxDirDialog( this, _("Choose a directory"), directory, 
 					   wxDD_DIR_MUST_EXIST | wxDD_CHANGE_DIR );
+#endif
     if( dialog->ShowModal() == wxID_OK )
     {
       changes = true;
@@ -1422,8 +1430,12 @@ p			  str_to_wxstr(master_content.player1).c_str(), str_to_wxstr(master_content.
     if( directory == wxT("") ) 
       directory = wxGetCwd();
 
+#ifdef BACKCOMPATIBLE_WX_2_6
+    wxDirDialog *dialog = new wxDirDialog( this, _("Choose a directory"), directory );
+#else
     wxDirDialog *dialog = new wxDirDialog( this, _("Choose a directory"), directory, 
 					   wxDD_DIR_MUST_EXIST | wxDD_CHANGE_DIR );
+#endif
     if( dialog->ShowModal() == wxID_OK )
     {
       changes = true;
@@ -1542,7 +1554,11 @@ p			  str_to_wxstr(master_content.player1).c_str(), str_to_wxstr(master_content.
 
   void Player_Setup_Panel::on_add_player( wxCommandEvent& WXUNUSED(event) )
   {
+#ifdef BACKCOMPATIBLE_WX_2_6
+    player_name->SetValue(player_name->GetValue());
+#else
     player_name->SetModified(false);
+#endif
     if( game_dialog.game_setup_manager )
     {
       Player::Help_Mode help_mode = Player::no_help;

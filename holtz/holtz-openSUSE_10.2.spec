@@ -33,12 +33,12 @@ BuildRequires: wxGTK >= 2.8.4 wxGTK-devel gcc-c++
 #wxGTK-static has to be manually compiled
 %else
 #-- OpenSUSE 10.3  
-Requires:      wxGTK >= 2.8.4
-BuildRequires: wxGTK-devel >= 2.8.4 gcc-c++
+#Requires:      wxGTK >= 2.8.4
+#BuildRequires: wxGTK-devel >= 2.8.4 gcc-c++
 #-- OpenSUSE 10.2 - OpenSUSE Build Service
-#Requires:      wxGTK >= 2.6.1  
-#BuildRequires: wxGTK-devel >= 2.6.1 gcc-c++  
-#%#define BACKWARDCOMPATIBILITY "--enable-wx_2_6"
+Requires:      wxGTK >= 2.6.1  
+BuildRequires: wxGTK-devel >= 2.6.1 gcc-c++  
+%define BACKWARDCOMPATIBILITY "--enable-wx_2_6"
 #-- Feodora 8 - OpenSUSE Build Service
 #Requires:      wxGTK >= 2.8.4  
 #BuildRequires: wxGTK-devel >= 2.8.4 gcc-c++ lynx  
