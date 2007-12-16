@@ -42,6 +42,7 @@ windiana@users.sf.net</a>.<br>
 <li>Visualize variant tree and enable navigation</li>
 <li>Fixed bug in loading PBM games</li>
 <li>Fixed bug in configure.ac causing compile problems with wxWidgets library</li>
+<li>Fixed bug when deleting AI thread (e.g. when switching between Zertz and Dvonn)</li>
 <li>RPM is dynamically linked to wxGTK</li>
 <li>Backward compatibility with wxWidgets 2.6 when using "./configure --enable-wx_2_6"</li>
 <li>Spec files for several RPM based distributions used with opensuse build service</li>
