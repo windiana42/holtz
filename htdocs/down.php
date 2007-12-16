@@ -10,6 +10,7 @@
 <li>Windows binary (<a href="http://downloads.sourceforge.net/holtz/holtz-1.2.2-win32.zip">holtz-1.2.2-win32.zip</a>) - just extract and run</li>
 <li>Linux RPM, OpenSUSE 10.3 
 (<a href="http://downloads.sourceforge.net/holtz/holtz-1.2.2-1.i586.rpm">holtz-1.2.2-1.rpm</a>)</li>
+<li>See below for other Linux distributions</li>
 </ul>
 
 <h3>Sourcecode:</h3>
@@ -23,8 +24,8 @@ compatible with wxWidgets 2.6 as well.</p>
 <li>RPM source package (<a href="http://downloads.sourceforge.net/holtz/holtz-1.2.2-1.src.rpm">holtz-1.2.2-1.src.rpm</a>) - to compile a package for your RPM distribution, requires: wxWidgets 2.8</li>
 </ul>
 
-<h3>Untested binary packages:</h3>
-<p>Binary packages for Fedora, Mandriva, and other SUSE distributions can be found at 
+<h3>Binary packages for other Linux distributions:</h3>
+<p>Untested binary packages for Fedora, Mandriva, and other SUSE distributions can be found at 
 <a href="http://software.opensuse.org/search?p=1&q=holtz&baseproject=ALL">opensuse build service</a>.
 Please <a href="mailto:windiana@users.sf.net">report</a> your experiences when 
 using one of these packages so more binary linux packages can be provided on this page.
