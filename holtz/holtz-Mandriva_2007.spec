@@ -33,8 +33,8 @@ BuildRequires: wxGTK >= 2.8.4 wxGTK-devel gcc-c++
 #wxGTK-static has to be manually compiled
 %else
 #-- OpenSUSE 10.3  
-Requires:      wxGTK >= 2.8.4
-BuildRequires: wxGTK-devel >= 2.8.4 gcc-c++
+#Requires:      wxGTK >= 2.8.4
+#BuildRequires: wxGTK-devel >= 2.8.4 gcc-c++
 #-- OpenSUSE 10.2 - OpenSUSE Build Service
 #Requires:      wxGTK >= 2.6.1  
 #BuildRequires: wxGTK-devel >= 2.6.1 gcc-c++  
@@ -43,10 +43,10 @@ BuildRequires: wxGTK-devel >= 2.8.4 gcc-c++
 #Requires:      wxGTK >= 2.8.4  
 #BuildRequires: wxGTK-devel >= 2.8.4 gcc-c++ lynx  
 #-- Mandriva 2007 - OpenSUSE Build Service
-#Requires:      wxGTK >= 2.6.0  
-#BuildRequires: wxGTK-devel >= 2.6.0 gcc-c++  
-#%#define BACKWARDCOMPATIBILITY "--enable-wx_2_6"  
-#%#define UNICODE "--disable-unicode"  
+Requires:      wxGTK >= 2.6.0  
+BuildRequires: wxGTK-devel >= 2.6.0 gcc-c++  
+%define BACKWARDCOMPATIBILITY "--enable-wx_2_6"  
+%define UNICODE "--disable-unicode"  
 #-- Debian Etch - OpenSUSE Build Service
 #Requires:      libwxgtk2.6
 #BuildRequires: libwxgtk2.6-dev gcc-c++ hostname alien
