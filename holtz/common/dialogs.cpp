@@ -2953,7 +2953,7 @@ p			  str_to_wxstr(master_content.player1).c_str(), str_to_wxstr(master_content.
     wxBoxSizer *top_sizer = new wxBoxSizer( wxVERTICAL );
 
     tree = new wxTreeCtrl( this,-1,wxDefaultPosition,wxDefaultSize,
-			   wxTR_HAS_BUTTONS | wxTR_HIDE_ROOT | wxTR_SINGLE | wxTR_LINES_AT_ROOT );
+			   wxTR_HAS_BUTTONS | /*wxTR_HIDE_ROOT |*/ wxTR_SINGLE | wxTR_LINES_AT_ROOT );
     selected_variant_id = tree->GetRootItem();
     top_sizer->Add(tree, 1, wxEXPAND, 0);
 
@@ -3030,6 +3030,9 @@ p			  str_to_wxstr(master_content.player1).c_str(), str_to_wxstr(master_content.
   void Game_Variants_Panel::show_variant_tree(const Variant_Tree &new_variant_tree,
 					      Coordinate_Translator *coordinate_translator)
   {
+    if(!IsShown())
+      return;
+
     current_tree_version++;
     variant_tree = new_variant_tree;
 
@@ -3049,7 +3052,7 @@ p			  str_to_wxstr(master_content.player1).c_str(), str_to_wxstr(master_content.
     else
     {
       root_data = new Variant_Tree_Item_Data(current_tree_version);
-      root = tree->AddRoot(wxT("variants"),-1,-1,root_data);
+      root = tree->AddRoot(wxT("start"),-1,-1,root_data);
     }
     // add leaves of root (each recursively)
     const Variant *add_variant = variant_tree.get_root_variant();
@@ -3136,11 +3139,21 @@ p			  str_to_wxstr(master_content.player1).c_str(), str_to_wxstr(master_content.
     // set sizer
     SetAutoLayout( true );     // tell dialog to use sizer
     SetSizer( top_sizer );      // actually set the sizer
+
+    // initialize panels
+    game_variants->Show(false);
+  }
+
+  void Game_Variants_Frame::show_frame()
+  {
+    game_variants->Show(true);
+    Show(true);
   }
 
   void Game_Variants_Frame::on_close( wxCloseEvent &event )
   {
     Show(false);
+    game_variants->Show(false);
     event.Veto();		// don't destroy frame
   }
 

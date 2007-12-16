@@ -247,7 +247,7 @@ namespace dvonn
   // help classes
   // ============================================================================
 
-  class Mouse_Handler : public Generic_Mouse_Input, wxEvtHandler
+  class Mouse_Handler : public wxEvtHandler, public Generic_Mouse_Input
   {
   public:
     Mouse_Handler( Game_Manager &, WX_GUI_Manager &, Sequence_Generator* & );

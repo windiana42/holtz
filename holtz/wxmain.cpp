@@ -372,11 +372,11 @@ namespace holtz
   {
     switch( active_game ) {
     case ZERTZ:
-      zertz_variants_frame->Show(true);
+      zertz_variants_frame->show_frame();
       zertz_gui_manager->refresh();
       break;
     case DVONN:
-      dvonn_variants_frame->Show(true);
+      dvonn_variants_frame->show_frame();
       dvonn_gui_manager->refresh();
       break;
     case NO_GAME:
