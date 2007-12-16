@@ -4,7 +4,7 @@
 
 <h2>Download the Holtz program (source or binary)</h2>
 
-<br>
+<p>Notice: currently this page is updated from Holtz version 1.2.1 to 1.2.2</p>
 <h3>Binary Packages:</h3>
 <ul>
 <li>Windows binary (<a href="http://downloads.sourceforge.net/holtz/holtz-1.2.2-win32.zip">holtz-1.2.2-win32.zip</a>) - just extract and run</li>
