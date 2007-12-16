@@ -10,7 +10,7 @@
 <li>Windows binary (<a href="http://downloads.sourceforge.net/holtz/holtz-1.2.2-win32.zip">holtz-1.2.2-win32.zip</a>) - just extract and run</li>
 <li>Linux RPM, OpenSUSE 10.3 
 (<a href="http://downloads.sourceforge.net/holtz/holtz-1.2.2-1.i586.rpm">holtz-1.2.2-1.rpm</a>)</li>
-<li>See below for other Linux distributions</li>
+<li>For other Linux distributions, see below</li>
 </ul>
 
 <h3>Sourcecode:</h3>
