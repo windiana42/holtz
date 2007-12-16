@@ -2,6 +2,7 @@
 - Visualize variant tree and enable navigation
 - Fixed bug in loading PBM games
 - Fixed bug in configure.ac causing compile problems with wxWidgets library
+- Fixed bug when deleting AI thread (e.g. when switching between Zertz and Dvonn)
 - RPM is dynamically linked to wxGTK
 - Backward compatibility with wxWidgets 2.6 when using "./configure --enable-wx_2_6"
 - Spec files for several RPM based distributions used with opensuse build service
