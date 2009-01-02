@@ -18,6 +18,7 @@ int main()
   stones.stone_count[ game.ruleset->get_stone(9, 2, 8) ] = 0;
 
   Game best_game = find_optimal_solution( game, stones );
+  best_game.print();
   
   return 0;
 }

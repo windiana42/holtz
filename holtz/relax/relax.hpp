@@ -567,6 +567,8 @@ namespace relax
     std::vector<Player>::iterator get_next_player( std::vector<Player>::iterator player );
     std::vector<Player>::iterator get_prev_player( std::vector<Player>::iterator player );
 
+    void print();
+
     // *********************
     // utility functions
 
