@@ -522,6 +522,11 @@ namespace relax
     return Field_Iterator( pos, this );
   }
 
+  Field_State_Type Board::get_field( unsigned x, unsigned y )
+  { 
+    return field[x][y]; 
+  }
+
   // ----------------------------------------------------------------------------
   // Ruleset
   // ----------------------------------------------------------------------------
@@ -1375,7 +1380,7 @@ namespace relax
 	      }
 	    else
 	      add_score += count * cur_num;
-	    if( missing )
+	    if( missing && add_score != 0 )
 	      {
 		speculative_scores[right_dir][cur_num].push_back
 		  ( Speculative_Score(cur_num,count,missing) );
@@ -1425,7 +1430,7 @@ namespace relax
 		    cur_num = num;
 		    cur_num_set = true;
 		  }
-	      }
+	      } else missing++;
 	    ++count;
 	    it1.Bottom_Left();
 	  }
@@ -1439,7 +1444,7 @@ namespace relax
 	      }
 	    else
 	      add_score += count * cur_num;
-	    if( missing )
+	    if( missing && add_score != 0 )
 	      {
 		speculative_scores[bottom_left_dir][cur_num].push_back
 		  ( Speculative_Score(cur_num,count,missing) );
@@ -1507,7 +1512,7 @@ namespace relax
 		    cur_num = num;
 		    cur_num_set = true;
 		  }
-	      }
+	      } else missing++;
 	    ++count;
 	    it1.Bottom_Right();
 	  }
@@ -1521,7 +1526,7 @@ namespace relax
 	      }
 	    else
 	      add_score += count * cur_num;
-	    if( missing )
+	    if( missing && add_score != 0 )
 	      {
 		speculative_scores[bottom_right_dir][cur_num].push_back
 		  ( Speculative_Score(cur_num,count,missing) );
@@ -1561,16 +1566,16 @@ namespace relax
 		std::map<int/*num*/,std::list<Speculative_Score> > &map1 = speculative_scores[dir];
 		std::map<int/*num*/,std::list<Speculative_Score> >::iterator it;
 		std::list<Speculative_Score>::iterator list_it;
-		for( it=map1.begin(); it!=map1.begin(); ++it )
+		for( it=map1.begin(); it!=map1.end(); ++it )
 		  {
-		    for( list_it=it->second.begin(); list_it!=it->second.begin(); ++list_it )
+		    for( list_it=it->second.begin(); list_it!=it->second.end(); ++list_it )
 		      {
 			Speculative_Score &speculative_score = *list_it;
 			if( speculative_score.assigned_index == 1 )
 			  {
 			    cur_score += speculative_score.num * speculative_score.count;
-			    if( cur_available[dir][speculative_score.num] >= speculative_score.count )
-			      cur_available[dir][speculative_score.num] -= speculative_score.count;
+			    if( cur_available[dir][speculative_score.num] >= speculative_score.missing )
+			      cur_available[dir][speculative_score.num] -= speculative_score.missing;
 			    else
 			      {
 				infeasible = true;
@@ -1590,8 +1595,8 @@ namespace relax
 			  {
 			    int num = ruleset->get_nums(dir)[speculative_score.assigned_index-1];
 			    cur_score += num * speculative_score.count;
-			    if( cur_available[dir][num] >= speculative_score.count )
-			      cur_available[dir][num] -= speculative_score.count;
+			    if( cur_available[dir][num] >= speculative_score.missing )
+			      cur_available[dir][num] -= speculative_score.missing;
 			    else
 			      {
 				infeasible = true;
@@ -1608,7 +1613,7 @@ namespace relax
 		bool multi_break=false;
 		for( it=map1.begin(); it!=map1.end(); ++it )
 		  {
-		    for( list_it=it->second.begin(); list_it!=it->second.begin(); ++list_it )
+		    for( list_it=it->second.begin(); list_it!=it->second.end(); ++list_it )
 		      {
 			Speculative_Score &speculative_score = *list_it;
 			if( speculative_score.assigned_index >= 1 )
@@ -2897,6 +2902,9 @@ namespace relax
     bool operator() (Stones::Stone_Type lhs, Stones::Stone_Type rhs) {
       boost::tuple<int,int,int> lhs_nums = ruleset->get_numbers(lhs);
       boost::tuple<int,int,int> rhs_nums = ruleset->get_numbers(rhs);
+//       if( (lhs_nums.get<0>() != 9 || lhs_nums.get<1>() != 7 || lhs_nums.get<2>() != 8) &&
+// 	  (rhs_nums.get<0>() != 9 || rhs_nums.get<1>() != 7 || rhs_nums.get<2>() != 8) )
+// 	return rand() % 2;	// random sorting
       bool res = max(lhs_nums.get<0>(),lhs_nums.get<1>(),lhs_nums.get<2>()) <
 	max(rhs_nums.get<0>(),rhs_nums.get<1>(),rhs_nums.get<2>());
 //       std::cout << "Predicate: " << res << "==" 
@@ -2970,11 +2978,12 @@ namespace relax
 	    state.best_game = state.game;
 	    state.best_score = score;
 	    std::cout << "New best score: " << score << std::endl;
+	    state.best_game.print();
 	  }
 	return;
       }
     int max_score = state.game.get_max_score(&state.stones_available);
-    if( max_score <= state.best_score || max_score < 183/*New Benchmark*/ )
+    if( max_score <= state.best_score /*|| max_score < 251 /*183/*New Benchmark*/ )
       {
 	++state.bound_cnt;
 	if( state.bound_cnt % 10000000 == 0 ) std::cout << "bounds:" << state.bound_cnt << std::endl;
@@ -3009,6 +3018,7 @@ namespace relax
 	state.empty_fields.pop_front();
 	state.game.board.field[pos.x][pos.y] = Field_State_Type(current_stone);
 	recursive_find_optimal_solution3( state, level+1 );
+	//int sub_max_score = state.game.get_max_score(&state.stones_available);  // debug code
 	state.game.board.field[pos.x][pos.y] = field_empty;
 	state.empty_fields.push_back(pos);
 	level_cnt++;
@@ -3018,6 +3028,8 @@ namespace relax
 	    std::cout << "Level " << level << ": " << level_cnt << "/" << num_fields 
 		      << " bounds: " << (state.bound_cnt - save_bound_cnt) 
 		      << " cnt: " << (state.cnt - save_cnt) 
+		      << " x: " << pos.x << " y: " << pos.y
+	      //		      << " max_score: " << sub_max_score
 		      << std::endl;
 	  }
       }
@@ -3038,15 +3050,9 @@ namespace relax
 	    state.best_game = state.game;
 	    state.best_score = score;
 	    std::cout << "New best score: " << score << std::endl;
+	    state.best_game.print();
 	  }
 	return;
-      }
-    int max_score = state.game.get_max_score(&state.stones_available);
-    if( max_score <= state.best_score /*|| max_score < 183/*New Benchmark*/ )
-      {
-	++state.bound_cnt;
-	if( state.bound_cnt % 10000000 == 0 ) std::cout << "bounds:" << state.bound_cnt << std::endl;
-	return;						     // bound
       }
 
     state.cnt++;
@@ -3069,7 +3075,7 @@ namespace relax
     --state.stones_available[2][nums.get<2>()];
 
     // scan fields
-    std::multimap<int/*max_score*/,std::list<Field_Pos>::iterator> positions;    
+    std::multimap<int/*max_score*/,Field_Pos> positions;    
     std::list<Field_Pos>::iterator it;
     for( it=state.empty_fields.begin(); it!=state.empty_fields.end(); ++it )
       {
@@ -3077,21 +3083,20 @@ namespace relax
 	state.game.board.field[pos.x][pos.y] = Field_State_Type(current_stone);
 	int sub_max_score = state.game.get_max_score(&state.stones_available);
 	if( sub_max_score > state.best_score )
-	  positions.insert( std::make_pair(sub_max_score,it) );
+	  positions.insert( std::make_pair(sub_max_score,pos) );
 	state.game.board.field[pos.x][pos.y] = field_empty;
       }
     
     // traverse fields
     int level_cnt = 0;
     unsigned num_fields = positions.size();
-    std::multimap<int/*max_score*/,std::list<Field_Pos>::iterator>::reverse_iterator prio_it;
+    std::multimap<int/*max_score*/,Field_Pos>::reverse_iterator prio_it;
     for( prio_it = positions.rbegin(); prio_it != positions.rend(); ++prio_it )
       {
 	unsigned save_bound_cnt = state.bound_cnt;
 	unsigned save_cnt = state.cnt;
-	Field_Pos pos = *prio_it->second;
-	std::list<Field_Pos>::iterator it = prio_it->second;
-	state.empty_fields.erase(it);
+	Field_Pos pos = prio_it->second;
+	state.empty_fields.erase(find(state.empty_fields.begin(),state.empty_fields.end(),pos));
 	state.game.board.field[pos.x][pos.y] = Field_State_Type(current_stone);
 	recursive_find_optimal_solution4( state, level+1 );
 	state.game.board.field[pos.x][pos.y] = field_empty;

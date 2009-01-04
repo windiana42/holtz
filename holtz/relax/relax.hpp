@@ -260,6 +260,7 @@ namespace relax
 
     std::vector< std::vector<Field_State_Type> > field; // field[x][y]
     inline Field_State_Type get_field( Field_Pos pos ) { return field[pos.x][pos.y]; }
+    Field_State_Type get_field( unsigned x, unsigned y );
     inline int get_x_size() const { return field.size(); }
     inline int get_y_size() const { return field[0].size(); }
   };
