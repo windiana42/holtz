@@ -14,19 +14,31 @@
  * 
  */
 
-#if defined(VERSION_ZERTZ) && defined(VERSION_DVONN)
+#if (defined(VERSION_ZERTZ) && defined(VERSION_DVONN))
 #  error "something went wrong in include sequence: VERSION_ZERTZ and VERSION_DVONN defined"
+#endif
+#if (defined(VERSION_ZERTZ) && defined(VERSION_RELAX))
+#  error "something went wrong in include sequence: VERSION_ZERTZ and VERSION_RELAX defined"
+#endif
+#if (defined(VERSION_RELAX) && defined(VERSION_DVONN))
+#  error "something went wrong in include sequence: VERSION_RELAX and VERSION_DVONN defined"
 #endif
 
 #if (defined(VERSION_ZERTZ) && !defined(__ZERTZ_BGP_PROTOCOL__)) || \
-  (defined(VERSION_DVONN) && !defined(__DVONN_BGP_PROTOCOL__))
+  (defined(VERSION_DVONN) && !defined(__DVONN_BGP_PROTOCOL__)) || \
+  (defined(VERSION_RELAX) && !defined(__RELAX_BGP_PROTOCOL__))
 
 #if defined(VERSION_ZERTZ)
 #  define __ZERTZ_BGP_PROTOCOL__
+//#  warning "using zertz..."
 #elif defined(VERSION_DVONN)
 #  define __DVONN_BGP_PROTOCOL__
+//#  warning "using dvonn..."
+#elif defined(VERSION_RELAX)
+#  define __RELAX_BGP_PROTOCOL__
+//#  warning "using relax..."
 #else
-#  error "Please define either VERSION_ZERTZ or VERSION_DVONN"
+#  error "Please define either VERSION_ZERTZ or VERSION_DVONN or VERSION_RELAX"
 #endif
 
 #if defined(VERSION_ZERTZ)
@@ -39,6 +51,11 @@
 #  include "msg_net.hpp"
 #  include "dvonn/dvonn.hpp"
 #  define VERSION_DVONN
+#elif defined(VERSION_RELAX)
+#  undef VERSION_RELAX
+#  include "msg_net.hpp"
+#  include "relax/relax.hpp"
+#  define VERSION_RELAX
 #endif
 
 #include <string>
@@ -47,6 +64,8 @@
 namespace zertz
 #elif defined(VERSION_DVONN)
 namespace dvonn
+#elif defined(VERSION_RELAX)
+namespace relax
 #endif
 {
   namespace BGP
@@ -290,6 +309,12 @@ namespace dvonn
 				// = 49 ring board (standard)
       board_custom=99		// board_custom <board>
     };
+#elif defined(VERSION_RELAX)
+    enum Start_Board_Type
+    {
+      board_standard=0,		// board_standard
+      board_custom=99		// board_custom <board>
+    };
 #endif    
 
 
@@ -306,6 +331,11 @@ namespace dvonn
     {
       board_state_set_moves=0,
       board_state_jump_moves,
+    };
+#elif defined(VERSION_RELAX)
+    enum Board_State_Type
+    {
+      board_state_default=0,
     };
 #endif    
 

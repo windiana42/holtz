@@ -185,89 +185,103 @@ namespace relax
 
   void Bitmap_Handler::setup_field_stone_bitmaps()
   {
-    std::map<Stones::Stone_Type,wxBitmap>::iterator stone_bitmap;
-    std::pair<Field_State_Type,wxBitmap> field_pair;
-    for( stone_bitmap =  normal.stone_bitmaps.begin();
-	 stone_bitmap != normal.stone_bitmaps.end(); ++stone_bitmap )
-    {
-      const Stones::Stone_Type &stone_type = stone_bitmap->first;
+    Standard_Ruleset ruleset; 	// to convert numbers in fields
 
-      wxImage field_stone_image (normal.field_bitmaps[field_empty].ConvertToImage());
-      wxImage stone_image (stone_bitmap->second.ConvertToImage());
-      unsigned char *field_stone_data  = field_stone_image.GetData();
-      unsigned char *field_stone_alpha = field_stone_image.GetAlpha();
-      unsigned char *stone_data        = stone_image.GetData();
-      unsigned char *stone_alpha       = stone_image.GetAlpha();
-      unsigned char mask_colour[3];
-      mask_colour[0] = stone_image.GetMaskRed();
-      mask_colour[1] = stone_image.GetMaskGreen();
-      mask_colour[2] = stone_image.GetMaskBlue();
-      int min_width = field_stone_image.GetWidth() < stone_image.GetWidth() ? 
-	field_stone_image.GetWidth() : stone_image.GetWidth();
-      int min_height = field_stone_image.GetHeight() < stone_image.GetHeight() ? 
-	field_stone_image.GetHeight() : stone_image.GetHeight();
-
-      for( int x = 0; x < min_width; ++x )
-        for( int y = 0; y < min_height; ++y )
-	{
-	  if( stone_alpha && field_stone_alpha )
+    std::map<int/*num*/,wxBitmap>::iterator it1,it2,it3;
+    for( it1=normal.num_bitmaps[0].begin(); 
+	 it1!=normal.num_bitmaps[0].end(); ++it1 )
+      for( it2=normal.num_bitmaps[1].begin(); 
+	   it2!=normal.num_bitmaps[1].end(); ++it2 )
+	for( it3=normal.num_bitmaps[2].begin(); 
+	     it3!=normal.num_bitmaps[2].end(); ++it3 )
 	  {
-	    int sa = stone_alpha[x+y*stone_image.GetWidth()];
-	    int fa = field_stone_alpha[x+y*stone_image.GetWidth()];
-	    int smul = sa;
-	    int fmul = int((1-sa/255.)*fa);
-	    int na = max(sa,fa);
-	    for( int c = 0; c < 3; ++c )
-	    {
-	      int s = stone_data[(x+y*stone_image.GetWidth())*3 + c];
-	      int f = field_stone_data[(x+y*stone_image.GetWidth())*3 + c];
-	      if( smul+fmul > 0 )
-		field_stone_data[(x+y*stone_image.GetWidth())*3 + c]
-		  = ( s * smul + f * fmul ) / (smul+fmul); // apply weightings
-	      else
-		na = 0;
-	    }
-	    field_stone_alpha[x+y*stone_image.GetWidth()] = na;
-	  }
-	  else
-	  {
-	    // fall-back implementation for no/partial alpha support
- 	    bool masked = true;
-	    for( int c = 0; c < 3; ++c )
-	    {
-	      if( mask_colour[c] != stone_data[(x+y*stone_image.GetWidth())*3 + c] )
+	    std::vector<int> nums; nums.resize(3);
+	    nums[0] = it1->first;
+	    nums[1] = it2->first;
+	    nums[2] = it3->first;
+	    std::vector<wxBitmap*> bitmaps; bitmaps.resize(3);
+	    bitmaps[0] = &it1->second;
+	    bitmaps[1] = &it2->second;
+	    bitmaps[2] = &it3->second;
+	    Stones::Stone_Type stone_type = ruleset.get_stone(nums[0],nums[1],nums[2]);
+	    wxImage field_stone_image (normal.stone_base.ConvertToImage());
+	    for( unsigned dir=0; dir<3; ++dir )
 	      {
-		masked = false;
-		break;
+		wxImage stone_image (bitmaps[dir]->ConvertToImage());
+		// selfmade alpha-based overlay copy
+		unsigned char *field_stone_data  = field_stone_image.GetData();
+		unsigned char *field_stone_alpha = field_stone_image.GetAlpha();
+		unsigned char *stone_data        = stone_image.GetData();
+		unsigned char *stone_alpha       = stone_image.GetAlpha();
+		unsigned char mask_colour[3];
+		mask_colour[0] = stone_image.GetMaskRed();
+		mask_colour[1] = stone_image.GetMaskGreen();
+		mask_colour[2] = stone_image.GetMaskBlue();
+		int min_width = field_stone_image.GetWidth() < stone_image.GetWidth() ? 
+		  field_stone_image.GetWidth() : stone_image.GetWidth();
+		int min_height = field_stone_image.GetHeight() < stone_image.GetHeight() ? 
+		  field_stone_image.GetHeight() : stone_image.GetHeight();
+
+		for( int x = 0; x < min_width; ++x )
+		  for( int y = 0; y < min_height; ++y )
+		    {
+		      if( stone_alpha && field_stone_alpha )
+			{
+			  int sa = stone_alpha[x+y*stone_image.GetWidth()];
+			  int fa = field_stone_alpha[x+y*stone_image.GetWidth()];
+			  int smul = sa;
+			  int fmul = int((1-sa/255.)*fa);
+			  int na = max(sa,fa);
+			  for( int c = 0; c < 3; ++c )
+			    {
+			      int s = stone_data[(x+y*stone_image.GetWidth())*3 + c];
+			      int f = field_stone_data[(x+y*stone_image.GetWidth())*3 + c];
+			      if( smul+fmul > 0 )
+				field_stone_data[(x+y*stone_image.GetWidth())*3 + c]
+				  = ( s * smul + f * fmul ) / (smul+fmul); // apply weightings
+			      else
+				na = 0;
+			    }
+			  field_stone_alpha[x+y*stone_image.GetWidth()] = na;
+			}
+		      else
+			{
+			  // fall-back implementation for no/partial alpha support
+			  bool masked = true;
+			  for( int c = 0; c < 3; ++c )
+			    {
+			      if( mask_colour[c] != stone_data[(x+y*stone_image.GetWidth())*3 + c] )
+				{
+				  masked = false;
+				  break;
+				}
+			    }
+			  if( stone_alpha )
+			    if( stone_alpha[x+y*stone_image.GetWidth()] < 255 )
+			      masked = true; // consider using alpha as half transparency
+			  if( !masked )
+			    {
+			      for( int c = 0; c < 3; ++c )
+				{
+				  field_stone_data[(x+y*field_stone_image.GetWidth())*3 + c] = 
+				    stone_data[(x+y*stone_image.GetWidth())*3 + c];
+				}
+			      if( field_stone_alpha )
+				field_stone_alpha[(x+y*field_stone_image.GetWidth())] = 255;
+			    }
+			}
+		    }
+		stone_image.Destroy();
 	      }
-	    }
-	    if( stone_alpha )
-	      if( stone_alpha[x+y*stone_image.GetWidth()] < 255 )
-		masked = true; // consider using alpha as half transparency
-	    if( !masked )
-	    {
-	      for( int c = 0; c < 3; ++c )
-	      {
-		field_stone_data[(x+y*field_stone_image.GetWidth())*3 + c] = 
-		  stone_data[(x+y*stone_image.GetWidth())*3 + c];
-	      }
-	      if( field_stone_alpha )
-		field_stone_alpha[(x+y*field_stone_image.GetWidth())] = 255;
-	    }
+	    Field_State_Type field_type = Field_State_Type(stone_type);
+	    assert( Board::is_stone( field_type ) );
+	    normal.field_bitmaps[field_type] = wxBitmap(field_stone_image);
+	    field_stone_image.Destroy();
 	  }
-	}
-      // !! workaround for bitmap->image->bitmap convertion loosing alpha
-      wxImage field_empty_image (normal.field_bitmaps[field_empty].ConvertToImage());
-      normal.field_bitmaps[field_empty] = wxBitmap(field_empty_image);
-      // !! end workaround
-
-      Field_State_Type field_type = Field_State_Type(stone_type);
-      assert( Board::is_stone( field_type ) );
-      normal.field_bitmaps[field_type] = wxBitmap(field_stone_image);
-
-      field_stone_image.Destroy();
-      stone_image.Destroy();
-    }
+    // !! workaround for bitmap->image->bitmap convertion loosing alpha
+    wxImage field_empty_image (normal.field_bitmaps[field_empty].ConvertToImage());
+    normal.field_bitmaps[field_empty] = wxBitmap(field_empty_image);
+    // !! end workaround
   }
 
   void Bitmap_Handler::setup_rotated_bitmaps()
@@ -286,19 +300,6 @@ namespace relax
 	  = normal_bitmap.ConvertToImage().Rotate90( false /*counter clockwise*/ );
 	rotated.field_bitmaps.insert
 	  (std::pair<Field_State_Type,wxBitmap>(type, wxBitmap(normal_image)));
-      }
-
-      // rotate stone_bitmaps
-      rotated.stone_bitmaps.clear();
-      std::map<Stones::Stone_Type,wxBitmap>::iterator stone_bitmap;
-      for( stone_bitmap =  normal.stone_bitmaps.begin();
-	   stone_bitmap != normal.stone_bitmaps.end(); ++stone_bitmap )
-      {
-	wxBitmap &normal_bitmap = stone_bitmap->second;
-	const Stones::Stone_Type &type = stone_bitmap->first;
-	wxImage normal_image = normal_bitmap.ConvertToImage().Rotate90( false/*counter clockwise*/ );
-	rotated.stone_bitmaps.insert
-	  (std::pair<Stones::Stone_Type,wxBitmap>(type, wxBitmap(normal_image)));
       }
 
       // rotate marks
@@ -376,9 +377,9 @@ namespace relax
     {
       if( bitmap_handler.dimensions.rotation_symmetric )
       {
-	width = bitmap_handler.dimensions.field_packed_width * (game.board.get_y_size()-1) + 
+	width = bitmap_handler.dimensions.field_packed_width * (game.current_player->board.get_y_size()-1) + 
 	  bitmap_handler.dimensions.field_width + board_x; 
-	height = bitmap_handler.dimensions.field_height * game.board.get_x_size() +
+	height = bitmap_handler.dimensions.field_height * game.current_player->board.get_x_size() +
 	  bitmap_handler.dimensions.field_height / 2 + board_y; 
 	
 	if( settings.show_coordinates )
@@ -389,9 +390,9 @@ namespace relax
       }
       else
       {
-	width = bitmap_handler.dimensions.field_packed_height * (game.board.get_y_size()-1) + 
+	width = bitmap_handler.dimensions.field_packed_height * (game.current_player->board.get_y_size()-1) + 
 	  bitmap_handler.dimensions.field_height + board_x; 
-	height = bitmap_handler.dimensions.field_width * game.board.get_x_size() +
+	height = bitmap_handler.dimensions.field_width * game.current_player->board.get_x_size() +
 	  bitmap_handler.dimensions.field_width / 2 + board_y; 
 	
 	if( settings.show_coordinates )
@@ -403,9 +404,9 @@ namespace relax
     }
     else
     {
-      width = bitmap_handler.dimensions.field_width * game.board.get_x_size() + board_x
+      width = bitmap_handler.dimensions.field_width * game.current_player->board.get_x_size() + board_x
 	+ bitmap_handler.dimensions.field_width / 2;
-      height = bitmap_handler.dimensions.field_packed_height * (game.board.get_y_size()-1)  
+      height = bitmap_handler.dimensions.field_packed_height * (game.current_player->board.get_y_size()-1)  
 	+ bitmap_handler.dimensions.field_height + board_y;
 
       if( settings.show_coordinates )
@@ -421,13 +422,13 @@ namespace relax
     Game &game = gui_manager.get_display_game();
     Bitmap_Set &bitmap_set = get_bitmap_set();
 
-    for( int fy = 0; fy < game.board.get_y_size(); ++fy )
+    for( int fy = 0; fy < game.current_player->board.get_y_size(); ++fy )
     {
-      for( int fx = 0; fx < game.board.get_x_size(); ++fx )
+      for( int fx = 0; fx < game.current_player->board.get_x_size(); ++fx )
       {
 	std::pair<int,int> pos = get_field_pos( fx, fy );
 
-	dc.DrawBitmap( bitmap_set.field_bitmaps[ game.board.field[fx][fy] ], 
+	dc.DrawBitmap( bitmap_set.field_bitmaps[ game.current_player->board.field[fx][fy] ], 
 		       pos.first,  pos.second, true );
       }
     }
@@ -439,11 +440,11 @@ namespace relax
       Game &game = gui_manager.get_display_game();
       dc.SetTextForeground(*wxBLACK/*settings.coordinate_font_colour*/);
       dc.SetFont( settings.coord_font );
-      for( int fy = 0; fy < game.board.get_y_size(); ++fy )
+      for( int fy = 0; fy < game.current_player->board.get_y_size(); ++fy )
       {
-	for( int fx = 0; fx < game.board.get_x_size(); ++fx )
+	for( int fx = 0; fx < game.current_player->board.get_x_size(); ++fx )
 	{
-	  if( !Board::is_removed(game.board.field[fx][fy]) )
+	  if( !Board::is_removed(game.current_player->board.field[fx][fy]) )
 	  {
 	    Field_Pos pos;
 	    pos.x = fx;
@@ -482,9 +483,9 @@ namespace relax
 	    break;
 	  }
 	}      
-	for( int fx2 = game.board.get_x_size() - 1; fx2 >= 0; --fx2 )
+	for( int fx2 = game.current_player->board.get_x_size() - 1; fx2 >= 0; --fx2 )
 	{
-	  if( !Board::is_removed(game.board.field[fx2][fy]) )
+	  if( !Board::is_removed(game.current_player->board.field[fx2][fy]) )
 	  {
 	    Field_Pos pos;
 	    pos.x = fx2;
@@ -545,15 +546,6 @@ namespace relax
 	    sequence_generator = 0;
 	    game_manager.continue_game();
 	    break;
-	  case Sequence_Generator::hold_white:
-	  case Sequence_Generator::hold_grey:
-	  case Sequence_Generator::hold_black:
-	    {
-	      std::pair<int,int> coord = get_field_pos( pos.x, pos.y );
-	      gui_manager.set_mark( coord.first, coord.second );
-	      gui_manager.show_user_information( true );
-	    }
-	  break;
 	  case Sequence_Generator::another_click:
 	    gui_manager.set_mark(-1,-1);
 	    gui_manager.show_user_information( true );
@@ -562,35 +554,17 @@ namespace relax
 	    msg.Printf( _("Fatal Error!") );
 	    gui_manager.report_error( msg, _("Click Error") );
 	    break;
-	  case Sequence_Generator::error_require_knock_out:
-	    gui_manager.show_status_text(_("You must do the knock out move!"));
-	    break;
 	  case Sequence_Generator::error_require_set:
 	    gui_manager.show_status_text(_("You have to set a stone!"));
 	    break;
-	  case Sequence_Generator::error_require_remove:
-	    gui_manager.show_status_text(_("You have to remove an empty border field!"));
-	    break;
-	  case Sequence_Generator::error_can_t_remove:
-	    gui_manager.show_status_text(_("Field can't be removed without moving another stone!"));
-	    break;
-	  case Sequence_Generator::error_can_t_move_here:
-	    gui_manager.show_status_text(_("You can't move to that field!"));
-	    break;
 	  case Sequence_Generator::error_can_t_set_here:
 	    gui_manager.show_status_text(_("Please set the stone on an empty field!"));
-	    break;
-	  case Sequence_Generator::error_must_pick_common_stone:
-	    gui_manager.show_status_text(_("You must pick a common stone!"));
 	    break;
 	  case Sequence_Generator::error_wrong_player:
 	    gui_manager.show_status_text(_("Its not the turn of that player!"));
 	    break;
 	  case Sequence_Generator::error_impossible_yet:
 	    gui_manager.show_status_text(_("You can't do that at the moment!"));
-	    break;
-	  case Sequence_Generator::error_must_knock_out_with_same_stone:
-	    gui_manager.show_status_text(_("You must knock out once more with the same stone!"));
 	    break;
 	    /*
 	      default:
@@ -619,7 +593,7 @@ namespace relax
       int board_size_y;
       if( bitmap_handler.dimensions.rotation_symmetric )
       {
-	board_size_y = bitmap_handler.dimensions.field_height * game.board.get_x_size() 
+	board_size_y = bitmap_handler.dimensions.field_height * game.current_player->board.get_x_size() 
 	  + bitmap_handler.dimensions.field_height / 2;
 
 	half_diff = (bitmap_handler.dimensions.field_width - 
@@ -630,7 +604,7 @@ namespace relax
       }
       else
       {
-	board_size_y = bitmap_handler.dimensions.field_width * game.board.get_x_size() 
+	board_size_y = bitmap_handler.dimensions.field_width * game.current_player->board.get_x_size() 
 	  + bitmap_handler.dimensions.field_width / 2;
 
 	half_diff = (bitmap_handler.dimensions.field_height - 
@@ -659,8 +633,8 @@ namespace relax
       int col = (rel_x - offset) / field_width;
       
       if( (col >= 0) && (row >= 0) && 
-	  (col < game.board.get_x_size()) && 
-	  (row < game.board.get_y_size()) )
+	  (col < game.current_player->board.get_x_size()) && 
+	  (row < game.current_player->board.get_y_size()) )
       {
 	return Field_Pos(col,row);
       }
@@ -686,7 +660,7 @@ namespace relax
 
 	// swap x-y and invert y-axis => rotated board
 	int field_y = anf_y
-	  + bitmap_handler.dimensions.field_height * (game.board.get_x_size() - 1 - col);
+	  + bitmap_handler.dimensions.field_height * (game.current_player->board.get_x_size() - 1 - col);
 	int field_x = anf_x + row*bitmap_handler.dimensions.field_packed_width;
 	return std::pair<int,int>( field_x, field_y );
       }
@@ -701,7 +675,7 @@ namespace relax
 
 	// swap x-y and invert y-axis => rotated board
 	int field_y = anf_y
-	  + bitmap_handler.dimensions.field_width * (game.board.get_x_size() - 1 - col);
+	  + bitmap_handler.dimensions.field_width * (game.current_player->board.get_x_size() - 1 - col);
 	int field_x = anf_x + row*bitmap_handler.dimensions.field_packed_height;
 	return std::pair<int,int>( field_x, field_y );
       }
@@ -755,99 +729,60 @@ namespace relax
 
   void Stone_Panel::calc_dimensions()
   {
-    if( settings.multiple_stones )
+    if( settings.multiple_stones )  // no difference
     {
-      width  = bitmap_handler.dimensions.field_width * settings.max_stones;
-      height = 3 * bitmap_handler.dimensions.field_height;
+      width  = bitmap_handler.dimensions.field_width;
+      height = bitmap_handler.dimensions.field_height;
     }
     else
     {
-      width  = 3 * bitmap_handler.dimensions.field_width;
+      width  = bitmap_handler.dimensions.field_width;
       height = bitmap_handler.dimensions.field_height;
     }
   }
   
   void Stone_Panel::draw( wxDC &dc ) const
   {
-    int stone_type;
     int y_pos = y, x_pos = x;
-    for( stone_type = Stones::white_stone; stone_type <= Stones::black_stone; ++stone_type )
-    {
-      if( settings.multiple_stones )
-      {
-	int count = stones.stone_count[ Stones::Stone_Type(stone_type) ];
-	if( count > settings.max_stones ) count = settings.max_stones;
-	
-	x_pos = x;
-	int i;
-	for( i = 0; i < count; ++i )
-	{
-	  if( settings.rotate_stones && !bitmap_handler.dimensions.rotation_symmetric )
-	  {
-	    dc.DrawBitmap( bitmap_handler.normal.field_bitmaps[ field_empty ], 
-			   x_pos, y_pos, true );
-	    dc.DrawBitmap( bitmap_handler.rotated.stone_bitmaps[ Stones::Stone_Type(stone_type) ], 
-			   x_pos, y_pos, true );
-	  }
-	  else
-	    dc.DrawBitmap( bitmap_handler.normal.field_bitmaps[ Field_State_Type(stone_type) ], 
-			   x_pos, y_pos, true );
-	  
-	  x_pos += bitmap_handler.dimensions.field_width;
-	}
-	for( ; i < settings.max_stones; ++i )
-	{
-	  dc.DrawBitmap( bitmap_handler.normal.field_bitmaps[ field_removed ], x_pos, y_pos, true );
-	  x_pos += bitmap_handler.dimensions.field_width;
-	}
-      
-	y_pos += bitmap_handler.dimensions.field_height;
-      }
-      else			// display only one stone and write count as text on it
+    if( stones.current_stone != Stones::invalid_stone )
       {
 	if( settings.rotate_stones && !bitmap_handler.dimensions.rotation_symmetric )
-	{
-	  dc.DrawBitmap( bitmap_handler.normal.field_bitmaps[ field_empty ], 
-			 x_pos, y_pos, true );
-	  dc.DrawBitmap( bitmap_handler.rotated.stone_bitmaps[ Stones::Stone_Type(stone_type) ], 
-			 x_pos, y_pos, true );
-	}
+	  {
+	    dc.DrawBitmap( bitmap_handler.rotated.field_bitmaps[ Field_State_Type(stones.current_stone) ], 
+			   x_pos, y_pos, true );
+	  }
 	else
-	  dc.DrawBitmap( bitmap_handler.normal.field_bitmaps[ Field_State_Type(stone_type) ], 
-			 x_pos, y_pos, true );
-
-	x_pos += bitmap_handler.dimensions.field_width;
+	  {
+	    dc.DrawBitmap( bitmap_handler.normal.field_bitmaps[ Field_State_Type(stones.current_stone) ], 
+			   x_pos, y_pos, true );
+	  }
       }
-    }
   }
 
   void Stone_Panel::draw_text( wxDC &dc ) const
   {
-    if( !settings.multiple_stones ) // display only one stone and write count as text on it
-    {
-      int stone_type;
-      int y_pos = y, x_pos = x;
-      for( stone_type = Stones::white_stone; stone_type <= Stones::black_stone; ++stone_type )
-      {
-	int count = stones.stone_count[ Stones::Stone_Type(stone_type) ];
+//     if( stones.current_stone != Stones::invalid_stone )
+//       {
+// 	int stone_type;
+// 	int y_pos = y, x_pos = x;
+// 	int num1=(stones.current_stone-Stones::stone_begin)%3;  // todo: user ruleset to determine!!!
+// 	int num2=((stones.current_stone-Stones::stone_begin)/3)%3;
+// 	int num3=((stones.current_stone-Stones::stone_begin)/9)%3;
 
-	wxString str;
-	str.Printf(wxT("%d"), count);
+// 	wxString str;
+// 	str.Printf(wxT("%d/%d/%d"), num1, num2, num3);
 
-	dc.SetTextForeground(*wxRED/*settings.stone_font_colour*/);
-	dc.SetFont( settings.stone_font );
-	wxCoord w,h;
-	dc.GetTextExtent(str,&w,&h);
+// 	dc.SetTextForeground(*wxRED/*settings.stone_font_colour*/);
+// 	dc.SetFont( settings.stone_font );
+// 	wxCoord w,h;
+// 	dc.GetTextExtent(str,&w,&h);
 
-	dc.DrawText( str, 
-		     x_pos + (bitmap_handler.dimensions.field_width  - w) / 2 +
-		     bitmap_handler.dimensions.field_x, 
-		     y_pos + (bitmap_handler.dimensions.field_height - h) / 2 +
-		     bitmap_handler.dimensions.field_y );
-
-	x_pos += bitmap_handler.dimensions.field_width;
-      }
-    }
+// 	dc.DrawText( str, 
+// 		     x_pos + (bitmap_handler.dimensions.field_width  - w) / 2 +
+// 		     bitmap_handler.dimensions.field_x, 
+// 		     y_pos + (bitmap_handler.dimensions.field_height - h) / 2 +
+// 		     bitmap_handler.dimensions.field_y );
+//       }
   }
   
   void Stone_Panel::on_click( int click_x, int click_y ) const
@@ -861,6 +796,7 @@ namespace relax
 
       if( type != Stones::invalid_stone )
       {
+	/*
 	if( col < stones.stone_count[type] )
 	{
 	  Sequence_Generator::Sequence_State state;
@@ -920,14 +856,15 @@ namespace relax
 	    case Sequence_Generator::error_must_knock_out_with_same_stone:
 	      gui_manager.show_status_text(_("You must knock out once more with the same stone!"));
 	      break;
-	      /*
+	      / *
 		default:
 		msg.Printf( _("Click impossible") );
 	    
 		wxMessageBox(msg, _("Click"), wxOK | wxICON_INFORMATION, 0);
-	      */
+	      * /
 	  }
 	}
+	*/
       }
     }
   }
@@ -1008,7 +945,7 @@ namespace relax
       if( clicked_stone.first != Stones::invalid_stone )
       {
 	Stones::Stone_Type type = clicked_stone.first;
-
+	/*
 	if( clicked_stone.second < player.stones.stone_count[type] )
 	{
 	  Sequence_Generator::Sequence_State state;
@@ -1068,14 +1005,15 @@ namespace relax
 	    case Sequence_Generator::error_must_knock_out_with_same_stone:
 	      gui_manager.show_status_text(_("You must knock out once more with the same stone!"));
 	      break;
-	      /*
+	      / *
 		default:
 		msg.Printf( _("Click impossible") );
 	    
 		wxMessageBox(msg, _("Click"), wxOK | wxICON_INFORMATION, 0);
-	      */
+	      * /
 	  }
 	}
+	*/
       }
     }
   }
@@ -1283,7 +1221,7 @@ namespace relax
     {
       Sequence_Generator::Sequence_State state;
       state = sequence_generator->undo_click();
-	
+      /*	
       switch( state )
       {
 	case Sequence_Generator::hold_white:
@@ -1303,6 +1241,7 @@ namespace relax
 	default:
 	  assert(false);	// shouldn't be returned by undo_click()
       }
+      */
     }
   }
 
@@ -1509,6 +1448,20 @@ namespace relax
     refresh();
   }
 
+  void WX_GUI_Manager::report_scores( std::multimap<int/*score*/,Player*> scores )
+  {
+    wxString msg, line;
+    std::multimap<int/*score*/,Player*>::iterator it;
+    for( it=scores.begin(); it!=scores.end(); ++it )
+      {
+	int score = it->first;
+	Player *player = it->second;
+	line.Printf( _("%3d points: %s\n"), score, str_to_wxstr(player->name).c_str() );
+	msg += line;
+      }
+    report_information( msg, _("Scores") );
+  }
+
   void WX_GUI_Manager::report_winner( Player *player )
   {
     if( player )
@@ -1555,6 +1508,7 @@ namespace relax
 	  {
 	    if( sequence_generator->get_required_move_type() != Move::set_move )
 	    {
+	      /*
 	      std::list<Field_Pos> clicks = sequence_generator->get_possible_clicks();
 	      std::list<Field_Pos>::iterator click;
 	      for( click = clicks.begin(); click != clicks.end(); ++click )
@@ -1566,6 +1520,7 @@ namespace relax
 		  stone_mark_positions.push_back
 		    ( game_panel.get_board_panel().get_field_pos( click->x, click->y ) );
 	      }
+	      */
 	    }
 	  }
 	}
@@ -1583,17 +1538,6 @@ namespace relax
 		case Move::no_move:
 		case Move::finish_move:
 		  break;
-		case Move::knock_out_move:
-		  {
-		    Knock_Out_Move *knock_move = dynamic_cast<Knock_Out_Move *>(*move);
-		    stone_mark_positions.push_back
-		      ( game_panel.get_board_panel().get_field_pos( knock_move->from.x, 
-								    knock_move->from.y ) );
-		    stone_mark_positions.push_back
-		      ( game_panel.get_board_panel().get_field_pos( knock_move->to.x, 
-								    knock_move->to.y ) );
-		  }
-		break;
 		case Move::set_move:
 		  {
 		    Set_Move *set_move = dynamic_cast<Set_Move *>(*move);
@@ -1631,14 +1575,6 @@ namespace relax
 								    set_move->pos.y ) );
 		  }
 		break;
-		case Move::remove:
-		  {
-		    Remove *remove = dynamic_cast<Remove *>(*move);
-		    field_mark_positions.push_back
-		      ( game_panel.get_board_panel().get_field_pos( remove->remove_pos.x,
-								    remove->remove_pos.y ) );
-		  }
-		break;
 	      }
 	    }
 	  }
@@ -1650,14 +1586,8 @@ namespace relax
       {
 	switch ( sequence_generator->get_required_move_type() )
 	{
-	  case Move::knock_out_move:
-	    show_status_text(_("Please do a knock out move")); // remove old status text message
-	    break;
 	  case Move::set_move:
 	    show_status_text(_("You should set a stone")); // remove old status text message
-	    break;
-	  case Move::remove:
-	    show_status_text(_("Just remove a field")); // remove old status text message
 	    break;
 	  case Move::no_move:
 	  case Move::finish_move:
@@ -1879,9 +1809,9 @@ namespace relax
     {
       bitmap_handler.normal.field_bitmaps[field_removed]	= wxBitmap(field_removed_xpm);
       bitmap_handler.normal.field_bitmaps[field_empty]		= wxBitmap(field_empty_xpm);
-      bitmap_handler.normal.stone_bitmaps[Stones::white_stone]	= wxBitmap(stone_white_xpm);
-      bitmap_handler.normal.stone_bitmaps[Stones::grey_stone]	= wxBitmap(stone_grey_xpm);
-      bitmap_handler.normal.stone_bitmaps[Stones::black_stone]	= wxBitmap(stone_black_xpm);
+      //bitmap_handler.normal.stone_bitmaps[Stones::white_stone]	= wxBitmap(stone_white_xpm);
+      //bitmap_handler.normal.stone_bitmaps[Stones::grey_stone]	= wxBitmap(stone_grey_xpm);
+      //bitmap_handler.normal.stone_bitmaps[Stones::black_stone]	= wxBitmap(stone_black_xpm);
       bitmap_handler.normal.click_mark				= wxBitmap(click_mark_xpm);
       bitmap_handler.normal.field_mark				= wxBitmap(field_mark_xpm);
       bitmap_handler.normal.stone_mark				= wxBitmap(stone_mark_xpm);
@@ -1992,6 +1922,7 @@ namespace relax
   {
     show_user_information(false,false);
 
+    Standard_Ruleset ruleset;	// to lookup numbers
     wxZipInputStream *input;
     wxImage image;
 
@@ -2005,22 +1936,26 @@ namespace relax
     image.LoadFile( *input, wxBITMAP_TYPE_PNG );
     bitmap_handler.normal.field_bitmaps[field_empty] = wxBitmap(image);
     delete input;
-    input = new wxZipInputStream( filename, wxT("stone_white.png") );
+    for( unsigned dir=0; dir<3; ++dir )
+      {
+	std::vector<int>::iterator it;
+	for( it=ruleset.get_nums(dir).begin(); it!=ruleset.get_nums(dir).end(); ++it )
+	  {
+	    int num = *it;
+	    std::string stone_file = "stone_" + long_to_string(dir) + "_" + 
+	      long_to_string(num) + ".png";
+	    input = new wxZipInputStream( filename, str_to_wxstr(stone_file) );
+	    if( input->Eof() ) { delete input; return false; }
+	    image.LoadFile( *input, wxBITMAP_TYPE_PNG );
+	    bitmap_handler.normal.num_bitmaps[dir][num] = wxBitmap(image);
+	    delete input;
+	  }
+      }
+    input = new wxZipInputStream( filename, wxT("stone_base.png") );
     if( input->Eof() ) { delete input; return false; }
     image.LoadFile( *input, wxBITMAP_TYPE_PNG );
-    bitmap_handler.normal.stone_bitmaps[Stones::white_stone] = wxBitmap(image);
+    bitmap_handler.normal.stone_base = wxBitmap(image);
     delete input;
-    input = new wxZipInputStream( filename, wxT("stone_grey.png") );
-    if( input->Eof() ) { delete input; return false; }
-    image.LoadFile( *input, wxBITMAP_TYPE_PNG );
-    bitmap_handler.normal.stone_bitmaps[Stones::grey_stone] = wxBitmap(image);
-    delete input;
-    input = new wxZipInputStream( filename, wxT("stone_black.png") );
-    if( input->Eof() ) { delete input; return false; }
-    image.LoadFile( *input, wxBITMAP_TYPE_PNG );
-    bitmap_handler.normal.stone_bitmaps[Stones::black_stone] = wxBitmap(image);
-    delete input;
-
     input = new wxZipInputStream( filename, wxT("click_mark.png") );
     if( input->Eof() ) { delete input; return false; }
     image.LoadFile( *input, wxBITMAP_TYPE_PNG );

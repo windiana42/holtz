@@ -19,28 +19,43 @@
 #include <wx/config.h>
 #include <wx/socket.h>
 
-#if defined(VERSION_ZERTZ) && defined(VERSION_DVONN)
+#if (defined(VERSION_ZERTZ) && defined(VERSION_DVONN))
 #  error "something went wrong in include sequence: VERSION_ZERTZ and VERSION_DVONN defined"
+#endif
+#if (defined(VERSION_ZERTZ) && defined(VERSION_RELAX))
+#  error "something went wrong in include sequence: VERSION_ZERTZ and VERSION_RELAX defined"
+#endif
+#if (defined(VERSION_RELAX) && defined(VERSION_DVONN))
+#  error "something went wrong in include sequence: VERSION_RELAX and VERSION_DVONN defined"
 #endif
 
 #if (defined(VERSION_ZERTZ) && !defined(__ZERTZ_NETWORK__)) || \
-  (defined(VERSION_DVONN) && !defined(__DVONN_NETWORK__))
+  (defined(VERSION_DVONN) && !defined(__DVONN_NETWORK__)) || \
+  (defined(VERSION_RELAX) && !defined(__RELAX_NETWORK__))
 
 #if defined(VERSION_ZERTZ)
 #  define __ZERTZ_NETWORK__
+//#  warning "using zertz..."
 #elif defined(VERSION_DVONN)
 #  define __DVONN_NETWORK__
+//#  warning "using dvonn..."
+#elif defined(VERSION_RELAX)
+#  define __RELAX_NETWORK__
+//#  warning "using relax..."
 #else
-#  error "Please define either VERSION_ZERTZ or VERSION_DVONN"
+#  error "Please define either VERSION_ZERTZ or VERSION_DVONN or VERSION_RELAX"
 #endif
 
 #define GAME_NAME_ZERTZ "/GIPFPROJECT/ZERTZ"
 #define GAME_NAME_DVONN "/GIPFPROJECT/DVONN"
+#define GAME_NAME_RELAX "/GIPFPROJECT/RELAX"
 
 #if defined(VERSION_ZERTZ)
 namespace zertz
 #elif defined(VERSION_DVONN)
 namespace dvonn
+#elif defined(VERSION_RELAX)
+namespace relax
 #endif
 {
   class Network_Connection_Handler;
@@ -96,12 +111,22 @@ namespace holtz
 #  include "dvonn/manager.hpp"
 #  include "dvonn/bgp.hpp"
 #  define VERSION_DVONN
+#elif defined(VERSION_RELAX)
+#  undef VERSION_RELAX
+#  include "msg_net.hpp"
+#  include "relax/relax.hpp"
+#  include "relax/wxrelax.hpp"
+#  include "relax/manager.hpp"
+#  include "relax/bgp.hpp"
+#  define VERSION_RELAX
 #endif
 
 #if defined(VERSION_ZERTZ)
 namespace zertz
 #elif defined(VERSION_DVONN)
 namespace dvonn
+#elif defined(VERSION_RELAX)
+namespace relax
 #endif
 {
   using namespace holtz;
@@ -198,9 +223,9 @@ namespace dvonn
     void on_done(wxTimerEvent& event);
     void on_connection_timer( Message_Network<BGP::Message> *connection ); 
   private:
-    typedef enum Display_Phase{ DISPLAY_INIT, DISPLAY_SETUP, DISPLAY_PLAYING };
+    enum Display_Phase{ DISPLAY_INIT, DISPLAY_SETUP, DISPLAY_PLAYING };
     // BGP 1.00a protocol states 
-    typedef enum Protocol_State{ BGP_UNCONNECTED, BGP_CONNECTED, BGP_HANDSHAKE, BGP_CHOOSE_ROOM,
+    enum Protocol_State{ BGP_UNCONNECTED, BGP_CONNECTED, BGP_HANDSHAKE, BGP_CHOOSE_ROOM,
 				 BGP_INFO, BGP_SETUP, BGP_ADD_PLAYER, BGP_REMOVE_PLAYER, 
 				 BGP_READY, BGP_OTHERS_TURN, BGP_HIS_TURN, 
 				 BGP_ASK_UNDO, BGP_ACCEPT_UNDO, 
@@ -208,7 +233,7 @@ namespace dvonn
 				 BGP_ERROR };
     std::string to_string(Protocol_State);
 /*bgp100c
-    typedef enum Protocol_State{ BGP_UNCONNECTED, BGP_CONNECTED, BGP_HANDSHAKE, BGP_CHOOSE_ROOM,
+    enum Protocol_State{ BGP_UNCONNECTED, BGP_CONNECTED, BGP_HANDSHAKE, BGP_CHOOSE_ROOM,
 				 BGP_INFO, BGP_SETUP, BGP_ASK_CHANGE, BGP_ACCEPT_CHANGE, 
 				 BGP_READY, BGP_READY_ACCEPT, BGP_OTHERS_TURN, BGP_HIS_TURN, 
 				 BGP_ASK_UNDO, BGP_ACCEPT_UNDO, 
@@ -401,9 +426,9 @@ namespace dvonn
     void on_timer(wxTimerEvent& event);
     void on_done(wxTimerEvent& event);
   private:
-    typedef enum Display_Phase{ DISPLAY_INIT, DISPLAY_SETUP, DISPLAY_PLAYING };
+    enum Display_Phase{ DISPLAY_INIT, DISPLAY_SETUP, DISPLAY_PLAYING };
     // BGP 1.00a protocol states 
-    typedef enum Protocol_State{ BGP_UNCONNECTED, BGP_HANDSHAKE, BGP_ROOMS,
+    enum Protocol_State{ BGP_UNCONNECTED, BGP_HANDSHAKE, BGP_ROOMS,
 				 BGP_ASK_ROOM, BGP_GET_PHASE, BGP_SETUP_PREPARE_1, 
 				 BGP_PLAY_PREPARE_1, BGP_PLAY_PREPARE_2, BGP_PLAY_PREPARE_3A,
 				 BGP_PLAY_PREPARE_3B, BGP_PLAY_PREPARE_4A, BGP_TAKE_PLAYER, 

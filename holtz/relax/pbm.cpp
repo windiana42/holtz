@@ -321,10 +321,7 @@ namespace relax
     if( from == 0 )		// if this is the first call of load_game setup a new game
     {
       Ruleset *ruleset;
-      if( relax_p11 )
-        ruleset = new Tournament_Ruleset();
-      else
-        ruleset = new Standard_Ruleset();
+      ruleset = new Standard_Ruleset();
       ruleset->min_players = 2;	// exact 2 players
       ruleset->max_players = 2;	// exact 2 players
       game.reset_game( *ruleset );

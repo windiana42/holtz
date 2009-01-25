@@ -24,6 +24,10 @@
 #  undef VERSION_DVONN
 #  include "util.hpp"
 #  define VERSION_DVONN
+#elif defined(VERSION_RELAX)
+#  undef VERSION_RELAX
+#  include "util.hpp"
+#  define VERSION_RELAX
 #endif
 
 #include <string>
@@ -37,6 +41,8 @@
 namespace zertz
 #elif defined(VERSION_DVONN)
 namespace dvonn
+#elif defined(VERSION_RELAX)
+namespace relax
 #endif
 {
   using namespace holtz;
@@ -146,6 +152,13 @@ namespace dvonn
 	default: return false;	// invalid board state
       }
       std::vector< std::vector< std::deque<Field_State_Type> > > fields;
+#elif defined(VERSION_RELAX)
+      switch(Board_State_Type(board_state))
+      {
+	case board_state_default: break;
+	default: return false;	// invalid board state
+      }
+      std::vector< std::vector< Field_State_Type > > fields;
 #endif
 
       fields.resize(rows);
@@ -203,6 +216,21 @@ namespace dvonn
 #endif
 	    return false;		// if field type is invalid
 	  }
+#elif defined(VERSION_RELAX)
+	  int field_type;
+	  eis >> field_type;
+	  if( field_type == field_empty )
+	      ++num_empty_fields;
+	  if( field_type == field_empty || field_type == field_removed ||
+	      (field_type >= field_begin && field_type < field_end) )
+	    {
+	      fields[row][col] = Field_State_Type(field_type);
+	      continue;		// field type ok => continue loop
+	    }
+#ifndef __WXMSW__
+	  std::cerr << "error: received invalid field" << std::endl;
+#endif
+	  return false;		// if field type is invalid
 #endif
 	}
       }
@@ -210,6 +238,8 @@ namespace dvonn
       board = Board(fields);
 #elif defined(VERSION_DVONN)
       board = Board(dvonn_board_state,num_empty_fields,fields);
+#elif defined(VERSION_RELAX)
+      board = Board(fields);
 #endif
       return true;
     }
@@ -225,6 +255,8 @@ namespace dvonn
 	case Board::set_moves:  board_state = board_state_set_moves; break;
 	case Board::jump_moves: board_state = board_state_jump_moves; break;
       }
+#elif defined(VERSION_RELAX)
+      board_state = board_state_default;
 #endif
       int columns=board.get_y_size(), rows=board.get_x_size();
       eos << board_state << rows << columns;
@@ -243,6 +275,8 @@ namespace dvonn
 	  {
 	    eos << *it;
 	  }
+#elif defined(VERSION_RELAX)
+	  eos << board.field[row][col];
 #endif
 	}
       }
@@ -261,6 +295,8 @@ namespace dvonn
     // DVONN:
     //   board_49
     //   board_custom <board>
+    // RELAX:
+    //   board_standard
     
     bool read_start_board( std::escape_istream &eis, Board &start_board )
     {
@@ -315,6 +351,19 @@ namespace dvonn
 	}
 #elif defined(VERSION_DVONN)
 	case board_49_rings:
+	{
+	  start_board = Board( (const int*) standard_board, 
+			       sizeof(standard_board[0]) / sizeof(standard_board[0][0]),
+			       sizeof(standard_board)    / sizeof(standard_board[0]),
+			       Board::standard );
+	  return true;
+	}
+	case board_custom:
+	{
+	  return read_board( eis, start_board );
+	}
+#elif defined(VERSION_RELAX)
+	case board_standard:
 	{
 	  start_board = Board( (const int*) standard_board, 
 			       sizeof(standard_board[0]) / sizeof(standard_board[0][0]),
@@ -388,6 +437,21 @@ namespace dvonn
 	  common_stones = Custom_Common_Stones( red_stones, white_stones, black_stones );
 	  return true;
 	}
+#elif defined(VERSION_RELAX)
+	case stones_standard:
+	{
+	  common_stones = Standard_Common_Stones();
+	  return true;
+	}
+	/* TODO
+	case stones_custom:
+	{
+	  int red_stones, white_stones, black_stones;
+	  eis >> red_stones >> white_stones >> black_stones;
+	  common_stones = Custom_Common_Stones( red_stones, white_stones, black_stones );
+	  return true;
+	}
+	*/
 #endif
       }
       return false;
@@ -406,6 +470,8 @@ namespace dvonn
 	eos << common_stones.stone_count[Stones::red_stone];
 	eos << common_stones.stone_count[Stones::white_stone];
 	eos << common_stones.stone_count[Stones::black_stone];
+#elif defined(VERSION_RELAX)
+	//!!! todo
 #endif
       }
     }
@@ -453,6 +519,12 @@ namespace dvonn
 	  win_condition = new Standard_Win_Condition();
 	  return true;
 	}
+#elif defined(VERSION_RELAX)
+	case win_standard:
+	{
+	  win_condition = new Standard_Win_Condition();
+	  return true;
+	}
 #endif
       }
       return false;
@@ -460,9 +532,9 @@ namespace dvonn
 
     void write_win_condition( std::escape_ostream &eos, Win_Condition *win_condition )
     {
-      assert( win_condition->get_type() != Win_Condition::full_custom );
       eos << win_condition->get_type();
 #if defined(VERSION_ZERTZ)
+      assert( win_condition->get_type() != Win_Condition::full_custom );
       if( win_condition->get_type() == Win_Condition::generic )
       {
 	Generic_Win_Condition *gwin = dynamic_cast<Generic_Win_Condition*>(win_condition);
@@ -475,6 +547,7 @@ namespace dvonn
 	}
       }
 #elif defined(VERSION_DVONN)
+#elif defined(VERSION_RELAX)
 #endif
     }
     
@@ -513,6 +586,12 @@ namespace dvonn
 	  return true;
 	}
 #elif defined(VERSION_DVONN)
+	case ruleset_standard:
+	{
+	  ruleset = Standard_Ruleset();
+	  return true;
+	}
+#elif defined(VERSION_RELAX)
 	case ruleset_standard:
 	{
 	  ruleset = Standard_Ruleset();
@@ -606,6 +685,7 @@ namespace dvonn
 	player.stones.stone_count[Stones::grey_stone ] = grey_stones;
 	player.stones.stone_count[Stones::black_stone] = black_stones;
 #elif defined(VERSION_DVONN)
+#elif defined(VERSION_RELAX)
 #endif
 	players.push_back( player );
       }
@@ -625,6 +705,7 @@ namespace dvonn
 	eos << i->stones.stone_count.find(Stones::grey_stone)->second;
 	eos << i->stones.stone_count.find(Stones::black_stone)->second;
 #elif defined(VERSION_DVONN)
+#elif defined(VERSION_RELAX)
 #endif
       }
     }

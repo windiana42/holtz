@@ -198,7 +198,7 @@ namespace zertz
   public:
     struct Settings
     {
-      typedef enum Arrangement_Type { arrange_standard, arrange_stones_right };
+      enum Arrangement_Type { arrange_standard, arrange_stones_right };
       Settings( const Board_Panel::Settings &board_settings, 
 		const Player_Panel::Settings &player_settings,
 		const Stone_Panel::Settings &common_stone_settings,
@@ -297,6 +297,7 @@ namespace zertz
     virtual void setup_game_display(); // setup all windows to display game
     virtual void set_board( const Game &game );
     virtual void update_board( const Game &game );
+    virtual void report_scores( std::multimap<int/*score*/,Player*> scores );
     virtual void report_winner( Player *player );
     virtual void report_error( wxString msg, wxString caption );
     virtual void report_information( wxString msg, wxString caption );

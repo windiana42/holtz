@@ -109,7 +109,7 @@ namespace relax
     wxEvtHandler *done_handler;
     int event_id, abort_id;
 
-    typedef enum State_Type { begin, knock_out_jump, knock_out_collects, 
+    enum State_Type { begin, knock_out_jump, knock_out_collects, 
 			      removing,setting_stone, finish_sequence, finish_removes, 
 			      finished };
     State_Type state;

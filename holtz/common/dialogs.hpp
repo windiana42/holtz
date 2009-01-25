@@ -14,28 +14,43 @@
  * 
  */
 
-#if defined(VERSION_ZERTZ) && defined(VERSION_DVONN)
+#if (defined(VERSION_ZERTZ) && defined(VERSION_DVONN))
 #  error "something went wrong in include sequence: VERSION_ZERTZ and VERSION_DVONN defined"
+#endif
+#if (defined(VERSION_ZERTZ) && defined(VERSION_RELAX))
+#  error "something went wrong in include sequence: VERSION_ZERTZ and VERSION_RELAX defined"
+#endif
+#if (defined(VERSION_RELAX) && defined(VERSION_DVONN))
+#  error "something went wrong in include sequence: VERSION_RELAX and VERSION_DVONN defined"
 #endif
 
 #if (defined(VERSION_ZERTZ) && !defined(__ZERTZ_DIALOG__)) || \
-  (defined(VERSION_DVONN) && !defined(__DVONN_DIALOG__))
+  (defined(VERSION_DVONN) && !defined(__DVONN_DIALOG__)) || \
+  (defined(VERSION_RELAX) && !defined(__RELAX_DIALOG__))
 
 #if defined(VERSION_ZERTZ)
 #  define __ZERTZ_DIALOG__
+//#  warning "using zertz..."
 #elif defined(VERSION_DVONN)
 #  define __DVONN_DIALOG__
+//#  warning "using dvonn..."
+#elif defined(VERSION_RELAX)
+#  define __RELAX_DIALOG__
+//#  warning "using relax..."
 #else
-#  error "Please define either VERSION_ZERTZ or VERSION_DVONN"
+#  error "Please define either VERSION_ZERTZ or VERSION_DVONN or VERSION_RELAX"
 #endif
 
 #define DEFAULT_PORT_ZERTZ 6211
 #define DEFAULT_PORT_DVONN 6221
+#define DEFAULT_PORT_RELAX 6231
 
 #if defined(VERSION_ZERTZ)
 namespace zertz
 #elif defined(VERSION_DVONN)
 namespace dvonn
+#elif defined(VERSION_RELAX)
+namespace relax
 #endif
 {
   class Game_Dialog;
@@ -58,6 +73,13 @@ namespace dvonn
 #  include "dvonn/pbm.hpp"
 #  include "dvonn/littlegolem.hpp"
 #  define VERSION_DVONN
+#elif defined(VERSION_RELAX)
+#  undef VERSION_RELAX
+#  include "relax/network.hpp"
+#  include "relax/relax.hpp"
+#  include "relax/wxrelax.hpp"
+#  include "relax/pbm.hpp"
+#  define VERSION_RELAX
 #endif
 
 #include <wx/wx.h>
@@ -72,6 +94,8 @@ namespace dvonn
 namespace zertz
 #elif defined(VERSION_DVONN)
 namespace dvonn
+#elif defined(VERSION_RELAX)
+namespace relax
 #endif
 {
   // ============================================================================

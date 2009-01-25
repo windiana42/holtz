@@ -57,7 +57,7 @@ namespace dvonn
   class Move_Translator;
   class Standard_Move_Translator;
   
-  typedef enum Field_State_Type{ field_removed=-1, field_empty=0, 
+  enum Field_State_Type{ field_removed=-1, field_empty=0, 
 				 field_red=1, field_white=2, field_black=3 };
 
   const int standard_board[][11] =
@@ -94,7 +94,7 @@ namespace dvonn
   public:
     Stones();
 
-    typedef enum Stone_Type{ invalid_stone=0, red_stone=1, white_stone=2, black_stone=3 };
+    enum Stone_Type{ invalid_stone=0, red_stone=1, white_stone=2, black_stone=3 };
     std::map<Stone_Type, int> stone_count;
 
 #ifndef __WXMSW__
@@ -107,7 +107,7 @@ namespace dvonn
   class Common_Stones : public Stones
   {
   public:
-    typedef enum Common_Stones_Type{ standard=0, custom=99 };
+    enum Common_Stones_Type{ standard=0, custom=99 };
 
     Common_Stones( Common_Stones_Type type=custom );
     Common_Stones_Type get_type() const { return type; }
@@ -130,8 +130,8 @@ namespace dvonn
   class Player_Input
   {
   public:
-    typedef enum Player_State{ finished=0, wait_for_event, request_undo,
-			       interruption_possible };
+    enum Player_State{ finished=0, wait_for_event, request_undo,
+		       interruption_possible };
 
     virtual Player_State determine_move() throw(Exception) = 0;
     virtual Move_Sequence get_move() = 0;
@@ -151,9 +151,9 @@ namespace dvonn
   class Player
   {
   public:
-    typedef enum Player_Type{ unknown=0, user, ai };
-    typedef enum Help_Mode{ no_help=0, show_possible_moves, show_hint };
-    typedef enum Origin{ local, remote }; // origin where player is controled
+    enum Player_Type{ unknown=0, user, ai };
+    enum Help_Mode{ no_help=0, show_possible_moves, show_hint };
+    enum Origin{ local, remote }; // origin where player is controled
 
     Player( std::string name="", int id=-1, Player_Input *in=0, 
 	    std::list<Player_Output*> out=no_output,
@@ -193,7 +193,7 @@ namespace dvonn
   class Field_Iterator 
   {
   public:
-    typedef enum Direction{ invalid_direction=-1, 
+    enum Direction{ invalid_direction=-1, 
 			    right=0, top_right=1, top_left=2, left=3, 
 			    bottom_left=4, bottom_right=5,
 			    right2=6, top_right2=7, top_left2=8, left2=9, 
@@ -243,8 +243,8 @@ namespace dvonn
   class Board
   {
   public:
-    typedef enum Board_Type{ standard=0, custom=99 };
-    typedef enum Game_State{ set_moves=0, jump_moves };
+    enum Board_Type{ standard=0, custom=99 };
+    enum Game_State{ set_moves=0, jump_moves };
 
     Board( const int *field_array, int width, int height, Board_Type type = custom );
     // field must be rectangular array!
@@ -307,7 +307,7 @@ namespace dvonn
   class Move
   {
   public:
-    typedef enum Move_Type { no_move=0, jump_move, set_move, finish_move };
+    enum Move_Type { no_move=0, jump_move, set_move, finish_move };
 
     virtual Move_Type get_type() const = 0;
     virtual void do_move( Game & ) = 0;	         // may store extra info about the move
@@ -521,7 +521,7 @@ namespace dvonn
   class Win_Condition
   {
   public:
-    typedef enum Win_Condition_Type{ standard=0, full_custom=99 };
+    enum Win_Condition_Type{ standard=0, full_custom=99 };
 
     Win_Condition( Win_Condition_Type type = full_custom );
     virtual ~Win_Condition();
@@ -548,7 +548,7 @@ namespace dvonn
   class Ruleset
   {
   public:
-    typedef enum Ruleset_Type { standard=0, custom=99 };
+    enum Ruleset_Type { standard=0, custom=99 };
     Ruleset( const Ruleset & );
     Ruleset();
     Ruleset &operator=( const Ruleset & );
@@ -582,8 +582,8 @@ namespace dvonn
   class Game
   {
   public:
-    typedef enum Game_State{ finished=0, wait_for_event, next_players_turn, interruption_possible, 
-			     wrong_number_of_players };
+    enum Game_State{ finished=0, finished_scores, wait_for_event, next_players_turn, interruption_possible, 
+		     wrong_number_of_players };
 
     Game( const Ruleset & );
     Game( const Game & );
@@ -597,6 +597,7 @@ namespace dvonn
     int get_winner_index() { return winner_player_index; } // returns -1 if no player won
     void reset_game();		// doesn't reset players
     void reset_game( const Ruleset & );	// doesn't reset players
+    std::multimap<int/*score*/,Player*> get_scores() { return std::multimap<int/*score*/,Player*>(); }
 
     // **************
     // init functions
@@ -767,7 +768,7 @@ namespace dvonn
   class Sequence_Generator
   {
   public:
-    typedef enum Sequence_State{ finished=0,
+    enum Sequence_State{ finished=0,
 				 hold_prefix=0, hold_red=1, hold_white=2, hold_black=3,
 				 another_click=4,
 
@@ -803,7 +804,7 @@ namespace dvonn
     Game &game;
     bool auto_undo;
 
-    typedef enum Internal_State{ begin, move_from, move_finished };
+    enum Internal_State{ begin, move_from, move_finished };
     Internal_State state;
 
     Field_Pos from;

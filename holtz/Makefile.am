@@ -1,4 +1,4 @@
-SUBDIRS=skins sounds locale help common zertz dvonn
+SUBDIRS=skins sounds locale help common zertz dvonn relax
 
 bin_PROGRAMS=		holtz
 
@@ -13,7 +13,7 @@ if INCLUDE_RC_FILE
 holtz_SOURCES += holtz.rc
 endif
 
-holtz_LDADD = dvonn/libdvonn.a zertz/libzertz.a
+holtz_LDADD = dvonn/libdvonn.a zertz/libzertz.a relax/librelax.a
 
 holtz_CXXFLAGS= \
 	-DDEFAULT_DATA_DIR=\"$(pkgdatadir)/\"

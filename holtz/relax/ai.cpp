@@ -123,8 +123,7 @@ namespace relax
   // ----------------------------------------------------------------------------
 
   Position::Position( Game &game )
-    : knock_out_possible( game.board.is_knock_out_possible() ),
-      expanded(0), rating(0), handler(0)
+    : expanded(0), rating(0), handler(0)
   {
   }
 
@@ -145,7 +144,7 @@ namespace relax
 				      Field_Iterator from, Field_Iterator over, Field_Iterator to )
   {
     bool ret = true;
-
+    /*
     Move *move = new Knock_Out_Move( from.get_pos(), over.get_pos(), to.get_pos() );
     assert( move->check_move( game ) );
     bool ok = sequence.add_move( game, move );
@@ -185,12 +184,13 @@ namespace relax
       assert( ok );
       move->do_move(game);
       
-      bool knock_out_possible = game.board.is_knock_out_possible();
+      bool knock_out_possible = false;//game.board.is_knock_out_possible();
       ret = add_branch( game, new Branch( sequence.clone(), Position(knock_out_possible) ) );
 
       sequence.undo_last_move( game );
     }
     sequence.undo_last_move( game );
+    */
     return ret;
   }
 
@@ -212,6 +212,7 @@ namespace relax
     for( pos = field_permutation.get_first(); !field_permutation.is_end(); 
 	 pos = field_permutation.get_next() )
     {
+      /*
       if( game.board.is_removable(pos) )
       {
 	any_removable = true;
@@ -238,6 +239,7 @@ namespace relax
       }
       if( !ret )
 	break;
+      */
     }
     field_permutation.restore_context(); // only restore in second pass
     
@@ -249,7 +251,7 @@ namespace relax
       assert( ok );
       move->do_move( game );
 
-      bool knock_out_possible = game.board.is_knock_out_possible();
+      bool knock_out_possible = false;//game.board.is_knock_out_possible();
       ret = add_branch( game, new Branch( sequence.clone(), Position(knock_out_possible) ) );
     }
     sequence.undo_sequence( game );
@@ -277,7 +279,7 @@ namespace relax
     if( knock_out_possible )
     {
       Field_Pos pos;
-      Field_Iterator p1(&game.board), p2(&game.board), p3(&game.board);
+      Field_Iterator p1(&game.current_player->board), p2(&game.current_player->board), p3(&game.current_player->board);
 	
       field_permutation.new_context();
       for( pos = field_permutation.get_first(); !field_permutation.is_end(); 
@@ -293,6 +295,7 @@ namespace relax
 	if( p3.is_valid_field() )
 	{
 	  assert( p2.is_valid_field() );
+	  /*
 	  if( Board::is_knock_out_possible(p1,p2,p3) )
 	  {
 	    if( Board::is_stone( *p1 ) )
@@ -301,6 +304,7 @@ namespace relax
 	      go_on = add_knock_out_moves( game, current_sequence, p3, p2, p1 );
 	    assert( current_sequence.is_empty() );
 	  }
+	  */
 	}
 
 	if( !go_on ) 
@@ -312,6 +316,7 @@ namespace relax
 	if( p3.is_valid_field() )
 	{
 	  assert( p2.is_valid_field() );
+	  /*
 	  if( Board::is_knock_out_possible(p1,p2,p3) )
 	  {
 	    if( Board::is_stone( *p1 ) )
@@ -320,6 +325,7 @@ namespace relax
 	      go_on = add_knock_out_moves( game, current_sequence, p3, p2, p1 );
 	    assert( current_sequence.is_empty() );
 	  }
+	  */
 	}
 
 	if( !go_on ) 
@@ -331,6 +337,7 @@ namespace relax
 	if( p3.is_valid_field() )
 	{
 	  assert( p2.is_valid_field() );
+	  /*
 	  if( Board::is_knock_out_possible(p1,p2,p3) )
 	  {
 	    if( Board::is_stone( *p1 ) )
@@ -339,6 +346,7 @@ namespace relax
 	      go_on = add_knock_out_moves( game, current_sequence, p3, p2, p1 );
 	    assert( current_sequence.is_empty() );
 	  }
+	  */
 	}
 	if( !go_on ) 
 	  break;
@@ -348,7 +356,7 @@ namespace relax
     else
     {
       Field_Pos pos;
-      Field_Iterator p1(&game.board);
+      Field_Iterator p1(&game.current_player->board);
      
       field_permutation.new_context();
       bool expand_first = true; // expand only one of each set moves
@@ -440,12 +448,14 @@ namespace relax
       max_depth(12),
       rate_white(4.5), rate_grey(3.5), rate_black(2.5), rate_current_player_bonus(0.3),
       min_depth(2), deep_knocking_possible(true), while_deep_knocking(false),
-      field_permutation( game.board )
+      field_permutation( game.current_player->board )
   {
+    /*
     stone_types.resize(3);
     stone_types[0] = Stones::white_stone;
     stone_types[1] = Stones::grey_stone;
     stone_types[2] = Stones::black_stone;
+    */
     real_average_time = 0;
   }
 
@@ -570,9 +580,11 @@ namespace relax
   double AI::rate_player( Player &player )
   {
     double rate = 0;
+    /*
     rate += player.stones.stone_count[Stones::white_stone] * rate_white;
     rate += player.stones.stone_count[Stones::grey_stone]  * rate_grey;
     rate += player.stones.stone_count[Stones::black_stone] * rate_black;
+    */
     return rate;
   }
 

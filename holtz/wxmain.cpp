@@ -23,6 +23,7 @@
 // ----------------------------------------------------------------------------
 #include "zertz/network.hpp" //workaround for cygwin
 #include "dvonn/network.hpp" //workaround for cygwin
+#include "relax/network.hpp" //workaround for cygwin
 
 #include "wxmain.hpp"
 
@@ -66,6 +67,7 @@ namespace holtz
   BEGIN_EVENT_TABLE(Main_Frame, wxFrame)				//**/
   EVT_MENU(HOLTZ_NEW_ZERTZ_GAME,  Main_Frame::on_new_zertz_game)	//**/
   EVT_MENU(HOLTZ_NEW_DVONN_GAME,  Main_Frame::on_new_dvonn_game)	//**/
+  EVT_MENU(HOLTZ_NEW_RELAX_GAME,  Main_Frame::on_new_relax_game)	//**/
   EVT_MENU(HOLTZ_UNDO,		  Main_Frame::on_undo_move)		//**/
   EVT_MENU(HOLTZ_VARIANTS,	  Main_Frame::on_variants)		//**/
   EVT_MENU(HOLTZ_SETTINGS,	  Main_Frame::on_settings)		//**/
@@ -214,7 +216,8 @@ namespace holtz
       parent_frame(*parent_frame),
       active_game(NO_GAME),
       zertz_game_manager(0), zertz_variants_frame(0), zertz_gui_manager(0), zertz_game_dialog(0),
-      dvonn_game_manager(0), dvonn_variants_frame(0), dvonn_gui_manager(0), dvonn_game_dialog(0)
+      dvonn_game_manager(0), dvonn_variants_frame(0), dvonn_gui_manager(0), dvonn_game_dialog(0),
+      relax_game_manager(0), relax_variants_frame(0), relax_gui_manager(0), relax_game_dialog(0)
   {
     SetBackgroundColour(*wxWHITE);
   }
@@ -246,6 +249,16 @@ namespace holtz
       dvonn_variants_frame->Destroy();
       dvonn_variants_frame = 0;
       break;
+    case RELAX:
+      if( relax_game_manager )
+	relax_game_manager->stop_game();
+      active_game = NO_GAME;
+      delete relax_game_dialog; // still needs game manager
+      delete relax_gui_manager;
+      delete relax_game_manager;
+      relax_variants_frame->Destroy();
+      relax_variants_frame = 0;
+      break;
     case NO_GAME:
       break;
     }
@@ -264,6 +277,9 @@ namespace holtz
       break;
     case DVONN:
       dvonn_gui_manager->load_settings();
+      break;
+    case RELAX:
+      relax_gui_manager->load_settings();
       break;
     case NO_GAME:
       break;
@@ -296,15 +312,29 @@ namespace holtz
     refresh();
   }
   
+  void Game_Window::init_relax() 
+  {
+    close_game();
+    relax_game_manager   = new relax::Game_Manager();
+    relax_variants_frame = new relax::Game_Variants_Frame( this );
+    relax_gui_manager    = new relax::WX_GUI_Manager( *relax_game_manager, *this, 
+						      *relax_variants_frame->get_game_variants() );
+    relax_game_dialog    = new relax::Game_Dialog( this, *relax_game_manager, *relax_gui_manager );
+
+    active_game = RELAX;
+    refresh();
+  }
+   
   void Game_Window::new_zertz_game()
   {
     if( active_game != ZERTZ )
     {
       if( active_game != NO_GAME )
       {
-	if( wxMessageBox(_("You are about to switch to Zertz and close your current game. Proceed?"),
-			 _("Closing Game"), wxYES | wxNO | wxCANCEL | wxICON_QUESTION ) 
-	    != wxYES )
+	if( wxMessageDialog
+	    ( this, _("You are about to switch to Zertz and close your current game. Proceed?"),
+	      _("Closing Game"), wxYES_NO | wxCANCEL | wxICON_QUESTION ).ShowModal() 
+	    != wxID_YES )
 	{
 	  return;
 	}      
@@ -319,6 +349,9 @@ namespace holtz
     case DVONN:
       dvonn_game_manager->new_game();
       break;
+    case RELAX:
+      relax_game_manager->new_game();
+      break;
     case NO_GAME:
       break;
     }
@@ -330,9 +363,10 @@ namespace holtz
     {
       if( active_game != NO_GAME )
       {
-	if( wxMessageBox(_("You are about to switch to Dvonn and close your current game. Proceed?"),
-			 _("Closing Game"), wxYES | wxNO | wxCANCEL | wxICON_QUESTION ) 
-	    != wxYES )
+	if( wxMessageDialog
+	    ( this, _("You are about to switch to Dvonn and close your current game. Proceed?"),
+	      _("Closing Game"), wxYES_NO | wxCANCEL | wxICON_QUESTION ).ShowModal()
+	    != wxID_YES )
 	{
 	  return;
 	}      
@@ -346,6 +380,41 @@ namespace holtz
       break;
     case DVONN:
       dvonn_game_manager->new_game();
+      break;
+    case RELAX:
+      relax_game_manager->new_game();
+      break;
+    case NO_GAME:
+      break;
+    }
+  }
+  
+  void Game_Window::new_relax_game()
+  {
+    if( active_game != RELAX )
+    {
+      if( active_game != NO_GAME )
+      {
+	if( wxMessageDialog
+	    ( this, _("You are about to switch to Relax and close your current game. Proceed?"),
+	      _("Closing Game"), wxYES_NO | wxCANCEL | wxICON_QUESTION ).ShowModal()
+	    != wxID_YES )
+	{
+	  return;
+	}      
+      }
+      init_relax();
+    }
+
+    switch( active_game ) {
+    case ZERTZ:
+      zertz_game_manager->new_game();
+      break;
+    case DVONN:
+      dvonn_game_manager->new_game();
+      break;
+    case RELAX:
+      relax_game_manager->new_game();
       break;
     case NO_GAME:
       break;
@@ -363,6 +432,10 @@ namespace holtz
       dvonn_gui_manager->clear_target_variant();
       dvonn_game_manager->undo_moves();
       break;
+    case RELAX:
+      relax_gui_manager->clear_target_variant();
+      relax_game_manager->undo_moves();
+      break;
     case NO_GAME:
       break;
     }
@@ -378,6 +451,10 @@ namespace holtz
     case DVONN:
       dvonn_variants_frame->show_frame();
       dvonn_gui_manager->refresh();
+      break;
+    case RELAX:
+      relax_variants_frame->show_frame();
+      relax_gui_manager->refresh();
       break;
     case NO_GAME:
       break;
@@ -397,6 +474,13 @@ namespace holtz
     case DVONN:
       {
 	dvonn::Settings_Dialog dialog( this, *dvonn_gui_manager );
+	dialog.Center();
+	dialog.ShowModal();
+      }
+      break;
+    case RELAX:
+      {
+	relax::Settings_Dialog dialog( this, *relax_gui_manager );
 	dialog.Center();
 	dialog.ShowModal();
       }
@@ -422,6 +506,10 @@ namespace holtz
       SetScrollbars( 10, 10, dvonn_gui_manager->get_width() / 10 + 1, 
 		     dvonn_gui_manager->get_height() / 10 + 1 );
       break;
+    case RELAX:
+      SetScrollbars( 10, 10, relax_gui_manager->get_width() / 10 + 1, 
+		     relax_gui_manager->get_height() / 10 + 1 );
+      break;
     case NO_GAME:
       break;
     }
@@ -434,6 +522,8 @@ namespace holtz
       return zertz_gui_manager->get_game_panel().get_background();
     case DVONN:
       return dvonn_gui_manager->get_game_panel().get_background();
+    case RELAX:
+      return relax_gui_manager->get_game_panel().get_background();
     case NO_GAME:
       break;
     }
@@ -487,6 +577,10 @@ namespace holtz
       dvonn_gui_manager->draw( *dc );
       dvonn_gui_manager->draw_mark( *dc );
       break;
+    case RELAX:
+      relax_gui_manager->draw( *dc );
+      relax_gui_manager->draw_mark( *dc );
+      break;
     case NO_GAME:
       break;
     }
@@ -506,6 +600,9 @@ namespace holtz
       break;
     case DVONN:
       dvonn_gui_manager->draw_text( *dc );
+      break;
+    case RELAX:
+      relax_gui_manager->draw_text( *dc );
       break;
     case NO_GAME:
       break;
@@ -549,6 +646,9 @@ namespace holtz
       case DVONN:
 	dvonn_gui_manager->mouse_click_left( cl_x, cl_y );
 	break;
+      case RELAX:
+	relax_gui_manager->mouse_click_left( cl_x, cl_y );
+	break;
       case NO_GAME:
 	break;
       }
@@ -563,6 +663,9 @@ namespace holtz
 	  break;
 	case DVONN:
 	  dvonn_gui_manager->mouse_click_right( cl_x, cl_y );
+	  break;
+	case RELAX:
+	  relax_gui_manager->mouse_click_right( cl_x, cl_y );
 	  break;
 	case NO_GAME:
 	  break;
@@ -580,6 +683,9 @@ namespace holtz
     case DVONN:
       dvonn_game_dialog->on_wizard_page_changing( event );
       break;
+    case RELAX:
+      relax_game_dialog->on_wizard_page_changing( event );
+      break;
     case NO_GAME:
       break;
     }
@@ -593,6 +699,9 @@ namespace holtz
     case DVONN:
       dvonn_game_dialog->on_wizard_finished( event );
       break;
+    case RELAX:
+      relax_game_dialog->on_wizard_finished( event );
+      break;
     case NO_GAME:
       break;
     }
@@ -605,6 +714,9 @@ namespace holtz
       break;
     case DVONN:
       dvonn_game_dialog->on_wizard_cancel( event );
+      break;
+    case RELAX:
+      relax_game_dialog->on_wizard_cancel( event );
       break;
     case NO_GAME:
       break;
@@ -661,6 +773,8 @@ namespace holtz
 		      _("Start a new Zertz game"));
     file_menu->Append(HOLTZ_NEW_DVONN_GAME, _("New &Dvonn Game...\tCtrl-D"), 
 		      _("Start a new Dvonn game"));
+    file_menu->Append(HOLTZ_NEW_RELAX_GAME, _("New &Relax Game...\tCtrl-R"), 
+		      _("Start a new Relax game"));
     file_menu->AppendSeparator();
     file_menu->Append(HOLTZ_QUIT,	    _("E&xit\tAlt-X"), _("Quit Holtz"));
 
@@ -738,6 +852,11 @@ namespace holtz
     game_window.new_dvonn_game();
   }
 
+  void Main_Frame::on_new_relax_game(wxCommandEvent& WXUNUSED(event))
+  {
+    game_window.new_relax_game();
+  }
+
   void Main_Frame::on_settings(wxCommandEvent& WXUNUSED(event))
   {
     game_window.settings_dialog();
@@ -776,7 +895,7 @@ namespace holtz
     msg += _("Zertz and Dvonn (www.gipf.com).\n");
     msg += _("GPLed by Martin Trautmann (2007)\n");
 
-    wxMessageBox(msg, _("About Holtz"), wxOK | wxICON_INFORMATION, this);
+    wxMessageDialog(this, msg, _("About Holtz"), wxOK | wxICON_INFORMATION).ShowModal();
   }
 
   void Main_Frame::on_close(wxCloseEvent& WXUNUSED(event))

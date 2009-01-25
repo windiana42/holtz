@@ -14,12 +14,19 @@
  * 
  */
 
-#if defined(VERSION_ZERTZ) && defined(VERSION_DVONN)
+#if (defined(VERSION_ZERTZ) && defined(VERSION_DVONN))
 #  error "something went wrong in include sequence: VERSION_ZERTZ and VERSION_DVONN defined"
+#endif
+#if (defined(VERSION_ZERTZ) && defined(VERSION_RELAX))
+#  error "something went wrong in include sequence: VERSION_ZERTZ and VERSION_RELAX defined"
+#endif
+#if (defined(VERSION_RELAX) && defined(VERSION_DVONN))
+#  error "something went wrong in include sequence: VERSION_RELAX and VERSION_DVONN defined"
 #endif
 
 #if (defined(VERSION_ZERTZ) && !defined(__ZERTZ_MANAGER__)) || \
-  (defined(VERSION_DVONN) && !defined(__DVONN_MANAGER__))
+  (defined(VERSION_DVONN) && !defined(__DVONN_MANAGER__)) || \
+  (defined(VERSION_RELAX) && !defined(__RELAX_MANAGER__))
 
 #if defined(VERSION_ZERTZ)
 #  define __ZERTZ_MANAGER__
@@ -27,14 +34,19 @@
 #elif defined(VERSION_DVONN)
 #  define __DVONN_MANAGER__
 //#  warning "using dvonn..."
+#elif defined(VERSION_RELAX)
+#  define __RELAX_MANAGER__
+//#  warning "using relax..."
 #else
-#  error "Please define either VERSION_ZERTZ or VERSION_DVONN"
+#  error "Please define either VERSION_ZERTZ or VERSION_DVONN or VERSION_RELAX"
 #endif
 
 #if defined(VERSION_ZERTZ)
 namespace zertz
 #elif defined(VERSION_DVONN)
 namespace dvonn
+#elif defined(VERSION_RELAX)
+namespace relax
 #endif
 {
   class Game_Manager;
@@ -53,6 +65,11 @@ namespace dvonn
 #  include "dvonn/ai.hpp"
 #  include "dvonn/dvonn.hpp"
 #  define VERSION_DVONN
+#elif defined(VERSION_RELAX)
+#  undef VERSION_RELAX
+#  include "relax/ai.hpp"
+#  include "relax/relax.hpp"
+#  define VERSION_RELAX
 #endif
 
 #include <wx/string.h>
@@ -61,6 +78,8 @@ namespace dvonn
 namespace zertz
 #elif defined(VERSION_DVONN)
 namespace dvonn
+#elif defined(VERSION_RELAX)
+namespace relax
 #endif
 {
   /*! abstract class Game_Setup_Display_Handler
@@ -101,9 +120,9 @@ namespace dvonn
   class Game_Setup_Manager
   {
   public:
-    typedef enum Game_State { everyone_ready, not_ready, too_few_players, too_many_players };
-    typedef enum Answer_Type { accept, deny, wait_for_answer };
-    typedef enum Type { alone, server, client };
+    enum Game_State { everyone_ready, not_ready, too_few_players, too_many_players };
+    enum Answer_Type { accept, deny, wait_for_answer };
+    enum Type { alone, server, client };
     virtual Type get_type() = 0;
     virtual void set_display_handler( Game_Setup_Display_Handler * ) = 0;
 
@@ -216,6 +235,7 @@ namespace dvonn
     virtual void setup_game_display() = 0; // setup all windows to display game
     virtual void set_board( const Game &game ) = 0;
     virtual void update_board( const Game &game ) = 0;
+    virtual void report_scores( std::multimap<int/*score*/,Player*> scores ) = 0;
     virtual void report_winner( Player *player ) = 0;
     virtual void report_error( wxString msg, wxString caption ) = 0;
     virtual void report_information( wxString msg, wxString caption ) = 0;
