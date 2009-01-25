@@ -22,6 +22,8 @@
 namespace zertz
 #elif defined(VERSION_DVONN)
 namespace dvonn
+#elif defined(VERSION_RELAX)
+namespace relax
 #endif
 {
   // ----------------------------------------------------------------------------
@@ -98,6 +100,20 @@ namespace dvonn
       int winner;
       switch( state )
       {
+	case Game::finished_scores:
+	{
+	  game.stop_game();
+	  if( ui_manager )
+	    ui_manager->update_board( game ); // update board display
+
+	  if( ui_manager )
+	  {
+	    ui_manager->report_scores( game.get_scores() );
+	  }
+
+	  go_on = false;
+	}
+	break;
 	case Game::finished:
 	{
 	  game.stop_game();
@@ -212,7 +228,8 @@ namespace dvonn
     {
       new_game_requested = false;
       wxString msg = _("The idea of starting a new game was rejected. Do you want to start a new game on your own?");
-      if( wxMessageBox( msg, _("New game?"), wxYES | wxNO | wxCANCEL | wxICON_QUESTION ) == wxYES )
+      if( wxMessageDialog( 0, msg, _("New game?"), 
+			   wxYES_NO | wxCANCEL | wxICON_QUESTION ).ShowModal() == wxID_YES )
       {
 	force_new_game(true/*on own*/);
       }

@@ -81,6 +81,52 @@ namespace relax
   {
   };
 
+  struct Field_Pos
+  {
+    int x;
+    int y;
+    Field_Pos();
+    Field_Pos( int x, int y );
+
+    static Field_Pos get_middle( Field_Pos p1, Field_Pos p2 );
+  };
+  
+  bool operator==( const Field_Pos &p1, const Field_Pos &p2 );
+  bool operator!=( const Field_Pos &p1, const Field_Pos &p2 );
+
+  class Board
+  {
+  public:
+    enum Board_Type{ standard=0, custom=99 };
+
+    Board( const int *field_array, int width, int height, Board_Type type = custom );
+    // field must be rectangular array!
+    Board( const std::vector< std::vector<Field_State_Type> > fields, Board_Type type = custom );
+    Board();			// should only be used for structures 
+
+    Board_Type board_type;
+    inline Board_Type get_type() const { return board_type; }
+
+    inline int get_stone_type_number( Field_State_Type state )
+    { return state; }
+    static inline bool is_stone( Field_State_Type state )
+    { return state > 0; }
+    static inline bool is_empty( Field_State_Type state )
+    { return state == field_empty; }
+    static inline bool is_removed( Field_State_Type state )
+    { return state == field_removed; }
+
+    std::list<Field_Pos> get_empty_fields();
+
+    Field_Iterator first_field();
+
+    std::vector< std::vector<Field_State_Type> > field; // field[x][y]
+    inline Field_State_Type get_field( Field_Pos pos ) { return field[pos.x][pos.y]; }
+    Field_State_Type get_field( unsigned x, unsigned y );
+    inline int get_x_size() const { return field.size(); }
+    inline int get_y_size() const { return field[0].size(); }
+  };
+
   class Ref_Counter
   {
   public:
@@ -97,6 +143,7 @@ namespace relax
     enum Stone_Type{ invalid_stone=0, stone_begin=1, stone_end=28 };
     std::map<Stone_Type, int> stone_count;
     unsigned total_count;
+    Stones::Stone_Type current_stone;
 
 #ifndef __WXMSW__
     void print();
@@ -162,6 +209,7 @@ namespace relax
     long total_time, average_time;
     int num_measures;		// of average time
 
+    Board board;		// every player has it's own board in relax
     Stones stones;
     Player_Input *input;
     std::list<Player_Output*> outputs; 
@@ -169,19 +217,6 @@ namespace relax
 
     static std::list<Player_Output*> no_output;
   };
-
-  struct Field_Pos
-  {
-    int x;
-    int y;
-    Field_Pos();
-    Field_Pos( int x, int y );
-
-    static Field_Pos get_middle( Field_Pos p1, Field_Pos p2 );
-  };
-  
-  bool operator==( const Field_Pos &p1, const Field_Pos &p2 );
-  bool operator!=( const Field_Pos &p1, const Field_Pos &p2 );
 
   class Field_Iterator 
   {
@@ -231,39 +266,6 @@ namespace relax
   { return p1.get_pos() == p2.get_pos(); }
   inline bool operator!=( const Field_Iterator &p1, const Field_Iterator &p2 )
   { return p1.get_pos() != p2.get_pos(); }
-
-  class Board
-  {
-  public:
-    enum Board_Type{ standard=0, custom=99 };
-
-    Board( const int *field_array, int width, int height, Board_Type type = custom );
-    // field must be rectangular array!
-    Board( const std::vector< std::vector<Field_State_Type> > fields, Board_Type type = custom );
-    Board();			// should only be used for structures 
-
-    Board_Type board_type;
-    inline Board_Type get_type() const { return board_type; }
-
-    inline int get_stone_type_number( Field_State_Type state )
-    { return state; }
-    static inline bool is_stone( Field_State_Type state )
-    { return state > 0; }
-    static inline bool is_empty( Field_State_Type state )
-    { return state == field_empty; }
-    static inline bool is_removed( Field_State_Type state )
-    { return state == field_removed; }
-
-    std::list<Field_Pos> get_empty_fields();
-
-    Field_Iterator first_field();
-
-    std::vector< std::vector<Field_State_Type> > field; // field[x][y]
-    inline Field_State_Type get_field( Field_Pos pos ) { return field[pos.x][pos.y]; }
-    Field_State_Type get_field( unsigned x, unsigned y );
-    inline int get_x_size() const { return field.size(); }
-    inline int get_y_size() const { return field[0].size(); }
-  };
 
   class Move
   {
@@ -485,9 +487,9 @@ namespace relax
   {
   public:
     enum Ruleset_Type { standard, custom=99 };
-    //Ruleset( const Ruleset & );
+    Ruleset( const Ruleset & );
     Ruleset();
-    //Ruleset &operator=( const Ruleset & );
+    Ruleset &operator=( const Ruleset & );
     virtual ~Ruleset();
     virtual Ruleset *clone() const { return new Ruleset(*this); }
     
@@ -526,8 +528,8 @@ namespace relax
   class Game
   {
   public:
-    enum Game_State{ finished=0, wait_for_event, next_players_turn, interruption_possible, 
-			     wrong_number_of_players };
+    enum Game_State{ finished=0, finished_scores, wait_for_event, next_players_turn, interruption_possible, 
+		     wrong_number_of_players };
 
     Game( const Ruleset & );
     Game( const Game & );
@@ -541,6 +543,7 @@ namespace relax
     int get_winner_index() { return winner_player_index; } // returns -1 if no player won
     void reset_game();		// doesn't reset players
     void reset_game( const Ruleset & );	// doesn't reset players
+    std::multimap<int/*score*/,Player*> get_scores();
 
     // **************
     // init functions
@@ -584,9 +587,7 @@ namespace relax
     int prev_player_index;	// index of player that was current player before
 
     Ruleset *ruleset;
-    Board board;
     Stones common_stones;
-    Stones::Stone_Type current_stone;
     Win_Condition *win_condition;
     Coordinate_Translator *coordinate_translator;
     bool undo_possible;
@@ -594,6 +595,8 @@ namespace relax
     Variant_Tree variant_tree;
 
     Ref_Counter *ref_counter;	// reference counting because of ruleset pointer
+
+    void initialize_round();
 
     inline Player &get_current_player() 
     { assert(current_player_index >= 0); return players[current_player_index]; }
@@ -665,6 +668,15 @@ namespace relax
     Standard_Ruleset();
   };
 
+  class Custom_Ruleset : public Ruleset
+  {
+  public:
+    // win_condition and coordinate translator will be deleted by Ruleset!
+    Custom_Ruleset( Board, Common_Stones, Win_Condition *, Coordinate_Translator *, 
+		    bool undo_possible = true, 
+		    unsigned min_players = 1, unsigned max_players = 1 );
+  };
+
   class No_Output : public Player_Output
   {
   public:
@@ -698,15 +710,15 @@ namespace relax
   {
   public:
     enum Sequence_State{ finished=0,
-				 another_click=1,
-				 hold_prefix=1, hold_stone_begin=2, hold_stone_end=29,
-
-				 error_require_set=-500, 
-				 error_can_t_set_here,
-				 error_wrong_player, 
-				 error_impossible_yet,
-
-				 fatal_error=-1000 };
+			 another_click=1,
+			 hold_prefix=1, hold_stone_begin=2, hold_stone_end=29,
+			 
+			 error_require_set=-500, 
+			 error_can_t_set_here,
+			 error_wrong_player, 
+			 error_impossible_yet,
+			 
+			 fatal_error=-1000 };
 
     Sequence_Generator( Game &, bool easy_multiple_knock = true );
     // synthesize move sequence from clicks
@@ -733,7 +745,7 @@ namespace relax
     Game &game;
     bool auto_undo;
 
-    enum Internal_State{ begin, move_from, move_dest, stone_picked, stone_set, 
+    enum Internal_State{ begin, stone_picked, stone_set, 
 			 move_finished };
     Internal_State state;
 

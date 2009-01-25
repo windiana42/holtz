@@ -73,7 +73,7 @@ namespace holtz {
   class Horizontal_Sizer : public Basic_Panel
   {
   public:
-    typedef enum Align_Type { top, bottom, middle };
+    enum Align_Type { top, bottom, middle };
     Horizontal_Sizer( Align_Type align = top );
     ~Horizontal_Sizer();
 
@@ -94,7 +94,7 @@ namespace holtz {
   class Vertical_Sizer : public Basic_Panel
   {
   public:
-    typedef enum Align_Type { left, right, center };
+    enum Align_Type { left, right, center };
     Vertical_Sizer( Align_Type align = left );
     ~Vertical_Sizer();
 

@@ -57,7 +57,7 @@ namespace zertz
   class Move_Translator;
   class Standard_Move_Translator;
   
-  typedef enum Field_State_Type{ field_removed=-1, field_empty=0, 
+  enum Field_State_Type{ field_removed=-1, field_empty=0, 
 				 field_white=1, field_grey=2, field_black=3 };
 
   const int standard_board[][7] =
@@ -144,7 +144,7 @@ namespace zertz
   public:
     Stones();
 
-    typedef enum Stone_Type{ invalid_stone=0, white_stone=1, grey_stone=2, black_stone=3 };
+    enum Stone_Type{ invalid_stone=0, white_stone=1, grey_stone=2, black_stone=3 };
     std::map<Stone_Type, int> stone_count;
 
 #ifndef __WXMSW__
@@ -157,7 +157,7 @@ namespace zertz
   class Common_Stones : public Stones
   {
   public:
-    typedef enum Common_Stones_Type{ basic=0, standard, custom=99 };
+    enum Common_Stones_Type{ basic=0, standard, custom=99 };
 
     Common_Stones( Common_Stones_Type type=custom );
     Common_Stones_Type get_type() const { return type; }
@@ -186,7 +186,7 @@ namespace zertz
   class Player_Input
   {
   public:
-    typedef enum Player_State{ finished=0, wait_for_event, request_undo,
+    enum Player_State{ finished=0, wait_for_event, request_undo,
 			       interruption_possible };
 
     virtual Player_State determine_move() throw(Exception) = 0;
@@ -207,9 +207,9 @@ namespace zertz
   class Player
   {
   public:
-    typedef enum Player_Type{ unknown=0, user, ai };
-    typedef enum Help_Mode{ no_help=0, show_possible_moves, show_hint };
-    typedef enum Origin{ local, remote }; // origin where player is controled
+    enum Player_Type{ unknown=0, user, ai };
+    enum Help_Mode{ no_help=0, show_possible_moves, show_hint };
+    enum Origin{ local, remote }; // origin where player is controled
 
     Player( std::string name="", int id=-1, Player_Input *in=0, 
 	    std::list<Player_Output*> out=no_output,
@@ -248,7 +248,7 @@ namespace zertz
   class Field_Iterator 
   {
   public:
-    typedef enum Direction{ invalid_direction=-1, 
+    enum Direction{ invalid_direction=-1, 
 			    right=0, top_right=1, top_left=2, left=3, 
 			    bottom_left=4, bottom_right=5,
 			    right2=6, top_right2=7, top_left2=8, left2=9, 
@@ -297,7 +297,7 @@ namespace zertz
   class Board
   {
   public:
-    typedef enum Board_Type{ s37_rings=0, s40_rings, s44_rings, s48_rings, s61_rings, custom=99 };
+    enum Board_Type{ s37_rings=0, s40_rings, s44_rings, s48_rings, s61_rings, custom=99 };
 
     Board( const int *field_array, int width, int height, Board_Type type = custom );
     // field must be rectangular array!
@@ -342,7 +342,7 @@ namespace zertz
   class Move
   {
   public:
-    typedef enum Move_Type { no_move=0, knock_out_move, set_move, remove, finish_move };
+    enum Move_Type { no_move=0, knock_out_move, set_move, remove, finish_move };
 
     virtual Move_Type get_type() const = 0;
     virtual void do_move( Game & ) = 0;	         // may store extra info about the move
@@ -576,7 +576,7 @@ namespace zertz
   class Win_Condition
   {
   public:
-    typedef enum Win_Condition_Type{ basic=0, standard, generic, full_custom=99 };
+    enum Win_Condition_Type{ basic=0, standard, generic, full_custom=99 };
 
     Win_Condition( Win_Condition_Type type = full_custom );
     virtual ~Win_Condition();
@@ -603,7 +603,7 @@ namespace zertz
   class Ruleset
   {
   public:
-    typedef enum Ruleset_Type { basic=0, standard, tournament, custom=99 };
+    enum Ruleset_Type { basic=0, standard, tournament, custom=99 };
     Ruleset( const Ruleset & );
     Ruleset();
     Ruleset &operator=( const Ruleset & );
@@ -637,8 +637,8 @@ namespace zertz
   class Game
   {
   public:
-    typedef enum Game_State{ finished=0, wait_for_event, next_players_turn, interruption_possible, 
-			     wrong_number_of_players };
+    enum Game_State{ finished=0, finished_scores, wait_for_event, next_players_turn, interruption_possible, 
+		     wrong_number_of_players };
 
     Game( const Ruleset & );
     Game( const Game & );
@@ -652,6 +652,7 @@ namespace zertz
     int get_winner_index() { return winner_player_index; } // returns -1 if no player won
     void reset_game();		// doesn't reset players
     void reset_game( const Ruleset & );	// doesn't reset players
+    std::multimap<int/*score*/,Player*> get_scores() { return std::multimap<int/*score*/,Player*>(); }
 
     // **************
     // init functions
@@ -845,7 +846,7 @@ namespace zertz
   class Sequence_Generator
   {
   public:
-    typedef enum Sequence_State{ finished=0,
+    enum Sequence_State{ finished=0,
 				 hold_prefix=0, hold_white=1, hold_grey=2, hold_black=3,
 				 another_click=4,
 
@@ -889,7 +890,7 @@ namespace zertz
     Game &game;
     bool auto_undo;
 
-    typedef enum Internal_State{ begin, move_from, move_dest, stone_picked, stone_set, 
+    enum Internal_State{ begin, move_from, move_dest, stone_picked, stone_set, 
 				 move_finished };
     Internal_State state;
 

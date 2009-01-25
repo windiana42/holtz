@@ -28,6 +28,12 @@
 #  include "util.hpp"
 #  define VERSION_DVONN
 #  define GAME_NAME GAME_NAME_DVONN
+#elif defined(VERSION_RELAX)
+#  undef VERSION_RELAX
+#  include "wxmain.hpp"
+#  include "util.hpp"
+#  define VERSION_RELAX
+#  define GAME_NAME GAME_NAME_RELAX
 #endif
 
 #define PROTOCOL_NUMBER 1.00
@@ -39,6 +45,8 @@
 namespace zertz
 #elif defined(VERSION_DVONN)
 namespace dvonn
+#elif defined(VERSION_RELAX)
+namespace relax
 #endif
 {
   using namespace holtz;

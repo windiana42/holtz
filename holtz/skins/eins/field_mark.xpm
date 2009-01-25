@@ -1,6 +1,6 @@
 /* XPM */
 static char * field_mark_xpm[] = {
-"1 1 1 1",
+"1 1 1 1", 	 
 " 	c None",
 " "};
 

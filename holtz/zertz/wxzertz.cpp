@@ -1509,6 +1509,20 @@ namespace zertz
     refresh();
   }
 
+  void WX_GUI_Manager::report_scores( std::multimap<int/*score*/,Player*> scores )
+  {
+    wxString msg, line;
+    std::multimap<int/*score*/,Player*>::iterator it;
+    for( it=scores.begin(); it!=scores.end(); ++it )
+      {
+	int score = it->first;
+	Player *player = it->second;
+	line.Printf( _("%3d points: %s\n"), score, str_to_wxstr(player->name).c_str() );
+	msg += line;
+      }
+    report_information( msg, _("Scores") );
+  }
+
   void WX_GUI_Manager::report_winner( Player *player )
   {
     if( player )

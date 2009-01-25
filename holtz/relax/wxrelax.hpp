@@ -60,9 +60,12 @@ namespace relax
   struct Bitmap_Set
   {
     std::map<Field_State_Type,wxBitmap> field_bitmaps;
-    std::map<Stones::Stone_Type,wxBitmap> stone_bitmaps;
+    //std::map<Stones::Stone_Type,wxBitmap> stone_bitmaps;
+    std::vector<std::map<int/*num*/,wxBitmap> > num_bitmaps;
     wxBitmap click_mark, stone_mark, field_mark;
-    wxBitmap background;
+    wxBitmap background, stone_base;
+
+    Bitmap_Set() { num_bitmaps.resize(3); /* 3 directions */ }
   };
 
   class Bitmap_Handler
@@ -198,7 +201,7 @@ namespace relax
   public:
     struct Settings
     {
-      typedef enum Arrangement_Type { arrange_standard, arrange_stones_right };
+      enum Arrangement_Type { arrange_standard, arrange_stones_right };
       Settings( const Board_Panel::Settings &board_settings, 
 		const Player_Panel::Settings &player_settings,
 		const Stone_Panel::Settings &common_stone_settings,
@@ -297,6 +300,7 @@ namespace relax
     virtual void setup_game_display(); // setup all windows to display game
     virtual void set_board( const Game &game );
     virtual void update_board( const Game &game );
+    virtual void report_scores( std::multimap<int/*score*/,Player*> scores );
     virtual void report_winner( Player *player );
     virtual void report_error( wxString msg, wxString caption );
     virtual void report_information( wxString msg, wxString caption );

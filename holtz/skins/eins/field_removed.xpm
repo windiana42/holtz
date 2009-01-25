@@ -1,5 +1,8 @@
-/* XPM */
+/* XPM */		       
 static char * field_removed_xpm[] = {
-"1 1 1 1",
-" 	c None",
-" "};
+"1 1 1 1",		       	     
+"       c None",	       
+" "};	        	 	        
+     
+     
+     

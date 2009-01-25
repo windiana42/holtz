@@ -332,41 +332,6 @@ namespace relax
 	assert( current_move != sequence.get_moves().end() );
 	switch( (*current_move)->get_type() )
 	{
-	  case Move::knock_out_move:
-	  {
-	    // ** initialize variables
-	    Knock_Out_Move *knock_move = dynamic_cast<Knock_Out_Move*>(*current_move);
-	    assert( knock_move );
-	    Field_State_Type stone_field = game->board.get_field(knock_move->from);
-	    assert( Board::is_stone(stone_field) );
-	    Stones::Stone_Type stone = Stones::Stone_Type(game->board.get_field(knock_move->from));
-
-	    // ** modify board state
-	    Field_Iterator from_field( knock_move->from, &game->board );
-	    save_field = *from_field; // store stone which moves
-	    *from_field = field_empty; // remove stone which moves
-
-	    // ** calculate animation positions
-	    std::pair<int,int> _from = 
-	      gui_manager.get_game_panel().get_board_panel().get_field_pos( knock_move->from.x, 
-									    knock_move->from.y );
-	    std::pair<int,int> _to = 
-	      gui_manager.get_game_panel().get_board_panel().get_field_pos( knock_move->to.x, 
-									    knock_move->to.y );
-
-	    wxPoint from( _from.first, _from.second );
-	    wxPoint to( _to.first, _to.second );
-
-	    // ** change state
-	    state = knock_out_jump;
-
-	    // ** refresh display and start animation
-	    game_window.refresh(); 
-	    ret = bitmap_move_animation.move
-	      ( gui_manager.get_game_panel().get_board_panel().get_bitmap_set().stone_bitmaps[stone],
-		from, to, 12, 35, this, ANIMATION_DONE, ANIMATION_ABORTED );
-	  }
-	  break;
 	  case Move::set_move:
 	  {
 	    // ** initialize variables
@@ -410,36 +375,9 @@ namespace relax
 	    // ** refresh display and start animation
 	    game_window.refresh();
 	    ret = bitmap_move_animation.move
-	      ( gui_manager.get_game_panel().get_board_panel().get_bitmap_set().stone_bitmaps[stone],
+	      ( gui_manager.get_game_panel().get_board_panel().get_bitmap_set().
+		field_bitmaps[Field_State_Type(stone)],
 		from, pos, 20, 40, this, ANIMATION_DONE, ANIMATION_ABORTED );
-	  }
-	  break;
-	  case Move::remove:
-	  {
-	    // ** initialize variables
-	    Remove *remove = dynamic_cast<Remove*>(*current_move);
-	    assert( remove );
-
-	    // ** modify board state
-	    Field_Iterator field  ( remove->remove_pos,   &game->board );
-	    *field = field_removed;
-
-	    // ** calculate animation positions
-	    std::pair<int,int> _remove_pos = 
-	      gui_manager.get_game_panel().get_board_panel().get_field_pos( remove->remove_pos.x, 
-							   remove->remove_pos.y );
-	    wxPoint remove_pos( _remove_pos.first, _remove_pos.second );
-
-	    // ** stay in begin state after animation
-	    ++current_move;
-	    state = begin;
-
-	    // ** refresh display and start animation
-	    game_window.refresh(); 
-	    ret = bitmap_move_animation.move
-	      ( gui_manager.get_game_panel().get_board_panel().get_bitmap_set()
-		.field_bitmaps[field_empty], 
-		remove_pos, wxPoint(-1,-1), 20, 40, this, ANIMATION_DONE, ANIMATION_ABORTED );
 	  }
 	  break;
 	  case Move::finish_move:
@@ -451,9 +389,6 @@ namespace relax
 	    // move has to be done once to calculate removed_stones
 	    Game save_game(*game);
 	    finish_move->do_move(save_game);
-
-	    current_removed_stone = finish_move->removed_stones.begin();
-	    end_removed_stones = finish_move->removed_stones.end();
 
 	    // ** change state
 	    state = finish_sequence;
@@ -468,59 +403,6 @@ namespace relax
 	}
       }
       break;
-      case knock_out_jump:
-      {
-	// ** initialize variables
-	Knock_Out_Move *knock_move = dynamic_cast<Knock_Out_Move*>(*current_move);
-	assert( knock_move );
-	Field_State_Type stone_field = knock_move->knocked_stone;
-	assert( Board::is_stone(stone_field) );
-	Stones::Stone_Type stone = Stones::Stone_Type(stone_field);
-
-	// ** modify board state
-	Field_Iterator to_field  ( knock_move->to,   &game->board );
-	Field_Iterator over_field( knock_move->over, &game->board );
-	*to_field = save_field;	    // set stone on destination field
-	*over_field = field_empty;  // remove stone in the middle
-
-	// ** calculate animation positions
-	std::pair<int,int> _over = 
-	  gui_manager.get_game_panel().get_board_panel().get_field_pos( knock_move->over.x, 
-									knock_move->over.y );
-	wxPoint over( _over.first, _over.second );
-
-	std::pair<int,int> _to;
-	const Player_Panel *panel = 
-	  gui_manager.get_game_panel().get_player_panel( current_player->id );
-	int col = current_player->stones.stone_count[stone];
-	assert(col >= 0);
-	_to = panel->get_stone_panel().get_field_pos( col, stone );
-	wxPoint to( _to.first, _to.second );
-
-	save_field = stone_field;
-
-	// ** change state
-	state = knock_out_collects;
-
-	// ** refresh display and start animation
-	game_window.refresh(); 
-	ret = bitmap_move_animation.move
-	  ( gui_manager.get_game_panel().get_board_panel().get_bitmap_set().stone_bitmaps[stone],
-	    over, to, 20, 40, this, ANIMATION_DONE, ANIMATION_ABORTED );
-      }
-      break;
-      case knock_out_collects:
-      {
-	// ** modify board state
-	assert( Board::is_stone(save_field) );
-	++current_player->stones.stone_count[Stones::Stone_Type(save_field)];
-
-	// ** begin new step
-	++current_move;
-	state = begin;
-	ret = step();		// next step at once
-      }
-      break;
       case setting_stone:
       {
 	// ** initialize variables
@@ -530,18 +412,13 @@ namespace relax
 	assert( Board::is_stone(stone) );
 
 	// ** modify board state
-	Field_Iterator to_field  ( set_move->pos, &game->board );
+	Field_Iterator to_field  ( set_move->pos, &game->current_player->board );
 	*to_field = stone;
 
 	// ** begin new step
 	++current_move;
 	state = begin;
 	ret = step();		// next step at once
-      }
-      break;
-      case removing:
-      {
-	assert(false);
       }
       break;
       case finish_sequence:
@@ -560,7 +437,7 @@ namespace relax
 	  Stones::Stone_Type &stone = current_removed_stone->second;
 
 	  // ** modify board state
-	  Field_Iterator field( field_pos, &game->board );
+	  Field_Iterator field( field_pos, &game->current_player->board );
 	  *field = field_removed;
 
 	  // ** calculate animation positions
@@ -582,7 +459,8 @@ namespace relax
 	  // ** refresh display and start animation
 	  game_window.refresh(); 
 	  ret = bitmap_move_animation.move
-	    ( gui_manager.get_game_panel().get_board_panel().get_bitmap_set().stone_bitmaps[stone], 
+	    ( gui_manager.get_game_panel().get_board_panel().get_bitmap_set().
+	      field_bitmaps[Field_State_Type(stone)], 
 	      pos, to, 20, 40, this, ANIMATION_DONE, ANIMATION_ABORTED );
 	}
       }
@@ -633,63 +511,6 @@ namespace relax
 
 	switch( (*current_undo_move)->get_type() )
 	{
-	  case Move::knock_out_move:
-	  {
-	    // ** initialize variables
-	    Knock_Out_Move *knock_move = dynamic_cast<Knock_Out_Move*>(*current_undo_move);
-	    assert( knock_move );
-
-	    Field_State_Type stone_field = knock_move->knocked_stone;
-	    assert( Board::is_stone(stone_field) );
-	    Stones::Stone_Type stone = Stones::Stone_Type(knock_move->knocked_stone);
-
-	    // ** modify board state
-#ifndef __WXMSW__
-	    if( current_player->stones.stone_count[stone] <= 0 )
-	    {
-	      std::cerr << "Error removing stonetype:" << stone << std::endl;
-	      std::cerr << current_player->stones.stone_count[Stones::white_stone] << std::endl;
-	      std::cerr << current_player->stones.stone_count[Stones::grey_stone] << std::endl;
-	      std::cerr << current_player->stones.stone_count[Stones::black_stone] << std::endl;
-	      std::cerr 
-		<< game->get_next_player(current_player)->stones.stone_count[Stones::white_stone] 
-		<< std::endl;
-	      std::cerr 
-		<< game->get_next_player(current_player)->stones.stone_count[Stones::grey_stone] 
-		<< std::endl;
-	      std::cerr 
-		<< game->get_next_player(current_player)->stones.stone_count[Stones::black_stone] 
-		<< std::endl;      
-	    }
-#endif
-	    assert(current_player->stones.stone_count[stone] > 0 );
-	    --current_player->stones.stone_count[stone]; // remove stone from player
-
-	    // ** calculate animation positions
-	    std::pair<int,int> _over = 
-	      gui_manager.get_game_panel().get_board_panel().get_field_pos( knock_move->over.x, 
-									    knock_move->over.y );
-	    wxPoint over( _over.first, _over.second );
-
-	    std::pair<int,int> _to;
-	    const Player_Panel *panel = 
-	      gui_manager.get_game_panel().get_player_panel( current_player->id );
-	    int col = current_player->stones.stone_count[stone];
-	    assert(col >= 0);
-	    _to = panel->get_stone_panel().get_field_pos( col, stone );
-	    wxPoint to( _to.first, _to.second );
-	    
-	    // ** change state
-	    state = knock_out_jump;
-	    
-	    // ** refresh display and start animation
-	    game_window.refresh(); 
-	    ret = bitmap_move_animation.move
-	      ( gui_manager.get_game_panel().get_board_panel().get_bitmap_set().stone_bitmaps[stone],
-		to, over, 20, 40, this, ANIMATION_DONE, ANIMATION_ABORTED ); 
-				// move in direction: <to> => <over>
-	  }
-	  break;
 	  case Move::set_move:
 	  {
 	    // ** initialize variables
@@ -698,7 +519,7 @@ namespace relax
 	    Stones::Stone_Type stone = set_move->stone_type;
 
 	    // ** modify board state
-	    Field_Iterator field  ( set_move->pos, &game->board );
+	    Field_Iterator field  ( set_move->pos, &game->current_player->board );
 	    *field = field_empty;
 
 	    // ** calculate animation positions
@@ -735,36 +556,10 @@ namespace relax
 	    // ** refresh display and start animation
 	    game_window.refresh(); // remove picked stone from screen
 	    ret = bitmap_move_animation.move
-	      ( gui_manager.get_game_panel().get_board_panel().get_bitmap_set().stone_bitmaps[stone],
+	      ( gui_manager.get_game_panel().get_board_panel().get_bitmap_set().
+		field_bitmaps[Field_State_Type(stone)],
 		pos, from, 20, 40, this, ANIMATION_DONE, ANIMATION_ABORTED ); 
 				// move in direction: <pos> => <from>
-	  }
-	  break;
-	  case Move::remove:
-	  {
-	    // ** initialize variables
-	    Remove *remove = dynamic_cast<Remove*>(*current_undo_move);
-	    assert( remove );
-
-	    // ** modify board state
-	    Field_Iterator field  ( remove->remove_pos, &game->board );
-	    *field = field_removed;
-
-	    // ** calculate animation positions
-	    std::pair<int,int> _remove_pos = 
-	      gui_manager.get_game_panel().get_board_panel().get_field_pos( remove->remove_pos.x, 
-							   remove->remove_pos.y );
-	    wxPoint remove_pos( _remove_pos.first, _remove_pos.second );
-
-	    // ** change state
-	    state = removing;
-
-	    // ** refresh display and start animation
-	    game_window.refresh(); 
-	    ret = bitmap_move_animation.move
-	      ( gui_manager.get_game_panel().get_board_panel().get_bitmap_set()
-		.field_bitmaps[field_empty], wxPoint(-1,-1), remove_pos, 20, 40, 
-		this, ANIMATION_DONE, ANIMATION_ABORTED ); // move field from anywhere 
 	  }
 	  break;
 	  case Move::finish_move:
@@ -772,9 +567,6 @@ namespace relax
 	    // ** initialize variables
 	    Finish_Move *finish_move = dynamic_cast<Finish_Move*>(*current_undo_move);
 	    assert( finish_move );
-
-	    current_removed_stone = finish_move->removed_stones.begin();
-	    end_removed_stones = finish_move->removed_stones.end();
 
 	    // ** change state
 	    state = finish_sequence;
@@ -794,65 +586,6 @@ namespace relax
 	}
       }
       break;
-      case knock_out_jump:
-      {
-	// ** initialize variables
-	Knock_Out_Move *knock_move = dynamic_cast<Knock_Out_Move*>(*current_undo_move);
-	assert( knock_move );
-	
-	Field_State_Type stone_field = knock_move->knocked_stone;
-	assert( Board::is_stone(stone_field) );
-
-	// ** modify board state
-	Field_Iterator over_field( knock_move->over, &game->board );
-	*over_field = stone_field;  // set stone in the middle
-	Field_Iterator to_field( knock_move->to, &game->board );
-	save_field = *to_field;
-	*to_field = field_empty; // remove stone which moves
-
-	// ** calculate animation positions
-	std::pair<int,int> _from = 
-	  gui_manager.get_game_panel().get_board_panel().get_field_pos( knock_move->from.x, 
-									knock_move->from.y );
-	std::pair<int,int> _to = 
-	  gui_manager.get_game_panel().get_board_panel().get_field_pos( knock_move->to.x, 
-									knock_move->to.y );
-
-	wxPoint from( _from.first, _from.second );
-	wxPoint to( _to.first, _to.second );
-
-	// ** change state
-	state = knock_out_collects;
-
-	// ** refresh display and start animation
-	game_window.refresh(); 
-	ret = bitmap_move_animation.move
-	  ( gui_manager.get_game_panel().get_board_panel().get_bitmap_set().
-	    stone_bitmaps[Stones::Stone_Type(save_field)],
-	    to, from, 12, 35, this, ANIMATION_DONE, ANIMATION_ABORTED ); 
-				// move stone back: <to> => <from>
-      }
-      break;
-      case knock_out_collects:
-      {
-	// ** initialize variables
-	Knock_Out_Move *knock_move = dynamic_cast<Knock_Out_Move*>(*current_undo_move);
-	assert( knock_move );
-	
-	Field_State_Type stone_field = knock_move->knocked_stone;
-	assert( Board::is_stone(stone_field) );
-
-	// ** modify board state
-	Field_Iterator from_field  ( knock_move->from,   &game->board );
-	assert( Board::is_stone(save_field) );
-	*from_field = save_field;	    // set stone on starting field
-
-	// ** begin new step
-	++current_undo_move;
-	state = begin;
-	ret = step_undo();
-      }
-      break;
       case setting_stone:
       {
 	// ** initialize variables
@@ -862,27 +595,11 @@ namespace relax
 	assert( Board::is_stone(stone) );
 
 	// ** modify board state
-	Field_Iterator to_field  ( set_move->pos, &game->board );
+	Field_Iterator to_field  ( set_move->pos, &game->current_player->board );
 	*to_field = field_empty;
 
 	// readd stone to player or common stones
 	++stones->stone_count[set_move->stone_type];
-
-	// ** begin new step
-	++current_undo_move;
-	state = begin;
-	ret = step_undo();
-      }
-      break;
-      case removing:
-      {
-	// ** initialize variables
-	Remove *remove = dynamic_cast<Remove*>(*current_undo_move);
-	assert( remove );
-
-	// ** modify board state
-	Field_Iterator field  ( remove->remove_pos, &game->board );
-	*field = field_empty;
 
 	// ** begin new step
 	++current_undo_move;
@@ -927,7 +644,8 @@ namespace relax
 	  // ** refresh display and start animation
 	  game_window.refresh(); 
 	  ret = bitmap_move_animation.move
-	    ( gui_manager.get_game_panel().get_board_panel().get_bitmap_set().stone_bitmaps[stone], 
+	    ( gui_manager.get_game_panel().get_board_panel().get_bitmap_set().
+	      field_bitmaps[Field_State_Type(stone)], 
 	      to, pos, 20, 40, this, ANIMATION_DONE, ANIMATION_ABORTED ); 
 				// move from <to> of player => <pos> on board
 	}
@@ -940,7 +658,7 @@ namespace relax
 	Stones::Stone_Type &stone = current_removed_stone->second;
 
 	// ** modify board state
-	Field_Iterator field( field_pos, &game->board );
+	Field_Iterator field( field_pos, &game->current_player->board );
 	*field = Field_State_Type(stone); // place removed stone
 
 	// ** begin next finish animation

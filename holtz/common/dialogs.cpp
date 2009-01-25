@@ -28,6 +28,12 @@
 #  include "util.hpp"
 #  define VERSION_DVONN
 #  define DEFAULT_PORT DEFAULT_PORT_DVONN
+#elif defined(VERSION_RELAX)
+#  undef VERSION_RELAX
+#  include "wxmain.hpp"
+#  include "util.hpp"
+#  define VERSION_RELAX
+#  define DEFAULT_PORT DEFAULT_PORT_RELAX
 #endif
 
 #include <wx/cshelp.h>
@@ -41,6 +47,8 @@
 namespace zertz
 #elif defined(VERSION_DVONN)
 namespace dvonn
+#elif defined(VERSION_RELAX)
+namespace relax
 #endif
 {
 
@@ -173,8 +181,9 @@ namespace dvonn
 
     if( connecting )
     {
-      wxMessageBox( _("Please wait until connection attempt succeeds or fails and try again"), 
-		    _("Wait"), wxOK | wxICON_INFORMATION );
+      wxMessageDialog( this,
+		       _("Please wait until connection attempt succeeds or fails and try again"), 
+		       _("Wait"), wxOK | wxICON_INFORMATION ).ShowModal();
       return false;
     }
 
@@ -233,7 +242,8 @@ namespace dvonn
 	  else
 	  {
 	    delete network_manager;
-	    wxMessageBox(_("Can't listen port"), _("Network Message"), wxOK | wxICON_ERROR, this);
+	    wxMessageDialog(this, _("Can't listen port"), _("Network Message"), 
+			    wxOK | wxICON_ERROR).ShowModal();
 	    return false;
 	  }
 	}
@@ -261,8 +271,8 @@ namespace dvonn
 	  else
 	  {
 	    delete network_manager;
-	    wxMessageBox(_("Connection to Server failed"), _("Network Message"), 
-			 wxOK | wxICON_ERROR,this);
+	    wxMessageDialog(this, _("Connection to Server failed"), _("Network Message"), 
+			    wxOK | wxICON_ERROR).ShowModal();
 	    return false;
 	  }
 	}
@@ -286,8 +296,8 @@ namespace dvonn
       if( !game_dialog.game_setup_manager->can_enter_player_setup() &&
 	  GetNext() == game_dialog.get_player_page() )
       {
-	wxMessageBox( _("Please wait for connection to allow player setup"), 
-		      _("Connecting"), wxOK | wxICON_INFORMATION );
+	wxMessageDialog( this, _("Please wait for connection to allow player setup"), 
+			 _("Connecting"), wxOK | wxICON_INFORMATION ).ShowModal();
 	return false;
       }
 
@@ -419,6 +429,13 @@ namespace dvonn
     new_game_choice = new wxRadioBox( this, DIALOG_NEW_GAME_CHOICE, 
 				      _("Rules for new game"), wxDefaultPosition,
 				      wxDefaultSize, 3, new_game_choices, 2, wxRA_SPECIFY_COLS );
+#elif defined(VERSION_RELAX)
+    wxString new_game_choices[2];
+    new_game_choices[0] = wxString(_("Standard Rules"));
+    new_game_choices[1] = wxString(_("Rules of last game"));
+    new_game_choice = new wxRadioBox( this, DIALOG_NEW_GAME_CHOICE, 
+				      _("Rules for new game"), wxDefaultPosition,
+				      wxDefaultSize, 2, new_game_choices, 2, wxRA_SPECIFY_COLS );
 #endif
 
     wxString continue_game_choices[3];
@@ -505,6 +522,12 @@ namespace dvonn
 	  case 1: game_dialog.game = Game( Random_Ruleset() ); break;
 	  case 2: game_dialog.game = Game( *game_dialog.game_manager.get_game().ruleset ); 
 	}
+#elif defined(VERSION_RELAX)
+	switch( new_game_choice->GetSelection() )
+	{
+	  case 0: game_dialog.game = Game( Standard_Ruleset() ); break;
+	  case 1: game_dialog.game = Game( *game_dialog.game_manager.get_game().ruleset ); 
+	}
 #endif
 	{
 	  if( game_dialog.game_setup_manager->ask_change_board( game_dialog.game ) == 
@@ -553,8 +576,8 @@ namespace dvonn
       if( !game_dialog.game_setup_manager->can_enter_player_setup() &&
 	  GetNext() == game_dialog.get_player_page() )
       {
-	wxMessageBox( _("Please wait for connection to allow player setup"), 
-		      _("Connecting"), wxOK | wxICON_INFORMATION );
+	wxMessageDialog( this, _("Please wait for connection to allow player setup"), 
+			 _("Connecting"), wxOK | wxICON_INFORMATION ).ShowModal();
 	return false;
       }
 
@@ -599,6 +622,13 @@ namespace dvonn
       }
       new_game_choice->Enable(true);
 #elif defined(VERSION_DVONN)
+      switch( game_dialog.game.ruleset->get_type() )
+      {
+	case Ruleset::standard:   new_game_choice->SetSelection(0); break;
+	case Ruleset::custom:     new_game_choice->SetSelection(1); break;
+      }
+      new_game_choice->Enable(true);
+#elif defined(VERSION_RELAX)
       switch( game_dialog.game.ruleset->get_type() )
       {
 	case Ruleset::standard:   new_game_choice->SetSelection(0); break;
@@ -998,8 +1028,8 @@ namespace dvonn
       if( !game_dialog.game_setup_manager->can_enter_player_setup() &&
 	  GetNext() == game_dialog.get_player_page() )
       {
-	wxMessageBox( _("Please wait for connection to allow player setup"), 
-		      _("Connecting"), wxOK | wxICON_INFORMATION );
+	wxMessageDialog( this, _("Please wait for connection to allow player setup"), 
+			 _("Connecting"), wxOK | wxICON_INFORMATION ).ShowModal();
 	return false;
       }
 
@@ -1121,8 +1151,8 @@ namespace dvonn
       if( !game_dialog.game_setup_manager->can_enter_player_setup() &&
 	  GetNext() == game_dialog.get_player_page() )
       {
-	wxMessageBox( _("Please wait for connection to allow player setup"), 
-		      _("Connecting"), wxOK | wxICON_INFORMATION );
+	wxMessageDialog( this, _("Please wait for connection to allow player setup"), 
+			 _("Connecting"), wxOK | wxICON_INFORMATION ).ShowModal();
 	return false;
       }
 
@@ -1207,6 +1237,8 @@ namespace dvonn
       {
 	wxString board_str;
 #if defined(VERSION_DVONN)
+	board_str << _("Board");
+#elif defined(VERSION_RELAX)
 	board_str << _("Board");
 #elif defined(VERSION_ZERTZ)
 	switch( master_content.ruleset_type )
@@ -1353,8 +1385,8 @@ namespace dvonn
       if( !game_dialog.game_setup_manager->can_enter_player_setup() &&
 	  GetNext() == game_dialog.get_player_page() )
       {
-	wxMessageBox( _("Please wait for connection to allow player setup"), 
-		      _("Connecting"), wxOK | wxICON_INFORMATION );
+	wxMessageDialog( this, _("Please wait for connection to allow player setup"), 
+			 _("Connecting"), wxOK | wxICON_INFORMATION ).ShowModal();
 	return false;
       }
 
@@ -1590,7 +1622,8 @@ p			  str_to_wxstr(master_content.player1).c_str(), str_to_wxstr(master_content.
       int num_players = player_list->GetCount();
       if( !game_dialog.game_setup_manager->add_player( player ) )
       {
-	wxMessageBox(_("Could not add player"), _("Add player"), wxOK | wxICON_INFORMATION, this);
+	wxMessageDialog(this, _("Could not add player"), _("Add player"), 
+			wxOK | wxICON_INFORMATION).ShowModal();
       }
       else
       {
@@ -1610,8 +1643,8 @@ p			  str_to_wxstr(master_content.player1).c_str(), str_to_wxstr(master_content.
 	int num_players = player_list->GetCount();
 	if( !game_dialog.game_setup_manager->remove_player( item_player[item] ) )
 	{
-	  wxMessageBox( _("Could not remove player!"), 
-		        _("Remove player"), wxOK | wxICON_INFORMATION, this );
+	  wxMessageDialog( this, _("Could not remove player!"), 
+			   _("Remove player"), wxOK | wxICON_INFORMATION ).ShowModal();
 	}
 	else
 	{
@@ -1631,8 +1664,8 @@ p			  str_to_wxstr(master_content.player1).c_str(), str_to_wxstr(master_content.
       {
 	if( !game_dialog.game_setup_manager->player_up( item_player[item] ) )
 	{
-	  wxMessageBox( _("Could not move player!"), _("Move player"), 
-		        wxOK | wxICON_INFORMATION, this );
+	  wxMessageDialog( this, _("Could not move player!"), _("Move player"), 
+			   wxOK | wxICON_INFORMATION ).ShowModal();
 	}
       }
     }
@@ -1648,8 +1681,8 @@ p			  str_to_wxstr(master_content.player1).c_str(), str_to_wxstr(master_content.
       {
 	if( !game_dialog.game_setup_manager->player_down( item_player[item] ) )
 	{
-	  wxMessageBox( _("Could not move player!"), _("Move player"), 
-		        wxOK | wxICON_INFORMATION, this );
+	  wxMessageDialog( this, _("Could not move player!"), _("Move player"), 
+			   wxOK | wxICON_INFORMATION ).ShowModal();
 	}
       }
     }
@@ -1764,7 +1797,8 @@ p			  str_to_wxstr(master_content.player1).c_str(), str_to_wxstr(master_content.
 
   void Player_Setup_Panel::player_change_denied()
   {
-    wxMessageBox( _("Change for this player denied!"), _("Denied"), wxOK | wxICON_INFORMATION, this);
+    wxMessageDialog( this, _("Change for this player denied!"), _("Denied"), 
+		     wxOK | wxICON_INFORMATION ).ShowModal();
   }
 
   void Player_Setup_Panel::player_ready( const Player & )
@@ -1820,7 +1854,8 @@ p			  str_to_wxstr(master_content.player1).c_str(), str_to_wxstr(master_content.
   {
     current_ruleset = last_ruleset;
     ruleset_choice->SetSelection( last_ruleset );
-    wxMessageBox( _("Change of ruleset denied!"), _("Ruleset denied"), wxOK | wxICON_INFORMATION, this);
+    wxMessageDialog( this, _("Change of ruleset denied!"), _("Ruleset denied"), 
+                     wxOK | wxICON_INFORMATION ).ShowModal();
   }
   */
 
@@ -1960,16 +1995,16 @@ p			  str_to_wxstr(master_content.player1).c_str(), str_to_wxstr(master_content.
     switch( game_dialog.game_setup_manager->can_start() )
     {
     case Game_Setup_Manager::too_few_players: 
-      wxMessageBox( _("Some more players are needed!"), _("Can't start"), 
-		    wxOK | wxICON_INFORMATION, this);
+      wxMessageDialog( this, _("Some more players are needed!"), _("Can't start"), 
+		       wxOK | wxICON_INFORMATION ).ShowModal();
       break;
     case Game_Setup_Manager::too_many_players: 
-      wxMessageBox( _("Too many players!"), _("Can't start"), wxOK | wxICON_INFORMATION, this);
+      wxMessageDialog( this, _("Too many players!"), _("Can't start"), 
+		       wxOK | wxICON_INFORMATION ).ShowModal();
       break;
     case Game_Setup_Manager::not_ready: 
-      wxMessageBox( _("Please wait until everyone is ready"), _("Can't start"), 
-		    wxOK | wxICON_INFORMATION,
-		    this);
+      wxMessageDialog( this, _("Please wait until everyone is ready"), _("Can't start"), 
+		       wxOK | wxICON_INFORMATION ).ShowModal();
       break;
     case Game_Setup_Manager::everyone_ready: 
       return true;
@@ -2102,7 +2137,8 @@ p			  str_to_wxstr(master_content.player1).c_str(), str_to_wxstr(master_content.
   bool Game_Dialog::ask_change_board( const Game &new_game, wxString who )
   {
     wxString msg = who + _(" asks to use another board. Accept?");
-    if( wxMessageBox( msg, _("Accept board?"), wxYES | wxNO | wxCANCEL | wxICON_QUESTION ) == wxYES )
+    if( wxMessageDialog( 0, msg, _("Accept board?"), 
+			 wxYES_NO | wxCANCEL | wxICON_QUESTION ).ShowModal() == wxID_YES )
     {
       game = new_game;
       get_custom_board_page()->restore();
@@ -2115,7 +2151,8 @@ p			  str_to_wxstr(master_content.player1).c_str(), str_to_wxstr(master_content.
   {
     game = new_game;
     wxString msg = _("Board changed. Do you want to view the new settings?");
-    if( wxMessageBox( msg, _("View board?"), wxYES | wxNO | wxCANCEL | wxICON_QUESTION ) == wxYES )
+    if( wxMessageDialog( 0, msg, _("View board?"), 
+			 wxYES_NO | wxCANCEL | wxICON_QUESTION ).ShowModal() == wxID_YES )
     {
       get_custom_board_page()->restore();
     }
@@ -2128,7 +2165,7 @@ p			  str_to_wxstr(master_content.player1).c_str(), str_to_wxstr(master_content.
   void Game_Dialog::board_change_denied()
   {
     wxString msg = _("Board change denied!");
-    wxMessageBox( msg, _("Change denied!"), wxOK | wxICON_INFORMATION );
+    wxMessageDialog( 0, msg, _("Change denied!"), wxOK | wxICON_INFORMATION ).ShowModal();
     game = game_setup_manager->get_board();
   }
 
@@ -2173,8 +2210,8 @@ p			  str_to_wxstr(master_content.player1).c_str(), str_to_wxstr(master_content.
 	tell_user = false;
     if( tell_user )
     {
-      wxMessageBox( _("Connection was closed! This may be caused intentinally by your fellow players or be a result of technical problems of the connection."), _("disconnect"), 
-		    wxOK | wxICON_INFORMATION );
+      wxMessageDialog( 0, _("Connection was closed! This may be caused intentinally by your fellow players or be a result of technical problems of the connection."), _("disconnect"), 
+		       wxOK | wxICON_INFORMATION ).ShowModal();
     }
   }
   void Game_Dialog::game_started()
@@ -2189,7 +2226,8 @@ p			  str_to_wxstr(master_content.player1).c_str(), str_to_wxstr(master_content.
   bool Game_Dialog::ask_new_game( wxString who ) // other player asks for a new game (true: accept)
   {
     wxString msg = who + _(" asks to play new game. Accept?");
-    if( wxMessageBox( msg, _("New game?"), wxYES | wxNO | wxCANCEL | wxICON_QUESTION ) == wxYES )
+    if( wxMessageDialog( 0, msg, _("New game?"), 
+			 wxYES_NO | wxCANCEL | wxICON_QUESTION ).ShowModal() == wxID_YES )
     {
       return true;
     } 
@@ -2203,7 +2241,8 @@ p			  str_to_wxstr(master_content.player1).c_str(), str_to_wxstr(master_content.
     else
       msg.Printf( _("%s asks undo %d half moves. Accept?"), who.c_str(), n);
 
-    if( wxMessageBox( msg, _("Allow undo?"), wxYES | wxNO | wxCANCEL | wxICON_QUESTION ) == wxYES )
+    if( wxMessageDialog( 0, msg, _("Allow undo?"), 
+			 wxYES_NO | wxCANCEL | wxICON_QUESTION ).ShowModal() == wxID_YES )
     {
       return true;
     } 
@@ -2232,8 +2271,8 @@ p			  str_to_wxstr(master_content.player1).c_str(), str_to_wxstr(master_content.
     {
       if(!game_setup_manager->is_allow_game_setup_abort())
       {
-	wxMessageBox( _("Closing the player setup now would leave the game in a bad state. Please go back to make changes to the game setup or finish the current setup. You can also start another game from the File menu."), 
-		      _("Please don't close"), wxOK | wxICON_INFORMATION );
+	wxMessageDialog( 0, _("Closing the player setup now would leave the game in a bad state. Please go back to make changes to the game setup or finish the current setup. You can also start another game from the File menu."), 
+			 _("Please don't close"), wxOK | wxICON_INFORMATION ).ShowModal();
 	
 	event.Veto();
 	return;
@@ -2854,7 +2893,8 @@ p			  str_to_wxstr(master_content.player1).c_str(), str_to_wxstr(master_content.
     {
       wxString msg;
       msg.Printf( _("Do you really want to disconnect %s?"), hostname.c_str() );
-      if( wxMessageBox( msg, _("Disconnect?"), wxYES | wxNO | wxCANCEL | wxICON_QUESTION ) == wxYES )
+      if( wxMessageDialog( this, msg, _("Disconnect?"), 
+			   wxYES_NO | wxCANCEL | wxICON_QUESTION ).ShowModal() == wxID_YES )
       {
 	network_server.disconnect_id( conn_id );
       }
@@ -2863,7 +2903,7 @@ p			  str_to_wxstr(master_content.player1).c_str(), str_to_wxstr(master_content.
     {
       wxString msg;
       msg.Printf( _("Can't disconnect host %s yet!"), hostname.c_str() );
-      wxMessageBox( msg, _("Can't disconnect!"), wxOK | wxICON_ERROR );
+      wxMessageDialog( this, msg, _("Can't disconnect!"), wxOK | wxICON_ERROR ).ShowModal();
     }
   }
 

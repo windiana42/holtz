@@ -32,6 +32,7 @@ namespace relax
   // ----------------------------------------------------------------------------
 
   Stones::Stones()
+    : current_stone(invalid_stone)
   {
     for( int i=stone_begin; i<stone_end; ++i )
       {
@@ -50,6 +51,7 @@ namespace relax
 
   void Stones::reset_stones()
   {
+    current_stone = invalid_stone;
     stone_count.clear();
     for( int i=stone_begin; i<stone_end; ++i )
       {
@@ -539,7 +541,6 @@ namespace relax
       undo_possible(undo_possible), min_players(min_players), max_players(max_players)
   {
   }
-  /*
   Ruleset::Ruleset( const Ruleset &ruleset )
     : type(ruleset.type), board(ruleset.board), common_stones(ruleset.common_stones),
       win_condition(ruleset.win_condition->clone()), 
@@ -554,13 +555,11 @@ namespace relax
     max_num2		  = ruleset.max_num2;
     max_num3		  = ruleset.max_num3;
   }
-  */
 
   Ruleset::Ruleset()
     : type(custom), win_condition(0), coordinate_translator(0)
   {
   }
-  /*
   Ruleset &Ruleset::operator=( const Ruleset &ruleset )
   {
     type		  = ruleset.type;
@@ -579,7 +578,6 @@ namespace relax
     max_num3		  = ruleset.max_num3;
     return *this;
   }
-  */
 
   Ruleset::~Ruleset()
   {
@@ -861,7 +859,6 @@ namespace relax
 
   Game::Game( const Ruleset &_ruleset )
     : ruleset(_ruleset.clone()), 
-      board(ruleset->board), 
       common_stones(ruleset->common_stones), 
       win_condition(ruleset->win_condition),
       coordinate_translator(ruleset->coordinate_translator),
@@ -873,10 +870,11 @@ namespace relax
     current_player_index = 0;
     prev_player = players.end();
     prev_player_index = -1;
+
+    initialize_round();
   }
 
   Game::Game( const Game &game )
-    : board(game.board)
   {
     *this = game;		// use operator=
   }
@@ -906,7 +904,6 @@ namespace relax
     prev_player_index    = game.prev_player_index;
     prev_player		 = get_player( prev_player_index );
 
-    board		  = game.board;
     common_stones 	  = game.common_stones;
     win_condition 	  = game.win_condition;
     coordinate_translator = game.coordinate_translator;
@@ -963,6 +960,9 @@ namespace relax
       return finished;
     }
 
+    if( current_player->board.get_empty_fields().empty() )
+      return finished_scores;
+
     do
     {
       Player_Input::Player_State state = current_player->input->determine_move();
@@ -1004,9 +1004,13 @@ namespace relax
 	  if( !current_player->is_active ) // if no player is able to move
 	  {
 	    winner_player_index=-1;
-	    return finished;
+	    return finished_scores;
 	  }
 
+	  if( current_player->board.get_empty_fields().empty() )
+	    return finished_scores;
+
+	  initialize_round();
 	  return next_players_turn;
 	}
 	break;
@@ -1026,7 +1030,6 @@ namespace relax
 
   void Game::reset_game()
   {
-    board = ruleset->board;
     common_stones = ruleset->common_stones;
     win_condition = ruleset->win_condition;
     coordinate_translator = ruleset->coordinate_translator;
@@ -1039,12 +1042,15 @@ namespace relax
     for( i = players.begin(); i != players.end(); ++i )
     {
       i->stones.reset_stones(); 
+      i->board = ruleset->board;
     }
 
     current_player = players.begin();
     current_player_index = 0;
     prev_player    = players.end();
     prev_player_index = -1;
+
+    initialize_round();
   }
 
   void Game::reset_game( const Ruleset &ruleset )
@@ -1061,6 +1067,20 @@ namespace relax
 
     this->ruleset = ruleset.clone();
     reset_game();
+  }
+
+  std::multimap<int/*score*/,Player*> Game::get_scores()
+  {
+    std::multimap<int/*score*/,Player*> ret;
+    std::vector<Player>::iterator it;
+    for( it = players.begin(); it != players.end(); ++it )
+    {
+      int score = get_max_score();
+      Player *player = &*it;
+      ret.insert(std::make_pair(score,player));
+    }
+    
+    return ret;
   }
 
   // true: right number of players
@@ -1149,6 +1169,28 @@ namespace relax
       ++ret;
 
     return ret;
+  }
+
+  void Game::initialize_round()
+  {
+    int num_stones = ruleset->nums1.size() * ruleset->nums2.size() * ruleset->nums3.size();
+    int possible_stones=0;
+    for( int i=0; i<num_stones; ++i )
+      {
+	Stones::Stone_Type stone_type = Stones::Stone_Type(Stones::stone_begin + i);
+	possible_stones += common_stones.stone_count[stone_type];
+      }
+    int chosen_index = random(possible_stones);
+    for( int i=0; i<num_stones; ++i )
+      {
+	Stones::Stone_Type stone_type = Stones::Stone_Type(Stones::stone_begin + i);
+	chosen_index -= common_stones.stone_count[stone_type];
+	if( chosen_index < 0 )
+	  {
+	    common_stones.current_stone = stone_type;
+	    break;
+	  }
+      }
   }
 
   std::vector<Player>::const_iterator Game::get_player( int index ) const
@@ -1242,6 +1284,7 @@ namespace relax
 
   void Game::print()
   {
+    Board &board = current_player->board;
     std::cout << "Max Score: " << get_max_score() << std::endl;
     for( int y=0; y<board.get_y_size(); ++y )
       {
@@ -1269,6 +1312,7 @@ namespace relax
 
   int Game::get_num_possible_moves() // number of possible moves in current situation
   {
+    Board &board = current_player->board;
     return board.get_empty_fields().size();
   }
 
@@ -1280,13 +1324,14 @@ namespace relax
     Move_Sequence current_sequence;
     std::list<Move_Sequence> possible_moves;
 
+    Board &board = current_player->board;
     std::list<Field_Pos> fields = board.get_empty_fields();
     std::list<Field_Pos>::iterator it;
     for( it = fields.begin(); it != fields.end(); ++it )
       {
 	Field_Pos pos = *it;
 	Move_Sequence move_sequence;
-	move_sequence.add_move( new Set_Move(pos, current_stone) );
+	move_sequence.add_move( new Set_Move(pos, common_stones.current_stone) );
 	move_sequence.add_move( new Finish_Move() );
 	possible_moves.push_back( move_sequence );
       }
@@ -1313,6 +1358,7 @@ namespace relax
   int Game::get_max_score(std::vector<std::map<int/*num*/, 
 			  unsigned /*stones*/> > *stones_available)
   {
+    Board &board = current_player->board;
     std::map<unsigned/*dir*/,std::map<int/*num*/,std::list<Speculative_Score> > > 
       speculative_scores;
     std::map<unsigned/*dir*/,std::list<Speculative_Score> > 
@@ -1553,6 +1599,9 @@ namespace relax
     // add speculative scores
     if( stones_available )
       {
+// 	int save_score = score;
+// 	std::vector<std::multimap<int,unsigned> > score_table;
+// 	score_table.resize(3);
 	for( unsigned dir=0; dir<3; ++dir )
 	  {
 	    int max_score = 0;
@@ -1607,8 +1656,13 @@ namespace relax
 		  }
 		// check max_score
 		if( !infeasible ) 
-		  if( cur_score > max_score ) 
-		    max_score = cur_score;
+		  {
+// 		    score_table[dir].insert( std::make_pair(cur_score,0/*dummy*/) );
+// 		    if( score_table[dir].size() >= 10 )
+// 		      score_table[dir].erase(score_table[dir].begin());
+		    if( cur_score > max_score ) 
+		      max_score = cur_score;
+		  }
 		// increment index
 		bool multi_break=false;
 		for( it=map1.begin(); it!=map1.end(); ++it )
@@ -1646,6 +1700,20 @@ namespace relax
 	      }
 	      score += max_score;
 	  }
+// 	if( score > 260 )
+// 	  {
+// 	    std::cout << "score=" << score << " (" << (score-save_score) << "):" << std::endl;
+// 	    for( unsigned dir=0; dir<3; ++dir )
+// 	      {
+// 		std::cout << "  dir=" << dir << ": ";
+// 		std::multimap<int,unsigned>::iterator it;
+// 		for( it=score_table[dir].begin(); it!=score_table[dir].end(); ++it )
+// 		  {
+// 		    std::cout << it->first << ",";
+// 		  }
+// 		std::cout << std::endl;
+// 	      }
+// 	  }
       }
     //std::cout << "score=" << score << std::endl;
     return score;
@@ -1705,20 +1773,21 @@ namespace relax
     {
       --game.common_stones.stone_count[ stone_type ];
     }
-    game.board.field[pos.x][pos.y] = Field_State_Type(stone_type);
+    game.current_player->board.field[pos.x][pos.y] = Field_State_Type(stone_type);
   }
   void Set_Move::undo_move( Game &game )
   {
     ++game.common_stones.stone_count[ stone_type ];
-    game.board.field[pos.x][pos.y] = field_empty;
+    game.current_player->board.field[pos.x][pos.y] = field_empty;
   }
 
   // true: move ok
   bool Set_Move::check_move( Game &game ) const 
   {
-    if( pos.x >= (int)game.board.field.size() ) return false;
-    if( pos.y >= (int)game.board.field[pos.x].size() ) return false;
-    if( !Board::is_empty( game.board.field[pos.x][pos.y] ) ) return false;
+    if( stone_type != game.common_stones.current_stone ) return false;
+    if( pos.x >= (int)game.current_player->board.field.size() ) return false;
+    if( pos.y >= (int)game.current_player->board.field[pos.x].size() ) return false;
+    if( !Board::is_empty( game.current_player->board.field[pos.x][pos.y] ) ) return false;
     if( game.common_stones.stone_count[ stone_type ] <= 0 ) return false;
     return true;
   }
@@ -2320,6 +2389,19 @@ namespace relax
   }
 
   // ----------------------------------------------------------------------------
+  // Custom_Ruleset
+  // ----------------------------------------------------------------------------
+
+  Custom_Ruleset::Custom_Ruleset( Board board, Common_Stones common_stones, 
+				  Win_Condition *win_condition, 
+				  Coordinate_Translator *coordinate_translator, 
+				  bool undo_possible, unsigned min_players, unsigned max_players )
+    : Ruleset( custom, board, common_stones, win_condition, coordinate_translator, undo_possible, 
+	       min_players, max_players )
+  {
+  }
+
+  // ----------------------------------------------------------------------------
   // No_Output
   // ----------------------------------------------------------------------------
 
@@ -2388,7 +2470,41 @@ namespace relax
   ( Field_Pos pos )
   {
     move_done = 0;
-    Field_Iterator p1( pos, &game.board );
+    Field_Iterator p1( pos, &game.current_player->board );
+    switch( state )
+    {
+      case begin:
+	if( !Board::is_empty(*p1) )
+	  {
+	    return error_can_t_set_here;
+	  }
+	else
+	  {
+	    Move *move = new Set_Move( pos, game.common_stones.current_stone );
+	    if( !move->check_move(game) )
+	      {
+		delete move;
+		state = begin;
+		return fatal_error;				 // why isn't this possible?
+	      }
+	    if( !sequence.add_move(game,move) )		 // check whether move may be added yet
+	      {
+		delete move;
+		return fatal_error;
+	      }
+	    move->do_move(game);
+	    move_done = move;
+	    // add finish move
+	    move = new Finish_Move();
+	    bool ret = sequence.add_move(game,move);
+	    assert( ret );
+	    move->do_move(game);
+	  
+	    state = move_finished;
+	    return finished;
+	  }
+	break;
+    }
     /*
     switch( state )
     {
@@ -2830,7 +2946,7 @@ namespace relax
   void recursive_find_optimal_solution( Game &game, std::list<Stones::Stone_Type> &remaining_stones,
 					Game &best_game, int &best_score, int &cnt )
   {
-    std::list<Field_Pos> positions = game.board.get_empty_fields();
+    std::list<Field_Pos> positions = game.current_player->board.get_empty_fields();
     if( remaining_stones.size() == 0 ) 
       {
 	// check score
@@ -2865,7 +2981,7 @@ namespace relax
   void recursive_find_optimal_solution2( Game &game, std::list<Stones::Stone_Type> &remaining_stones,
 					Game &best_game, int &best_score, int &cnt )
   {
-    std::list<Field_Pos> positions = game.board.get_empty_fields();
+    std::list<Field_Pos> positions = game.current_player->board.get_empty_fields();
     if( remaining_stones.size() == 0 ) 
       {
 	// check score
@@ -2887,9 +3003,9 @@ namespace relax
     for( it=positions.begin(); it!=positions.end(); ++it )
       {
 	Field_Pos pos = *it;
-	game.board.field[pos.x][pos.y] = Field_State_Type(current_stone);
+	game.current_player->board.field[pos.x][pos.y] = Field_State_Type(current_stone);
 	recursive_find_optimal_solution2( game, remaining_stones, best_game, best_score, cnt );
-	game.board.field[pos.x][pos.y] = field_empty;
+	game.current_player->board.field[pos.x][pos.y] = field_empty;
       }
     remaining_stones.push_back(current_stone);
   }
@@ -2931,7 +3047,7 @@ namespace relax
       // sort remaining stones from low to high numbers
       this->remaining_stones.sort(Predicate(game.ruleset));
       // get empty fields
-      empty_fields = game.board.get_empty_fields();
+      empty_fields = game.current_player->board.get_empty_fields();
       // determine available stone counts
       stones_available.resize(3);
       std::list<Stones::Stone_Type>::iterator it;
@@ -2983,7 +3099,7 @@ namespace relax
 	return;
       }
     int max_score = state.game.get_max_score(&state.stones_available);
-    if( max_score <= state.best_score /*|| max_score < 251 /*183/*New Benchmark*/ )
+    if( max_score <= state.best_score )
       {
 	++state.bound_cnt;
 	if( state.bound_cnt % 10000000 == 0 ) std::cout << "bounds:" << state.bound_cnt << std::endl;
@@ -3016,10 +3132,10 @@ namespace relax
 	unsigned save_cnt = state.cnt;
 	Field_Pos pos = state.empty_fields.front();
 	state.empty_fields.pop_front();
-	state.game.board.field[pos.x][pos.y] = Field_State_Type(current_stone);
+	state.game.current_player->board.field[pos.x][pos.y] = Field_State_Type(current_stone);
 	recursive_find_optimal_solution3( state, level+1 );
 	//int sub_max_score = state.game.get_max_score(&state.stones_available);  // debug code
-	state.game.board.field[pos.x][pos.y] = field_empty;
+	state.game.current_player->board.field[pos.x][pos.y] = field_empty;
 	state.empty_fields.push_back(pos);
 	level_cnt++;
 	if( level < 2 )
@@ -3080,11 +3196,13 @@ namespace relax
     for( it=state.empty_fields.begin(); it!=state.empty_fields.end(); ++it )
       {
 	Field_Pos pos = *it;
-	state.game.board.field[pos.x][pos.y] = Field_State_Type(current_stone);
+	state.game.current_player->board.field[pos.x][pos.y] = Field_State_Type(current_stone);
 	int sub_max_score = state.game.get_max_score(&state.stones_available);
 	if( sub_max_score > state.best_score )
 	  positions.insert( std::make_pair(sub_max_score,pos) );
-	state.game.board.field[pos.x][pos.y] = field_empty;
+	else
+	  ++state.bound_cnt;
+	state.game.current_player->board.field[pos.x][pos.y] = field_empty;
       }
     
     // traverse fields
@@ -3097,9 +3215,9 @@ namespace relax
 	unsigned save_cnt = state.cnt;
 	Field_Pos pos = prio_it->second;
 	state.empty_fields.erase(find(state.empty_fields.begin(),state.empty_fields.end(),pos));
-	state.game.board.field[pos.x][pos.y] = Field_State_Type(current_stone);
+	state.game.current_player->board.field[pos.x][pos.y] = Field_State_Type(current_stone);
 	recursive_find_optimal_solution4( state, level+1 );
-	state.game.board.field[pos.x][pos.y] = field_empty;
+	state.game.current_player->board.field[pos.x][pos.y] = field_empty;
 	state.empty_fields.push_back(pos);
 	level_cnt++;
 	if( level < 2 )
@@ -3134,7 +3252,10 @@ namespace relax
 
     // enter recursion
     recursive_find_optimal_solution4( state, 0/*level*/ );
-    std::cout << "Best score: " << state.best_score << std::endl;
+    std::cout << "Best score: " << state.best_score
+	      << " bounds: " << state.bound_cnt
+	      << " cnt: " << state.cnt
+	      << std::endl;
     return state.best_game;
   }
 }

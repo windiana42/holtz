@@ -110,7 +110,7 @@ namespace dvonn
     wxEvtHandler *done_handler;
     int event_id, abort_id;
 
-    typedef enum State_Type { begin, jump_move, setting_stone, setting_stone2, finish_sequence, 
+    enum State_Type { begin, jump_move, setting_stone, setting_stone2, finish_sequence, 
 			      finish_sequence2, finished };
     State_Type state;
     std::list<Move*>::const_iterator current_move;
