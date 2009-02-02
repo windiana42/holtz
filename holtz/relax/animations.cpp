@@ -262,6 +262,9 @@ namespace relax
 				       wxEvtHandler *_done_handler, 
 				       int _event_id, int _abort_id )
   {
+    //!!! todo: implement correct animations
+    return false;
+
     if( state != finished )
       return false;
 
@@ -290,6 +293,9 @@ namespace relax
 					    wxEvtHandler *_done_handler, 
 					    int _event_id, int _abort_id )
   {
+    //!!! todo: implement correct animations
+    return false;
+
     if( state != finished )
       return false;
 
@@ -341,32 +347,18 @@ namespace relax
 
 	    // ** calculate animation positions and modify board
 	    std::pair<int,int> _from;
-	    if( set_move->own_stone ) // is stone owned by current_player
-	    {
-	      const Player_Panel *panel = 
-		gui_manager.get_game_panel().get_player_panel( current_player->id );
-	      int col = current_player->stones.stone_count[set_move->stone_type] - 1;
-	      assert(col >= 0);
-	      _from = panel->get_stone_panel().get_field_pos( col, set_move->stone_type );
+	    // get position of last stone of the right type
+	    int col = game->common_stones.stone_count[set_move->stone_type] - 1;
+	    assert(col >= 0);
+	    _from = gui_manager.get_game_panel().get_stone_panel()
+	      .get_field_pos( col, set_move->stone_type );
+	    // remove stone from reservoir
+	    --game->common_stones.stone_count[set_move->stone_type];
 
-	      // remove stone from player
-	      --current_player->stones.stone_count[set_move->stone_type];
-	    }
-	    else
-	    {
-	      // get position of last stone of the right type
-	      int col = game->common_stones.stone_count[set_move->stone_type] - 1;
-	      assert(col >= 0);
-	      _from = gui_manager.get_game_panel().get_stone_panel()
-		.get_field_pos( col, set_move->stone_type );
-	      // remove stone from reservoir
-	      --game->common_stones.stone_count[set_move->stone_type];
-	    }
 	    wxPoint from( _from.first, _from.second );
-
-	    std::pair<int,int> _pos = 
+	    std::pair<int,int> _pos; /*= 
 	      gui_manager.get_game_panel().get_board_panel().get_field_pos( set_move->pos.x, 
-									    set_move->pos.y );
+	      set_move->pos.y );*/
 	    wxPoint pos( _pos.first, _pos.second );
 
 	    // ** change state
@@ -374,10 +366,12 @@ namespace relax
 	    
 	    // ** refresh display and start animation
 	    game_window.refresh();
+	    /*
 	    ret = bitmap_move_animation.move
 	      ( gui_manager.get_game_panel().get_board_panel().get_bitmap_set().
 		field_bitmaps[Field_State_Type(stone)],
 		from, pos, 20, 40, this, ANIMATION_DONE, ANIMATION_ABORTED );
+	    */
 	  }
 	  break;
 	  case Move::finish_move:
@@ -441,8 +435,8 @@ namespace relax
 	  *field = field_removed;
 
 	  // ** calculate animation positions
-	  std::pair<int,int> _pos = 
-	    gui_manager.get_game_panel().get_board_panel().get_field_pos( field_pos.x, field_pos.y );
+	  std::pair<int,int> _pos ;/*= 
+				     gui_manager.get_game_panel().get_board_panel().get_field_pos( field_pos.x, field_pos.y );*/
 	  wxPoint pos( _pos.first, _pos.second );
 
 	  std::pair<int,int> _to;
@@ -458,10 +452,12 @@ namespace relax
 
 	  // ** refresh display and start animation
 	  game_window.refresh(); 
+	  /*
 	  ret = bitmap_move_animation.move
 	    ( gui_manager.get_game_panel().get_board_panel().get_bitmap_set().
 	      field_bitmaps[Field_State_Type(stone)], 
 	      pos, to, 20, 40, this, ANIMATION_DONE, ANIMATION_ABORTED );
+	  */
 	}
       }
       break;
@@ -524,30 +520,18 @@ namespace relax
 
 	    // ** calculate animation positions
 	    std::pair<int,int> _from;
-	    if( set_move->own_stone ) // is stone owned by current_player
-	    {
-	      const Player_Panel *panel = 
-		gui_manager.get_game_panel().get_player_panel( current_player->id );
-	      int col = current_player->stones.stone_count[set_move->stone_type];
-	      assert(col >= 0);
-	      _from = panel->get_stone_panel().get_field_pos( col, set_move->stone_type );
+	    // get position of last stone of the right type
+	    int col = game->common_stones.stone_count[set_move->stone_type];
+	    assert(col >= 0);
+	    _from = gui_manager.get_game_panel().get_stone_panel()
+	      .get_field_pos( col, set_move->stone_type );
+	    stones = &game->common_stones;
 
-	      stones = &current_player->stones;
-	    }
-	    else
-	    {
-	      // get position of last stone of the right type
-	      int col = game->common_stones.stone_count[set_move->stone_type];
-	      assert(col >= 0);
-	      _from = gui_manager.get_game_panel().get_stone_panel()
-		.get_field_pos( col, set_move->stone_type );
-	      stones = &game->common_stones;
-	    }
 	    wxPoint from( _from.first, _from.second );
 
-	    std::pair<int,int> _pos = 
+	    std::pair<int,int> _pos /*= 
 	      gui_manager.get_game_panel().get_board_panel().get_field_pos( set_move->pos.x, 
-									    set_move->pos.y );
+	      set_move->pos.y )*/;
 	    wxPoint pos( _pos.first, _pos.second );
 
 	    // ** change state
@@ -555,10 +539,12 @@ namespace relax
 	    
 	    // ** refresh display and start animation
 	    game_window.refresh(); // remove picked stone from screen
+	    /*
 	    ret = bitmap_move_animation.move
 	      ( gui_manager.get_game_panel().get_board_panel().get_bitmap_set().
 		field_bitmaps[Field_State_Type(stone)],
 		pos, from, 20, 40, this, ANIMATION_DONE, ANIMATION_ABORTED ); 
+	    */
 				// move in direction: <pos> => <from>
 	  }
 	  break;
@@ -626,8 +612,8 @@ namespace relax
 	  --current_player->stones.stone_count[stone]; // remove stone from player
 
 	  // ** calculate animation positions
-	  std::pair<int,int> _pos = 
-	    gui_manager.get_game_panel().get_board_panel().get_field_pos( field_pos.x, field_pos.y );
+	  std::pair<int,int> _pos /*= 
+				    gui_manager.get_game_panel().get_board_panel().get_field_pos( field_pos.x, field_pos.y )*/;
 	  wxPoint pos( _pos.first, _pos.second );
 
 	  std::pair<int,int> _to;
@@ -643,10 +629,12 @@ namespace relax
 
 	  // ** refresh display and start animation
 	  game_window.refresh(); 
+	  /*
 	  ret = bitmap_move_animation.move
 	    ( gui_manager.get_game_panel().get_board_panel().get_bitmap_set().
 	      field_bitmaps[Field_State_Type(stone)], 
 	      to, pos, 20, 40, this, ANIMATION_DONE, ANIMATION_ABORTED ); 
+	  */
 				// move from <to> of player => <pos> on board
 	}
       }

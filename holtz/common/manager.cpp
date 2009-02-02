@@ -436,12 +436,12 @@ namespace relax
     game = new_game;
   }
 
-  void Game_Manager::set_players( const std::list<Player>& players )
-  {
-    //stop_game();
-    assert(game_stopped);
-    game.set_players( list_to_vector(players) );
-  }
+//   void Game_Manager::set_players( const std::list<Player>& players )
+//   {
+//     //stop_game();
+//     assert(game_stopped);
+//     game.set_players( list_to_vector(players) );
+//   }
 
   AI_Input *Game_Manager::get_hint_ai()
   {
@@ -634,8 +634,8 @@ namespace relax
   void Standalone_Game_Setup_Manager::start_game()
   {
     assert( can_start() == everyone_ready );
+    game.set_players( list_to_vector(players) );
     game_manager.set_board  ( game );
-    game_manager.set_players( players );
     game_manager.start_game();
   }
   Standalone_Game_Setup_Manager::Answer_Type Standalone_Game_Setup_Manager::ask_new_game()

@@ -82,6 +82,8 @@ namespace relax
         case msg_request_final_setup: return "request_final_setup";
         case msg_request_move_reminder: return "request_move_reminder";
         case msg_take_player: return "take_player";
+        case msg_tell_player_setup: return "tell_player_setup";
+        case msg_tell_player_moves: return "tell_player_moves";
         case msg_setup: return "setup";
         case msg_get_setup_and_changes: return "get_setup_and_changes";
         case msg_get_moves_and_play: return "get_moves_and_play";
@@ -917,7 +919,9 @@ namespace relax
     // ----------------------------------------------------------------------------
     //   <n> {<move_sequence>}*
 
-    bool read_moves( std::escape_istream &eis, std::list<Move_Sequence> &moves )
+    bool read_moves( std::escape_istream &eis, 
+		     std::list<std::pair<Move_Sequence,int/*player index*/> > &moves,
+		     bool exchange_player_indices )
     {
       moves.clear();
 
@@ -929,20 +933,34 @@ namespace relax
       for( int i=0; i<move_cnt; ++i )
       {
 	if( !read_move_sequence(eis,move_sequence) ) return false;
-	
-	moves.push_back( move_sequence );
+	if( exchange_player_indices )
+	  {
+	    int player_index;
+	    eis >> player_index;
+	    moves.push_back( std::make_pair(move_sequence,player_index) );
+	  }
+	else
+	  {
+	    moves.push_back( std::make_pair(move_sequence,(int)-1) );
+	  }
       }
       return true;
     }
     
-    void write_moves( std::escape_ostream &eos, const std::list<Move_Sequence> &moves )
+    void write_moves( std::escape_ostream &eos, 
+		      const std::list<std::pair<Move_Sequence,int/*player index*/> > &moves,
+		      bool exchange_player_indices )
     {
       eos << moves.size();
       
-      std::list<Move_Sequence>::const_iterator i;
+      std::list<std::pair<Move_Sequence,int/*player index*/> >::const_iterator i;
       for( i = moves.begin(); i != moves.end(); ++i )
       {
-	write_move_sequence(eos,*i);
+	write_move_sequence(eos,i->first);
+	if( exchange_player_indices )
+	  {
+	    eos << i->second;	// write player index
+	  }	
       }
     }
 
@@ -1134,6 +1152,22 @@ namespace relax
 	case msg_take_player:
 	{
 	  Msg_Take_Player *msg = new Msg_Take_Player();
+	  if( msg->read_from_line(line) )
+	    return msg;
+	  delete msg;
+	  break;
+	}
+	case msg_tell_player_setup:
+	{
+	  Msg_Tell_Player_Setup *msg = new Msg_Tell_Player_Setup();
+	  if( msg->read_from_line(line) )
+	    return msg;
+	  delete msg;
+	  break;
+	}
+	case msg_tell_player_moves:
+	{
+	  Msg_Tell_Player_Moves *msg = new Msg_Tell_Player_Moves();
 	  if( msg->read_from_line(line) )
 	    return msg;
 	  delete msg;
@@ -1694,13 +1728,13 @@ namespace relax
     // Msg_Tell_Setup
     // ----------------------------------------------------------------------------
 
-    Msg_Tell_Setup::Msg_Tell_Setup( Setup setup )
-      : Message(msg_tell_setup), setup(setup)
+    Msg_Tell_Setup::Msg_Tell_Setup( Setup setup, bool exchange_player_indices )
+      : Message(msg_tell_setup), setup(setup), exchange_player_indices(exchange_player_indices)
     {
     }
     
-    Msg_Tell_Setup::Msg_Tell_Setup()
-      : Message(msg_tell_setup)
+    Msg_Tell_Setup::Msg_Tell_Setup(bool exchange_player_indices)
+      : Message(msg_tell_setup), exchange_player_indices(exchange_player_indices)
     {
     }
 
@@ -1721,7 +1755,7 @@ namespace relax
       // !!! Debug output
       std::cerr << "ruleset received" << std::endl; 
 #endif
-      if( !read_moves  ( eis, setup.init_moves ) ) return false;
+      if( !read_moves  ( eis, setup.init_moves, exchange_player_indices ) ) return false;
 #ifndef __WXMSW__
       // !!! Debug output
       std::cerr << "moves received" << std::endl; 
@@ -1748,7 +1782,7 @@ namespace relax
       std::escape_ostream eos(os);
 
       write_ruleset( eos, setup.ruleset );
-      write_moves  ( eos, setup.init_moves );
+      write_moves  ( eos, setup.init_moves, exchange_player_indices );
       write_players( eos, setup.initial_players );
       write_player_settings( eos, setup.current_players );
 
@@ -1765,13 +1799,14 @@ namespace relax
     // Msg_Tell_Moves
     // ----------------------------------------------------------------------------
 
-    Msg_Tell_Moves::Msg_Tell_Moves( std::list<Move_Sequence> moves )
-      : Message(msg_tell_moves), moves(moves)
+    Msg_Tell_Moves::Msg_Tell_Moves( std::list<std::pair<Move_Sequence,int/*player index*/> > moves, 
+				    bool exchange_player_indices )
+      : Message(msg_tell_moves), moves(moves), exchange_player_indices(exchange_player_indices)
     {
     }
     
-    Msg_Tell_Moves::Msg_Tell_Moves()
-      : Message(msg_tell_moves)
+    Msg_Tell_Moves::Msg_Tell_Moves( bool exchange_player_indices )
+      : Message(msg_tell_moves), exchange_player_indices(exchange_player_indices)
     {
     }
 
@@ -1783,7 +1818,7 @@ namespace relax
       int msg_number;
       eis >> msg_number;
 
-      if( !read_moves( eis, moves ) ) return false;
+      if( !read_moves( eis, moves, exchange_player_indices ) ) return false;
 
       if( eis.did_error_occur() )
 	return false;
@@ -1795,7 +1830,7 @@ namespace relax
       std::ostringstream os;
       std::escape_ostream eos(os);
 
-      write_moves( eos, moves );
+      write_moves( eos, moves, exchange_player_indices );
 
       return os.str();
     }

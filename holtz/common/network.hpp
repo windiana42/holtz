@@ -182,6 +182,9 @@ namespace relax
     virtual void game_setup_entered();  // game setup entered 
     virtual bool is_allow_game_setup_abort(); // is it allowed to abort the game setup?
 
+    // special variants of game commands
+    void start_prepared_game(); // call only when can_start() == true
+
     //-------------------------------------------
     // commands inherited from Player Input
 
@@ -304,7 +307,8 @@ namespace relax
     void setup_players();		    // setup players for local use
     void cleanup_players();
     bool process_move( const Move_Sequence&, Message_Network<BGP::Message>* connection=0, 
-		       int player_id=-1 );  // process a move and initiate consequences
+		       int player_id=-1, bool delay_continue_game=false );  
+					    // process a move and initiate consequences
     void process_deferred_messages();       // process all messages that were deferred
 
     Game_Manager &game_manager;
@@ -345,7 +349,10 @@ namespace relax
     int asking_n;
     Message_Network<BGP::Message>* possibly_interrupted_connection;
     std::list<std::pair<int/*player_id*/,Move_Sequence> > pending_moves;
+    std::map<int/*player_id*/,
+	     std::pair<Move_Sequence,Message_Network<BGP::Message>*> > pending_player_move;
     std::list<std::pair<Message_Network<BGP::Message>*,BGP::Message*> > deferred_messages;
+    bool delayed_move_visualization;
 
     DECLARE_EVENT_TABLE() //**/
   };
@@ -392,6 +399,9 @@ namespace relax
     virtual void stop_game();  // stop game
     virtual void game_setup_entered();  // game setup entered
     virtual bool is_allow_game_setup_abort(); // is it allowed to abort the game setup?
+
+    // special variants of game commands
+    void start_prepared_game(); // call only when can_start() == true
 
     //-------------------------------------------
     // commands inherited from Player Input
@@ -461,8 +471,9 @@ namespace relax
     void setup_players();
     void cleanup_players();
     bool process_setup( BGP::Setup );
-    bool process_moves( std::list<Move_Sequence> );
-    bool process_move( const Move_Sequence&, bool local, int player_id=-1 );
+    bool process_moves( std::list<std::pair<Move_Sequence,int/*player index*/> > );
+    bool process_move( const Move_Sequence&, bool local, int player_id=-1, 
+		       bool delay_continue_game=false );
     void process_deferred_messages();       // process all messages that were deferred
 
     Game_Manager &game_manager;
@@ -493,9 +504,11 @@ namespace relax
     int requested_remove_player_id;
     std::set<int>::iterator requested_take_player_id;
     std::list<std::pair<int/*player_id*/,Move_Sequence> > pending_moves;
+    std::map<int/*player_id*/,Move_Sequence> pending_player_move;
     std::list<std::pair<Message_Network<BGP::Message>*,BGP::Message*> > deferred_messages;
     int error_recovery_pongs;
     unsigned error_recovery_attempts;
+    bool delayed_move_visualization;
 
     DECLARE_EVENT_TABLE() //**/
   };

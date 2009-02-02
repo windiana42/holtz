@@ -328,12 +328,13 @@ namespace relax
   }
 
   Board_Panel::Board_Panel( Settings &settings, Game_Manager &game_manager, 
-			    WX_GUI_Manager &gui_manager, Sequence_Generator* &sg )
+			    WX_GUI_Manager &gui_manager, Sequence_Generator* &sg,
+			    int player_id )
     : settings(settings), game_manager(game_manager), gui_manager(gui_manager), 
       bitmap_handler(gui_manager.get_bitmap_handler()), 
       board_x(bitmap_handler.dimensions.board_x_offset), 
       board_y(bitmap_handler.dimensions.board_y_offset),
-      sequence_generator( sg )     
+      sequence_generator( sg ), player_id(player_id)
   {
     if( settings.show_coordinates )
     {
@@ -349,9 +350,14 @@ namespace relax
     }
   }
 
+  const Board &Board_Panel::get_board() const 
+  { 
+    return gui_manager.get_display_game().get_player_by_id(player_id)->board; 
+  }
+
   void Board_Panel::calc_dimensions()
   {
-    Game &game = gui_manager.get_display_game();
+    //Game &game = gui_manager.get_display_game();
     board_x = bitmap_handler.dimensions.board_x_offset;
     board_y = bitmap_handler.dimensions.board_y_offset;
     if( settings.show_coordinates )
@@ -377,9 +383,9 @@ namespace relax
     {
       if( bitmap_handler.dimensions.rotation_symmetric )
       {
-	width = bitmap_handler.dimensions.field_packed_width * (game.current_player->board.get_y_size()-1) + 
+	width = bitmap_handler.dimensions.field_packed_width * (get_board().get_y_size()-1) + 
 	  bitmap_handler.dimensions.field_width + board_x; 
-	height = bitmap_handler.dimensions.field_height * game.current_player->board.get_x_size() +
+	height = bitmap_handler.dimensions.field_height * get_board().get_x_size() +
 	  bitmap_handler.dimensions.field_height / 2 + board_y; 
 	
 	if( settings.show_coordinates )
@@ -390,9 +396,9 @@ namespace relax
       }
       else
       {
-	width = bitmap_handler.dimensions.field_packed_height * (game.current_player->board.get_y_size()-1) + 
+	width = bitmap_handler.dimensions.field_packed_height * (get_board().get_y_size()-1) + 
 	  bitmap_handler.dimensions.field_height + board_x; 
-	height = bitmap_handler.dimensions.field_width * game.current_player->board.get_x_size() +
+	height = bitmap_handler.dimensions.field_width * get_board().get_x_size() +
 	  bitmap_handler.dimensions.field_width / 2 + board_y; 
 	
 	if( settings.show_coordinates )
@@ -404,9 +410,9 @@ namespace relax
     }
     else
     {
-      width = bitmap_handler.dimensions.field_width * game.current_player->board.get_x_size() + board_x
+      width = bitmap_handler.dimensions.field_width * get_board().get_x_size() + board_x
 	+ bitmap_handler.dimensions.field_width / 2;
-      height = bitmap_handler.dimensions.field_packed_height * (game.current_player->board.get_y_size()-1)  
+      height = bitmap_handler.dimensions.field_packed_height * (get_board().get_y_size()-1)  
 	+ bitmap_handler.dimensions.field_height + board_y;
 
       if( settings.show_coordinates )
@@ -419,16 +425,16 @@ namespace relax
 
   void Board_Panel::draw( wxDC &dc ) const
   {
-    Game &game = gui_manager.get_display_game();
+    //Game &game = gui_manager.get_display_game();
     Bitmap_Set &bitmap_set = get_bitmap_set();
 
-    for( int fy = 0; fy < game.current_player->board.get_y_size(); ++fy )
+    for( int fy = 0; fy < get_board().get_y_size(); ++fy )
     {
-      for( int fx = 0; fx < game.current_player->board.get_x_size(); ++fx )
+      for( int fx = 0; fx < get_board().get_x_size(); ++fx )
       {
 	std::pair<int,int> pos = get_field_pos( fx, fy );
 
-	dc.DrawBitmap( bitmap_set.field_bitmaps[ game.current_player->board.field[fx][fy] ], 
+	dc.DrawBitmap( bitmap_set.field_bitmaps[ get_board().field[fx][fy] ], 
 		       pos.first,  pos.second, true );
       }
     }
@@ -440,11 +446,11 @@ namespace relax
       Game &game = gui_manager.get_display_game();
       dc.SetTextForeground(*wxBLACK/*settings.coordinate_font_colour*/);
       dc.SetFont( settings.coord_font );
-      for( int fy = 0; fy < game.current_player->board.get_y_size(); ++fy )
+      for( int fy = 0; fy < get_board().get_y_size(); ++fy )
       {
-	for( int fx = 0; fx < game.current_player->board.get_x_size(); ++fx )
+	for( int fx = 0; fx < get_board().get_x_size(); ++fx )
 	{
-	  if( !Board::is_removed(game.current_player->board.field[fx][fy]) )
+	  if( !Board::is_removed(get_board().field[fx][fy]) )
 	  {
 	    Field_Pos pos;
 	    pos.x = fx;
@@ -483,9 +489,9 @@ namespace relax
 	    break;
 	  }
 	}      
-	for( int fx2 = game.current_player->board.get_x_size() - 1; fx2 >= 0; --fx2 )
+	for( int fx2 = get_board().get_x_size() - 1; fx2 >= 0; --fx2 )
 	{
-	  if( !Board::is_removed(game.current_player->board.field[fx2][fy]) )
+	  if( !Board::is_removed(get_board().field[fx2][fy]) )
 	  {
 	    Field_Pos pos;
 	    pos.x = fx2;
@@ -579,7 +585,7 @@ namespace relax
 
   Field_Pos Board_Panel::get_field( int abs_x, int abs_y ) const
   {
-    Game &game = gui_manager.get_display_game();
+    //Game &game = gui_manager.get_display_game();
 
     int half_diff, offset, field_width, row;
     int rel_x, rel_y;
@@ -593,7 +599,7 @@ namespace relax
       int board_size_y;
       if( bitmap_handler.dimensions.rotation_symmetric )
       {
-	board_size_y = bitmap_handler.dimensions.field_height * game.current_player->board.get_x_size() 
+	board_size_y = bitmap_handler.dimensions.field_height * get_board().get_x_size() 
 	  + bitmap_handler.dimensions.field_height / 2;
 
 	half_diff = (bitmap_handler.dimensions.field_width - 
@@ -604,7 +610,7 @@ namespace relax
       }
       else
       {
-	board_size_y = bitmap_handler.dimensions.field_width * game.current_player->board.get_x_size() 
+	board_size_y = bitmap_handler.dimensions.field_width * get_board().get_x_size() 
 	  + bitmap_handler.dimensions.field_width / 2;
 
 	half_diff = (bitmap_handler.dimensions.field_height - 
@@ -633,8 +639,8 @@ namespace relax
       int col = (rel_x - offset) / field_width;
       
       if( (col >= 0) && (row >= 0) && 
-	  (col < game.current_player->board.get_x_size()) && 
-	  (row < game.current_player->board.get_y_size()) )
+	  (col < get_board().get_x_size()) && 
+	  (row < get_board().get_y_size()) )
       {
 	return Field_Pos(col,row);
       }
@@ -644,7 +650,7 @@ namespace relax
 
   std::pair<int,int> Board_Panel::get_field_pos( int col, int row ) const
   {
-    Game &game = gui_manager.get_display_game();
+    //Game &game = gui_manager.get_display_game();
     int offset;
 
     if( settings.rotate_board )
@@ -660,7 +666,7 @@ namespace relax
 
 	// swap x-y and invert y-axis => rotated board
 	int field_y = anf_y
-	  + bitmap_handler.dimensions.field_height * (game.current_player->board.get_x_size() - 1 - col);
+	  + bitmap_handler.dimensions.field_height * (get_board().get_x_size() - 1 - col);
 	int field_x = anf_x + row*bitmap_handler.dimensions.field_packed_width;
 	return std::pair<int,int>( field_x, field_y );
       }
@@ -675,7 +681,7 @@ namespace relax
 
 	// swap x-y and invert y-axis => rotated board
 	int field_y = anf_y
-	  + bitmap_handler.dimensions.field_width * (game.current_player->board.get_x_size() - 1 - col);
+	  + bitmap_handler.dimensions.field_width * (get_board().get_x_size() - 1 - col);
 	int field_x = anf_x + row*bitmap_handler.dimensions.field_packed_height;
 	return std::pair<int,int>( field_x, field_y );
       }
@@ -910,8 +916,9 @@ namespace relax
   // ----------------------------------------------------------------------------
 
   Player_Panel::Settings::Settings( const relax::Stone_Panel::Settings &stone_settings,
+				    const relax::Board_Panel::Settings &board_settings,
 				    wxFont player_font )
-    : stone_settings(stone_settings), player_font( player_font )
+    : stone_settings(stone_settings), board_settings(board_settings), player_font( player_font )
   {
     if( player_font == wxNullFont )
     {
@@ -927,17 +934,22 @@ namespace relax
       bitmap_handler(gui_manager.get_bitmap_handler()), 
       sequence_generator(sg), 
       stone_panel( settings.stone_settings, player.stones, game_manager, gui_manager, sg ),
+      board_panel( settings.board_settings, game_manager, gui_manager, sequence_generator, player.id ),
       header_panel( settings, player )
   {
     add( &header_panel );
     Horizontal_Sizer *stone_sizer = new Horizontal_Sizer();
     stone_sizer->add( new Spacer(bitmap_handler.dimensions.stone_offset,0), true /*deleted by sizer*/ );
+    stone_sizer->add( &board_panel );
     stone_sizer->add( &stone_panel );
     add( stone_sizer, true /*deleted by sizer*/ );
   }
 
   void Player_Panel::on_click( int cl_x, int cl_y ) const
   {
+    if( board_panel.is_in(cl_x,cl_y) )
+      board_panel.on_click( cl_x, cl_y );
+    /*
     wxString msg;
     if( sequence_generator )
     {
@@ -945,7 +957,7 @@ namespace relax
       if( clicked_stone.first != Stones::invalid_stone )
       {
 	Stones::Stone_Type type = clicked_stone.first;
-	/*
+	/ *
 	if( clicked_stone.second < player.stones.stone_count[type] )
 	{
 	  Sequence_Generator::Sequence_State state;
@@ -1013,9 +1025,10 @@ namespace relax
 	      * /
 	  }
 	}
-	*/
+	* /
       }
     }
+    */
   }
 
   Player_Panel::Header_Panel::Header_Panel( Player_Panel::Settings &settings, Player &player )
@@ -1189,7 +1202,7 @@ namespace relax
     : settings(settings), game_manager(game_manager), gui_manager(gui_manager),
       bitmap_handler(gui_manager.get_bitmap_handler()), 
       sequence_generator(sequence_generator),
-      board_panel( settings.board_settings, game_manager, gui_manager, sequence_generator ),
+      //board_panel( settings.board_settings, game_manager, gui_manager, sequence_generator ),
       stone_panel( settings.common_stone_settings, gui_manager.get_display_game().common_stones, 
 		   game_manager, gui_manager,sequence_generator )
   {
@@ -1253,7 +1266,7 @@ namespace relax
       case Settings::arrange_standard:
       {
 	Vertical_Sizer *vertical = new Vertical_Sizer();
-	vertical->add( &board_panel );
+	//vertical->add( &board_panel );
 	vertical->add( new Spacer( 0, bitmap_handler.dimensions.board_stones_spacing ), 
 		       true /*destroy on remove*/ );
 	vertical->add( &stone_panel );
@@ -1264,7 +1277,7 @@ namespace relax
       break;
       case Settings::arrange_stones_right:
       {
-	add( &board_panel );
+	//add( &board_panel );
 	Vertical_Sizer *vertical = new Vertical_Sizer();
 	vertical->add( &stone_panel );
 	vertical->add( new Spacer( 0, bitmap_handler.dimensions.stones_player_spacing ), true );
@@ -1291,6 +1304,7 @@ namespace relax
   }
   void Game_Panel::add_player( Player &player )
   {
+    // !!! todo: maybe we need to update settings.player_settings.board_settings from settings.board_settings
     bool first = player_panels.empty();
     Player_Panel *player_panel = new Player_Panel( settings.player_settings, player, game_manager, 
 						   gui_manager, sequence_generator );
@@ -1315,10 +1329,19 @@ namespace relax
   const wxBitmap &Game_Panel::get_background() const
   {
     if( bitmap_handler.dimensions.rotate_background )
-      return get_board_panel().get_bitmap_set().background;
+      return get_bitmap_set().background;
     else
       return bitmap_handler.normal.background;
   }
+
+  Bitmap_Set &Game_Panel::get_bitmap_set() const
+  {
+    if( settings.board_settings.rotate_board && !bitmap_handler.dimensions.rotation_symmetric )
+      return bitmap_handler.rotated;
+    else
+      return bitmap_handler.normal;
+  }
+
 
   // ----------------------------------------------------------------------------
   // WX_GUI_Manager
@@ -1330,7 +1353,7 @@ namespace relax
       game_manager(game_manager), game_window(game_window),
       variants_display_manager(variants_display_manager),
       game_settings( Board_Panel::Settings(),
-		     Player_Panel::Settings(Stone_Panel::Settings()),
+		     Player_Panel::Settings(Stone_Panel::Settings(),Board_Panel::Settings()),
 		     Stone_Panel::Settings() ),
       game_panel( game_settings, game_manager, *this, sequence_generator ), 
       sequence_generator(0),
@@ -1541,38 +1564,11 @@ namespace relax
 		case Move::set_move:
 		  {
 		    Set_Move *set_move = dynamic_cast<Set_Move *>(*move);
-		    if( !set_move->own_stone )
-		    {
-		      int stone_count = game.common_stones.stone_count[ set_move->stone_type ];
-		      if( stone_count > 0 )
-		      {
-			stone_mark_positions.push_back
-			  ( game_panel.get_stone_panel().get_field_pos( 0, set_move->stone_type ) );
-		      }
-		    }
-		    else
-		    {
-		      std::list<Player_Panel*>::const_iterator panel;
-		      for( panel = game_panel.get_player_panels().begin(); 
-			   panel != game_panel.get_player_panels().end(); ++panel )
-		      {
-			if( (*panel)->get_id() == game.current_player->id )
-			{
-			  int stone_count = 
-			    game.current_player->stones.stone_count[ set_move->stone_type ];
-			  if( stone_count > 0 )
-			  {
-			    stone_mark_positions.push_back
-			      ( (*panel)->get_stone_panel().get_field_pos( 0, 
-									   set_move->stone_type ) );
-			  }
-			  break;
-			}
-		      }
-		    }
+		    /*
 		    stone_mark_positions.push_back
 		      ( game_panel.get_board_panel().get_field_pos( set_move->pos.x, 
 								    set_move->pos.y ) );
+		    */
 		  }
 		break;
 	      }
@@ -1635,7 +1631,7 @@ namespace relax
     {
       int &x = position->first;
       int &y = position->second;
-      dc.DrawBitmap( get_game_panel().get_board_panel().get_bitmap_set().stone_mark, x, y, true );
+      //dc.DrawBitmap( get_game_panel().get_board_panel().get_bitmap_set().stone_mark, x, y, true );
     }
 
     for( position = field_mark_positions.begin();
@@ -1643,12 +1639,13 @@ namespace relax
     {
       int &x = position->first;
       int &y = position->second;
-      dc.DrawBitmap( get_game_panel().get_board_panel().get_bitmap_set().field_mark, x, y, true );
+      //dc.DrawBitmap( get_game_panel().get_board_panel().get_bitmap_set().field_mark, x, y, true );
     }
-
+    /*
     if( click_mark_x >= 0 )
       dc.DrawBitmap( get_game_panel().get_board_panel().get_bitmap_set().click_mark, 
 		     click_mark_x, click_mark_y, true );
+    */
   }
 
   void WX_GUI_Manager::allow_user_activity()
