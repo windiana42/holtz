@@ -1098,13 +1098,13 @@ namespace dvonn
     return false;
   }
 
-  std::list<Move_Sequence> Variant_Tree::get_current_variant_moves() const
+  std::list<std::pair<Move_Sequence,int/*player index*/> > Variant_Tree::get_current_variant_moves() const
   {
-    std::list<Move_Sequence> ret;
+    std::list<std::pair<Move_Sequence,int/*player index*/> > ret;
     const Variant *cur = get_current_variant();
     while( cur != get_root_variant() )
     {
-      ret.push_front(cur->move_sequence);
+      ret.push_front(std::make_pair(cur->move_sequence,cur->current_player_index));
       cur = cur->prev;
     }
     return ret;
@@ -1493,6 +1493,30 @@ namespace dvonn
       --it;
       ++ret;
     }
+    return ret;
+  }
+
+  std::vector<Player>::iterator Game::get_player_by_id( int id )
+  {
+    std::vector<Player>::iterator ret = players.begin();
+    while( ret != players.end() )
+      {
+	if( ret->id == id ) return ret;
+	++ret;
+      }
+
+    return ret;
+  }
+
+  std::vector<Player>::const_iterator Game::get_player_by_id( int id ) const
+  {
+    std::vector<Player>::const_iterator ret = players.begin();
+    while( ret != players.end() )
+      {
+	if( ret->id == id ) return ret;
+	++ret;
+      }
+
     return ret;
   }
 
@@ -2013,7 +2037,7 @@ namespace dvonn
   */
 
   // get moves played since start
-  std::list<Move_Sequence> Game::get_played_moves() 
+  std::list<std::pair<Move_Sequence,int/*player index*/> > Game::get_played_moves() 
   {
     return variant_tree.get_current_variant_moves();
   }

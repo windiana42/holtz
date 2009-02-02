@@ -70,7 +70,7 @@ namespace relax
       disable_new_connections(false), is_ready(false), sequence_available(false), 
       awaiting_move(false), asking_new_game(false), asking_undo(false), asking_done(false), 
       answer(false), clients_in_setup(1), clients_ready(0), clients_asked(0), asking_client(0),
-      asking_n(0), possibly_interrupted_connection(0)
+      asking_n(0), possibly_interrupted_connection(0), delayed_move_visualization(false)
   {
     // self register
     game_manager.set_game_setup_manager( this );
@@ -258,13 +258,25 @@ namespace relax
       return not_ready;
   }
   // call only when can_start() == true
-  void Network_Manager_BGP100a_Server::start_game()
+  void Network_Manager_BGP100a_Server::start_prepared_game()  // game has already players
   {
     assert( can_start() == everyone_ready );
     display_phase = DISPLAY_PLAYING;
     game_manager.set_board  ( game );
-    game_manager.set_players( players );
-    game.set_players(list_to_vector(players));
+    int id = game.get_current_player().id;
+    if( does_include(player_id_connection,id) )
+      msg_net_connection_state[player_id_connection[id]].state = BGP_HIS_TURN;
+
+    game_manager.start_game();
+    process_deferred_messages();
+  }
+  // call only when can_start() == true
+  void Network_Manager_BGP100a_Server::start_game()
+  {
+    assert( can_start() == everyone_ready );
+    display_phase = DISPLAY_PLAYING;
+    game.set_players( list_to_vector(players) );
+    game_manager.set_board ( game );
     int id = game.get_current_player().id;
     if( does_include(player_id_connection,id) )
       msg_net_connection_state[player_id_connection[id]].state = BGP_HIS_TURN;
@@ -431,6 +443,17 @@ namespace relax
 	  sequence_available = true;
 	  pending_moves.pop_front();
 	  return Player_Input::finished;
+	}
+	else if( does_include(pending_player_move,game.get_current_player().id) )
+	{
+	  Message_Network<BGP::Message> *connection 
+	    = pending_player_move[game.get_current_player().id].second;
+	  sequence = pending_player_move[game.get_current_player().id].first;
+	  pending_player_move.erase(game.get_current_player().id);
+	  awaiting_move = true;
+	  process_move(sequence, connection, game.get_current_player().id,
+		       /*delay_continue_game=*/true);
+	  return Player_Input::wait_for_event;
 	}
 	else
 	{
@@ -710,10 +733,20 @@ namespace relax
 									  size()+1),
 							   setup.initial_players.size()+10000));
 		  setup.current_players = players;
-		  BGP::Msg_Tell_Setup msg1(setup);
-		  BGP::Msg_Tell_Moves msg2(game.get_played_moves());
-		  connection->send_message(&msg1);
-		  connection->send_message(&msg2);
+		  if( game.is_out_of_order() )
+		    {
+		      BGP::Msg_Tell_Player_Setup msg1(setup);
+		      BGP::Msg_Tell_Player_Moves msg2(game.get_played_moves());
+		      connection->send_message(&msg1);
+		      connection->send_message(&msg2);
+		    }
+		  else
+		    {
+		      BGP::Msg_Tell_Setup msg1(setup);
+		      BGP::Msg_Tell_Moves msg2(game.get_played_moves());
+		      connection->send_message(&msg1);
+		      connection->send_message(&msg2);
+		    }
 		}
 	      } 
 	      else
@@ -1057,6 +1090,11 @@ namespace relax
     
   void Network_Manager_BGP100a_Server::on_timer(wxTimerEvent& WXUNUSED(event))
   {
+    if( delayed_move_visualization )
+    {
+      ui_manager.do_move_slowly( sequence, this, ANIMATION_DONE, ANIMATION_DONE );
+      // triggers continue_game() after done
+    }
   }
     
   void Network_Manager_BGP100a_Server::on_done(wxTimerEvent& WXUNUSED(event))
@@ -1225,7 +1263,7 @@ namespace relax
     id_connection.erase(conn_state.id);
     connection->set_handler(0);	// disable message reception from connection
     delete connection;
-
+    
     // check possibly adapted counters
     if( game_phase == BGP::phase_setup )
       check_all_ready();
@@ -1584,7 +1622,11 @@ namespace relax
 					       setup.initial_players.size()+10000));
       setup.current_players = players;
       // send final setup to all clients in setup phase that requested it
-      BGP::Msg_Tell_Setup msg(setup);
+      BGP::Message *msg;
+      if( game.is_out_of_order() )
+	msg = new BGP::Msg_Tell_Player_Setup(setup);
+      else
+	msg = new BGP::Msg_Tell_Setup(setup);
       bool done;
       do{
 	// extract current connections since the connections can change (iterators!)
@@ -1611,7 +1653,7 @@ namespace relax
 	    conn_state.phase = BGP::phase_playing;
 	    conn_state.state = BGP_OTHERS_TURN;
 	    if( conn_state.final_setup )
-	      connection->send_message(&msg);
+	      connection->send_message(msg);
 	  }
 	}
 	done = true;
@@ -1632,6 +1674,7 @@ namespace relax
 	  }
 	}
       }while(!done);
+      delete msg;
 
       if( display_handler && display_phase == DISPLAY_SETUP )
 	display_handler->everything_ready();
@@ -1882,7 +1925,8 @@ namespace relax
   }
 
   bool Network_Manager_BGP100a_Server::process_move
-  ( const Move_Sequence& move_sequence, Message_Network<BGP::Message>* connection, int player_id )
+  ( const Move_Sequence& move_sequence, Message_Network<BGP::Message>* connection, int player_id, 
+    bool delay_continue_game )
   {
     bool error = false;
     if( asking_new_game ) // only player who's turn it is is allowed to ask for new game
@@ -1911,11 +1955,42 @@ namespace relax
 	error = true;
       }
     }
+    else if( player_id != game.get_current_player().id && game.is_out_of_order() )
+    {
+      Connection_State &conn_state = msg_net_connection_state[connection];
+      if( does_include(own_player_ids,player_id) )
+      {
+#ifndef __WXMSW__
+	std::cerr << "Client Error - Received remote move for local player!" << std::endl;
+#endif
+	error = true;
+      } 
+      else if( !does_include(conn_state.controlled_player_ids,player_id) )
+      {
+#ifndef __WXMSW__
+	std::cerr << "Client Error - Received remote move for player of different connection!" << std::endl;
+#endif
+	error = true;
+      } 
+      else if( does_include(pending_player_move,player_id) )
+      {
+#ifndef __WXMSW__
+	std::cerr << "Client Error - Player already sent a move: " << player_id << "!" 
+		  << std::endl;
+#endif
+	error = true;
+      }
+      else
+      {
+	pending_player_move[player_id] = std::make_pair(move_sequence,connection);
+	return true;
+      }
+    }
     else 
     {
       Connection_State &conn_state = msg_net_connection_state[connection];
-
-      if( player_id != game.get_current_player().id  )
+      
+      if( player_id != game.get_current_player().id )
       {
 #ifndef __WXMSW__
 	std::cerr << "Server Error - Received remote move for player " << player_id 
@@ -1940,7 +2015,7 @@ namespace relax
       }
       conn_state.state = BGP_OTHERS_TURN;  // his turn is received
     }
-    if( !move_sequence.check_sequence(game) )
+    if( !error && !move_sequence.check_sequence(game) )
     {
 #ifndef __WXMSW__
       std::cerr << "Server Error - Invalid Move " << move_sequence << "!" << std::endl;
@@ -1978,8 +2053,16 @@ namespace relax
 	  sequence = move_sequence;
 	  sequence_available = true;
 	  awaiting_move = false;
-	  ui_manager.do_move_slowly( sequence, this, ANIMATION_DONE, ANIMATION_DONE );
-	  // triggers continue_game() after done
+	  if( delay_continue_game )
+	  {
+	    delayed_move_visualization = true;
+	    start_timer(1);
+	  }
+	  else
+	  {
+	    ui_manager.do_move_slowly( sequence, this, ANIMATION_DONE, ANIMATION_DONE );
+	    // triggers continue_game() after done
+	  }
 	}
 	else
 	{
@@ -2027,7 +2110,8 @@ namespace relax
       connection_lost(false),
       display_phase(DISPLAY_INIT), game_phase(BGP::phase_setup),
       sequence_available(false), awaiting_move(false), asking_new_game(false), 
-      asking_undo(false), asking_n(0), error_recovery_attempts(0)
+      asking_undo(false), asking_n(0), error_recovery_attempts(0),
+      delayed_move_visualization(false)
   {
     conn_state.state = BGP_UNCONNECTED;
     // self register
@@ -2204,7 +2288,7 @@ namespace relax
   }
 
   // call only when can_start() == true
-  void Network_Manager_BGP100a_Client::start_game()
+  void Network_Manager_BGP100a_Client::start_prepared_game() // game has already players
   {
     if( display_phase != DISPLAY_PLAYING && display_handler )
     {
@@ -2215,8 +2299,26 @@ namespace relax
     assert( can_start() == everyone_ready );
     display_phase = DISPLAY_PLAYING;
     game_manager.set_board  ( game );
-    game_manager.set_players( players );
-    game.set_players(list_to_vector(players));
+    if( does_include(own_player_ids,game.get_current_player().id) )
+      conn_state.state = BGP_MY_TURN;
+
+    game_manager.start_game();
+    process_deferred_messages();
+  }
+
+  // call only when can_start() == true
+  void Network_Manager_BGP100a_Client::start_game()
+  {
+    if( display_phase != DISPLAY_PLAYING && display_handler )
+    {
+      // client enters an existing game
+      display_handler->game_started();
+    }
+
+    assert( can_start() == everyone_ready );
+    display_phase = DISPLAY_PLAYING;
+    game.set_players( list_to_vector(players) );
+    game_manager.set_board  ( game );
     if( does_include(own_player_ids,game.get_current_player().id) )
       conn_state.state = BGP_MY_TURN;
 
@@ -2338,6 +2440,15 @@ namespace relax
 	  sequence_available = true;
 	  pending_moves.pop_front();
 	  return Player_Input::finished;
+	}
+	else if( does_include(pending_player_move,game.get_current_player().id) )
+	{
+	  sequence = pending_player_move[game.get_current_player().id];
+	  pending_player_move.erase(game.get_current_player().id);
+	  awaiting_move = true;
+	  process_move(sequence,/*local=*/false,game.get_current_player().id,
+		       /*delay_continue_game=*/true);
+	  return Player_Input::wait_for_event;
 	}
 	else
 	{
@@ -2656,16 +2767,50 @@ namespace relax
 	  {
 	    case BGP::msg_tell_setup:
 	    {
-	      BGP::Msg_Tell_Setup *det_msg = static_cast<BGP::Msg_Tell_Setup*>(message);
-	      if( process_setup(det_msg->get_setup()) )
+	      if( game.is_out_of_order() )
 	      {
-		conn_state.state = BGP_PLAY_PREPARE_4A;
-		// setup timeout
-		start_timer(response_timeout);
-		// wait for follow-up message
+#ifndef __WXMSW__
+		std::cout << "Client Error - Invalid Network Command for out-of-order player game" << std::endl;		
+#endif
+		invalid = true;
 	      }
 	      else
+	      {
+		BGP::Msg_Tell_Setup *det_msg = static_cast<BGP::Msg_Tell_Setup*>(message);
+		if( process_setup(det_msg->get_setup()) )
+		{
+		  conn_state.state = BGP_PLAY_PREPARE_4A;
+		  // setup timeout
+		  start_timer(response_timeout);
+		  // wait for follow-up message
+		}
+		else
+		  invalid = true;
+	      }
+	      break;
+	    }
+	    case BGP::msg_tell_player_setup:
+	    {
+	      if( !game.is_out_of_order() )
+	      {
+#ifndef __WXMSW__
+		std::cout << "Client Error - Invalid Network Command for in-order player game" << std::endl;		
+#endif
 		invalid = true;
+	      }
+	      else
+	      {
+		BGP::Msg_Tell_Player_Setup *det_msg = static_cast<BGP::Msg_Tell_Player_Setup*>(message);
+		if( process_setup(det_msg->get_setup()) )
+		{
+		  conn_state.state = BGP_PLAY_PREPARE_4A;
+		  // setup timeout
+		  start_timer(response_timeout);
+		  // wait for follow-up message
+		}
+		else
+		  invalid = true;
+	      }
 	      break;
 	    }
 	    default: invalid = true; break;
@@ -2679,13 +2824,43 @@ namespace relax
 	  {
 	    case BGP::msg_tell_moves:
 	    {
-	      BGP::Msg_Tell_Moves *det_msg = static_cast<BGP::Msg_Tell_Moves*>(message);
-	      game.set_players(list_to_vector(players));
-	      if( process_moves(det_msg->get_moves()) )
-		start_game();
-	      else
+	      if( game.is_out_of_order() )
+	      {
+#ifndef __WXMSW__
+		std::cout << "Client Error - Invalid Network Command for out-of-order player game" << std::endl;		
+#endif
 		invalid = true;
-	      break;
+	      }
+	      else
+	      {
+		BGP::Msg_Tell_Moves *det_msg = static_cast<BGP::Msg_Tell_Moves*>(message);
+		game.set_players(list_to_vector(players));
+		if( process_moves(det_msg->get_moves()) )
+		  start_prepared_game();
+		else
+		  invalid = true;
+		break;
+	      }
+	    }
+	    case BGP::msg_tell_player_moves:
+	    {
+	      if( !game.is_out_of_order() )
+	      {
+#ifndef __WXMSW__
+		std::cout << "Client Error - Invalid Network Command for in-order player game" << std::endl;		
+#endif
+		invalid = true;
+	      }
+	      else
+	      {
+		BGP::Msg_Tell_Player_Moves *det_msg = static_cast<BGP::Msg_Tell_Player_Moves*>(message);
+		game.set_players(list_to_vector(players));
+		if( process_moves(det_msg->get_moves()) )
+		  start_prepared_game();
+		else
+		  invalid = true;
+		break;
+	      }
 	    }
 	    default: invalid = true; break;
 	  }
@@ -2797,15 +2972,48 @@ namespace relax
 	  {
 	    case BGP::msg_tell_setup:
 	    {
-	      BGP::Msg_Tell_Setup *det_msg = static_cast<BGP::Msg_Tell_Setup*>(message);
-	      if( process_setup( det_msg->get_setup() ) )
+	      if( game.is_out_of_order() )
 	      {
-		conn_state.state = BGP_OTHERS_TURN;
-		if( display_handler && display_phase == DISPLAY_SETUP )
-		  display_handler->everything_ready();
+#ifndef __WXMSW__
+		std::cout << "Client Error - Invalid Network Command for out-of-order player game" << std::endl;		
+#endif
+		invalid = true;
 	      }
 	      else
+	      {
+		BGP::Msg_Tell_Setup *det_msg = static_cast<BGP::Msg_Tell_Setup*>(message);
+		if( process_setup( det_msg->get_setup() ) )
+		{
+		  conn_state.state = BGP_OTHERS_TURN;
+		  if( display_handler && display_phase == DISPLAY_SETUP )
+		    display_handler->everything_ready();
+		}
+		else
+		  invalid = true;
+	      }
+	      break;
+	    }
+	    case BGP::msg_tell_player_setup:
+	    {
+	      if( !game.is_out_of_order() )
+	      {
+#ifndef __WXMSW__
+		std::cout << "Client Error - Invalid Network Command for in-order player game" << std::endl;		
+#endif
 		invalid = true;
+	      }
+	      else
+	      {
+		BGP::Msg_Tell_Player_Setup *det_msg = static_cast<BGP::Msg_Tell_Player_Setup*>(message);
+		if( process_setup( det_msg->get_setup() ) )
+		{
+		  conn_state.state = BGP_OTHERS_TURN;
+		  if( display_handler && display_phase == DISPLAY_SETUP )
+		    display_handler->everything_ready();
+		}
+		else
+		  invalid = true;
+	      }
 	      break;
 	    }
 	    default: invalid = true; break;
@@ -2931,6 +3139,28 @@ namespace relax
 	{
 	  switch( message->get_type() )
 	  {
+	    case BGP::msg_move:
+	    {
+	      if( game.is_out_of_order() )
+	      {
+		if( display_phase != DISPLAY_PLAYING )
+		{
+		  deferred_messages.push_back(std::pair<Message_Network<BGP::Message>*,BGP::Message*>
+					      (msg_net_client,message));
+#ifndef __WXMSW__
+		  std::cerr << "Client: deferred message" << std::endl;
+#endif
+		}
+		else
+		{
+		  BGP::Msg_Move *det_msg = static_cast<BGP::Msg_Move*>(message);
+		  process_move(det_msg->get_move(), /*local=*/false, det_msg->get_player_id()); 
+		}
+	      }
+	      else
+		invalid = true;
+	      break;
+	    }
 	    default: invalid = true; break;
 	  }
 	  break;
@@ -3211,44 +3441,52 @@ namespace relax
     
   void Network_Manager_BGP100a_Client::on_timer(wxTimerEvent& event)
   {
-    if(!msg_net_client) return;  // already disconnected ?
-
-    // timeout events
-    Message_Network<BGP::Message> *connection = msg_net_client;
-#ifndef __WXMSW__
-    std::cerr << "Client Error - Timeout triggered" << std::endl;
-#endif
-    switch(conn_state.state)
+    if( delayed_move_visualization )
     {
-      case BGP_UNCONNECTED:
-	if( connection->get_socket()->Error() )
-	{
-	  // this happens in case of the client connecting to an
-	  // unreachable host but even no negative response is sent by
-	  // routers (it can also happen just if connecting takes more
-	  // than <response_timeout>)
-	  msg_net_client->set_handler(0);
-	  delete msg_net_client;
-	  msg_net_client = 0;
-	  if( display_handler )
-	    display_handler->aborted();
-	}
-	break;
-      case BGP_HANDSHAKE:
-      case BGP_ROOMS:
-      case BGP_ASK_ROOM:
-	conn_state.state = BGP_UNCONNECTED;
-	disconnect();
-	break;
-      case BGP_ERROR:		// repeat error until error returns or disconnect
-      default:
-	conn_state.state = BGP_ERROR;
-	// send response
-	BGP::Msg_Error msg;
-	connection->send_message(&msg);
-	// setup timeout
-	start_timer(response_timeout);
-	break;
+      ui_manager.do_move_slowly( sequence, this, ANIMATION_DONE, ANIMATION_DONE );
+      // triggers continue_game() after done
+    }
+    else			// assume timeout callback
+    {
+      if(!msg_net_client) return;  // already disconnected ?
+
+      // timeout events
+      Message_Network<BGP::Message> *connection = msg_net_client;
+#ifndef __WXMSW__
+      std::cerr << "Client Error - Timeout triggered" << std::endl;
+#endif
+      switch(conn_state.state)
+      {
+	case BGP_UNCONNECTED:
+	  if( connection->get_socket()->Error() )
+	  {
+	    // this happens in case of the client connecting to an
+	    // unreachable host but even no negative response is sent by
+	    // routers (it can also happen just if connecting takes more
+	    // than <response_timeout>)
+	    msg_net_client->set_handler(0);
+	    delete msg_net_client;
+	    msg_net_client = 0;
+	    if( display_handler )
+	      display_handler->aborted();
+	  }
+	  break;
+	case BGP_HANDSHAKE:
+	case BGP_ROOMS:
+	case BGP_ASK_ROOM:
+	  conn_state.state = BGP_UNCONNECTED;
+	  disconnect();
+	  break;
+	case BGP_ERROR:		// repeat error until error returns or disconnect
+	default:
+	  conn_state.state = BGP_ERROR;
+	  // send response
+	  BGP::Msg_Error msg;
+	  connection->send_message(&msg);
+	  // setup timeout
+	  start_timer(response_timeout);
+	  break;
+      }
     }
   }
 
@@ -3465,10 +3703,14 @@ namespace relax
     }
     else
     {
-      std::list<Move_Sequence>::iterator it; int num_moves_read = 0;
+      std::list<std::pair<Move_Sequence,int/*player index*/> >::iterator it; 
+      int num_moves_read = 0;
       for( it=setup.init_moves.begin(); it!=setup.init_moves.end(); ++it )
       {
-	Move_Sequence &sequence = *it;
+	Move_Sequence &sequence = it->first;
+	int player_index = it->second;
+	if( game_manager.is_out_of_order_game() && player_index >= 0 && player_index < (int)game.players.size() )
+	  game.set_current_player_index(player_index);
 	if( !sequence.check_sequence(game) ) 
 	{
 #ifndef __WXMSW__
@@ -3490,12 +3732,16 @@ namespace relax
     return !invalid;
   }
 
-  bool Network_Manager_BGP100a_Client::process_moves( std::list<Move_Sequence> moves )
+  bool Network_Manager_BGP100a_Client::process_moves
+  ( std::list<std::pair<Move_Sequence,int/*player index*/> > moves )
   {
-    std::list<Move_Sequence>::iterator move_it;
+    std::list<std::pair<Move_Sequence,int/*player index*/> >::iterator move_it;
     for( move_it = moves.begin(); move_it != moves.end(); ++move_it )
     {
-      Move_Sequence &move = *move_it;
+      Move_Sequence &move = move_it->first;
+      int player_index = move_it->second;
+      if( game_manager.is_out_of_order_game() && player_index >= 0 && player_index < (int)game.players.size() )
+	game.set_current_player_index(player_index);
       if( !move.check_sequence(game) )
 	return false;
       game.do_move(move);
@@ -3517,9 +3763,9 @@ namespace relax
 
     return true;
   }
-
-  bool Network_Manager_BGP100a_Client::process_move( const Move_Sequence& move_sequence, 
-						     bool local, int player_id )
+      
+  bool Network_Manager_BGP100a_Client::process_move
+  ( const Move_Sequence& move_sequence, bool local, int player_id, bool delay_continue_game )
   {
     if(!msg_net_client) return false;  // already disconnected ?
 
@@ -3551,9 +3797,32 @@ namespace relax
 	player_id = game.get_current_player().id;
       assert( does_include(own_player_ids,player_id) );
     }
+    else if( player_id != game.get_current_player().id && game.is_out_of_order() )
+    {
+      if( does_include(own_player_ids,player_id) )
+      {
+#ifndef __WXMSW__
+	std::cerr << "Client Error - Received remote move for local player!" << std::endl;
+#endif
+	error = true;
+      } 
+      else if( does_include(pending_player_move,player_id) )
+      {
+#ifndef __WXMSW__
+	std::cerr << "Client Error - Player already sent a move: " << player_id << "!" 
+		  << std::endl;
+#endif
+	error = true;
+      }
+      else
+      {
+	pending_player_move[player_id] = move_sequence;
+	return true;
+      }
+    }
     else 
     {
-      if( player_id != game.get_current_player().id  )
+      if( player_id != game.get_current_player().id )
       {
 #ifndef __WXMSW__
 	std::cerr << "Client Error - Received remote move for player " << player_id 
@@ -3577,7 +3846,7 @@ namespace relax
 	error = true;
       }
     }
-    if( !move_sequence.check_sequence(game) )
+    if( !error && !move_sequence.check_sequence(game) )
     {
 #ifndef __WXMSW__
       std::cerr << "Client Error - Invalid Move " << move_sequence << "!" << std::endl;
@@ -3626,8 +3895,16 @@ namespace relax
 	  sequence = move_sequence;
 	  sequence_available = true;
 	  awaiting_move = false;
-	  ui_manager.do_move_slowly( sequence, this, ANIMATION_DONE, ANIMATION_DONE );
-	  // triggers continue_game() after done
+	  if( delay_continue_game )
+	  {
+	    delayed_move_visualization = true;
+	    start_timer(1);
+	  }
+	  else
+	  {
+	    ui_manager.do_move_slowly( sequence, this, ANIMATION_DONE, ANIMATION_DONE );
+	    // triggers continue_game() after done
+	  }
 	}
 	else
 	{

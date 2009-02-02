@@ -38,9 +38,8 @@ namespace relax
   class Field_Iterator;
   class Board;
   class Move;
-  class Knock_Out_Move;
   class Set_Move;
-  class Remove;
+  class Select_Move;
   class Move_Sequence;
   class Variant;
   class Variant_Tree;
@@ -59,7 +58,7 @@ namespace relax
   class Standard_Move_Translator;
   
   enum Field_State_Type{ field_removed=-1, field_empty=0, 
-				 field_begin=1, field_end=28 };
+			 field_begin=1/*, field_end=28 open-end*/, field_end=(1+5*5*5) };
 
   const int standard_board[][5] =
     { {   -1,  0,  0,  0, -1 },
@@ -124,7 +123,7 @@ namespace relax
     inline Field_State_Type get_field( Field_Pos pos ) { return field[pos.x][pos.y]; }
     Field_State_Type get_field( unsigned x, unsigned y );
     inline int get_x_size() const { return field.size(); }
-    inline int get_y_size() const { return field[0].size(); }
+    inline int get_y_size() const { if( field.empty() ) return 0; return field[0].size(); }
   };
 
   class Ref_Counter
@@ -140,16 +139,13 @@ namespace relax
   public:
     Stones();
 
-    enum Stone_Type{ invalid_stone=0, stone_begin=1, stone_end=28 };
+    enum Stone_Type{ invalid_stone=0, stone_begin=1/*, stone_end=28 open-end*/, stone_max_end=(1+5*5*5) };
     std::map<Stone_Type, int> stone_count;
-    unsigned total_count;
     Stones::Stone_Type current_stone;
 
 #ifndef __WXMSW__
     void print();
 #endif
-
-    void reset_stones();
   };
 
   class Common_Stones : public Stones
@@ -166,7 +162,7 @@ namespace relax
   class Standard_Common_Stones : public Common_Stones
   {
   public:
-    Standard_Common_Stones();
+    Standard_Common_Stones() : Common_Stones() {}
   };
 
   class Player_Input
@@ -214,6 +210,7 @@ namespace relax
     Player_Input *input;
     std::list<Player_Output*> outputs; 
     bool is_active;
+    bool already_done;		// for out-of-order playing
 
     static std::list<Player_Output*> no_output;
   };
@@ -270,7 +267,7 @@ namespace relax
   class Move
   {
   public:
-    enum Move_Type { no_move=0, set_move, finish_move };
+    enum Move_Type { no_move=0, set_move, select_move, finish_move };
 
     virtual Move_Type get_type() const = 0;
     virtual void do_move( Game & ) = 0;	         // may store extra info about the move
@@ -309,7 +306,30 @@ namespace relax
   //private:
     Field_Pos pos;
     Stones::Stone_Type stone_type;
-    bool own_stone;		// whether stone belonged to player
+  };
+
+  class Select_Move : public Move
+  {
+  public:
+    virtual Move_Type get_type() const;
+    virtual void do_move( Game & );
+    virtual void undo_move( Game & );
+    virtual bool check_move( Game & ) const; // true: move ok
+    virtual bool check_previous_move( Game &, Move * ) const; // true: type ok
+    virtual bool may_be_first_move( Game & ) const;
+    virtual bool may_be_last_move( Game & ) const;
+    virtual std::escape_ostream &output( std::escape_ostream & ) const;
+    virtual bool input( std::escape_istream & );
+
+    virtual Move *clone() const;
+
+    Select_Move();
+    Select_Move( Stones::Stone_Type stone_type );
+
+  //private:
+    Stones::Stone_Type stone_type;
+    // undo information
+    Stones::Stone_Type prev_stone_type;
   };
 
   // must be added as last move
@@ -378,12 +398,10 @@ namespace relax
 
   bool operator==( const Move &m1, const Move &m2 );
   bool operator<( const Move &m1, const Move &m2 );
-  bool operator==( const Knock_Out_Move &m1, const Knock_Out_Move &m2 );
-  bool operator<( const Knock_Out_Move &m1, const Knock_Out_Move &m2 );
   bool operator==( const Set_Move &m1, const Set_Move &m2 );
   bool operator<( const Set_Move &m1, const Set_Move &m2 );
-  bool operator==( const Remove &m1, const Remove &m2 );
-  bool operator<( const Remove &m1, const Remove &m2 );
+  bool operator==( const Select_Move &m1, const Select_Move &m2 );
+  bool operator<( const Select_Move &m1, const Select_Move &m2 );
   inline bool operator==( const Finish_Move &m1, const Finish_Move &m2 ) { return true; }
   inline bool operator<( const Finish_Move &m1, const Finish_Move &m2 ) { return false; }
   bool operator==( const Move_Sequence &s1, const Move_Sequence &s2 );
@@ -438,7 +456,7 @@ namespace relax
     inline Variant *get_root_variant()    { return root; }
     inline const Variant *get_current_variant() const { return current_variant; }
     inline const Variant *get_root_variant()    const { return root; }
-    std::list<Move_Sequence> get_current_variant_moves() const;
+    std::list<std::pair<Move_Sequence,int/*player index*/> > get_current_variant_moves() const;
     std::list<unsigned> get_variant_id_path( const Variant *dest_variant ) const;
     const Variant *get_variant( const std::list<unsigned> variant_id_path ) const;
     Variant *get_variant( const std::list<unsigned> variant_id_path );
@@ -530,6 +548,7 @@ namespace relax
   public:
     enum Game_State{ finished=0, finished_scores, wait_for_event, next_players_turn, interruption_possible, 
 		     wrong_number_of_players };
+    enum Game_Phase{ selecting=0, selected, local, remote };
 
     Game( const Ruleset & );
     Game( const Game & );
@@ -559,12 +578,14 @@ namespace relax
 
     // *********************
     // information functions
+    inline bool is_out_of_order() { return true; }
     inline unsigned get_min_players() { return ruleset->min_players; }
     inline unsigned get_max_players() { return ruleset->max_players; }
 
     int get_num_possible_moves(); // number of possible moves in current situation
     std::list<Move_Sequence> get_possible_moves(); // get possible moves in situation
-    std::list<Move_Sequence> get_played_moves();   // get moves played since start
+    std::list<std::pair<Move_Sequence,int/*player index*/> > get_played_moves();   
+				// get moves played since start
     int get_max_score(std::vector<std::map<int/*num*/, 
 		      unsigned /*stones*/> > *stones_available = 0);
     
@@ -579,6 +600,7 @@ namespace relax
     void copy_player_times( Game &from ); // number of players must be the same
   public:
     // public: for internal usage (friend might be used instead)
+    Game_Phase game_phase;
     std::vector<Player> players;
 
     std::vector<Player>::iterator current_player;
@@ -596,7 +618,7 @@ namespace relax
 
     Ref_Counter *ref_counter;	// reference counting because of ruleset pointer
 
-    void initialize_round();
+    Move_Sequence initialize_round();
 
     inline Player &get_current_player() 
     { assert(current_player_index >= 0); return players[current_player_index]; }
@@ -606,8 +628,13 @@ namespace relax
     std::vector<Player>::iterator get_player( int index );
     std::vector<Player>::const_iterator get_player( int index ) const;
     int get_player_index( std::vector<Player>::iterator ) const;
+    std::vector<Player>::iterator get_player_by_id( int id );
+    std::vector<Player>::const_iterator get_player_by_id( int id ) const;
+    // for out-of-order-games:
+    void set_current_player_index(int player_index);
+    void undo_set_current_player_index();
   public:
-    // use this functions only of you use Move::do_move before
+    // use these functions only if you used Move::do_move before
     // use Game::do_move otherwise
     bool choose_next_player();		// next player is current player (players may be skiped)
 				// call next_player after Move_Sequence::do_move
@@ -615,7 +642,8 @@ namespace relax
 				// prev player is current player prev_prev_player can't be determined
 				// automatically
   private:
-    void remove_filled_areas();
+    void reset_player_already_done();
+    int last_in_order_player_index;
 
     int winner_player_index;
   };

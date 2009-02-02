@@ -34,31 +34,13 @@ namespace relax
   Stones::Stones()
     : current_stone(invalid_stone)
   {
-    for( int i=stone_begin; i<stone_end; ++i )
-      {
-	stone_count[Stone_Type(i)] = 1;
-      }
-    total_count = (int)stone_end - (int)stone_begin;
   }
 
 #ifndef __WXMSW__
   void Stones::print()
   {
-    std::cout << std::endl;
-    std::cout << total_count << std::endl;
   }
 #endif
-
-  void Stones::reset_stones()
-  {
-    current_stone = invalid_stone;
-    stone_count.clear();
-    for( int i=stone_begin; i<stone_end; ++i )
-      {
-	stone_count[Stone_Type(i)] = 1;
-      }
-    total_count = (int)stone_end - (int)stone_begin;
-  }
 
   // ----------------------------------------------------------------------------
   // Common_Stones
@@ -66,15 +48,6 @@ namespace relax
 
   Common_Stones::Common_Stones( Common_Stones::Common_Stones_Type type )
     : type(type)
-  {
-  }
-
-  // ----------------------------------------------------------------------------
-  // Standard_Common_Stones
-  // ----------------------------------------------------------------------------
-
-  Standard_Common_Stones::Standard_Common_Stones()
-    : Common_Stones( standard )
   {
   }
 
@@ -106,7 +79,7 @@ namespace relax
 		  Origin origin )
     : name(name), id(id), host(host), type(type), help_mode(help_mode), 
       origin(origin), total_time(0), average_time(-1), num_measures(0), 
-      input(input), outputs(outputs), is_active(false)
+      input(input), outputs(outputs), is_active(false), already_done(false)
   {
   }
 
@@ -780,13 +753,14 @@ namespace relax
     return false;
   }
 
-  std::list<Move_Sequence> Variant_Tree::get_current_variant_moves() const
+  std::list<std::pair<Move_Sequence,int/*player index*/> > 
+  Variant_Tree::get_current_variant_moves() const
   {
-    std::list<Move_Sequence> ret;
+    std::list<std::pair<Move_Sequence,int/*player index*/> > ret;
     const Variant *cur = get_current_variant();
     while( cur != get_root_variant() )
     {
-      ret.push_front(cur->move_sequence);
+      ret.push_front(std::make_pair(cur->move_sequence,cur->current_player_index));
       cur = cur->prev;
     }
     return ret;
@@ -858,20 +832,19 @@ namespace relax
   // ----------------------------------------------------------------------------
 
   Game::Game( const Ruleset &_ruleset )
-    : ruleset(_ruleset.clone()), 
+    : game_phase(selecting), ruleset(_ruleset.clone()), 
       common_stones(ruleset->common_stones), 
       win_condition(ruleset->win_condition),
       coordinate_translator(ruleset->coordinate_translator),
       undo_possible(ruleset->undo_possible),
       ref_counter(new Ref_Counter()),
+      last_in_order_player_index(-1),
       winner_player_index(-1)
   {
     current_player = players.begin();
     current_player_index = 0;
     prev_player = players.end();
     prev_player_index = -1;
-
-    initialize_round();
   }
 
   Game::Game( const Game &game )
@@ -899,6 +872,7 @@ namespace relax
       players = game.players;
     }
 
+    game_phase		 = game.game_phase;
     current_player_index = game.current_player_index;
     current_player	 = get_player( current_player_index );
     prev_player_index    = game.prev_player_index;
@@ -914,6 +888,7 @@ namespace relax
     ref_counter 	  = game.ref_counter;
     ++ref_counter->cnt;
 
+    last_in_order_player_index = game.last_in_order_player_index;
     winner_player_index	  = game.winner_player_index;
 
     return *this;
@@ -965,13 +940,27 @@ namespace relax
 
     do
     {
-      Player_Input::Player_State state = current_player->input->determine_move();
+      bool sequence_already_given = false;
+      Player_Input::Player_State state;
+      if( game_phase == selecting &&
+	  current_player->origin == Player::local )
+      {
+	state = Player_Input::finished;
+	sequence = initialize_round();	// game where first player is local, does select moves
+	sequence_already_given = true;
+      }
+      else
+      {
+	state = current_player->input->determine_move();
+      }
+
       switch( state )
       {
 	case Player_Input::finished:
 	{
 	  // get move
-	  sequence = current_player->input->get_move();
+	  if( !sequence_already_given )
+	    sequence = current_player->input->get_move();
 
 	  // report move
 	  for( output =  current_player->outputs.begin();
@@ -980,12 +969,15 @@ namespace relax
 	    (*output)->report_move( sequence );
 
 	  // calculate average time
-	  long time = current_player->input->get_used_time();
-	  current_player->total_time += time;
-	  current_player->average_time 
-	    = current_player->average_time * current_player->num_measures + time;
-	  ++current_player->num_measures;
-	  current_player->average_time /= current_player->num_measures;
+	  if( !sequence_already_given )
+	  {
+	    long time = current_player->input->get_used_time();
+	    current_player->total_time += time;
+	    current_player->average_time 
+	      = current_player->average_time * current_player->num_measures + time;
+	    ++current_player->num_measures;
+	    current_player->average_time /= current_player->num_measures;
+	  }
 
 	  // do move
 	  do_move( sequence );
@@ -1010,7 +1002,6 @@ namespace relax
 	  if( current_player->board.get_empty_fields().empty() )
 	    return finished_scores;
 
-	  initialize_round();
 	  return next_players_turn;
 	}
 	break;
@@ -1030,6 +1021,7 @@ namespace relax
 
   void Game::reset_game()
   {
+    game_phase = selecting;
     common_stones = ruleset->common_stones;
     win_condition = ruleset->win_condition;
     coordinate_translator = ruleset->coordinate_translator;
@@ -1041,7 +1033,7 @@ namespace relax
     std::vector<Player>::iterator i;
     for( i = players.begin(); i != players.end(); ++i )
     {
-      i->stones.reset_stones(); 
+      i->stones = ruleset->common_stones;
       i->board = ruleset->board;
     }
 
@@ -1049,8 +1041,7 @@ namespace relax
     current_player_index = 0;
     prev_player    = players.end();
     prev_player_index = -1;
-
-    initialize_round();
+    reset_player_already_done();
   }
 
   void Game::reset_game( const Ruleset &ruleset )
@@ -1095,13 +1086,15 @@ namespace relax
       player_src = new_players.begin();
       for( player = players.begin(); player != players.end(); ++player, ++player_src )
       {
-	// rescue captured stones
+	// rescue stones / board
 	Stones player_stones = player->stones;
+	Board player_board = player->board;
 	// copy player
 	assert( player_src != new_players.end() );
 	*player = *player_src;
 
 	player->stones = player_stones;
+	player->board = player_board;
       }
     }
     else
@@ -1111,7 +1104,8 @@ namespace relax
       // remove player stones
       for( player = players.begin(); player != players.end(); ++player )
       {
-	player->stones = Stones();
+	player->stones = ruleset->common_stones;
+	player->board = ruleset->board;
       }
 
       current_player       = players.begin();
@@ -1139,6 +1133,9 @@ namespace relax
       return false;
 
     players.push_back( player );
+    players.back().already_done = false;
+    players.back().stones = ruleset->common_stones;
+    players.back().board = ruleset->board;
     current_player = players.begin();
     current_player_index = 0;
     current_player->is_active = true;
@@ -1158,21 +1155,9 @@ namespace relax
     prev_player_index = -1;
   }
 
-  std::vector<Player>::iterator Game::get_player( int index )
+  Move_Sequence Game::initialize_round()
   {
-    if( index < 0 )
-      return players.end();
-
-    std::vector<Player>::iterator ret = players.begin();
-
-    for( int i = 0; i < index; ++i )
-      ++ret;
-
-    return ret;
-  }
-
-  void Game::initialize_round()
-  {
+    Stones::Stone_Type chosen_stone = Stones::invalid_stone;
     int num_stones = ruleset->nums1.size() * ruleset->nums2.size() * ruleset->nums3.size();
     int possible_stones=0;
     for( int i=0; i<num_stones; ++i )
@@ -1187,10 +1172,29 @@ namespace relax
 	chosen_index -= common_stones.stone_count[stone_type];
 	if( chosen_index < 0 )
 	  {
-	    common_stones.current_stone = stone_type;
+	    chosen_stone = stone_type;
 	    break;
 	  }
       }
+    Move_Sequence seq;
+    Move *move = new Select_Move(chosen_stone);
+    seq.add_move(move);
+    move = new Finish_Move();
+    seq.add_move(move);
+    return seq;
+  }
+
+  std::vector<Player>::iterator Game::get_player( int index )
+  {
+    if( index < 0 )
+      return players.end();
+
+    std::vector<Player>::iterator ret = players.begin();
+
+    for( int i = 0; i < index; ++i )
+      ++ret;
+
+    return ret;
   }
 
   std::vector<Player>::const_iterator Game::get_player( int index ) const
@@ -1220,6 +1224,54 @@ namespace relax
     return ret;
   }
 
+  std::vector<Player>::iterator Game::get_player_by_id( int id )
+  {
+    std::vector<Player>::iterator ret = players.begin();
+    while( ret != players.end() )
+      {
+	if( ret->id == id ) return ret;
+	++ret;
+      }
+
+    return ret;
+  }
+
+  std::vector<Player>::const_iterator Game::get_player_by_id( int id ) const
+  {
+    std::vector<Player>::const_iterator ret = players.begin();
+    while( ret != players.end() )
+      {
+	if( ret->id == id ) return ret;
+	++ret;
+      }
+
+    return ret;
+  }
+
+  void Game::set_current_player_index(int player_index)
+  {
+    assert(is_out_of_order());
+    last_in_order_player_index = current_player_index;
+    bool save_active = current_player->is_active;
+    current_player->is_active = false;
+    current_player = get_player(player_index);
+    current_player_index = player_index;
+    current_player->is_active = save_active;
+  }
+
+  void Game::undo_set_current_player_index()
+  {
+    if( last_in_order_player_index >= 0 )
+    {
+      bool save_active = current_player->is_active;
+      current_player->is_active = false;
+      current_player = get_player(last_in_order_player_index);
+      current_player_index = last_in_order_player_index;
+      current_player->is_active = save_active;
+      last_in_order_player_index = -1;
+    }
+  }
+
   //! game dependent function
   bool Game::choose_next_player()		// next player is current player
   {
@@ -1228,13 +1280,60 @@ namespace relax
 
     // change player
     current_player->is_active = false;
-    ++current_player; 
-    ++current_player_index;
-    if( current_player == players.end() )		 // if last player
+    bool done;
+    do{
+      done = true;
+      bool first = true;
+      if( last_in_order_player_index >= 0 )  // jump back to last in-order player
       {
-	current_player = players.begin();		 // cycle to first player
-	current_player_index = 0;
+	current_player_index = last_in_order_player_index;
+	current_player = get_player(current_player_index);
+	last_in_order_player_index = -1;
+	first = false;
       }
+      switch(game_phase)
+      {
+      case selecting:
+	current_player = players.begin();
+	current_player_index = 0;
+	break;
+      case selected:
+	current_player = players.begin();
+	current_player_index = 0;
+	first = false;
+	game_phase = local;
+	// fall through
+      case local:
+	while(current_player != players.end())
+	{
+	  if( !first && current_player->origin == Player::local ) break;
+	  ++current_player;
+	  ++current_player_index;
+	  first = false;
+	}
+	if( current_player != players.end() ) break;  // 2nd break
+	current_player = players.begin();
+	current_player_index = 0;
+	// fall through
+      case remote:
+	game_phase = remote;
+	while(current_player != players.end())
+	{
+	  if( !first && current_player->origin == Player::remote ) break;
+	  ++current_player;
+	  ++current_player_index;
+	  first = false;
+	}
+	if( current_player != players.end() ) break;  // 2nd break
+	game_phase = selecting;
+	current_player = players.begin();
+	current_player_index = 0;
+	reset_player_already_done();
+	break;
+      }
+      if( game_phase != selecting && current_player->already_done ) 
+	done = false;
+    }while(!done);
     current_player->is_active = true;
 
     return true;
@@ -1252,12 +1351,27 @@ namespace relax
 
     prev_player	      = get_player( prev_prev_player_index );
     prev_player_index = prev_prev_player_index;
+    if( game_phase == remote && current_player->origin == Player::local )
+      game_phase = local;
     return true;
+  }
+
+  void Game::reset_player_already_done()
+  {
+    std::vector<Player>::iterator it;
+    for( it=players.begin(); it!=players.end(); ++it )
+    {
+      Player &player = *it;
+      player.already_done = false;
+    }
+    last_in_order_player_index = -1;
   }
 
   void Game::do_move( const Move_Sequence &sequence )
   {
     int player_index = current_player_index;
+    if( game_phase != selecting )
+      current_player->already_done = true;
     sequence.do_sequence( *this );
     choose_next_player();
     variant_tree.add_in_current_variant( player_index, sequence, get_num_possible_moves() );
@@ -1279,6 +1393,8 @@ namespace relax
       choose_prev_player( -1 );
 
     sequence.undo_sequence( *this );
+    current_player->already_done = false;
+    //!!! todo: undo game_phase change
     return true;
   }
 
@@ -1339,7 +1455,7 @@ namespace relax
   }
 
   // get moves played since start
-  std::list<Move_Sequence> Game::get_played_moves() 
+  std::list<std::pair<Move_Sequence,int/*player index*/> > Game::get_played_moves() 
   {
     return variant_tree.get_current_variant_moves();
   }
@@ -1768,27 +1884,28 @@ namespace relax
   void Set_Move::do_move( Game &game )
   {
     assert( check_move(game) );
-    assert( game.common_stones.stone_count[ stone_type ] > 0 );
-    if( game.common_stones.stone_count[ stone_type ] > 0 )
+    assert( game.current_player->stones.stone_count[ stone_type ] > 0 );
+    if( game.current_player->stones.stone_count[ stone_type ] > 0 )
     {
-      --game.common_stones.stone_count[ stone_type ];
+      --game.current_player->stones.stone_count[ stone_type ];
     }
     game.current_player->board.field[pos.x][pos.y] = Field_State_Type(stone_type);
   }
   void Set_Move::undo_move( Game &game )
   {
-    ++game.common_stones.stone_count[ stone_type ];
+    ++game.current_player->stones.stone_count[ stone_type ];
     game.current_player->board.field[pos.x][pos.y] = field_empty;
   }
 
   // true: move ok
   bool Set_Move::check_move( Game &game ) const 
   {
+    if( game.game_phase == Game::selecting ) return false;
     if( stone_type != game.common_stones.current_stone ) return false;
     if( pos.x >= (int)game.current_player->board.field.size() ) return false;
     if( pos.y >= (int)game.current_player->board.field[pos.x].size() ) return false;
     if( !Board::is_empty( game.current_player->board.field[pos.x][pos.y] ) ) return false;
-    if( game.common_stones.stone_count[ stone_type ] <= 0 ) return false;
+    if( game.current_player->stones.stone_count[ stone_type ] <= 0 ) return false;
     return true;
   }
 
@@ -1818,7 +1935,7 @@ namespace relax
     eis >> pos.x >> pos.y >> stone;
     if( (pos.x < 0) || (pos.y < 0) )
       return false;
-    if( (stone < Stones::stone_begin || stone >= Stones::stone_end) )
+    if( (stone < Stones::stone_begin || stone >= Stones::stone_max_end) )
       return false;
     stone_type = Stones::Stone_Type(stone);
     return true;
@@ -1835,6 +1952,83 @@ namespace relax
 
   Set_Move::Set_Move( Field_Pos pos, Stones::Stone_Type stone_type  )
     : pos(pos), stone_type(stone_type)
+  {
+  }
+
+  // ----------------------------------------------------------------------------
+  // Select_Move
+  // ----------------------------------------------------------------------------
+
+  Move::Move_Type Select_Move::get_type() const
+  {
+    return select_move;
+  }
+  void Select_Move::do_move( Game &game )
+  {
+    assert( check_move(game) );
+    assert( game.common_stones.stone_count[ stone_type ] > 0 );
+    prev_stone_type = game.common_stones.current_stone;
+    game.common_stones.current_stone = stone_type;
+    --game.common_stones.stone_count[ stone_type ];
+    game.game_phase = Game::selected;
+  }
+  void Select_Move::undo_move( Game &game )
+  {
+    assert( game.game_phase != Game::selecting );
+    ++game.common_stones.stone_count[ game.common_stones.current_stone ];
+    game.common_stones.current_stone = prev_stone_type;
+    game.game_phase = Game::selecting;
+  }
+
+  // true: move ok
+  bool Select_Move::check_move( Game &game ) const 
+  {
+    if( game.game_phase != Game::selecting ) return false;
+    if( game.common_stones.stone_count[ stone_type ] <= 0 ) return false;
+    return true;
+  }
+
+  // true: type ok
+  bool Select_Move::check_previous_move( Game &, Move *move ) const 
+  {
+    return move == 0;
+  }
+  bool Select_Move::may_be_first_move( Game &game ) const
+  {
+    return true;
+  }
+  bool Select_Move::may_be_last_move( Game &game ) const
+  {
+    return true;
+  }
+
+  std::escape_ostream &Select_Move::output( std::escape_ostream &eos ) const
+  {
+    eos << get_type() << stone_type;
+    return eos;
+  }
+
+  bool Select_Move::input( std::escape_istream &eis )
+  {
+    int stone;
+    eis >> stone;
+    if( (stone < Stones::stone_begin || stone >= Stones::stone_max_end) )
+      return false;
+    stone_type = Stones::Stone_Type(stone);
+    return true;
+  }
+  
+  Move *Select_Move::clone() const
+  {
+    return new Select_Move(*this);
+  }
+  
+  Select_Move::Select_Move()
+  {
+  }
+
+  Select_Move::Select_Move( Stones::Stone_Type stone_type  )
+    : stone_type(stone_type)
   {
   }
 
@@ -1979,6 +2173,7 @@ namespace relax
       switch( type )
       {
 	case Move::set_move:		move = new Set_Move(); break;
+	case Move::select_move:		move = new Select_Move(); break;
 	case Move::finish_move:		move = new Finish_Move(); break;
 	default: return false;
       }
@@ -2140,6 +2335,12 @@ namespace relax
 	const Set_Move *det_m2 = static_cast<const Set_Move*>(&m2);
 	return *det_m1 == *det_m2;
       }
+      case Move::select_move: 
+      {
+	const Select_Move *det_m1 = static_cast<const Select_Move*>(&m1);
+	const Select_Move *det_m2 = static_cast<const Select_Move*>(&m2);
+	return *det_m1 == *det_m2;
+      }
       case Move::finish_move: 
       {
 	const Finish_Move *det_m1 = static_cast<const Finish_Move*>(&m1);
@@ -2163,6 +2364,12 @@ namespace relax
 	const Set_Move *det_m2 = static_cast<const Set_Move*>(&m2);
 	return *det_m1 < *det_m2;
       }
+      case Move::select_move: 
+      {
+	const Select_Move *det_m1 = static_cast<const Select_Move*>(&m1);
+	const Select_Move *det_m2 = static_cast<const Select_Move*>(&m2);
+	return *det_m1 < *det_m2;
+      }
       case Move::finish_move: 
       {
 	const Finish_Move *det_m1 = static_cast<const Finish_Move*>(&m1);
@@ -2184,6 +2391,17 @@ namespace relax
     if( m1.pos.x > m2.pos.x ) return false;
     if( m1.pos.y < m2.pos.y ) return true;
     if( m1.pos.y > m2.pos.y ) return false;
+    if( (int)m1.stone_type < (int)m2.stone_type ) return true;
+    if( (int)m1.stone_type > (int)m2.stone_type ) return false;
+    return false;
+  }
+  bool operator==( const Select_Move &m1, const Select_Move &m2 )
+  {
+    if( m1.stone_type != m2.stone_type ) return false;
+    return true;
+  }
+  bool operator<( const Select_Move &m1, const Select_Move &m2 )
+  {
     if( (int)m1.stone_type < (int)m2.stone_type ) return true;
     if( (int)m1.stone_type > (int)m2.stone_type ) return false;
     return false;
@@ -2229,7 +2447,6 @@ namespace relax
   {
     std::string ret;
     std::list<Move*>::const_iterator move_it;
-    bool first_knock_out = true;
     for( move_it = sequence.get_moves().begin(); move_it != sequence.get_moves().end(); move_it++ )
     {
       Move *move = *move_it;
@@ -2244,10 +2461,12 @@ namespace relax
 	  {
 	    case Stones::invalid_stone: break;
 	    case Stones::stone_begin:   ret += 'W'; break;
+	    case Stones::stone_max_end: break;
 	  }
 	  ret += coordinate_translator->get_field_name(det_move->pos);
 	}
 	break;
+	case Move::select_move:
 	case Move::finish_move:
 	{
 	}
@@ -2366,9 +2585,9 @@ namespace relax
 	       Board( (const int*) standard_board, 
 		      sizeof(standard_board[0]) / sizeof(standard_board[0][0]),
 		      sizeof(standard_board)    / sizeof(standard_board[0]), Board::standard ),
-	       Standard_Common_Stones(),
+	       Common_Stones(),
 	       new Standard_Win_Condition(), 0 /*coordinate translator init below */,
-	       true /*undo possible*/, 1, 1 )
+	       true /*undo possible*/, 1, 10 )
   {
     coordinate_translator = new Standard_Coordinate_Translator(board);
     nums1.resize(3);
@@ -2386,6 +2605,9 @@ namespace relax
     nums3[1] = 4;
     nums3[2] = 8;
     max_num3 = 8;
+    // set stone count to 1 for every stone
+    for( unsigned i=0; i< nums1.size()*nums2.size()*nums3.size(); ++i )
+      common_stones.stone_count[ Stones::Stone_Type(Stones::stone_begin + (int)i) ] = 1;
   }
 
   // ----------------------------------------------------------------------------
@@ -3241,9 +3463,10 @@ namespace relax
     
     // fill remaining stones
     std::list<Stones::Stone_Type> remaining_stones;
-    for( int idx = Stones::stone_begin; idx < Stones::stone_end; ++idx )
+    for( int idx = Stones::stone_begin; idx < Stones::stone_max_end; ++idx )
       {
 	Stones::Stone_Type stone_type = Stones::Stone_Type(idx);
+	if( !does_include(stones.stone_count,stone_type) ) continue;
 	for( int i=0; i < stones.stone_count[stone_type]; ++i )
 	  remaining_stones.push_back(stone_type);
       }

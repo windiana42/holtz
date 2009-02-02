@@ -96,7 +96,8 @@ namespace relax
 		wxFont coord_font = wxNullFont );
     };
 
-    Board_Panel( Settings &settings, Game_Manager &, WX_GUI_Manager &, Sequence_Generator* & );
+    Board_Panel( Settings &settings, Game_Manager &, WX_GUI_Manager &, Sequence_Generator* &,
+		 int player_id );
 
     void calc_dimensions();
     void draw( wxDC &dc ) const;
@@ -106,6 +107,7 @@ namespace relax
     Field_Pos		get_field( int x, int y ) const;
     std::pair<int,int>  get_field_pos( int col, int row ) const;
     Bitmap_Set         &get_bitmap_set() const;
+    const Board &	get_board() const;
   private:
     Settings &settings;
 
@@ -115,6 +117,7 @@ namespace relax
     Bitmap_Handler &bitmap_handler;
     int board_x, board_y;
     Sequence_Generator* &sequence_generator;
+    int player_id;
   };
 
   class Stone_Panel : public Basic_Panel
@@ -158,9 +161,11 @@ namespace relax
     struct Settings
     {
       Settings( const relax::Stone_Panel::Settings &stone_settings,
+		const relax::Board_Panel::Settings &board_settings,
 		wxFont player_font = wxNullFont );
 
       relax::Stone_Panel::Settings stone_settings;
+      relax::Board_Panel::Settings board_settings;
 
       wxFont player_font;
     };
@@ -182,6 +187,7 @@ namespace relax
     Sequence_Generator* &sequence_generator;
 
     Stone_Panel stone_panel;
+    Board_Panel board_panel;
 
     class Header_Panel : public Basic_Panel
     {
@@ -227,11 +233,12 @@ namespace relax
     void remove_players();
     void add_player( Player &player );
 
-    inline const Board_Panel &get_board_panel() const { return board_panel; }
+    //inline const Board_Panel &get_board_panel() const { return board_panel; }
     inline const Stone_Panel &get_stone_panel() const { return stone_panel; }
     inline const std::list<Player_Panel*> &get_player_panels() const { return player_panels; }
     const Player_Panel *get_player_panel( int id ) const;
-    const wxBitmap &get_background() const;
+    const wxBitmap     &get_background() const;
+    Bitmap_Set         &get_bitmap_set() const;
   private:
     void rearrange_panels();
 
@@ -243,9 +250,9 @@ namespace relax
     Bitmap_Handler &bitmap_handler;
     Sequence_Generator* &sequence_generator;
 
-    Board_Panel board_panel;
+    //Board_Panel board_panel;
     std::list<Player_Panel*> player_panels;
-    Vertical_Sizer player_panel_sizer;
+    Horizontal_Sizer player_panel_sizer;
     Stone_Panel stone_panel;
   };
   

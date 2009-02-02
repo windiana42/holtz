@@ -124,8 +124,15 @@ namespace relax
 				// = ask server to tell me when it is my turn
       msg_take_player,		// take_player <id>
 				// = request to take over abandoned player <id>
+      // additional commands for only a few games
+      msg_tell_player_setup,	// tell_player_setup <setup>
+				// = tell all setup settings of the specified game with player indices
+      msg_tell_player_moves,	// tell_player_moves <moves>
+				// = tell all moves already played with player indices
+
       msg_setup=40,		// setup
 				// = go to setup state (may add players)
+
       // Subversion B,C:
       msg_get_setup_and_changes,// get_setup_and_changes
 				// = ask for game setup and allow master to send changes afterwards
@@ -267,7 +274,8 @@ namespace relax
     struct Setup
     {
       Ruleset ruleset;
-      std::list<Move_Sequence> init_moves; // moves executed before players start
+      std::list<std::pair<Move_Sequence,int/*player index*/> > init_moves; 
+				// moves executed before players start
       std::list<Player> initial_players; // players with given stones and default names
       std::list<Player> current_players; // currently registered players
     };
@@ -580,7 +588,7 @@ namespace relax
       { os << to_string(get_type()) << ' ' << write_to_line() << '\n'; }
 
       Message_Type get_type() { return type; }
-
+    protected:
       Message_Type type;
     };
 
@@ -752,8 +760,8 @@ namespace relax
     class Msg_Tell_Setup : public Message
     {
     public:
-      Msg_Tell_Setup( Setup );
-      Msg_Tell_Setup();
+      Msg_Tell_Setup( Setup, bool exchange_player_indices=false );
+      Msg_Tell_Setup( bool exchange_player_indices=false );
 
       // message number is included at the beginning of the line
       bool read_from_line( std::string line ); // returns false on parse error
@@ -762,6 +770,14 @@ namespace relax
       Setup get_setup()   { return setup; }
     private:
       Setup setup;
+      bool exchange_player_indices;
+    };
+
+    class Msg_Tell_Player_Setup : public Msg_Tell_Setup
+    {
+    public:
+      Msg_Tell_Player_Setup( Setup s ) : Msg_Tell_Setup(s,true) { type = msg_tell_player_setup; }
+      Msg_Tell_Player_Setup() : Msg_Tell_Setup(true) { type = msg_tell_player_setup; }
     };
 
     class Msg_Get_Moves : public Message
@@ -773,16 +789,26 @@ namespace relax
     class Msg_Tell_Moves : public Message
     {
     public:
-      Msg_Tell_Moves( std::list<Move_Sequence> moves );
-      Msg_Tell_Moves();
+      Msg_Tell_Moves( std::list<std::pair<Move_Sequence,int/*player index*/> > moves, 
+		      bool exchange_player_indices=false );
+      Msg_Tell_Moves( bool exchange_player_indices=false );
 
       // message number is included at the beginning of the line
       bool read_from_line( std::string line ); // returns false on parse error
       virtual std::string write_to_line();
   
-      std::list<Move_Sequence> get_moves()   { return moves; }
+      std::list<std::pair<Move_Sequence,int/*player index*/> > get_moves()   { return moves; }
     private:
-      std::list<Move_Sequence> moves;
+      std::list<std::pair<Move_Sequence,int/*player index*/> > moves;
+      bool exchange_player_indices;
+    };
+
+    class Msg_Tell_Player_Moves : public Msg_Tell_Moves
+    {
+    public:
+      Msg_Tell_Player_Moves( std::list<std::pair<Move_Sequence,int/*player index*/> > m ) 
+	: Msg_Tell_Moves(m,true) { type = msg_tell_player_moves; }
+      Msg_Tell_Player_Moves() : Msg_Tell_Moves(true) { type = msg_tell_player_moves; }
     };
 
     class Msg_Get_Situation : public Message

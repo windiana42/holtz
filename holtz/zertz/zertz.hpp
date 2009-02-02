@@ -555,7 +555,7 @@ namespace zertz
     inline Variant *get_root_variant()    { return root; }
     inline const Variant *get_current_variant() const { return current_variant; }
     inline const Variant *get_root_variant()    const { return root; }
-    std::list<Move_Sequence> get_current_variant_moves() const;
+    std::list<std::pair<Move_Sequence,int/*player index*/> > get_current_variant_moves() const;
     std::list<unsigned> get_variant_id_path( const Variant *dest_variant ) const;
     const Variant *get_variant( const std::list<unsigned> variant_id_path ) const;
     Variant *get_variant( const std::list<unsigned> variant_id_path );
@@ -668,12 +668,14 @@ namespace zertz
 
     // *********************
     // information functions
+    inline bool is_out_of_order() { return false; }
     inline unsigned get_min_players() { return ruleset->min_players; }
     inline unsigned get_max_players() { return ruleset->max_players; }
 
     int get_num_possible_moves(); // number of possible moves in current situation
     std::list<Move_Sequence> get_possible_moves(); // get possible moves in situation
-    std::list<Move_Sequence> get_played_moves();   // get moves played since start
+    std::list<std::pair<Move_Sequence,int/*player index*/> > get_played_moves();   
+				// get moves played since start
     
     std::vector<Player>::iterator get_next_player( std::vector<Player>::iterator player );
     std::vector<Player>::iterator get_prev_player( std::vector<Player>::iterator player );
@@ -710,6 +712,11 @@ namespace zertz
     std::vector<Player>::iterator get_player( int index );
     std::vector<Player>::const_iterator get_player( int index ) const;
     int get_player_index( std::vector<Player>::iterator ) const;
+    std::vector<Player>::iterator get_player_by_id( int id );
+    std::vector<Player>::const_iterator get_player_by_id( int id ) const;
+    // for out-of-order-games:
+    void set_current_player_index(int) { assert(false); }
+    void undo_set_current_player_index() {}
   public:
     // use this functions only of you use Move::do_move before
     // use Game::do_move otherwise

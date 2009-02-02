@@ -177,7 +177,7 @@ namespace relax
     void stop_game();
 
     void set_board  ( const Game& );
-    void set_players( const std::list<Player>& );
+    //void set_players( const std::list<Player>& );
 
     AI_Input *get_hint_ai();
     AI_Input *get_player_ai();
@@ -189,6 +189,7 @@ namespace relax
     { game_setup_manager = sm; }
     inline void set_game_setup_display_handler( Game_Setup_Display_Handler *sm )
     { game_setup_display_handler = sm; }
+    inline bool is_out_of_order_game() { return game.is_out_of_order(); }
   private:
     Game_Setup_Manager *game_setup_manager;
     Game_Setup_Display_Handler *game_setup_display_handler;
