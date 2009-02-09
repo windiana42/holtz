@@ -1066,8 +1066,8 @@ namespace relax
     std::vector<Player>::iterator it;
     for( it = players.begin(); it != players.end(); ++it )
     {
-      int score = get_max_score();
       Player *player = &*it;
+      int score = get_max_score(player);
       ret.insert(std::make_pair(score,player));
     }
     
@@ -1471,10 +1471,10 @@ namespace relax
     unsigned assigned_index;
   };
 
-  int Game::get_max_score(std::vector<std::map<int/*num*/, 
+  int Game::get_max_score(Player *player, std::vector<std::map<int/*num*/, 
 			  unsigned /*stones*/> > *stones_available)
   {
-    Board &board = current_player->board;
+    Board &board = player?player->board:current_player->board;
     std::map<unsigned/*dir*/,std::map<int/*num*/,std::list<Speculative_Score> > > 
       speculative_scores;
     std::map<unsigned/*dir*/,std::list<Speculative_Score> > 
@@ -2457,16 +2457,15 @@ namespace relax
 	case Move::set_move:
 	{
 	  Set_Move *det_move = static_cast<Set_Move*>(move);
-	  switch( det_move->stone_type )
-	  {
-	    case Stones::invalid_stone: break;
-	    case Stones::stone_begin:   ret += 'W'; break;
-	    case Stones::stone_max_end: break;
-	  }
 	  ret += coordinate_translator->get_field_name(det_move->pos);
 	}
 	break;
 	case Move::select_move:
+	{
+	  Select_Move *det_move = static_cast<Select_Move*>(move);
+	  ret += "s" + long_to_string(det_move->stone_type);
+	}
+	break;
 	case Move::finish_move:
 	{
 	}
@@ -2482,52 +2481,19 @@ namespace relax
     Move_Sequence sequence;
     char first;
     is >> first;
-    if( (first == 'x') || (first == 'X') ) // is knock out move ?
+    if( (first == 's') || (first == 'S') ) // is knock out move ?
     {
-      std::string str;
-      is >> str;
-      size_t i;
-      // search for letters followed by digits
-      for( i = 0; i < str.size(); ++i ) if( !isalpha( str[i] ) ) break;
-      for( ; i < str.size(); ++i )	if( !isdigit( str[i] ) ) break;
-      Field_Pos from = coordinate_translator->get_field_pos( str.substr(0,i) );
-      if( from.x < 0 ) return Move_Sequence();
-      do
-      {
-	Stones::Stone_Type stone; // stone won't be checked
-	switch( str[i] )
-	{
-	  case 'w':
-	  case 'W': stone = Stones::stone_begin; break;
-	  default: return Move_Sequence();
-	}
-	++i;
-	size_t start = i;
-	// search for letters followed by digits
-	for( ; i < str.size(); ++i ) if( !isalpha( str[i] ) ) break;
-	for( ; i < str.size(); ++i ) if( !isdigit( str[i] ) ) break;
-	Field_Pos to = coordinate_translator->get_field_pos( str.substr(start, i - start) );
-	if( to.x < 0 ) return Move_Sequence();
+      int stone_type_num;
+      is >> stone_type_num;
+      if( stone_type_num < Stones::stone_begin || stone_type_num >= Stones::stone_max_end )
+	return sequence;
 
-	Field_Pos middle = Field_Pos::get_middle(from, to);
-
-	//Knock_Out_Move *move = 0;//new Knock_Out_Move(from, middle, to);
-	//sequence.add_move( move );
-
-	from = to;
-      }while( i < str.size() );
+      sequence.add_move( new Select_Move(Stones::Stone_Type(stone_type_num)) );
       sequence.add_move( new Finish_Move() );
     }
     else			// set move
     {
-      Stones::Stone_Type stone;
-      switch( first )		// first character already read
-      {
-	case 'w':
-	case 'W': stone = Stones::stone_begin; break;
-	default: return Move_Sequence();
-      }
-
+      is.unget();		// put back first character
       std::string str;
       is >> str;
       size_t i;
@@ -2536,33 +2502,9 @@ namespace relax
       for( ; i < str.size(); ++i )	if( !isdigit( str[i] ) ) break;
       Field_Pos pos = coordinate_translator->get_field_pos( str.substr(0,i) );
       if( pos.x < 0 ) return Move_Sequence();
-      
-      sequence.add_move( new Set_Move( pos, stone ) );
 
-      if( str[i] != ',' ) return Move_Sequence();
-      ++i;
-
-      size_t start = i;
-      // search for letters followed by digits
-      for( ; i < str.size(); ++i ) if( !isalpha( str[i] ) ) break;
-      for( ; i < str.size(); ++i ) if( !isdigit( str[i] ) ) break;
-      if( i < str.size() ) return Move_Sequence();
-      pos = coordinate_translator->get_field_pos( str.substr(start,i - start) );
-      if( pos.x < 0 ) return Move_Sequence();
-
-      //sequence.add_move( new Remove(pos) );
+      sequence.add_move( new Set_Move( pos, Stones::invalid_stone ) );
       sequence.add_move( new Finish_Move() );
-
-      // read probable removed stones
-      char next;
-      is >> next;
-      if( next != 'x' )
-	is.unget();
-      else
-      {
-	is >> str;		// read removed fields
-	// and forget
-      }
     }
     return sequence;
   }
@@ -2587,7 +2529,7 @@ namespace relax
 		      sizeof(standard_board)    / sizeof(standard_board[0]), Board::standard ),
 	       Common_Stones(),
 	       new Standard_Win_Condition(), 0 /*coordinate translator init below */,
-	       true /*undo possible*/, 1, 10 )
+	       false /*undo possible*/, 1, 10 )
   {
     coordinate_translator = new Standard_Coordinate_Translator(board);
     nums1.resize(3);
@@ -2689,8 +2631,10 @@ namespace relax
 
   // synthesize move sequence from clicks
   Sequence_Generator::Sequence_State Sequence_Generator::add_click
-  ( Field_Pos pos )
+  ( int player_id, Field_Pos pos )
   {
+    if( game.get_current_player().id != player_id ) 
+      return error_wrong_player;
     move_done = 0;
     Field_Iterator p1( pos, &game.current_player->board );
     switch( state )
@@ -2725,6 +2669,8 @@ namespace relax
 	    state = move_finished;
 	    return finished;
 	  }
+	break;
+      case move_finished:
 	break;
     }
     /*
@@ -2898,28 +2844,6 @@ namespace relax
     }
     */
     assert( false );
-    return fatal_error;
-  }
-
-  Sequence_Generator::Sequence_State Sequence_Generator::add_click_current_stone
-  ( )
-  {
-    /*
-    move_done = 0;
-    if( state != begin )
-      return error_impossible_yet;
-
-    if( game.board.is_knock_out_possible() )
-      return error_require_knock_out;
-
-    if( game.common_stones.stone_count[stone_type] <= 0 )
-      return fatal_error;				 // clicked on stone which is not there?!?
-
-    picked_stone = stone_type;
-    state = stone_picked;
-
-    return Sequence_State(hold_prefix + stone_type);
-    */
     return fatal_error;
   }
 
@@ -3320,7 +3244,7 @@ namespace relax
 	  }
 	return;
       }
-    int max_score = state.game.get_max_score(&state.stones_available);
+    int max_score = state.game.get_max_score(0,&state.stones_available);
     if( max_score <= state.best_score )
       {
 	++state.bound_cnt;
@@ -3356,7 +3280,7 @@ namespace relax
 	state.empty_fields.pop_front();
 	state.game.current_player->board.field[pos.x][pos.y] = Field_State_Type(current_stone);
 	recursive_find_optimal_solution3( state, level+1 );
-	//int sub_max_score = state.game.get_max_score(&state.stones_available);  // debug code
+	//int sub_max_score = state.game.get_max_score(0,&state.stones_available);  // debug code
 	state.game.current_player->board.field[pos.x][pos.y] = field_empty;
 	state.empty_fields.push_back(pos);
 	level_cnt++;
@@ -3419,7 +3343,7 @@ namespace relax
       {
 	Field_Pos pos = *it;
 	state.game.current_player->board.field[pos.x][pos.y] = Field_State_Type(current_stone);
-	int sub_max_score = state.game.get_max_score(&state.stones_available);
+	int sub_max_score = state.game.get_max_score(0,&state.stones_available);
 	if( sub_max_score > state.best_score )
 	  positions.insert( std::make_pair(sub_max_score,pos) );
 	else
@@ -3483,3 +3407,7 @@ namespace relax
   }
 }
 
+void debug_print(relax::Player &player)
+{ 
+  std::cout << "id=" << player.id << "name=" << player.name << ",host=" << player.host << std::endl; 
+}

@@ -586,7 +586,7 @@ namespace relax
     std::list<Move_Sequence> get_possible_moves(); // get possible moves in situation
     std::list<std::pair<Move_Sequence,int/*player index*/> > get_played_moves();   
 				// get moves played since start
-    int get_max_score(std::vector<std::map<int/*num*/, 
+    int get_max_score(Player *player=0,std::vector<std::map<int/*num*/, 
 		      unsigned /*stones*/> > *stones_available = 0);
     
     std::vector<Player>::iterator get_next_player( std::vector<Player>::iterator player );
@@ -750,8 +750,7 @@ namespace relax
 
     Sequence_Generator( Game &, bool easy_multiple_knock = true );
     // synthesize move sequence from clicks
-    Sequence_State add_click( Field_Pos pos ); 
-    Sequence_State add_click_current_stone(); 
+    Sequence_State add_click( int player_id, Field_Pos pos ); 
     Sequence_State undo_click(); // undo click 
     
     Move::Move_Type get_required_move_type();
@@ -773,8 +772,7 @@ namespace relax
     Game &game;
     bool auto_undo;
 
-    enum Internal_State{ begin, stone_picked, stone_set, 
-			 move_finished };
+    enum Internal_State{ begin, move_finished };
     Internal_State state;
 
     Stones::Stone_Type picked_stone;
@@ -804,5 +802,7 @@ namespace relax
 
   Game find_optimal_solution( Game game, Stones stones );
 }
+
+void debug_print(relax::Player &player);
 
 #endif

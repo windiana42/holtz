@@ -543,7 +543,7 @@ namespace relax
       if( pos.x >= 0 )		// valid position
       {
 	Sequence_Generator::Sequence_State state;
-	state = sequence_generator->add_click( pos );
+	state = sequence_generator->add_click( player_id, pos );
 	
 	switch( state )
 	{
@@ -793,6 +793,7 @@ namespace relax
   
   void Stone_Panel::on_click( int click_x, int click_y ) const
   {
+	/*
     wxString msg;
     if( sequence_generator )
     {
@@ -802,7 +803,6 @@ namespace relax
 
       if( type != Stones::invalid_stone )
       {
-	/*
 	if( col < stones.stone_count[type] )
 	{
 	  Sequence_Generator::Sequence_State state;
@@ -870,9 +870,9 @@ namespace relax
 	      * /
 	  }
 	}
-	*/
       }
     }
+	*/
   }
 
   std::pair<int,int> Stone_Panel::get_field_pos( int col, Stones::Stone_Type type ) const
@@ -1140,7 +1140,7 @@ namespace relax
       gui_manager.clear_target_variant();
       stop_watch.Start();
       gui_manager.allow_user_activity();
-      if( game.current_player->help_mode == Player::show_hint )
+      if( game.get_current_player().help_mode == Player::show_hint )
       {
 	ai = game_manager.get_hint_ai();
 	ai->determine_hints();
@@ -1157,7 +1157,7 @@ namespace relax
     used_time = stop_watch.Time();
     if( game.players.size() )
     {
-      if( game.current_player->help_mode == Player::show_hint )
+      if( game.get_current_player().help_mode == Player::show_hint )
       {
 	if( ai )
 	  ai->abort();
@@ -1260,6 +1260,7 @@ namespace relax
 
   void Game_Panel::rearrange_panels()
   {
+    settings.player_settings.board_settings = settings.board_settings;
     clear();
     switch( settings.arrangement )
     {
@@ -1314,6 +1315,37 @@ namespace relax
       player_panel_sizer.add( new Spacer(0,bitmap_handler.dimensions.player_player_spacing), true );
     player_panel_sizer.add( player_panel );
   }
+
+  void Game_Panel::update_player_panels()
+  {
+    bool difference = false;
+    std::vector<Player>::iterator player = gui_manager.get_display_game().players.begin();
+    std::list<Player_Panel*>::iterator panel;
+    for( panel = player_panels.begin(); panel != player_panels.end(); ++panel, ++player )
+    {
+      if( player == gui_manager.get_display_game().players.end() )
+      {
+	difference = true; break;
+      }
+      if( &(*player) != &(*panel)->get_player() )
+      {
+	difference = true; break;
+      }
+    } 
+    if( player != gui_manager.get_display_game().players.end() ) 
+      difference = true;
+    if( difference )
+    {
+      // remove and readd player panels
+      remove_players();
+      for( player = gui_manager.get_display_game().players.begin(); 
+	   player != gui_manager.get_display_game().players.end(); ++player )
+      {
+	add_player( *player );
+      }
+    }
+  }
+
 
   const Player_Panel *Game_Panel::get_player_panel( int id ) const
   {
@@ -1466,6 +1498,7 @@ namespace relax
     if( target_variant )
       variant_id_path = display_game.variant_tree.get_variant_id_path(target_variant);
     display_game = new_game;
+    game_panel.update_player_panels();
     if( target_variant )
       target_variant = display_game.variant_tree.get_variant(variant_id_path);
     refresh();
@@ -1522,30 +1555,12 @@ namespace relax
     field_mark_positions.clear();
     if( visible && game.players.size() )
     {
-      switch( game.current_player->help_mode )
+      switch( game.get_current_player().help_mode )
       {
 	case Player::no_help: break;
 	case Player::show_possible_moves: 
 	{
-	  if( sequence_generator )
-	  {
-	    if( sequence_generator->get_required_move_type() != Move::set_move )
-	    {
-	      /*
-	      std::list<Field_Pos> clicks = sequence_generator->get_possible_clicks();
-	      std::list<Field_Pos>::iterator click;
-	      for( click = clicks.begin(); click != clicks.end(); ++click )
-	      {
-		if( sequence_generator->get_required_move_type() == Move::remove )
-		  field_mark_positions.push_back
-		    ( game_panel.get_board_panel().get_field_pos( click->x, click->y ) );
-		else
-		  stone_mark_positions.push_back
-		    ( game_panel.get_board_panel().get_field_pos( click->x, click->y ) );
-	      }
-	      */
-	    }
-	  }
+	  // show possible moves doesn't make sense for relax
 	}
 	break;
 	case Player::show_hint:
@@ -1559,16 +1574,16 @@ namespace relax
 	      switch( (*move)->get_type() )
 	      {
 		case Move::no_move:
+		case Move::select_move:
 		case Move::finish_move:
 		  break;
 		case Move::set_move:
 		  {
 		    Set_Move *set_move = dynamic_cast<Set_Move *>(*move);
-		    /*
-		    stone_mark_positions.push_back
-		      ( game_panel.get_board_panel().get_field_pos( set_move->pos.x, 
-								    set_move->pos.y ) );
-		    */
+		    int player_id = game.get_current_player().id;
+		    field_mark_positions.push_back
+		      ( game_panel.get_player_panel(player_id)->get_board_panel()
+			.get_field_pos( set_move->pos.x, set_move->pos.y ) );
 		  }
 		break;
 	      }
@@ -1586,6 +1601,7 @@ namespace relax
 	    show_status_text(_("You should set a stone")); // remove old status text message
 	    break;
 	  case Move::no_move:
+	  case Move::select_move:
 	  case Move::finish_move:
 	    break;
 	}
@@ -1631,7 +1647,7 @@ namespace relax
     {
       int &x = position->first;
       int &y = position->second;
-      //dc.DrawBitmap( get_game_panel().get_board_panel().get_bitmap_set().stone_mark, x, y, true );
+      dc.DrawBitmap( get_game_panel().get_bitmap_set().stone_mark, x, y, true );
     }
 
     for( position = field_mark_positions.begin();
@@ -1639,13 +1655,11 @@ namespace relax
     {
       int &x = position->first;
       int &y = position->second;
-      //dc.DrawBitmap( get_game_panel().get_board_panel().get_bitmap_set().field_mark, x, y, true );
+      dc.DrawBitmap( get_game_panel().get_bitmap_set().field_mark, x, y, true );
     }
-    /*
     if( click_mark_x >= 0 )
-      dc.DrawBitmap( get_game_panel().get_board_panel().get_bitmap_set().click_mark, 
+      dc.DrawBitmap( get_game_panel().get_bitmap_set().click_mark, 
 		     click_mark_x, click_mark_y, true );
-    */
   }
 
   void WX_GUI_Manager::allow_user_activity()
