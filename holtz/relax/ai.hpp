@@ -67,8 +67,7 @@ namespace relax
     Position( bool knock_out_possible );
     ~Position();
 
-    void calc_following_positions( Game &, Field_Permutation &, 
-				   std::vector<Stones::Stone_Type> &stone_types );
+    void calc_following_positions( Game &, Field_Permutation & );
     inline bool is_expanded() { return expanded; }
     void set_expanded_handler( Position_Expanded_Handler * );
 
@@ -81,9 +80,6 @@ namespace relax
     typedef std::pair<double,std::list<Branch*>::iterator> sorted_positions_element_type;
   private:
     // return false: don't continue
-    bool add_knock_out_moves( Game &game, Move_Sequence &sequence, 
-			      Field_Iterator from, Field_Iterator over, Field_Iterator to );
-
     bool add_set_moves( Game &game, Field_Iterator to, Stones::Stone_Type type,
 			Field_Permutation &field_permutation, bool expand_first );
     bool add_branch( Game &game, Branch *branch );
@@ -117,17 +113,12 @@ namespace relax
   public:
     AI( const Game &game );
     AI_Result get_move( const Game &game );
-
-    double rate_player( Player & );
-    double rate_position( Game &, Position & );
-    double depth_search( Game &, Position &, unsigned depth, double max, int min_max_vz,
-			 bool knock_out_only );
   protected:
     virtual bool need_stop_watch() { return true; }
     virtual bool should_stop( bool depth_finished );	// determines whether AI should stop now
     virtual void report_current_hint( AI_Result ) {}
     // position expanded return false: don't continue
-    virtual bool expanded( Game &, std::list<Branch*>::iterator );  
+    virtual bool expanded( Game &, std::list<Branch*>::iterator ) { return false; }
 
     wxStopWatch stop_watch;
     long max_time, average_time, real_average_time;
@@ -142,19 +133,14 @@ namespace relax
     unsigned positions_checked;
     unsigned expanded_calls;
 
-    const double rate_white, rate_grey, rate_black, rate_current_player_bonus;
     unsigned min_depth;
-    bool deep_knocking_possible;// activates deep knocking strategy
   protected:
     bool aborted;		// aborted depth because of time
   private:
     bool don_t_abort;
-    bool deep_knocking;		// whether knock_out moves should be done to rate a position
-    bool while_deep_knocking;
     unsigned max_depth_expanded;// the highest depth that was really expanded
 
     Field_Permutation field_permutation;    
-    std::vector<Stones::Stone_Type> stone_types;
 
     //storage of recursion parameters:
     Position *position;

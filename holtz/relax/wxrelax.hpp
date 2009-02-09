@@ -175,7 +175,9 @@ namespace relax
     virtual void on_click( int x, int y ) const;
 
     inline const Stone_Panel &get_stone_panel() const { return stone_panel; }
+    inline const Board_Panel &get_board_panel() const { return board_panel; }
     inline int get_id() const { return player.id; }
+    const Player &get_player() const { return player; }
   private:
     Settings &settings;
 
@@ -232,6 +234,7 @@ namespace relax
 
     void remove_players();
     void add_player( Player &player );
+    void update_player_panels();
 
     //inline const Board_Panel &get_board_panel() const { return board_panel; }
     inline const Stone_Panel &get_stone_panel() const { return stone_panel; }

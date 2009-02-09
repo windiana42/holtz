@@ -644,7 +644,10 @@ namespace relax
   }
   Standalone_Game_Setup_Manager::Answer_Type Standalone_Game_Setup_Manager::ask_undo_moves(int /*n*/)
   {
-    return accept;
+    if( get_board().undo_possible )
+      return accept;
+    else
+      return deny;
   }
   // force new game (may close connections)
   void Standalone_Game_Setup_Manager::force_new_game(bool /*on_own*/) 

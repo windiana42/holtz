@@ -312,6 +312,7 @@ namespace relax
   // request to undo n half moves
   Game_Setup_Manager::Answer_Type Network_Manager_BGP100a_Server::ask_undo_moves(int n)
   {
+    if( !game.undo_possible ) return deny;
     if( !game.players.size() || game_phase == BGP::phase_setup ) return accept;
     int id = game.get_current_player().id;
     if( !does_include(own_player_ids,id) )
@@ -2345,6 +2346,7 @@ namespace relax
   // request to undo n half moves
   Game_Setup_Manager::Answer_Type Network_Manager_BGP100a_Client::ask_undo_moves(int n)
   {
+    if( !game.undo_possible ) return deny;
     if( !msg_net_client ) 
       return accept;
     if( conn_state.state != BGP_MY_TURN || asking_new_game || asking_undo )
