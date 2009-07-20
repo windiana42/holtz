@@ -66,6 +66,15 @@ namespace relax
       {    0,  0,  0,  0,  0 },
       { -1,  0,  0,  0,  0 },
       {   -1,  0,  0,  0, -1 } };
+
+  const int board_37[][7] =
+    { {   -1,  0,  0,  0,  0, -1, -1 },
+      { -1,  0,  0,  0,  0,  0, -1 },
+      {    0,  0,  0,  0,  0,  0, -1 },
+      {  0,  0,  0,  0,  0,  0,  0 },
+      {    0,  0,  0,  0,  0,  0, -1 },
+      { -1,  0,  0,  0,  0,  0, -1 },
+      {   -1,  0,  0,  0,  0, -1, -1 } };
 }
 
 namespace relax
@@ -96,7 +105,7 @@ namespace relax
   class Board
   {
   public:
-    enum Board_Type{ standard=0, custom=99 };
+    enum Board_Type{ standard=0, extended, custom=99 };
 
     Board( const int *field_array, int width, int height, Board_Type type = custom );
     // field must be rectangular array!
@@ -151,7 +160,7 @@ namespace relax
   class Common_Stones : public Stones
   {
   public:
-    enum Common_Stones_Type{ standard=0, custom=99 };
+    enum Common_Stones_Type{ standard=0, extended, custom=99 };
 
     Common_Stones( Common_Stones_Type type=custom );
     Common_Stones_Type get_type() const { return type; }
@@ -504,7 +513,7 @@ namespace relax
   class Ruleset
   {
   public:
-    enum Ruleset_Type { standard, custom=99 };
+    enum Ruleset_Type { standard, extended, custom=99 };
     Ruleset( const Ruleset & );
     Ruleset();
     Ruleset &operator=( const Ruleset & );
@@ -634,6 +643,8 @@ namespace relax
     void set_current_player_index(int player_index);
     void undo_set_current_player_index();
   public:
+    // direct manipulation functions of internal state
+    void set_selecting_phase();
     // use these functions only if you used Move::do_move before
     // use Game::do_move otherwise
     bool choose_next_player();		// next player is current player (players may be skiped)
@@ -694,6 +705,12 @@ namespace relax
   {
   public:
     Standard_Ruleset();
+  };
+
+  class Extended_Ruleset : public Ruleset
+  {
+  public:
+    Extended_Ruleset();
   };
 
   class Custom_Ruleset : public Ruleset

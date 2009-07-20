@@ -430,12 +430,13 @@ namespace relax
 				      _("Rules for new game"), wxDefaultPosition,
 				      wxDefaultSize, 3, new_game_choices, 2, wxRA_SPECIFY_COLS );
 #elif defined(VERSION_RELAX)
-    wxString new_game_choices[2];
+    wxString new_game_choices[3];
     new_game_choices[0] = wxString(_("Standard Rules"));
-    new_game_choices[1] = wxString(_("Rules of last game"));
+    new_game_choices[1] = wxString(_("Extended Rules"));
+    new_game_choices[2] = wxString(_("Rules of last game"));
     new_game_choice = new wxRadioBox( this, DIALOG_NEW_GAME_CHOICE, 
 				      _("Rules for new game"), wxDefaultPosition,
-				      wxDefaultSize, 2, new_game_choices, 2, wxRA_SPECIFY_COLS );
+				      wxDefaultSize, 3, new_game_choices, 2, wxRA_SPECIFY_COLS );
 #endif
 
     wxString continue_game_choices[3];
@@ -526,7 +527,8 @@ namespace relax
 	switch( new_game_choice->GetSelection() )
 	{
 	  case 0: game_dialog.game = Game( Standard_Ruleset() ); break;
-	  case 1: game_dialog.game = Game( *game_dialog.game_manager.get_game().ruleset ); 
+	  case 1: game_dialog.game = Game( Extended_Ruleset() ); break;
+	  case 2: game_dialog.game = Game( *game_dialog.game_manager.get_game().ruleset ); 
 	}
 #endif
 	{
@@ -632,7 +634,8 @@ namespace relax
       switch( game_dialog.game.ruleset->get_type() )
       {
 	case Ruleset::standard:   new_game_choice->SetSelection(0); break;
-	case Ruleset::custom:     new_game_choice->SetSelection(1); break;
+	case Ruleset::extended:   new_game_choice->SetSelection(1); break;
+	case Ruleset::custom:     new_game_choice->SetSelection(2); break;
       }
       new_game_choice->Enable(true);
 #endif

@@ -11,7 +11,7 @@
 %define UNICODE "--enable-unicode"  
 
 Name: holtz
-Version: 1.2.2
+Version: 1.3.0
 Release: %rel
 
 Summary: Holtz is an implementation of the two player abstract board games Zertz and Dvonn

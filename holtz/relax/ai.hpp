@@ -151,14 +151,16 @@ namespace relax
   class AI_Thread : public wxThread, public AI
   {
   public:
-    AI_Thread( wxEvtHandler *handler, const Game &game, long last_average_time = -1, 
+    AI_Thread( int ID, wxEvtHandler *handler, const Game &game, long last_average_time = -1, 
 	       int num_measures = 0, bool give_hints_only = false );
 
     virtual ExitCode Entry();
     virtual bool need_stop_watch() { return false; }
     virtual bool should_stop( bool depth_finished );	// determines whether AI should stop now
     virtual void report_current_hint( AI_Result hint );
+    int get_ID() { return ID; }
   private:
+    int ID;
     wxEvtHandler *handler;
     const Game &game;
     bool give_hints_only;
@@ -182,6 +184,7 @@ namespace relax
   public:
     AI_Result ai_result;
     AI_Thread *thread;
+    int thread_ID;
 
   private:
     DECLARE_DYNAMIC_CLASS(AI_Event) //**/
@@ -210,6 +213,8 @@ namespace relax
     void on_report_hint( AI_Event & );
     void on_finished( AI_Event & );
     void on_animation_done( wxTimerEvent &event );
+
+    static int next_ID() { return ++unique_ID_counter; }
   protected:
     Game_Manager    &game_manager;
     Game_UI_Manager *ui_manager;
@@ -219,8 +224,10 @@ namespace relax
     long used_time;
 
     AI_Thread *thread;
+    int thread_ID;
     bool thread_active;
     bool give_hints;
+    static int unique_ID_counter;
   };
 }
 

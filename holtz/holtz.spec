@@ -11,7 +11,7 @@
 %define UNICODE "--enable-unicode"  
 
 Name: holtz
-Version: 1.2.2
+Version: 1.3.0
 Release: %rel
 
 Summary: Holtz is an implementation of the two player abstract board games Zertz and Dvonn
@@ -29,12 +29,12 @@ BuildRoot: %_tmppath/%name-%version-root
 %if %{semistatic}
 #I am not sure about precise requirements of wxGTK-static
 Requires:      gtk+ >= 1.2.7 gettext
-BuildRequires: wxGTK >= 2.8.4 wxGTK-devel gcc-c++
+BuildRequires: wxGTK >= 2.8.4 wxGTK-devel gcc-c++ boost-devel
 #wxGTK-static has to be manually compiled
 %else
-#-- OpenSUSE 10.3  
+#-- OpenSUSE 10.3 or higher 
 Requires:      wxGTK >= 2.8.4
-BuildRequires: wxGTK-devel >= 2.8.4 gcc-c++
+BuildRequires: wxGTK-devel >= 2.8.4 gcc-c++ boost-devel
 #-- OpenSUSE 10.2 - OpenSUSE Build Service
 #Requires:      wxGTK >= 2.6.1  
 #BuildRequires: wxGTK-devel >= 2.6.1 gcc-c++  
@@ -60,7 +60,8 @@ Provides: holtz
 Holtz is an implementation of the two player abstract board games Zertz and Dvonn from the gipf probject (www.gipf.com).
 Zertz is about placing and collecting stones, making sacrifices, and a continuously shriking board. 
 Dvonn is about controlling stacks of stones which can jump on other stacks to capture them and keeping 
-contact to the three dvonn stones.
+contact to the three dvonn stones. Version 1.3.0 added a third game called Relax which resembles the game
+"Take it Easy"
 
 %prep
 %setup -q
@@ -96,7 +97,7 @@ rm -rf $RPM_BUILD_ROOT
 %defattr(-,root,root,755)
 %doc AUTHORS COPYING README NEWS ChangeLog TODO Rules.german Rules.english
 %prefix/bin/*
-%prefix/share/locale/*/LC_MESSAGES/
+%prefix/share/locale/*/LC_MESSAGES/*.mo
 %prefix/share/holtz/skins/*
 %prefix/share/holtz/sounds/*
 %prefix/share/holtz/help/*

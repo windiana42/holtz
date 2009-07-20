@@ -42,6 +42,11 @@ and Ubuntu packaging. Please email <a href="mailto:windiana@users.sf.net">
 windiana@users.sf.net</a>.</p>
 
 <h2>Changes:</h2>
+<h3>1.3.0:</h3>
+<ul>
+<li>New Game supported: Relax</li>
+</ul>
+
 <h3>1.2.2:</h3>
 <ul>
 <li>Visualize variant tree and enable navigation</li>
