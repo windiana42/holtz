@@ -18,6 +18,7 @@ function PrintMenu($activepage) {
   PrintMenuItem("Home", "index.php", $activepage);
   PrintMenuItem("Z&egrave;rtz", "zertz.php", $activepage);
   PrintMenuItem("Dvonn", "dvonn.php", $activepage);
+  PrintMenuItem("Relax", "relax.php", $activepage);
   PrintMenuItem("Screenshots", "helpprog.php", $activepage);
   PrintMenuItem("Download", "down.php", $activepage);
   PrintMenuItem("Links", "links.php", $activepage, 1);

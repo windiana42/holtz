@@ -20,7 +20,7 @@ holtz_CXXFLAGS= \
 
 EXTRA_DIST=	\
 	Rules.german Rules.english holtz.rc holtz.ico holtz.sln holtz.vcproj icon.xpm holtz.spec \
-	holtz-*.spec 
+	$(srcdir)/holtz-*.spec 
 
 .rc.o:
 if INCLUDE_RC_FILE

@@ -1272,6 +1272,16 @@ namespace relax
     }
   }
 
+  void Game::set_selecting_phase()
+  { 
+    game_phase = selecting; 
+    bool save_active = current_player->is_active;
+    current_player->is_active = false;
+    current_player = get_player(0);
+    current_player_index = 0;
+    current_player->is_active = save_active;
+  }
+
   //! game dependent function
   bool Game::choose_next_player()		// next player is current player
   {
@@ -2550,6 +2560,40 @@ namespace relax
     // set stone count to 1 for every stone
     for( unsigned i=0; i< nums1.size()*nums2.size()*nums3.size(); ++i )
       common_stones.stone_count[ Stones::Stone_Type(Stones::stone_begin + (int)i) ] = 1;
+  }
+
+  // ----------------------------------------------------------------------------
+  // Extended_Ruleset
+  // ----------------------------------------------------------------------------
+
+  Extended_Ruleset::Extended_Ruleset()
+    : Ruleset( extended,
+	       Board( (const int*) board_37, 
+		      sizeof(board_37[0]) / sizeof(board_37[0][0]),
+		      sizeof(board_37)    / sizeof(board_37[0]), Board::extended ),
+	       Common_Stones(),
+	       new Standard_Win_Condition(), 0 /*coordinate translator init below */,
+	       false /*undo possible*/, 1, 10 )
+  {
+    coordinate_translator = new Standard_Coordinate_Translator(board);
+    nums1.resize(3);
+    nums1[0] = 1;
+    nums1[1] = 5;
+    nums1[2] = 9;
+    max_num1 = 9;
+    nums2.resize(3);
+    nums2[0] = 2;
+    nums2[1] = 6;
+    nums2[2] = 7;
+    max_num2 = 7;
+    nums3.resize(3);
+    nums3[0] = 3;
+    nums3[1] = 4;
+    nums3[2] = 8;
+    max_num3 = 8;
+    // set stone count to 1 for every stone
+    for( unsigned i=0; i< nums1.size()*nums2.size()*nums3.size(); ++i )
+      common_stones.stone_count[ Stones::Stone_Type(Stones::stone_begin + (int)i) ] = 2;
   }
 
   // ----------------------------------------------------------------------------

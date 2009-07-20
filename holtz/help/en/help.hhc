@@ -24,11 +24,17 @@
 		<LI> <OBJECT type="text/sitemap">
 			<param name="Name" value="Z&egrave;rtz">
 			<param name="Local" value="helprsum.htm">
+			<param name="URL" value="helprsum.htm">
 			</OBJECT>
 		<LI> <OBJECT type="text/sitemap">
 			<param name="Name" value="Dvonn">
 			<param name="Local" value="helpdsum.htm">
 			<param name="URL" value="helpdsum.htm">
+			</OBJECT>
+		<LI> <OBJECT type="text/sitemap">
+			<param name="Name" value="Relax">
+			<param name="Local" value="helpxsum.htm">
+			<param name="URL" value="helpxsum.htm">
 			</OBJECT>
 	</UL>
 	<LI> <OBJECT type="text/sitemap">

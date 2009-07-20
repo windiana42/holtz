@@ -184,25 +184,21 @@ namespace relax
 
     Field_Pos pos;
     Field_Iterator p1(&game.get_current_player().board);
-     
+
+    bool expand_first = false;
     field_permutation.new_context();
-    bool expand_first = true; // expand only one of each set moves
-    do
+    for( pos = field_permutation.get_first(); !field_permutation.is_end(); 
+	 pos = field_permutation.get_next() )
       {
-	for( pos = field_permutation.get_first(); !field_permutation.is_end(); 
-	     pos = field_permutation.get_next() )
+	p1.set_pos( pos );
+	if( *p1 == field_empty )
 	  {
-	    p1.set_pos( pos );
-	    if( *p1 == field_empty )
-	      {
-		go_on = add_set_moves( game, p1, game.common_stones.current_stone, 
-				       field_permutation, expand_first );
-	      }
-	    if( !go_on ) 
-	      break;
+	    go_on = add_set_moves( game, p1, game.common_stones.current_stone, 
+				   field_permutation, expand_first );
 	  }
-	expand_first = !expand_first;
-      }while( !expand_first );
+	if( !go_on ) 
+	  break;
+      }
     field_permutation.restore_context();
 
     if( go_on ) 
@@ -264,20 +260,109 @@ namespace relax
     //while( stop_watch.Time() == 0 ); // check for stop watch to be started
     aborted = false;
     don_t_abort = true;
+    
+    // determine number of empty fields after current set-move
+    assert(save_game.get_current_player().board.get_empty_fields().size() > 0 );
+    unsigned num_empty_fields = save_game.get_current_player().board.get_empty_fields().size()-1;
+    // determine sets of available stones
+    unsigned num_try_variants;
+    unsigned choose_variant;
+    // This table configures how optimistic the strategy is for future stone selection.
+    // It is a wild guess and not systematically optimized
+    if( num_empty_fields > 30 )
+      {
+	num_try_variants = 2;
+	choose_variant = 0;
+      }
+    else if( num_empty_fields > 16 )
+      {
+	num_try_variants = 5;
+	choose_variant = 1;
+      }
+    else if( num_empty_fields > 10 )
+      {
+	num_try_variants = 15;
+	choose_variant = 10;
+      }
+    else if( num_empty_fields > 5 )
+      {
+	num_try_variants = 25;
+	choose_variant = 10;
+      }
+    else
+      {
+	num_try_variants = 25;
+	choose_variant = 5;
+      }
+    std::vector<std::vector<std::map<int/*num*/, unsigned /*stones*/> > > stones_availables;
+    stones_availables.resize(num_try_variants);
+    for( unsigned i=0; i<num_try_variants; ++i )
+      {
+	std::vector<std::map<int/*num*/, unsigned /*stones*/> > &stones_available 
+	  = stones_availables[i];
+	stones_available.resize(3);
+	// determine random set of stones
+	Game save_save_game = save_game;
+	for( unsigned j=0; j<num_empty_fields; ++j )
+	  {
+	    Move_Sequence sequence = save_save_game.initialize_round();
+	    assert(sequence.get_moves().size() > 1);
+	    assert(sequence.get_moves().front()->get_type() == Move::select_move);
+	    const Select_Move *move = 
+	      dynamic_cast<const Select_Move*>(sequence.get_moves().front());
+	    assert(move);
+	    int num0 = save_game.ruleset->get_numbers(move->stone_type).get<0>();
+	    int num1 = save_game.ruleset->get_numbers(move->stone_type).get<1>();
+	    int num2 = save_game.ruleset->get_numbers(move->stone_type).get<2>();
+	    if( !does_include(stones_available[0],num0) ) stones_available[0][num0] = 0;
+	    if( !does_include(stones_available[1],num1) ) stones_available[1][num1] = 0;
+	    if( !does_include(stones_available[2],num2) ) stones_available[2][num2] = 0;
+	    ++stones_available[0][num0];
+	    ++stones_available[1][num1];
+	    ++stones_available[2][num2];
+	    save_save_game.set_selecting_phase();  // first player does select moves
+	    sequence.do_sequence(save_save_game);
+	  }
+      }
 
+    std::cout << "AI Thread: Testmove Scores" << std::endl;
     int max_score=-1;
     Branch *best_branch=0;
     current_position.calc_following_positions(save_game,field_permutation);
-    std::list< Branch* >::iterator i;
-    for( i = current_position.following_positions.begin(); 
-	 i != current_position.following_positions.end(); ++i )
+    std::list< Branch* >::iterator it;
+    for( it = current_position.following_positions.begin(); 
+	 it != current_position.following_positions.end(); ++it )
       {
-	bool stop = false;
-	Branch* branch = *i;
+	Branch* branch = *it;
 	(branch)->sequence.do_sequence(save_game);
-	int score = save_game.get_max_score(0/*current_player*/);
-	(branch)->sequence.undo_sequence(save_game);
 
+	std::multiset<int> scores;
+	for( unsigned i=0; i<num_try_variants; ++i )
+	  {
+	    std::vector<std::map<int/*num*/, unsigned /*stones*/> > stones_available
+	      = stones_availables[i];
+	    // get maxscore based on stones_available
+	    int cur_score = save_game.get_max_score(0/*current_player*/,&stones_available);
+	    scores.insert(cur_score);
+	  }
+	
+	// determine score
+	assert(scores.size()==num_try_variants);
+	assert(num_try_variants > choose_variant);
+	std::multiset<int>::iterator score_it = scores.begin();
+	for( int j=0; j < choose_variant && score_it != scores.end(); ++j )
+	  ++score_it;
+	int score = *score_it;  // choose a low quantile of all scores
+
+	// debug output
+	assert(branch->sequence.get_moves().size() > 1);
+	assert(branch->sequence.get_moves().front()->get_type() == Move::set_move);
+	const Set_Move *move = 
+	  dynamic_cast<const Set_Move*>(branch->sequence.get_moves().front());
+	std::cout << "  Move: " << move->pos.x << "/" << move->pos.y
+		  << " Scores: " << *scores.begin() << "/" << score << "/" << *scores.rbegin() << std::endl;
+
+	(branch)->sequence.undo_sequence(save_game);
 
 	if( score > max_score || best_branch==0 )
 	  {
@@ -291,14 +376,14 @@ namespace relax
 	    report_current_hint(result);
 	  }
 
-	if( should_stop(false) )
-	  stop = true;
+// 	if( should_stop(false) )
+// 	  stop = true;
 
-	if( stop )
-	  {
-	    ++i;
-	    break;
-	  }
+// 	if( stop )
+// 	  {
+// 	    ++it;
+// 	    break;
+// 	  }
       }
 
 #ifndef __WXMSW__
@@ -332,12 +417,6 @@ namespace relax
 
     if( aborted )
       return true;
-
-    if( expanded_calls > max_positions_expanded )
-    {
-      aborted = true;
-      return true;
-    }
 
     long time = stop_watch.Time();
     if( time > max_time )
@@ -380,10 +459,10 @@ namespace relax
   // AI_Thread
   // ----------------------------------------------------------------------------
 
-  AI_Thread::AI_Thread( wxEvtHandler *handler, const Game &game, 
+  AI_Thread::AI_Thread( int ID, wxEvtHandler *handler, const Game &game, 
 			long last_average_time, int _num_measures, 
 			bool give_hints_only )
-    : AI(game), handler(handler), game(game), give_hints_only(give_hints_only)
+    : AI(game), ID(ID), handler(handler), game(game), give_hints_only(give_hints_only)
   {
     if( (average_time >= 0) && (_num_measures > 0) )
       real_average_time = last_average_time;
@@ -400,12 +479,11 @@ namespace relax
     else
     {
       AI_Result result = get_move(game);
-      Sleep(100);      // workaround for timing problem
+      Sleep(50);      // workaround for timing problem
       AI_Event event( result, EVT_AI_REPORT_MOVE, this ); 
       handler->AddPendingEvent( event );
+      Sleep(50);			// assure that report move event is received earlier than finished event
     }
-
-    Sleep(200);			// assure that report move event is received earlier
 
     AI_Event event( EVT_AI_FINISHED, this ); 
     handler->AddPendingEvent( event );
@@ -423,10 +501,7 @@ namespace relax
   {
     if( give_hints_only )
     {
-      if( expanded_calls > max_positions_expanded )
-	aborted = true;
-      else
-	aborted = TestDestroy();
+      aborted = TestDestroy();
       return aborted;
     }
     else
@@ -450,7 +525,7 @@ namespace relax
   IMPLEMENT_DYNAMIC_CLASS( relax::AI_Event, wxEvent ) //**/
 
   AI_Event::AI_Event()
-    : wxEvent(-1)
+    : wxEvent(-1), thread(0), thread_ID(-1)
   {
     SetEventType(EVT_AI_REPORT_MOVE);
   }
@@ -458,12 +533,14 @@ namespace relax
   AI_Event::AI_Event( WXTYPE type, AI_Thread *thread )
     : wxEvent(-1), thread(thread)
   {
+    thread_ID = thread->get_ID();
     SetEventType(type);
   }
 
   AI_Event::AI_Event( AI_Result ai_result, WXTYPE type, AI_Thread *thread )
     : wxEvent(-1), ai_result(ai_result), thread(thread)
   {
+    thread_ID = thread->get_ID();
     SetEventType(type);
   }
 
@@ -471,6 +548,7 @@ namespace relax
   // AI_Input
   // ----------------------------------------------------------------------------
 
+  int AI_Input::unique_ID_counter = 0;
 
   AI_Input::AI_Input( Game_Manager &game_manager, Game_UI_Manager *ui_manager )
     : game_manager(game_manager), ui_manager(ui_manager), ai_done(false), move_done(false), 
@@ -515,8 +593,10 @@ namespace relax
     {
       abort();			// abort possibly running thread
       thread_active = true;
-      thread = new AI_Thread( this, game, game.get_current_player().average_time, 
+      thread = new AI_Thread( next_ID(), this, game, game.get_current_player().average_time, 
 			      game.get_current_player().num_measures );
+      thread_ID = thread->get_ID();
+      std::cout << "AI: Create new thread " << thread << std::endl;
       thread->Create();
       thread->Run();
     }
@@ -540,8 +620,10 @@ namespace relax
     const Game &game = game_manager.get_game();
     give_hints = true;
     abort();			// abort possibly running thread
+    std::cout << "AI: Create new hint thread" << std::endl;
     thread_active = true;
-    thread = new AI_Thread( this, game, -1, 0, true );
+    thread = new AI_Thread( next_ID(), this, game, -1, 0, true );
+    thread_ID = thread->get_ID();
     //thread->SetPriority( WXTHREAD_MIN_PRIORITY );
     thread->Create();
     thread->Run();
@@ -553,6 +635,7 @@ namespace relax
     if( thread )
       thread->Delete();
     thread = 0;
+    thread_ID = -1;
   }
 
   void AI_Input::destroy_ai()
@@ -564,7 +647,8 @@ namespace relax
 
   void AI_Input::on_report_move( AI_Event &event )
   {
-    if( thread_active && (event.thread == thread) )
+    std::cout << "AI: report move " << event.thread << std::endl;
+    if( thread_active && (event.thread_ID == thread_ID) )
     {
       assert( event.ai_result.valid );	// assert that a move was found
       ai_done = true;
@@ -584,7 +668,8 @@ namespace relax
 
   void AI_Input::on_report_hint( AI_Event &event )
   {
-    if( thread_active && (event.thread == thread) && give_hints && ui_manager )
+    std::cout << "AI: report hint " << event.thread << std::endl;
+    if( thread_active && (event.thread_ID == thread_ID) && give_hints && ui_manager )
     {
       ui_manager->give_hint( event.ai_result );
     }
@@ -592,8 +677,10 @@ namespace relax
 
   void AI_Input::on_finished( AI_Event &event )
   {
-    if( thread_active && (event.thread == thread) )
+    std::cout << "AI: finished " << event.thread << std::endl;
+    if( thread_active && (event.thread_ID == thread_ID) )
     {
+      std::cout << "AI: aborting thread" << std::endl;
       abort();
     }
   }
