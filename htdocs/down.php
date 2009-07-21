@@ -6,16 +6,16 @@
 
 <h3>Binary Packages:</h3>
 <ul>
-<li>Windows binary (<a href="http://downloads.sourceforge.net/holtz/holtz-1.2.2-win32.zip">holtz-1.2.2-win32.zip</a>) - just extract and run</li>
-<li>Linux RPM, OpenSUSE 10.3 
-(<a href="http://downloads.sourceforge.net/holtz/holtz-1.2.2-1.i586.rpm">holtz-1.2.2-1.rpm</a>)</li>
+<li>Windows binary (<a href="http://sourceforge.net/projects/holtz/files/holtz/holtz-1.3.0-win32.zip/download">holtz-1.3.0-win32.zip</a>) - just extract and run</li>
+<li>Linux RPM, OpenSUSE 11.0 
+(<a href="http://sourceforge.net/projects/holtz/files/holtz/holtz-1.3.0-1.x86_64.rpm/download">holtz-1.3.0-1.x86_64.rpm</a>)</li>
 <li>For other Linux distributions, see below</li>
 </ul>
 
 <h3>Sourcecode:</h3>
 <ul>
-<li>Source (<a href="http://downloads.sourceforge.net/holtz/holtz-1.2.2.tar.gz">holtz-1.2.2.tar.gz</a>) - source prepared with autotools, requires: wxWidgets 2.8 or 2.6</li>
-<li>RPM source package (<a href="http://downloads.sourceforge.net/holtz/holtz-1.2.2-1.src.rpm">holtz-1.2.2-1.src.rpm</a>) - to compile a package for your RPM distribution, requires: wxWidgets 2.8</li>
+<li>Source (<a href="http://sourceforge.net/projects/holtz/files/holtz/holtz-1.3.0.tar.gz/download">holtz-1.3.0.tar.gz</a>) - source prepared with autotools, requires: wxWidgets 2.8 or 2.6</li>
+<li>RPM source package (<a href="http://sourceforge.net/projects/holtz/files/holtz/holtz-1.3.0-1.src.rpm/download">holtz-1.3.0-1.src.rpm</a>) - to compile a package for your RPM distribution, requires: wxWidgets 2.8</li>
 </ul>
 <p>Note: For compiling the sourcecode you either need to install a development package 
 of wxWidgets (e.g. wxGTK-devel, libwxgtk2.6-dev, or libwxgtk2.8-dev) or download source directly 
@@ -24,10 +24,10 @@ tested with wxWidgets 2.8. When using "./configure --enable-wx_2_6" the source s
 compatible with wxWidgets 2.6 as well.</p>
 
 <h3>Binary packages for other Linux distributions:</h3>
-<p>Untested binary packages for Fedora, Mandriva, and other SUSE distributions can be found at 
+<p>More binary packages for Fedora, Mandriva, and other SuSE distributions can be found at 
 <a href="http://software.opensuse.org/search?p=1&q=holtz&baseproject=ALL">opensuse build service</a>.
 Please <a href="mailto:windiana@users.sf.net">report</a> your experiences when 
-using one of these packages so more binary linux packages can be provided on this page.
+using one of these packages since they are not intensively tested.
 </p>
 
 <h3>Older versions:</h3>
