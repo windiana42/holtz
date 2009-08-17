@@ -6,16 +6,16 @@
 
 <h3>Binary Packages:</h3>
 <ul>
-<li>Windows binary (<a href="http://sourceforge.net/projects/holtz/files/holtz/holtz-1.3.0-win32.zip/download">holtz-1.3.0-win32.zip</a>) - just extract and run</li>
+<li>Windows binary (<a href="http://sourceforge.net/projects/holtz/files/holtz/holtz-1.3.1-win32.zip/download">holtz-1.3.1-win32.zip</a>) - just extract and run</li>
 <li>Linux RPM, OpenSUSE 11.0 
-(<a href="http://sourceforge.net/projects/holtz/files/holtz/holtz-1.3.0-1.x86_64.rpm/download">holtz-1.3.0-1.x86_64.rpm</a>)</li>
+(<a href="http://sourceforge.net/projects/holtz/files/holtz/holtz-1.3.1-1.x86_64.rpm/download">holtz-1.3.1-1.x86_64.rpm</a>)</li>
 <li>For other Linux distributions, see below</li>
 </ul>
 
 <h3>Sourcecode:</h3>
 <ul>
-<li>Source (<a href="http://sourceforge.net/projects/holtz/files/holtz/holtz-1.3.0.tar.gz/download">holtz-1.3.0.tar.gz</a>) - source prepared with autotools, requires: wxWidgets 2.8 or 2.6</li>
-<li>RPM source package (<a href="http://sourceforge.net/projects/holtz/files/holtz/holtz-1.3.0-1.src.rpm/download">holtz-1.3.0-1.src.rpm</a>) - to compile a package for your RPM distribution, requires: wxWidgets 2.8</li>
+<li>Source (<a href="http://sourceforge.net/projects/holtz/files/holtz/holtz-1.3.1.tar.gz/download">holtz-1.3.1.tar.gz</a>) - source prepared with autotools, requires: wxWidgets 2.8 or 2.6</li>
+<li>RPM source package (<a href="http://sourceforge.net/projects/holtz/files/holtz/holtz-1.3.1-1.src.rpm/download">holtz-1.3.1-1.src.rpm</a>) - to compile a package for your RPM distribution, requires: wxWidgets 2.8</li>
 </ul>
 <p>Note: For compiling the sourcecode you either need to install a development package 
 of wxWidgets (e.g. wxGTK-devel, libwxgtk2.6-dev, or libwxgtk2.8-dev) or download source directly 
@@ -42,6 +42,12 @@ and Ubuntu packaging. Please email <a href="mailto:windiana@users.sf.net">
 windiana@users.sf.net</a>.</p>
 
 <h2>Changes:</h2>
+
+<h3>1.3.1:</h3>
+<ul>
+<li>Fixed bug in dvonn AI which made it loose intentionally on the final moves sometimes</li>
+</ul>
+
 <h3>1.3.0:</h3>
 <ul>
 <li>New Game supported: Relax</li>
