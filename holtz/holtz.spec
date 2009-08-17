@@ -11,10 +11,10 @@
 %define UNICODE "--enable-unicode"  
 
 Name: holtz
-Version: 1.3.0
+Version: 1.3.1
 Release: %rel
 
-Summary: Holtz is an implementation of the two player abstract board games Zertz and Dvonn
+Summary: Holtz is an implementation of the abstract board games Zertz and Dvonn
 License: GPL
 Group: Recreation/
 Vendor: Martin Trautmann <martintrautmann@gmx.de>
@@ -32,29 +32,17 @@ Requires:      gtk+ >= 1.2.7 gettext
 BuildRequires: wxGTK >= 2.8.4 wxGTK-devel gcc-c++ boost-devel
 #wxGTK-static has to be manually compiled
 %else
-#-- OpenSUSE 10.3 or higher 
 Requires:      wxGTK >= 2.8.4
 BuildRequires: wxGTK-devel >= 2.8.4 gcc-c++ boost-devel
-#-- OpenSUSE 10.2 - OpenSUSE Build Service
-#Requires:      wxGTK >= 2.6.1  
-#BuildRequires: wxGTK-devel >= 2.6.1 gcc-c++  
-#%#define BACKWARDCOMPATIBILITY "--enable-wx_2_6"
-#-- Feodora 8 - OpenSUSE Build Service
-#Requires:      wxGTK >= 2.8.4  
-#BuildRequires: wxGTK-devel >= 2.8.4 gcc-c++ lynx  
-#-- Mandriva 2007 - OpenSUSE Build Service
-#Requires:      wxGTK >= 2.6.0  
-#BuildRequires: wxGTK-devel >= 2.6.0 gcc-c++  
-#%#define BACKWARDCOMPATIBILITY "--enable-wx_2_6"  
-#%#define UNICODE "--disable-unicode"  
-#-- Debian Etch - OpenSUSE Build Service
-#Requires:      libwxgtk2.6
-#BuildRequires: libwxgtk2.6-dev gcc-c++ hostname alien
-#%#define BACKWARDCOMPATIBILITY "--enable-wx_2_6"
-#--
 %endif
 
-Provides: holtz
+# discribution specific settings
+# Mandriva 2009:
+%if 0%{?mandriva_version}
+%define UNICODE "--disable-unicode"  
+%endif
+
+Provides: holtz-%version
 
 %description
 Holtz is an implementation of the two player abstract board games Zertz and Dvonn from the gipf probject (www.gipf.com).
@@ -101,6 +89,7 @@ rm -rf $RPM_BUILD_ROOT
 %prefix/share/holtz/skins/*
 %prefix/share/holtz/sounds/*
 %prefix/share/holtz/help/*
+%prefix/share/holtz/
 
 #%changelog
 #* first version

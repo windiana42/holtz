@@ -19,8 +19,7 @@ holtz_CXXFLAGS= \
 	-DDEFAULT_DATA_DIR=\"$(pkgdatadir)/\"
 
 EXTRA_DIST=	\
-	Rules.german Rules.english holtz.rc holtz.ico holtz.sln holtz.vcproj icon.xpm holtz.spec \
-	$(srcdir)/holtz-*.spec 
+	Rules.german Rules.english holtz.rc holtz.ico holtz.sln holtz.vcproj icon.xpm holtz.spec 
 
 .rc.o:
 if INCLUDE_RC_FILE

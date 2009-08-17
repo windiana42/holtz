@@ -1,7 +1,7 @@
 #!/bin/bash
 DIR=holtz-win32;
 i="cross";
-VERSION=1.3.0
+VERSION=1.3.1
 
 FILES="";
 echo Building zip-package for $i;
