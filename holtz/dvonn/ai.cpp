@@ -437,7 +437,8 @@ namespace dvonn
 
 #ifndef __WXMSW__
       std::cerr << std::endl;
-      std::cerr << "AI: depth = " << depth << (deep_jumping?" (deep jumping)":"") << std::endl;
+      std::cerr << "AI: depth = " << depth << (deep_jumping?" (deep jumping)":"") << " player=" 
+		<< current_player->name << std::endl;
 #endif
 
       max_ratings[0] = RATE_MAX * 2;
@@ -462,32 +463,37 @@ namespace dvonn
 #ifndef __WXMSW__
       std::cerr << "AI: rating = " << current_position.rating
 		<< "; rating2 = " << current_position.sorted_positions.begin()->first
+		<< "; player=" << current_player->name
 		<< "; positions = " << positions_checked 
 		<< "; max_depth = " << max_depth_expanded
 		<< "; expanded = " << expanded_calls
 		<< "; duration = " << stop_watch.Time() / 1000.0 << "s"
-		<< "; current best move = " << result.sequence << std::endl;
+		<< "; current best move = " << result.sequence 
+		<< "(" << DEBUG_translate_move(result.sequence) << ")" << std::endl;
       if( current_position.following_positions.size() > 1 )
       {
 	Branch *second_branch = *(++current_position.sorted_positions.begin())->second;
 	std::cerr << "AI: rating = " << second_branch->position.rating
 		  << "; rating2 = " << (++current_position.sorted_positions.begin())->first
-		  << "; second best move = " << second_branch->sequence << std::endl;
+		  << "; second best move = " << second_branch->sequence 
+		  << "(" << DEBUG_translate_move(second_branch->sequence) << ")" << std::endl;
       }
 
       Branch *worst_branch = *(--current_position.sorted_positions.end())->second;
       std::cerr << "AI: rating = " << worst_branch->position.rating
 		<< "; rating2 = " << (--current_position.sorted_positions.end())->first
-		<< "; worst move = " << worst_branch->sequence << std::endl;
+		<< "; worst move = " << worst_branch->sequence 
+		<< "(" << DEBUG_translate_move(worst_branch->sequence) << ")" << std::endl;
       std::cerr << "AI: expect:" << std::endl; 
+      std::cerr << "  best sequence: ";
       Position *pos = &current_position;
       while( pos->is_expanded() )
       {
-	std::cerr << "  " << (*pos->sorted_positions.begin()->second)->sequence 
-		  << ": " << (*pos->sorted_positions.begin()->second)->position.rating
-		  << std::endl; 
+	std::cerr << DEBUG_translate_move((*pos->sorted_positions.begin()->second)->sequence)
+		  << "; ";
 	pos = &(*pos->sorted_positions.begin()->second)->position;
       }
+      std::cerr << std::endl;
 #endif
 
       if( (current_position.following_positions.size() == 1) || // if I have no choice
@@ -652,36 +658,41 @@ namespace dvonn
   double AI::rate_position( Game &game, Position &position )
   {
     double rating = 0;
-    if( deep_jumping && !position.set_moves && !while_deep_jumping )
-    {
-      while_deep_jumping = true;
+    // deep jumping is a feature of Zertz not Dvonn AI
+//     if( deep_jumping && !position.set_moves && !while_deep_jumping )
+//     {
+//       while_deep_jumping = true;
 
-      unsigned save_cur_depth = cur_depth;
-      // store recursion parameters
-      unsigned save_depth = depth; 
-      int save_min_max_vz = min_max_vz; 
+//       unsigned save_cur_depth = cur_depth;
+//       // store recursion parameters
+//       unsigned save_depth = depth; 
+//       int save_min_max_vz = min_max_vz; 
 
-      cur_depth += 4;		// additional depth
-      if( cur_depth > max_depth )
-	cur_depth = max_depth;
-      max_ratings[depth+2] = -(RATE_MAX * 2) * min_max_vz;
-      // search for more jump moves
-      int new_min_max_vz = (game.current_player == game.prev_player ? min_max_vz : -min_max_vz);
-      rating = depth_search( game, position, depth+1, max_ratings[depth+1], new_min_max_vz, true );
+//       cur_depth += 4;		// additional depth
+//       if( cur_depth > max_depth )
+// 	cur_depth = max_depth;
+//       max_ratings[depth+2] = -(RATE_MAX * 2) * min_max_vz;
+//       // search for more jump moves
+//       int new_min_max_vz = (game.current_player == game.prev_player ? min_max_vz : -min_max_vz);
+//       rating = depth_search( game, position, depth+1, max_ratings[depth+1], new_min_max_vz, true );
 
-      if( (rating != RATE_MAX) && (rating != -RATE_MAX) )
-	if( current_player->id == game.get_current_player().id )
-	  rating -= rate_current_player_bonus; // all other positions on this level "get the bonus"
+//       if( (rating != RATE_MAX) && (rating != -RATE_MAX) )
+// 	if( current_player->id == game.get_current_player().id )
+// 	  rating -= rate_current_player_bonus; // all other positions on this level "get the bonus"
 
-      // restore recursion parameters
-      depth = save_depth; 
-      min_max_vz = save_min_max_vz; 
+//       // restore recursion parameters
+//       depth = save_depth; 
+//       min_max_vz = save_min_max_vz; 
+
+//       if( rating == RATE_MAX || rating == -RATE_MAX )
+// 	std::cout << "Deep-Jump Rating: depth=" << depth << " rating=" << rating 
+// 		  << " min_max_vz=" << min_max_vz << std::endl;
       
-      cur_depth = save_cur_depth;
+//       cur_depth = save_cur_depth;
 
-      while_deep_jumping = false;
-    }
-    else
+//       while_deep_jumping = false;
+//     }
+//     else
     {
       Distance_Map distance_map(game.board);
       if( game.board.get_game_state() == Board::set_moves )
@@ -751,10 +762,12 @@ namespace dvonn
 
     if( game_finished )
     {
-      if( game.get_current_player().id == winner_id )
+      if( current_player->id == winner_id )
 	pos_rating = RATE_MAX;
       else
 	pos_rating = -RATE_MAX;
+//       std::cout << "Winner: depth=" << depth << " win-id=" << winner_id << " rating=" << pos_rating 
+// 		<< " min_max_vz=" << min_max_vz << " jump-only=" << jump_only << std::endl;
     }
     else
     {
@@ -789,7 +802,12 @@ namespace dvonn
     jump_only = save_jump_only;
 	  
     if( (position->rating - pos_rating) * min_max_vz > 0 )
-      position->rating = pos_rating;
+      {
+	position->rating = pos_rating;
+// 	if( game_finished )
+// 	  std::cout << "New best rating: depth=" << depth << " rating=" << pos_rating 
+// 		    << " min_max_vz=" << min_max_vz << " jump-only=" << jump_only << std::endl;
+      }
     
     position->sorted_positions.insert
       ( Position::sorted_positions_element_type( pos_rating * min_max_vz, branch ) );

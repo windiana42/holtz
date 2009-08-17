@@ -58,7 +58,7 @@ namespace dvonn
   class Standard_Move_Translator;
   
   enum Field_State_Type{ field_removed=-1, field_empty=0, 
-				 field_red=1, field_white=2, field_black=3 };
+			 field_red=1, field_white=2, field_black=3 };
 
   const int standard_board[][11] =
     { {   -1,  0,  0,  0,  0,  0,  0,  0,  0,  0, -1 },
@@ -66,6 +66,18 @@ namespace dvonn
       {    0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0 },
       { -1,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0 },
       {   -1,  0,  0,  0,  0,  0,  0,  0,  0,  0, -1 } };
+
+//  { {   -1, c5, d5, e5, f5, g5, h5, i5, j4, k3, -1 },
+//    { -1, b4, c4, d4, e4, f4, g4, h4, i4, j3, k2 },
+//    {   a3, b3, c3, d3, e3, f3, g3, h3, i3, j2, k1 },
+//    { -1, a2, b2, c2, d2, e2, f2, g2, h2, i2, j1 },
+//    {   -1, a1, b1, c1, d1, e1, f1, g1, h1, i1, -1 } };
+
+//  { {   -1,0-1,0-0,0-3,0-0,0-5,0-6,0-7,0-8,0-9, -1 },
+//    { -1,1-1,1-1,1-3,1-1,1-5,1-6,1-7,1-8,1-9,1-10},
+//    {  2-0,2-1,2-2,2-3,2-2,2-5,2-6,2-7,2-8,2-9,2-10},
+//    { -1,3-1,3-2,3-3,3-4,3-5,3-6,3-7,3-8,3-9,3-10},
+//    {   -1,4-1,4-2,4-3,4-4,4-5,4-6,4-7,4-8,4-9, -1 } };
 
 }
 
@@ -302,6 +314,8 @@ namespace dvonn
     inline std::deque<Field_State_Type> get_field( Field_Pos pos ) { return field[pos.x][pos.y]; }
     inline int get_x_size() const { return field.size(); }
     inline int get_y_size() const { return field[0].size(); }
+
+    void print();
   };
 
   class Move
@@ -423,6 +437,8 @@ namespace dvonn
 
     inline const std::list<Move*> &get_moves() const { return *moves; }
     inline bool is_empty() { return moves->empty(); }
+    // for debug purposes
+    const Ref_Counter* get_ref_counter() const { return ref_counter; }
   private:
     void modify_moves();	// called before <moves> is modified
     std::list<Move*> *moves;
@@ -833,6 +849,8 @@ namespace dvonn
 
     Game &game;
   };
+
+  std::string DEBUG_translate_move(const Move_Sequence& sequence);
 }
 
 #endif

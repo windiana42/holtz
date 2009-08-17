@@ -16,6 +16,7 @@
 
 #include "dvonn.hpp"
 #include <assert.h>
+#include <iomanip>
 
 #include "util.hpp"
 
@@ -891,6 +892,37 @@ namespace dvonn
   {
     Field_Pos pos( 0, 0 ); 
     return Field_Iterator( pos, this );
+  }
+
+  void Board::print()
+  {
+    for( int y=0; y<get_y_size(); ++y )
+      {
+	if( y%2 == 0 ) 
+	  std::cout << "   ";	// indent
+	for( int x=0; x<get_x_size(); ++x )
+	  {
+	    Field_State_Type top = field.at(x).at(y).back();
+	    std::size_t size = field.at(x).at(y).size();
+	    switch( top )
+	      {
+	      case field_removed:
+	      case field_empty:
+		std::cout << "    ; ";
+		break;
+	      case field_white:
+		std::cout << std::setw(2) << size << ":W; ";
+		break;
+	      case field_black:
+		std::cout << std::setw(2) << size << ":B; ";
+		break;
+	      case field_red:
+		std::cout << std::setw(2) << size << ":R; ";
+		break;
+	      }
+	  }
+	std::cout << std::endl;
+      }
   }
 
   // ----------------------------------------------------------------------------
@@ -3480,6 +3512,16 @@ namespace dvonn
   Coordinate_Translator *Standard_Coordinate_Translator::clone()
   {
     return new Standard_Coordinate_Translator( orig_board );
+  }
+
+  std::string DEBUG_translate_move(const Move_Sequence& sequence)
+  {
+    Board board( (const int*) standard_board, 
+		 sizeof(standard_board[0]) / sizeof(standard_board[0][0]),
+		 sizeof(standard_board)    / sizeof(standard_board[0]), Board::standard );
+    Standard_Coordinate_Translator coordinate_translator(board);
+    Standard_Move_Translator move_translator(&coordinate_translator);
+    return move_translator.encode(sequence);
   }
 }
 
