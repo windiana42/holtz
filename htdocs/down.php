@@ -6,16 +6,16 @@
 
 <h3>Binary Packages:</h3>
 <ul>
-<li>Windows binary (<a href="http://sourceforge.net/projects/holtz/files/holtz/holtz-1.3.1-win32.zip/download">holtz-1.3.1-win32.zip</a>) - just extract and run</li>
+<li>Windows binary (<a href="http://sourceforge.net/projects/holtz/files/holtz/holtz-1.3.1-win32.zip/download">holtz-1.3.1-win32.zip</a>) - just extract and run - (MD5: 2438fc6c9e0d93078b4b5ff1c44a959a)</li>
 <li>Linux RPM, OpenSUSE 11.0 
-(<a href="http://sourceforge.net/projects/holtz/files/holtz/holtz-1.3.1-1.x86_64.rpm/download">holtz-1.3.1-1.x86_64.rpm</a>)</li>
+    (<a href="http://sourceforge.net/projects/holtz/files/holtz/holtz-1.3.1-1.x86_64.rpm/download">holtz-1.3.1-1.x86_64.rpm</a>) - (MD5: 483182fc0e97f31bb44cdc3295a7a4c0)</li>
 <li>For other Linux distributions, see below</li>
 </ul>
 
 <h3>Sourcecode:</h3>
 <ul>
-<li>Source (<a href="http://sourceforge.net/projects/holtz/files/holtz/holtz-1.3.1.tar.gz/download">holtz-1.3.1.tar.gz</a>) - source prepared with autotools, requires: wxWidgets 2.8 or 2.6</li>
-<li>RPM source package (<a href="http://sourceforge.net/projects/holtz/files/holtz/holtz-1.3.1-1.src.rpm/download">holtz-1.3.1-1.src.rpm</a>) - to compile a package for your RPM distribution, requires: wxWidgets 2.8</li>
+    <li>Source (<a href="http://sourceforge.net/projects/holtz/files/holtz/holtz-1.3.1.tar.gz/download">holtz-1.3.1.tar.gz</a>) - source prepared with autotools, requires: wxWidgets 2.8 or 2.6 - (MD5: 1ec4b4560eefa0475bf81e7991398db9)</li>
+   <li>RPM source package (<a href="http://sourceforge.net/projects/holtz/files/holtz/holtz-1.3.1-1.src.rpm/download">holtz-1.3.1-1.src.rpm</a>) - to compile a package for your RPM distribution, requires: wxWidgets 2.8 - (MD5: cbe3e52831d28fbc7a41a2a938fd96d6)</li>
 </ul>
 <p>Note: For compiling the sourcecode you either need to install a development package 
 of wxWidgets (e.g. wxGTK-devel, libwxgtk2.6-dev, or libwxgtk2.8-dev) or download source directly 
