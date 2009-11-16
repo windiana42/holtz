@@ -99,6 +99,15 @@ function EndPage($showSidebar = 1, $sidebarImg = "", $bigImg = "") {
       &nbsp;&nbsp;&nbsp; -- &nbsp;<a href="http://sourceforge.net/projects/holtz/">Project Page</a>
     </tr>
   </table>
+  <script type="text/javascript">
+var gaJsHost = (("https:" == document.location.protocol) ? "https://ssl." : "http://www.");
+document.write(unescape("%3Cscript src='" + gaJsHost + "google-analytics.com/ga.js' type='text/javascript'%3E%3C/script%3E"));
+</script>
+<script type="text/javascript">
+try {
+var pageTracker = _gat._getTracker("UA-11624493-1");
+pageTracker._trackPageview();
+} catch(err) {}</script>
 </body>
 </html>
 <?php
