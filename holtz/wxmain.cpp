@@ -124,8 +124,16 @@ namespace holtz
 
     int language = wxLANGUAGE_DEFAULT;
     if( argc > 1 )
-      if( wxString(argv[1]) == wxT("de") || wxString(argv[1]) == wxT("de_DE") )
-	language = wxLANGUAGE_GERMAN;
+      {
+	if( wxString(argv[1]) == wxT("de") || wxString(argv[1]) == wxT("de_DE") )
+	{
+	  language = wxLANGUAGE_GERMAN;
+	}	
+	if( wxString(argv[1]) == wxT("it") || wxString(argv[1]) == wxT("it_IT") )
+	{
+	  language = wxLANGUAGE_ITALIAN;
+	}
+      }
     loc->Init(language); // get default language from OS
     wxLocale::AddCatalogLookupPathPrefix(wxT("locale")); // enable translation lookup from ./locale/
     loc->AddCatalog(wxT("holtz")); // load translation file holtz.mo if available
