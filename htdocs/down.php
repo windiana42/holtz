@@ -25,7 +25,7 @@ compatible with wxWidgets 2.6 as well.</p>
 
 <h3>Binary packages for other Linux distributions:</h3>
 <p>More binary packages for Fedora, Mandriva, and various SuSE distributions can be found at 
-<a href="https://build.opensuse.org/package/show?package=holtz-1.3.1&project=home%3Atrautm">opensuse build service</a>.
+<a href="http://software.opensuse.org/search?q=holtz&baseproject=ALL&include_home=true">opensuse build service</a>.
 Please <a href="mailto:windiana@users.sf.net">report</a> your experiences when 
 using one of these packages since they are not intensively tested. However, since it instantly worked on OpenSuSE 11.4 and Fedora14,
 I am confident, that all SuSE, Fedora, and Mandriva packages should indeed work. 

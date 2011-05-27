@@ -24,6 +24,7 @@
       <a href="http://www.littlegolem.net/" target="_blank">
 	http://www.littlegolem.net/</a>
     </li>
+<!--
     <li>
       A Z&egrave;rtz newsgroup: 
       <a href="http://groups.yahoo.com/group/zertz" target="_blank">
@@ -34,6 +35,7 @@
       <a href="http://www.assimilate.de/zf1/" target="_blank">
 	http://www.assimilate.de/zf1/</a>
     </li>
+-->
   </ul>
     
 <?php EndPage(); ?>
