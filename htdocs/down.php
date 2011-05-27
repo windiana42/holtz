@@ -7,28 +7,32 @@
 <h3>Binary Packages:</h3>
 <ul>
 <li>Windows binary (<a href="http://sourceforge.net/projects/holtz/files/holtz/1.3.1/holtz-1.3.1-win32.zip/download">holtz-1.3.1-win32.zip</a>) - just extract and run - (MD5: 2438fc6c9e0d93078b4b5ff1c44a959a)</li>
-<li>Linux RPM, OpenSUSE 11.0 
-    (<a href="http://sourceforge.net/projects/holtz/files/holtz/1.3.1/holtz-1.3.1-1.x86_64.rpm/download">holtz-1.3.1-1.x86_64.rpm</a>) - (MD5: 483182fc0e97f31bb44cdc3295a7a4c0)</li>
+<li>Linux RPM, Fedora 14 (x86 - 64 bit)
+    (<a href="http://sourceforge.net/projects/holtz/files/holtz/1.3.1/fedora/holtz-1.3.1-1.x86_64.rpm/download">holtz-1.3.1-1.x86_64.rpm</a>) - (MD5: 593aea9b6ceacf5efd7c66ca82798a66)</li>
 <li>For other Linux distributions, see below</li>
 </ul>
 
 <h3>Sourcecode:</h3>
 <ul>
-    <li>Source (<a href="http://sourceforge.net/projects/holtz/files/holtz/1.3.1/holtz-1.3.1.tar.gz/download">holtz-1.3.1.tar.gz</a>) - source prepared with autotools, requires: wxWidgets 2.8 or 2.6 - (MD5: 1ec4b4560eefa0475bf81e7991398db9)</li>
-   <li>RPM source package (<a href="http://sourceforge.net/projects/holtz/files/holtz/1.3.1/holtz-1.3.1-1.src.rpm/download">holtz-1.3.1-1.src.rpm</a>) - to compile a package for your RPM distribution, requires: wxWidgets 2.8 - (MD5: cbe3e52831d28fbc7a41a2a938fd96d6)</li>
+    <li>Source (<a href="http://sourceforge.net/projects/holtz/files/holtz/1.3.1/holtz-1.3.1.tar.gz/download">holtz-1.3.1.tar.gz</a>) - source prepared with autotools, requires: wxWidgets 2.8 or 2.6 - (MD5: 3adb2486254320ce2f81f8f1e76c9e0c)</li>
+   <li>RPM source package (<a href="http://sourceforge.net/projects/holtz/files/holtz/1.3.1/holtz-1.3.1-1.src.rpm/download">holtz-1.3.1-1.src.rpm</a>) - to compile a package for your RPM distribution, requires: wxWidgets 2.8 - (MD5: da94bf9f6f9d2efce7b5e32c244797c8)</li>
 </ul>
 <p>Note: For compiling the sourcecode you either need to install a development package 
-of wxWidgets (e.g. wxGTK-devel, libwxgtk2.6-dev, or libwxgtk2.8-dev) or download source directly 
+of wxWidgets (e.g. wxGTK-devel, wxWidgets-devel, libwxgtk2.6-dev, or libwxgtk2.8-dev) or download source directly 
 from the <a href="http://wxwidgets.org">wxWidgets</a> homepage. Holtz was only 
 tested with wxWidgets 2.8. When using "./configure --enable-wx_2_6" the source should be 
 compatible with wxWidgets 2.6 as well.</p>
 
 <h3>Binary packages for other Linux distributions:</h3>
-<p>More binary packages for Fedora, Mandriva, and other SuSE distributions can be found at 
-<a href="http://software.opensuse.org/search?p=1&q=holtz&baseproject=ALL">opensuse build service</a>.
+<p>More binary packages for Fedora, Mandriva, and various SuSE distributions can be found at 
+<a href="https://build.opensuse.org/package/show?package=holtz-1.3.1&project=home%3Atrautm">opensuse build service</a>.
 Please <a href="mailto:windiana@users.sf.net">report</a> your experiences when 
-using one of these packages since they are not intensively tested.
+using one of these packages since they are not intensively tested. However, since it instantly worked on OpenSuSE 11.4 and Fedora14,
+I am confident, that all SuSE, Fedora, and Mandriva packages should indeed work. 
 </p>
+
+<p> I am still looking for someone who can help me compile holtz for Debian and Ubuntu. Please email <a href="mailto:windiana@users.sf.net">
+windiana@users.sf.net</a> </p>
 
 <h3>Older versions:</h3>
 <p>Older versions can be found on the 
