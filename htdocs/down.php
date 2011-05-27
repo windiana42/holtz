@@ -8,7 +8,7 @@
 <ul>
 <li>Windows binary (<a href="http://sourceforge.net/projects/holtz/files/holtz/1.3.1/holtz-1.3.1-win32.zip/download">holtz-1.3.1-win32.zip</a>) - just extract and run - (MD5: 2438fc6c9e0d93078b4b5ff1c44a959a)</li>
 <li>Linux RPM, Fedora 14 (x86 - 64 bit)
-    (<a href="http://sourceforge.net/projects/holtz/files/holtz/1.3.1/fedora/holtz-1.3.1-1.x86_64.rpm/download">holtz-1.3.1-1.x86_64.rpm</a>) - (MD5: 593aea9b6ceacf5efd7c66ca82798a66)</li>
+    (<a href="http://sourceforge.net/projects/holtz/files/holtz/1.3.1/fedora14/holtz-1.3.1-1.x86_64.rpm/download">holtz-1.3.1-1.x86_64.rpm</a>) - (MD5: 593aea9b6ceacf5efd7c66ca82798a66)</li>
 <li>For other Linux distributions, see below</li>
 </ul>
 
