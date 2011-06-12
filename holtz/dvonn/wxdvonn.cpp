@@ -620,7 +620,7 @@ namespace dvonn
 	    gui_manager.show_user_information( true );
 	    break;
 	  case Sequence_Generator::fatal_error:
-	    msg.Printf( _("Fatal Error!") );
+	    msg.Printf( wxT("%s"), _("Fatal Error!") );
 	    gui_manager.report_error( msg, _("Click Error") );
 	    break;
 	  case Sequence_Generator::error_require_jump:
