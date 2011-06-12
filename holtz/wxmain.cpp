@@ -157,7 +157,7 @@ namespace holtz
     // for help: zip files
     wxFileSystem::AddHandler(new wxZipFSHandler);
     if(!init_help(*loc))
-      wxLogWarning(_("No help file found."));
+      wxLogWarning(wxT("%s"),_("No help file found."));
 
     check_config(); // asks for configuration if not yet done
 
