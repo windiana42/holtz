@@ -15,6 +15,7 @@
  */
 #include "network.hpp" // workaround for cygwin 
 
+#define MY_WX_MAKING_DLL
 #include "ai.hpp"
 
 #include "util.hpp"
@@ -24,6 +25,11 @@
 #include <assert.h>
 
 #define RATE_MAX	1e13
+// #ifndef NDEBUG
+// #  warning "disable DEBUG_MIN_MAX in production"
+// #  define DEBUG_MIN_MAX  // verify min-max algo is correct !!! never activate this in production !!!
+// #  define DEBUG_MIN_MAX_PRINT
+// #endif
 
 namespace dvonn
 {
@@ -394,6 +400,7 @@ namespace dvonn
   AI::AI( const Game &game )
     : max_time(30000), average_time(4000), num_measures(0), max_positions_expanded(150000),
       max_depth(12),
+      alloc_max_depth(12+3),
       rate_alpha(0.85),		// exponential value degradation with distance to red stone
       rate_beta_no_good(0.3), 	// factor if only move on own stones possible
       rate_beta_not_now(0.85), 	// factor if stack is blocked by surrounding stones
@@ -423,9 +430,11 @@ namespace dvonn
     if( deep_jumping_possible )
       deep_jumping = true;
 
-    current_player = save_game.current_player;
+    ai_player = save_game.current_player;
     unsigned depth, end_depth = max_depth;
-    max_ratings.resize(max_depth+3);
+    max_ratings.resize(2);
+    max_ratings[0].resize(alloc_max_depth);
+    max_ratings[1].resize(alloc_max_depth);
     if( save_game.common_stones.stone_count[Stones::red_stone] > 1 )
       end_depth = 1;		// don't waste time for placing the first two red stones
     for( depth = 1; depth <= end_depth; ++depth )
@@ -438,13 +447,18 @@ namespace dvonn
 #ifndef __WXMSW__
       std::cerr << std::endl;
       std::cerr << "AI: depth = " << depth << (deep_jumping?" (deep jumping)":"") << " player=" 
-		<< current_player->name << std::endl;
+		<< ai_player->name << std::endl;
 #endif
 
-      max_ratings[0] = RATE_MAX * 2;
-      max_ratings[1] = -RATE_MAX * 2;
-      depth_search( save_game, current_position, 0, max_ratings[0], -1, false );
-      assert( current_player == save_game.current_player );
+      for( unsigned d = 0; d < alloc_max_depth; ++d )
+      {
+	max_ratings[0/*min_max_vz=-1*/][d/*depth*/] = RATE_MAX * 2;
+	max_ratings[1/*min_max_vz=1*/] [d/*depth*/] = -RATE_MAX * 2;
+      }
+      int new_min_max_vz = -1;
+      depth_search( save_game, current_position, 0, max_ratings[new_min_max_vz>0?1:0][0], 
+		    new_min_max_vz, /*jump-only=*/false, /*debug_disable_min_max=*/false );
+      assert( ai_player == save_game.current_player );
 
       if( aborted )
 	break;
@@ -463,7 +477,7 @@ namespace dvonn
 #ifndef __WXMSW__
       std::cerr << "AI: rating = " << current_position.rating
 		<< "; rating2 = " << current_position.sorted_positions.begin()->first
-		<< "; player=" << current_player->name
+		<< "; player=" << ai_player->name
 		<< "; positions = " << positions_checked 
 		<< "; max_depth = " << max_depth_expanded
 		<< "; expanded = " << expanded_calls
@@ -496,10 +510,47 @@ namespace dvonn
       std::cerr << std::endl;
 #endif
 
+#ifdef DEBUG_MIN_MAX
+      double rating = current_position.rating;
+      Move_Sequence best_move = result.sequence;
+      std::string best_move_str = DEBUG_translate_move(result.sequence);
+      Game save_game2(game);
+      Position current_position2( save_game2 );
+      new_min_max_vz = -1;
+      depth_search( save_game2, current_position2, 0, 0, 
+		    new_min_max_vz, /*jump-only=*/false, /*debug_disable_min_max=*/true );
+      if( !aborted )
+	{
+	  Move_Sequence &sequence2 = (*current_position.sorted_positions.begin()->second)->sequence;
+	  assert( sequence2.check_sequence( save_game2 ) );
+	  double rating2 = current_position2.rating;
+	  Move_Sequence &best_move2 = sequence2;
+	  std::string best_move_str2 = DEBUG_translate_move(sequence2);
+	  if( rating != rating2 )
+	    {
+	      std::cerr << "  best sequence2: ";
+	      Position *pos = &current_position2;
+	      while( !pos->sorted_positions.empty() )
+		{
+		  std::cerr << DEBUG_translate_move((*pos->sorted_positions.begin()->second)->sequence)
+			    << "; ";
+		  pos = &(*pos->sorted_positions.begin()->second)->position;
+		}
+	      std::cerr << std::endl;
+	    }
+	  assert(fabs(rating - rating2) < epsilon);
+	  assert(best_move == best_move2);
+	}
+#endif
+
       if( (current_position.following_positions.size() == 1) || // if I have no choice
 	  (current_position.rating ==  RATE_MAX) ||		// or if I can win
 	  (current_position.rating == -RATE_MAX) )		// or if I can give up
+      {
+	std::cerr << "AI: aborting due to having no choice or having a guaranteed winner: " 
+		  << "#choices=" << current_position.following_positions.size() << std::endl;
 	break;
+      }
 
       if( depth >= min_depth )	// after depth 2
 	don_t_abort = false;	// make abort possible
@@ -520,7 +571,7 @@ namespace dvonn
 #ifndef __WXMSW__
     std::cerr << "AI: average_time = " << real_average_time / 1000.0 << "s" 
 	      << "; num_measures = " << num_measures 
-	      << "; last_average_time = " << last_average_time
+	      << "; last_average_time = " << last_average_time / 1000.0 << "s"
 	      << std::endl;
 #endif
 
@@ -531,6 +582,17 @@ namespace dvonn
 
     return result;
   }
+
+  // static std::string prefix(int depth)
+  // {
+  //   std::string ret = "d" + long_to_string(depth) + ":";
+  //   // indent 
+  //   for( int i=0; i<depth; ++i )
+  //   {
+  //     ret += "  ";
+  //   }
+  //   return ret;
+  // }
 
   double AI::rate_player( Game &game, Player &player, Distance_Map &distance_map )
   {
@@ -677,7 +739,7 @@ namespace dvonn
 //       rating = depth_search( game, position, depth+1, max_ratings[depth+1], new_min_max_vz, true );
 
 //       if( (rating != RATE_MAX) && (rating != -RATE_MAX) )
-// 	if( current_player->id == game.get_current_player().id )
+// 	if( ai_player->id == game.get_current_player().id )
 // 	  rating -= rate_current_player_bonus; // all other positions on this level "get the bonus"
 
 //       // restore recursion parameters
@@ -704,7 +766,7 @@ namespace dvonn
       for( player = game.players.begin(); player != game.players.end(); ++player )
       {
 	assert( !game.win_condition->did_player_win(game, *player) );
-	if( player->id == current_player->id )
+	if( player->id == ai_player->id )
 	{
 	  rating += rate_player(game, *player, distance_map);
 	}
@@ -718,7 +780,7 @@ namespace dvonn
       /*
       // !!! DEBUG!!!
       std::cerr << "AI DEBUG: " << rating << "(" 
-		<< (current_player->stone_type == Stones::white_stone ? "white" : "black") 
+		<< (ai_player->stone_type == Stones::white_stone ? "white" : "black") 
 		<< "), last player: " 
 		<< (game.current_player->stone_type == Stones::white_stone ? "white" : "black") 
 		<< std::endl;
@@ -740,15 +802,17 @@ namespace dvonn
     // store recursion parameters
     Position *save_position = position;
     unsigned save_depth = depth; 
-    double save_max = max;
+    double save_max = max_val;
     int save_min_max_vz = min_max_vz; 
     bool save_jump_only = jump_only;
+    bool save_debug_disable_min_max = debug_disable_min_max;
 
     double pos_rating;
 
     // test if expanded move caused player to win:
     bool game_finished=false;
-    int winner_id;
+    int winner_id=-1;
+    std::string winner_name;
     std::vector<Player>::iterator player;
     for( player = game.players.begin(); player != game.players.end(); ++player )
     {
@@ -756,18 +820,25 @@ namespace dvonn
       {
 	game_finished = true;
 	winner_id = player->id;
+	winner_name = player->name;
 	break;
       }
     }
 
     if( game_finished )
     {
-      if( current_player->id == winner_id )
+      if( ai_player->id == winner_id )
 	pos_rating = RATE_MAX;
       else
 	pos_rating = -RATE_MAX;
 //       std::cout << "Winner: depth=" << depth << " win-id=" << winner_id << " rating=" << pos_rating 
 // 		<< " min_max_vz=" << min_max_vz << " jump-only=" << jump_only << std::endl;
+      /** /
+      // DEBUG!!!
+      std::cerr << "AI DEBUG: " << prefix(depth) << "   Winner: win-id=" << winner_id << "(" << winner_name << ")" 
+		<< " rating=" << pos_rating << "(" << ai_player->id << ")" << " min_max_vz=" << min_max_vz 
+		<< " jump-only=" << jump_only << std::endl;
+      / **/
     }
     else
     {
@@ -781,10 +852,19 @@ namespace dvonn
       {
 	if( depth < cur_depth - 1 )
 	{
-	  max_ratings[depth+2] = -(RATE_MAX * 2) * min_max_vz;
-	  int new_min_max_vz = (game.current_player == game.prev_player ? min_max_vz : -min_max_vz);
+	  // reset max_ratings for the depth where prev player may choose again
+	  if( game.prev_player->id == game.current_player->id )
+	  {
+	    max_ratings[0/*min_max_vz=-1*/][depth+1] = RATE_MAX * 2;
+	    max_ratings[1/*min_max_vz=1*/] [depth+1] = -RATE_MAX * 2;
+	  }
+	  max_ratings[0/*min_max_vz=-1*/][depth+2] = RATE_MAX * 2;
+	  max_ratings[1/*min_max_vz=1*/] [depth+2] = -RATE_MAX * 2;
+	  int new_min_max_vz = (game.current_player->id == game.prev_player->id ? min_max_vz : -min_max_vz);
 	  pos_rating = depth_search( game, (*branch)->position, depth+1, 
-				     max_ratings[depth+1], new_min_max_vz, jump_only );
+				     max_ratings[new_min_max_vz>0?1:0][depth+1], new_min_max_vz, jump_only,
+				     debug_disable_min_max);
+	  // attention: avoid using depth/min_max_vz/etc., use save_depth/... from now on
 	}
 	else
 	{
@@ -797,31 +877,52 @@ namespace dvonn
     // restore recursion parameters
     position = save_position;
     depth = save_depth; 
-    max = save_max;
+    max_val = save_max;
     min_max_vz = save_min_max_vz; 
     jump_only = save_jump_only;
+    debug_disable_min_max = save_debug_disable_min_max;
 	  
     if( (position->rating - pos_rating) * min_max_vz > 0 )
       {
 	position->rating = pos_rating;
-// 	if( game_finished )
-// 	  std::cout << "New best rating: depth=" << depth << " rating=" << pos_rating 
-// 		    << " min_max_vz=" << min_max_vz << " jump-only=" << jump_only << std::endl;
+	/** /
+	// DEBUG !!!
+	std::cerr << "AI DEBUG: " << prefix(depth) << "   Finished(New best rating): move=" 
+		  << DEBUG_translate_move((*branch)->sequence)
+		  << " rating=" << pos_rating 
+		  << " min_max_vz=" << min_max_vz << " player=" << game.current_player->name
+		  << " jump-only=" << jump_only << std::endl;
+	/ **/
+      }
+    else
+      {
+	/** /
+	// DEBUG !!!
+	std::cerr << "AI DEBUG: " << prefix(depth) << "   Finished: move=" << DEBUG_translate_move((*branch)->sequence) 
+		  << " rating=" << pos_rating 
+		  << " min_max_vz=" << min_max_vz << " player=" << game.current_player->name
+		  << " jump-only=" << jump_only << std::endl;
+	/ **/
       }
     
     position->sorted_positions.insert
       ( Position::sorted_positions_element_type( pos_rating * min_max_vz, branch ) );
 
-    assert( max == max_ratings[depth] );
-    if( depth == 0 )
-      assert( (max == RATE_MAX * 2) && (min_max_vz == -1) );
-    assert( (pos_rating >= -RATE_MAX) && (pos_rating <= RATE_MAX) );
+
+    if(!debug_disable_min_max)
+      {
+	// bound tree branches according to min-max-algorithm
+	//assert( max_val == max_ratings[depth] );
+	if( depth == 0 )
+	  assert( (max_val == RATE_MAX * 2) && (min_max_vz == -1) );
+	assert( (pos_rating + epsilon >= -RATE_MAX) && (pos_rating - epsilon <= RATE_MAX) );
       
-    if( (max - pos_rating) * min_max_vz >= 0 )
-    {
-      assert( depth != 0 );
-      return false;
-    }
+	if( (max_val - pos_rating) * min_max_vz >= 0 )
+	  {
+	    assert( depth != 0 );
+	    return false;
+	  }
+      }
 
     if( should_stop(false) )
       return false;
@@ -829,21 +930,29 @@ namespace dvonn
     return true;
   }
 
-  double AI::depth_search( Game &game, Position &position, unsigned depth, double max, 
-			   int min_max_vz, bool jump_only )
+  double AI::depth_search( Game &game, Position &position, unsigned depth, double max_val, 
+			   int min_max_vz, bool jump_only/*unused*/, bool debug_disable_min_max )
   {
     // save recursive parameters for expanded()
     this->position = &position;
     this->depth = depth;
-    this->max = max;
+    this->max_val = max_val;
     this->min_max_vz = min_max_vz;
     this->jump_only = jump_only;
+    this->debug_disable_min_max = debug_disable_min_max;
 
     position.rating = RATE_MAX * 1.5 * min_max_vz;
     bool go_on = true, stop = false;
 
     if( !position.is_expanded() )
     {
+#ifndef __WXMSW__
+      /** /
+      // DEBUG!!!
+      std::cerr << "AI DEBUG: " << prefix(depth) << " expanding new...; min_max_vz=" << min_max_vz 
+		<< "; max=" << max_val << std::endl;
+      / **/
+#endif
       position.set_expanded_handler(this);
       position.calc_following_positions( game, field_permutation );
       if( !aborted && (max_depth_expanded < depth) )
@@ -855,26 +964,32 @@ namespace dvonn
 	/*
 	  std::cout << "AI: expanded " << position.sorted_positions.size() << " positions" 
 	  << "; rating = " << position.rating
-	  << "; max = " << max
+	  << "; max = " << max_val
 	  << "; depth = " << depth << std::endl;
 	*/
       }
-      /*
-	if( !jump_only && position.sorted_positions.size() > 1 )
-	std::cerr << "AI: expanded " << position.sorted_positions.size() << " positions" 
-	<< "; rating = " << position.rating
-	<< "; max = " << max
-	<< std::endl;
-      */
+      /** /
+      // DEBUG!!!
+      std::cerr << "AI DEBUG: " << prefix(depth) << " expanded(new) " 
+		<< position.sorted_positions.size() << " positions" 
+		<< "; rating = " << position.rating
+		<< "; min_max_vz=" << min_max_vz
+		<< "; max = " << max_val
+		<< std::endl;
+      / **/
 #endif
     }
     else
     {
 #ifndef __WXMSW__
-      /*
-	if( !jump_only )
-	std::cerr << "AI: work on " << position.sorted_positions.size() << " positions" << std::endl;
-      */
+      /** /
+      // DEBUG!!!
+      std::cerr << "AI DEBUG: " << prefix(depth) << " expanding old... " 
+		<< position.sorted_positions.size() << " positions"
+		<< "; min_max_vz=" << min_max_vz
+		<< "; max = " << max_val
+		<< std::endl;
+      / **/
 #endif
       assert( position.sorted_positions.size() == position.following_positions.size() );
       std::multimap<double,std::list<Branch*>::iterator> copy_sorted_positions;
@@ -910,11 +1025,21 @@ namespace dvonn
 	assert( position.sorted_positions.size() == position.following_positions.size() );
       }
       assert( position.sorted_positions.size() > 0 ); // any move should be possible
+      /** /
+      // DEBUG!!!
+      std::cerr << "AI DEBUG: " << prefix(depth) << " expanded(old) " 
+		<< position.sorted_positions.size() << " positions" 
+		<< "; rating = " << position.rating
+		<< "; min_max_vz=" << min_max_vz
+		<< "; max = " << max_val
+		<< std::endl;
+      / **/
     }
-    assert( (position.rating >= -RATE_MAX) && (position.rating <= RATE_MAX) );
+    assert( (position.rating + epsilon >= -RATE_MAX) && (position.rating - epsilon <= RATE_MAX) );
 
-    if( (position.rating - max_ratings[depth]) * min_max_vz > 0 )
-      max_ratings[depth] = position.rating;
+    // update max_ratings if new maximum/minimum reached 
+    if( (position.rating - max_ratings[min_max_vz>0?1:0][depth]) * min_max_vz > 0 )
+      max_ratings[min_max_vz>0?1:0][depth] = position.rating;
 
     return position.rating;
   }
@@ -930,6 +1055,13 @@ namespace dvonn
     if( expanded_calls > max_positions_expanded )
     {
       aborted = true;
+#ifndef __WXMSW__
+      if( depth_finished )
+      {
+	std::cerr << "AI: aborting due to maximum expanded positions reached: #expanded=" 
+		  << expanded_calls << " max=" << max_positions_expanded << std::endl;
+      }
+#endif
       return true;
     }
 
@@ -937,6 +1069,13 @@ namespace dvonn
     if( time > max_time )
     {
       aborted = true;
+#ifndef __WXMSW__
+      if( depth_finished )
+      {
+	std::cerr << "AI: aborting due to maximum time reached: time=" << (time/1000.0) << "s"
+		  << " max=" << (max_time/1000.0) << "s" << std::endl;
+      }
+#endif
       return true;
     }
 
@@ -944,7 +1083,7 @@ namespace dvonn
     {
       stop_watch.Start();
 #ifndef __WXMSW__
-      std::cerr << "Error: stop watch failed!" << std::endl;
+      std::cerr << "AI: Error: stop watch failed!" << std::endl;
 #endif
     }
 
@@ -955,6 +1094,13 @@ namespace dvonn
       if( time > average_time/2 ) 
       {
 	aborted = true;
+#ifndef __WXMSW__
+	if( depth_finished )
+	{
+	  std::cerr << "AI: aborting due to target average time reached (end of depth): time=" << (time/1000.0) << "s"
+		    << " target=" << (average_time/2/1000.0) << "s" << std::endl;
+	}
+#endif
 	return true;
       }
     }
@@ -963,6 +1109,13 @@ namespace dvonn
       if( time > average_time * 2 ) 
       {
 	aborted = true;
+#ifndef __WXMSW__
+	if( depth_finished )
+	{
+	  std::cerr << "AI: aborting due to target average time reached: time=" << (time/1000.0) << "s"
+		    << " target=" << (average_time*2/1000.0) << "s" << std::endl;
+	}
+#endif
 	return true;
       }
     }
@@ -993,10 +1146,13 @@ namespace dvonn
     else
     {
       AI_Event event( get_move(game), EVT_AI_REPORT_MOVE, this ); 
+      if( TestDestroy() ) return 0;
       handler->AddPendingEvent( event );
     }
 
     Sleep(200);			// assure that report move event is received earlier
+
+    if( TestDestroy() ) return 0;
 
     AI_Event event( EVT_AI_FINISHED, this ); 
     handler->AddPendingEvent( event );
@@ -1027,7 +1183,7 @@ namespace dvonn
   void AI_Thread::report_current_hint( AI_Result hint )
   {
     AI_Event event( hint, EVT_AI_REPORT_HINT, this ); 
-
+    if( TestDestroy() ) return;
     handler->AddPendingEvent( event );
   }
 
@@ -1190,7 +1346,7 @@ namespace dvonn
     }
   }
 
-  void AI_Input::on_animation_done( wxTimerEvent &event )
+  void AI_Input::on_animation_done( wxTimerEvent & /*event*/ )
   {
     move_done = true;
     game_manager.continue_game();

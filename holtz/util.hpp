@@ -38,6 +38,8 @@
 
 namespace holtz
 {
+  static const double epsilon = 1e-8;
+
   template<typename T> inline T min(T t1, T t2) { return t1 < t2 ? t1 : t2; }
   template<typename T> inline T max(T t1, T t2) { return t1 > t2 ? t1 : t2; }
   template<typename T> inline T min(T t1, T t2, T t3) { return min(min(t1,t2),t3); }
@@ -87,7 +89,7 @@ namespace holtz
 
   inline bool is_equal( float v1, float v2 )
   {
-    return fabs(v1 - v2) < 1e-6;
+    return fabs(v1 - v2) < epsilon;
   }
 }
 namespace std

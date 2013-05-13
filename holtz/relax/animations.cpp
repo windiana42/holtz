@@ -343,7 +343,7 @@ namespace relax
 	    // ** initialize variables
 	    Set_Move *set_move = dynamic_cast<Set_Move*>(*current_move);
 	    assert( set_move );
-	    Stones::Stone_Type stone = set_move->stone_type;
+	    //Stones::Stone_Type stone = set_move->stone_type;
 
 	    // ** calculate animation positions and modify board
 	    std::pair<int,int> _from;
@@ -394,6 +394,8 @@ namespace relax
 	  case Move::no_move:
 	    ret = false;
 	    break;
+	  case Move::select_move:
+	    break;
 	}
       }
       break;
@@ -406,7 +408,7 @@ namespace relax
 	assert( Board::is_stone(stone) );
 
 	// ** modify board state
-	Field_Iterator to_field  ( set_move->pos, &game->current_player->board );
+	Mutable_Field_Iterator to_field  ( set_move->pos, &game->current_player->board );
 	*to_field = stone;
 
 	// ** begin new step
@@ -431,7 +433,7 @@ namespace relax
 	  Stones::Stone_Type &stone = current_removed_stone->second;
 
 	  // ** modify board state
-	  Field_Iterator field( field_pos, &game->current_player->board );
+	  Mutable_Field_Iterator field( field_pos, &game->current_player->board );
 	  *field = field_removed;
 
 	  // ** calculate animation positions
@@ -475,6 +477,10 @@ namespace relax
       break;
       case finished:
 	break;
+      case knock_out_jump:
+      case knock_out_collects:
+      case removing:
+	break;
     }
 
     return ret;
@@ -512,10 +518,10 @@ namespace relax
 	    // ** initialize variables
 	    Set_Move *set_move = dynamic_cast<Set_Move*>(*current_undo_move);
 	    assert( set_move );
-	    Stones::Stone_Type stone = set_move->stone_type;
+	    //Stones::Stone_Type stone = set_move->stone_type;
 
 	    // ** modify board state
-	    Field_Iterator field  ( set_move->pos, &game->current_player->board );
+	    Mutable_Field_Iterator field  ( set_move->pos, &game->current_player->board );
 	    *field = field_empty;
 
 	    // ** calculate animation positions
@@ -569,6 +575,8 @@ namespace relax
 	    ret = step_undo();
 	  }
 	  break;
+	  case Move::select_move:
+	  break;
 	}
       }
       break;
@@ -581,7 +589,7 @@ namespace relax
 	assert( Board::is_stone(stone) );
 
 	// ** modify board state
-	Field_Iterator to_field  ( set_move->pos, &game->current_player->board );
+	Mutable_Field_Iterator to_field  ( set_move->pos, &game->current_player->board );
 	*to_field = field_empty;
 
 	// readd stone to player or common stones
@@ -605,7 +613,7 @@ namespace relax
 	else
 	{
 	  // ** initialize variables
-	  Field_Pos &field_pos = current_removed_stone->first;
+	  //Field_Pos &field_pos = current_removed_stone->first;
 	  Stones::Stone_Type &stone = current_removed_stone->second;
 
 	  // ** modify board state
@@ -646,7 +654,7 @@ namespace relax
 	Stones::Stone_Type &stone = current_removed_stone->second;
 
 	// ** modify board state
-	Field_Iterator field( field_pos, &game->current_player->board );
+	Mutable_Field_Iterator field( field_pos, &game->current_player->board );
 	*field = Field_State_Type(stone); // place removed stone
 
 	// ** begin next finish animation
@@ -656,6 +664,10 @@ namespace relax
       }
       break;
       case finished:
+	break;
+      case knock_out_jump:
+      case knock_out_collects:
+      case removing:
 	break;
     }
 

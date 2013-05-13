@@ -1,5 +1,5 @@
 AC_INIT(wxmain.cpp)
-AM_INIT_AUTOMAKE(holtz, 1.3.1)
+AM_INIT_AUTOMAKE(holtz, 1.4.0)
 AC_PROG_CC
 AC_PROG_CXX
 AC_PROG_INSTALL
@@ -83,6 +83,7 @@ AC_OUTPUT(
 	Makefile
 	zertz/Makefile
 	dvonn/Makefile
+	bloks/Makefile
 	relax/Makefile
 	common/Makefile
 	skins/Makefile

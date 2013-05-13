@@ -19,8 +19,16 @@
 #include <wx/config.h>
 #include <wx/socket.h>
 
+#define GAME_NAME_ZERTZ "/GIPFPROJECT/ZERTZ"
+#define GAME_NAME_DVONN "/GIPFPROJECT/DVONN"
+#define GAME_NAME_BLOKS "/GIPFPROJECT/BLOKS"
+#define GAME_NAME_RELAX "/GIPFPROJECT/RELAX"
+
 #if (defined(VERSION_ZERTZ) && defined(VERSION_DVONN))
 #  error "something went wrong in include sequence: VERSION_ZERTZ and VERSION_DVONN defined"
+#endif
+#if (defined(VERSION_ZERTZ) && defined(VERSION_BLOKS))
+#  error "something went wrong in include sequence: VERSION_ZERTZ and VERSION_BLOKS defined"
 #endif
 #if (defined(VERSION_ZERTZ) && defined(VERSION_RELAX))
 #  error "something went wrong in include sequence: VERSION_ZERTZ and VERSION_RELAX defined"
@@ -28,9 +36,16 @@
 #if (defined(VERSION_RELAX) && defined(VERSION_DVONN))
 #  error "something went wrong in include sequence: VERSION_RELAX and VERSION_DVONN defined"
 #endif
+#if (defined(VERSION_RELAX) && defined(VERSION_BLOKS))
+#  error "something went wrong in include sequence: VERSION_RELAX and VERSION_BLOKS defined"
+#endif
+#if (defined(VERSION_DVONN) && defined(VERSION_BLOKS))
+#  error "something went wrong in include sequence: VERSION_DVONN and VERSION_BLOKS defined"
+#endif
 
 #if (defined(VERSION_ZERTZ) && !defined(__ZERTZ_NETWORK__)) || \
   (defined(VERSION_DVONN) && !defined(__DVONN_NETWORK__)) || \
+  (defined(VERSION_BLOKS) && !defined(__BLOKS_NETWORK__)) || \
   (defined(VERSION_RELAX) && !defined(__RELAX_NETWORK__))
 
 #if defined(VERSION_ZERTZ)
@@ -39,21 +54,22 @@
 #elif defined(VERSION_DVONN)
 #  define __DVONN_NETWORK__
 //#  warning "using dvonn..."
+#elif defined(VERSION_BLOKS)
+#  define __BLOKS_NETWORK__
+//#  warning "using bloks..."
 #elif defined(VERSION_RELAX)
 #  define __RELAX_NETWORK__
 //#  warning "using relax..."
 #else
-#  error "Please define either VERSION_ZERTZ or VERSION_DVONN or VERSION_RELAX"
+#  error "Please define either VERSION_ZERTZ or VERSION_DVONN or VERSION_BLOKS or VERSION_RELAX"
 #endif
-
-#define GAME_NAME_ZERTZ "/GIPFPROJECT/ZERTZ"
-#define GAME_NAME_DVONN "/GIPFPROJECT/DVONN"
-#define GAME_NAME_RELAX "/GIPFPROJECT/RELAX"
 
 #if defined(VERSION_ZERTZ)
 namespace zertz
 #elif defined(VERSION_DVONN)
 namespace dvonn
+#elif defined(VERSION_BLOKS)
+namespace bloks
 #elif defined(VERSION_RELAX)
 namespace relax
 #endif
@@ -111,6 +127,14 @@ namespace holtz
 #  include "dvonn/manager.hpp"
 #  include "dvonn/bgp.hpp"
 #  define VERSION_DVONN
+#elif defined(VERSION_BLOKS)
+#  undef VERSION_BLOKS
+#  include "msg_net.hpp"
+#  include "bloks/bloks.hpp"
+#  include "bloks/wxbloks.hpp"
+#  include "bloks/manager.hpp"
+#  include "bloks/bgp.hpp"
+#  define VERSION_BLOKS
 #elif defined(VERSION_RELAX)
 #  undef VERSION_RELAX
 #  include "msg_net.hpp"
@@ -125,6 +149,8 @@ namespace holtz
 namespace zertz
 #elif defined(VERSION_DVONN)
 namespace dvonn
+#elif defined(VERSION_BLOKS)
+namespace bloks
 #elif defined(VERSION_RELAX)
 namespace relax
 #endif

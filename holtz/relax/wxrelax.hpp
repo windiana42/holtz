@@ -49,6 +49,15 @@ namespace relax
   class Settings_Dialog;
 }
 
+// declare custom event type wx_EVT_RELAX_NOTIFY
+BEGIN_DECLARE_EVENT_TYPES()
+#if defined(MY_WX_MAKING_DLL) && defined(__WIN32__)
+DECLARE_EXPORTED_EVENT_TYPE(__declspec(dllexport),wxEVT_RELAX_NOTIFY, 0)
+#else
+DECLARE_EVENT_TYPE(wxEVT_RELAX_NOTIFY, 0)
+#endif
+END_DECLARE_EVENT_TYPES()
+
 namespace relax
 {
   using namespace holtz;
@@ -273,7 +282,7 @@ namespace relax
     virtual void disable_mouse_input();
     virtual long get_used_time();
 
-    void on_animation_done( wxTimerEvent& );
+    void on_animation_done( wxCommandEvent& );
   private:
     Game_Manager &game_manager;
     WX_GUI_Manager &gui_manager;
@@ -310,7 +319,7 @@ namespace relax
     virtual void setup_game_display(); // setup all windows to display game
     virtual void set_board( const Game &game );
     virtual void update_board( const Game &game );
-    virtual void report_scores( std::multimap<int/*score*/,Player*> scores );
+    virtual void report_scores( std::multimap<int/*score*/,const Player*> scores );
     virtual void report_winner( Player *player );
     virtual void report_error( wxString msg, wxString caption );
     virtual void report_information( wxString msg, wxString caption );

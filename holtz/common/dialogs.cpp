@@ -28,6 +28,12 @@
 #  include "util.hpp"
 #  define VERSION_DVONN
 #  define DEFAULT_PORT DEFAULT_PORT_DVONN
+#elif defined(VERSION_BLOKS)
+#  undef VERSION_BLOKS
+#  include "wxmain.hpp"
+#  include "util.hpp"
+#  define VERSION_BLOKS
+#  define DEFAULT_PORT DEFAULT_PORT_BLOKS
 #elif defined(VERSION_RELAX)
 #  undef VERSION_RELAX
 #  include "wxmain.hpp"
@@ -47,6 +53,8 @@
 namespace zertz
 #elif defined(VERSION_DVONN)
 namespace dvonn
+#elif defined(VERSION_BLOKS)
+namespace bloks
 #elif defined(VERSION_RELAX)
 namespace relax
 #endif
@@ -429,6 +437,14 @@ namespace relax
     new_game_choice = new wxRadioBox( this, DIALOG_NEW_GAME_CHOICE, 
 				      _("Rules for new game"), wxDefaultPosition,
 				      wxDefaultSize, 3, new_game_choices, 2, wxRA_SPECIFY_COLS );
+#elif defined(VERSION_BLOKS)
+    wxString new_game_choices[3];
+    new_game_choices[0] = wxString(_("Standard Rules (4 colors)"));
+    new_game_choices[1] = wxString(_("Small Board Rules (2 colors)"));
+    new_game_choices[2] = wxString(_("Rules of last game"));
+    new_game_choice = new wxRadioBox( this, DIALOG_NEW_GAME_CHOICE, 
+				      _("Rules for new game"), wxDefaultPosition,
+				      wxDefaultSize, 3, new_game_choices, 2, wxRA_SPECIFY_COLS );
 #elif defined(VERSION_RELAX)
     wxString new_game_choices[3];
     new_game_choices[0] = wxString(_("Standard Rules"));
@@ -441,8 +457,11 @@ namespace relax
 
     wxString continue_game_choices[3];
     continue_game_choices[0] = wxString(_("Continue last game"));
+    int n = 1;
+#if defined(VERSION_ZERTZ) || defined(VERSION_DVONN)
     continue_game_choices[1] = wxString(_("Load PBM game"));
-    int n = 2;
+    n = 2;
+#endif
 #if defined(VERSION_DVONN)
     continue_game_choices[2] = wxString(_("Load Little Golem game"));
     n = 3;
@@ -520,7 +539,18 @@ namespace relax
 	switch( new_game_choice->GetSelection() )
 	{
 	  case 0: game_dialog.game = Game( Standard_Ruleset() ); break;
+// #warning TODO: change back from micro ruleset to random ruleset
+// 	  case 1: game_dialog.game = Game( Micro_Ruleset() ); break;
 	  case 1: game_dialog.game = Game( Random_Ruleset() ); break;
+	  case 2: game_dialog.game = Game( *game_dialog.game_manager.get_game().ruleset ); 
+	}
+#elif defined(VERSION_BLOKS)
+	switch( new_game_choice->GetSelection() )
+	{
+	  case 0: game_dialog.game = Game( Standard_Ruleset() ); break;
+// #warning TODO: change back from micro ruleset to small board
+// 	  case 1: game_dialog.game = Game( Micro_Ruleset() ); break;
+	  case 1: game_dialog.game = Game( Small_Board_Ruleset() ); break;
 	  case 2: game_dialog.game = Game( *game_dialog.game_manager.get_game().ruleset ); 
 	}
 #elif defined(VERSION_RELAX)
@@ -628,6 +658,14 @@ namespace relax
       {
 	case Ruleset::standard:   new_game_choice->SetSelection(0); break;
 	case Ruleset::custom:     new_game_choice->SetSelection(1); break;
+      }
+      new_game_choice->Enable(true);
+#elif defined(VERSION_BLOKS)
+      switch( game_dialog.game.ruleset->get_type() )
+      {
+	case Ruleset::standard:    new_game_choice->SetSelection(0); break;
+	case Ruleset::small_board: new_game_choice->SetSelection(1); break;
+	case Ruleset::custom:      new_game_choice->SetSelection(2); break;
       }
       new_game_choice->Enable(true);
 #elif defined(VERSION_RELAX)
@@ -894,12 +932,12 @@ namespace relax
 #endif
   }
 
-  void Custom_Board_Setup_Panel::on_change_board  ( wxCommandEvent& event )
+  void Custom_Board_Setup_Panel::on_change_board  ( wxCommandEvent& )
   {
     changes = true;
   }
 
-  void Custom_Board_Setup_Panel::on_change_win  ( wxCommandEvent& event )
+  void Custom_Board_Setup_Panel::on_change_win  ( wxCommandEvent& )
   {
     changes = true;
 #if defined(VERSION_ZERTZ)
@@ -929,7 +967,7 @@ namespace relax
 #endif
   }
 
-  void Custom_Board_Setup_Panel::on_spin_win ( wxSpinEvent& event )
+  void Custom_Board_Setup_Panel::on_spin_win ( wxSpinEvent& )
   {
     changes = true;
 #if defined(VERSION_ZERTZ)
@@ -937,7 +975,7 @@ namespace relax
 #endif
   }
 
-  void Custom_Board_Setup_Panel::on_change_stones  ( wxCommandEvent& event )
+  void Custom_Board_Setup_Panel::on_change_stones  ( wxCommandEvent& )
   {
     changes = true;
 #if defined(VERSION_ZERTZ)
@@ -1104,6 +1142,8 @@ namespace relax
     {
       int index = pbm_game_list->GetSelection();
       int board_num = int(intptr_t( pbm_game_list->GetClientData(index) ));
+				// attention: retrieving integer from pointer variable (see
+				// pbm_game_list->Append(,xxx))
 
       // load board
       int current_move = 0, max_move, num_moves;
@@ -1254,7 +1294,9 @@ namespace relax
 		  << str_to_wxstr(master_content.player1) << wxT(":")
 		  << str_to_wxstr(master_content.player2) << wxT(" (") 
 		  << master_content.to << wxT(" ") << _("moves") << wxT(")");
-	pbm_game_list->Append( board_str, (void*) (master_content.id) );
+	pbm_game_list->Append( board_str, ((char*) 0) + (master_content.id) ); 
+				// attention: storing integer in pointer variable instead of
+				// dynamically allocating memory
       }
     }
 
@@ -2082,7 +2124,7 @@ p			  str_to_wxstr(master_content.player1).c_str(), str_to_wxstr(master_content.
   // Game_Dialog
   // ----------------------------------------------------------------------------
 
-  Game_Dialog::Game_Dialog( wxWindow *parent, Game_Manager &game_manager, 
+  Game_Dialog::Game_Dialog( wxWindow* /*parent*/, Game_Manager &game_manager, 
 			    WX_GUI_Manager &gui_manager )
     : game_manager(game_manager), gui_manager(gui_manager),
       game( Standard_Ruleset() ), game_setup_manager(0),
@@ -2252,7 +2294,7 @@ p			  str_to_wxstr(master_content.player1).c_str(), str_to_wxstr(master_content.
     return false;
   }
 
-  void Game_Dialog::on_wizard_finished( wxWizardEvent& event )
+  void Game_Dialog::on_wizard_finished( wxWizardEvent& )
   {
     wizard = 0;			// wizard will destroy itself
     if( game_setup_manager )
@@ -2263,7 +2305,7 @@ p			  str_to_wxstr(master_content.player1).c_str(), str_to_wxstr(master_content.
     }
   }
 
-  void Game_Dialog::on_wizard_page_changing( wxWizardEvent& event )
+  void Game_Dialog::on_wizard_page_changing( wxWizardEvent& )
   {
     // will be handled by page
   }
@@ -2330,6 +2372,26 @@ p			  str_to_wxstr(master_content.player1).c_str(), str_to_wxstr(master_content.
 					 wxDefaultSize, 2, arrangement_choices, 1, 
 					 wxRA_SPECIFY_COLS );
     top_sizer->Add( arrangement_choice, 0, wxALL, 10  );
+    orientation_choice->
+      SetHelpText(_("Select the orientation in which the board is displayed on screen."));
+#elif defined(VERSION_BLOKS)
+    wxString orientation_choices[2];
+    orientation_choices[0] = wxString(_("Horizontal"));
+    orientation_choices[1] = wxString(_("Vertical"));
+    orientation_choice = new wxRadioBox( this, -1, _("Board orientation"), wxDefaultPosition,
+					 wxDefaultSize, 2, orientation_choices, 1, 
+					 wxRA_SPECIFY_ROWS );
+    top_sizer->Add( orientation_choice, 0, wxALL, 10  );
+
+    wxString arrangement_choices[2];
+    arrangement_choices[0] = wxString(_("Board top stones below"));
+    arrangement_choices[1] = wxString(_("Board left stones right"));
+    arrangement_choice = new wxRadioBox( this, -1, _("Panels arrangement"), wxDefaultPosition,
+					 wxDefaultSize, 2, arrangement_choices, 1, 
+					 wxRA_SPECIFY_COLS );
+    top_sizer->Add( arrangement_choice, 0, wxALL, 10  );
+    orientation_choice->
+      SetHelpText(_("Select the orientation in which the board is displayed on screen."));
 #endif
 
     show_coordinates = new wxCheckBox( this, -1, _("Show field coordinates") );
@@ -2342,8 +2404,9 @@ p			  str_to_wxstr(master_content.player1).c_str(), str_to_wxstr(master_content.
     multiple_player_stones = new wxCheckBox( this, -1, _("Display all player stones individually") );
     top_sizer->Add( multiple_player_stones, 0, wxALL, 10 );
 
-    orientation_choice->
-      SetHelpText(_("Select the orientation in which the board is displayed on-screen."));
+#elif defined(VERSION_BLOKS)
+    multiple_player_stones = new wxCheckBox( this, -1, _("Display all player stones individually") );
+    top_sizer->Add( multiple_player_stones, 0, wxALL, 10 );
 #endif
 
     // set help texts
@@ -2426,6 +2489,15 @@ p			  str_to_wxstr(master_content.player1).c_str(), str_to_wxstr(master_content.
     multiple_common_stones->SetValue( dialog->game_settings.common_stone_settings.multiple_stones );
     multiple_player_stones->SetValue( dialog->game_settings
 				      .player_settings.stone_settings.multiple_stones );
+#elif defined(VERSION_BLOKS)
+    orientation_choice->SetSelection( dialog->game_settings.board_settings.rotate_board ? 1 : 0 );
+    switch( dialog->game_settings.arrangement )
+    {
+      case Game_Panel::Settings::arrange_standard:     arrangement_choice->SetSelection(0); break;
+      case Game_Panel::Settings::arrange_player_stones_right: arrangement_choice->SetSelection(1); break;
+    }
+    multiple_player_stones->SetValue( dialog->game_settings
+				      .player_settings.stone_settings.multiple_stones );
 #endif
   }
 
@@ -2447,6 +2519,20 @@ p			  str_to_wxstr(master_content.player1).c_str(), str_to_wxstr(master_content.
     }
     dialog->game_settings.common_stone_settings.multiple_stones		 
       = multiple_common_stones->GetValue();
+    dialog->game_settings.player_settings.stone_settings.multiple_stones 
+      = multiple_player_stones->GetValue();
+#elif defined(VERSION_BLOKS)
+    dialog->game_settings.board_settings.rotate_board 
+      = orientation_choice->GetSelection() == 0 ? false : true;
+    dialog->game_settings.common_stone_settings.rotate_stones          
+      = dialog->game_settings.board_settings.rotate_board;
+    dialog->game_settings.player_settings.stone_settings.rotate_stones 
+      = dialog->game_settings.board_settings.rotate_board;
+    switch( arrangement_choice->GetSelection() )
+    {
+      case 0: dialog->game_settings.arrangement = Game_Panel::Settings::arrange_standard; break;
+      case 1: dialog->game_settings.arrangement = Game_Panel::Settings::arrange_player_stones_right; break;
+    }
     dialog->game_settings.player_settings.stone_settings.multiple_stones 
       = multiple_player_stones->GetValue();
 #endif
@@ -2603,7 +2689,7 @@ p			  str_to_wxstr(master_content.player1).c_str(), str_to_wxstr(master_content.
     dialog->game_settings.player_settings.player_font		    = player_font;
     dialog->game_settings.board_settings.coord_font		    = coord_font;
     dialog->game_settings.common_stone_settings.stone_font	    = stone_font;
-#if defined(VERSION_ZERTZ)
+#if defined(VERSION_ZERTZ) || defined(VERSION_BLOKS)
     dialog->game_settings.player_settings.stone_settings.stone_font = stone_font;
 #elif defined(VERSION_DVONN)
     dialog->game_settings.board_settings.stack_font		    = stone_font;
@@ -2620,8 +2706,10 @@ p			  str_to_wxstr(master_content.player1).c_str(), str_to_wxstr(master_content.
       valid_skin_file = filename;
       skin_file->SetValue( filename );
     }
-    else
-      /*!!! output error !!!*/;
+    else 
+    {
+      /*!!! output error !!!*/
+    }
   }
   void Look_Feel_Page::on_change_skin( wxCommandEvent& WXUNUSED(event) )
   {
@@ -2629,7 +2717,9 @@ p			  str_to_wxstr(master_content.player1).c_str(), str_to_wxstr(master_content.
     if( wxFileExists(filename) )
       valid_skin_file = filename;
     else
-      /*!!! output error !!!*/;
+    {
+      /*!!! output error !!!*/
+    }
   }
   void Look_Feel_Page::on_choose_beep( wxCommandEvent& WXUNUSED(event) )
   {
@@ -2642,7 +2732,9 @@ p			  str_to_wxstr(master_content.player1).c_str(), str_to_wxstr(master_content.
       beep_file->SetValue( filename );
     }
     else
-      /*!!! output error !!!*/;
+    {
+      /*!!! output error !!!*/
+    }
   }
   void Look_Feel_Page::on_change_beep( wxCommandEvent& WXUNUSED(event) )
   {
@@ -2650,7 +2742,9 @@ p			  str_to_wxstr(master_content.player1).c_str(), str_to_wxstr(master_content.
     if( wxFileExists(filename) )
       valid_beep_file = filename;
     else
-      /*!!! output error !!!*/;
+    {
+      /*!!! output error !!!*/
+    }
   }
   void Look_Feel_Page::on_choose_player_font( wxCommandEvent& WXUNUSED(event) )
   {

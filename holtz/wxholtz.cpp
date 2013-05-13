@@ -14,7 +14,11 @@
  * 
  */
 
+#define MY_WX_MAKING_DLL // for WX MSW using mingw cross-compile
 #include "wxholtz.hpp"
+
+// define custom event type wx_EVT_HOLTZ_NOTIFY
+DEFINE_EVENT_TYPE(wxEVT_HOLTZ_NOTIFY)
 
 namespace holtz {
 
@@ -33,7 +37,7 @@ namespace holtz {
   {
   }
 
-  Dimensions::Dimensions( char **field_xpm )
+  Dimensions::Dimensions( const char **field_xpm )
     : field_x(0), field_y(0), stack_shift_x(0), stack_shift_y(3),      
       caption_height(30), stone_offset(20),
       board_x_offset(10), board_y_offset(10),

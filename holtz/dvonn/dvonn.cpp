@@ -77,6 +77,18 @@ namespace dvonn
   }
 
   // ----------------------------------------------------------------------------
+  // Micro_Common_Stones
+  // ----------------------------------------------------------------------------
+
+  Micro_Common_Stones::Micro_Common_Stones()
+    : Common_Stones( custom )
+  {
+    stone_count[ Stones::red_stone ]   = 3;
+    stone_count[ Stones::white_stone ] = 8;
+    stone_count[ Stones::black_stone ] = 8;
+  }
+
+  // ----------------------------------------------------------------------------
   // Custom_Common_Stones
   // ----------------------------------------------------------------------------
 
@@ -1632,18 +1644,6 @@ namespace dvonn
   // **********************
   // get_num_possible_moves
 
-  // counts knock out moves beginning with from->over->to
-  int get_num_knock_out_moves( Game &game, 
-			       Move_Sequence &current_move_sequence, 
-			       Field_Iterator from, Field_Iterator over, Field_Iterator to )
-  {
-    int num_possible_moves = 0;
-
-    //!!! implement that
-    num_possible_moves = 43;   
-
-    return num_possible_moves;
-  }
   /*
 
   // get number of set-remove moves beginning with a special set move
@@ -2178,11 +2178,11 @@ namespace dvonn
   {
     return move == 0;
   }
-  bool Jump_Move::may_be_first_move( Game &game ) const
+  bool Jump_Move::may_be_first_move( Game & /*game*/ ) const
   {
     return true;
   }
-  bool Jump_Move::may_be_last_move( Game &game ) const
+  bool Jump_Move::may_be_last_move( Game & /*game*/ ) const
   {
     return true;
   }
@@ -2354,11 +2354,11 @@ namespace dvonn
   {
     return move == 0;
   }
-  bool Set_Move::may_be_first_move( Game &game ) const
+  bool Set_Move::may_be_first_move( Game & /*game*/ ) const
   {
     return true;
   }
-  bool Set_Move::may_be_last_move( Game &game ) const
+  bool Set_Move::may_be_last_move( Game & /*game*/ ) const
   {
     return true;
   }
@@ -2574,12 +2574,12 @@ namespace dvonn
     }
   }
   // true: move ok
-  bool Finish_Move::check_move( Game &game ) const 
+  bool Finish_Move::check_move( Game & /*game*/ ) const 
   {
     return true;
   }
   // true: type ok
-  bool Finish_Move::check_previous_move ( Game &game, Move *move ) const 
+  bool Finish_Move::check_previous_move ( Game & /*game*/, Move *move ) const 
   {
     if( !move )
       return false;
@@ -2600,7 +2600,7 @@ namespace dvonn
     eos << get_type();
     return eos;
   }
-  bool Finish_Move::input( std::escape_istream &is )
+  bool Finish_Move::input( std::escape_istream & /*is*/ )
   {
     return true;
   }
@@ -3021,6 +3021,7 @@ namespace dvonn
       Field_Pos pos = coordinate_translator->get_field_pos( word );
       Set_Move *move = new Set_Move(pos);
       sequence.add_move( move );
+      //sequence.add_move( new Finish_Move() ); // no finish move needed for set moves
     }
     else if( word.size() == 4 )
     {
@@ -3129,6 +3130,22 @@ namespace dvonn
     }
     board.num_empty_fields = 0;
     board.game_state = Board::jump_moves;
+  }
+
+  // ----------------------------------------------------------------------------
+  // Micro_Ruleset
+  // ----------------------------------------------------------------------------
+
+  Micro_Ruleset::Micro_Ruleset()
+    : Ruleset( custom,
+	       Board( (const int*) micro_board, 
+		      sizeof(micro_board[0]) / sizeof(micro_board[0][0]),
+		      sizeof(micro_board)    / sizeof(micro_board[0]), Board::custom ),
+	       Micro_Common_Stones(),
+	       new Standard_Win_Condition(), 0 /*coordinate translator init below */,
+	       true /*undo possible*/, 2, 2 )
+  {
+    coordinate_translator = new Standard_Coordinate_Translator(board);
   }
 
   // ----------------------------------------------------------------------------

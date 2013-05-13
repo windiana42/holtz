@@ -228,15 +228,15 @@ namespace relax
   {
   public:
     enum Direction{ invalid_direction=-1, 
-			    right=0, top_right=1, top_left=2, left=3, 
-			    bottom_left=4, bottom_right=5,
-			    right2=6, top_right2=7, top_left2=8, left2=9, 
-			    bottom_left2=10, bottom_right2=11 };
+		    right=0, top_right=1, top_left=2, left=3, 
+		    bottom_left=4, bottom_right=5,
+		    right2=6, top_right2=7, top_left2=8, left2=9, 
+		    bottom_left2=10, bottom_right2=11 };
 
     // counting numbers turns in math. positive direction
 
-    Field_Iterator( Board * );
-    Field_Iterator( Field_Pos, Board * );
+    Field_Iterator( const Board * );
+    Field_Iterator( Field_Pos, const Board * );
     void set_pos( Field_Pos );
     inline Field_Pos get_pos() const { return current_pos; }
     static bool is_connected( Field_Pos p1, Field_Pos p2 );
@@ -261,11 +261,21 @@ namespace relax
     Field_Iterator &Bottom_Right();
     Field_Iterator &Go( Direction );
 
-    bool is_valid_field();	// tells whether field is in range
-    Field_State_Type &operator*();
-  private:
+    bool is_valid_field() const;	// tells whether field is in range
+    Field_State_Type operator*() const; // don't call with invalid field
+  protected:
     Field_Pos current_pos;
-    Board *board;
+    const Board *board;
+  };
+
+  class Mutable_Field_Iterator : public Field_Iterator
+  {
+  public:
+    Mutable_Field_Iterator( Board *board ) : Field_Iterator(board), mutable_board(board) {}
+    Mutable_Field_Iterator( Field_Pos pos, Board *board ) : Field_Iterator(pos,board), mutable_board(board) {}
+    Field_State_Type &operator*(); // don't call with invalid field
+  private:
+    Board *mutable_board;
   };
   
   inline bool operator==( const Field_Iterator &p1, const Field_Iterator &p2 )
@@ -411,8 +421,8 @@ namespace relax
   bool operator<( const Set_Move &m1, const Set_Move &m2 );
   bool operator==( const Select_Move &m1, const Select_Move &m2 );
   bool operator<( const Select_Move &m1, const Select_Move &m2 );
-  inline bool operator==( const Finish_Move &m1, const Finish_Move &m2 ) { return true; }
-  inline bool operator<( const Finish_Move &m1, const Finish_Move &m2 ) { return false; }
+  inline bool operator==( const Finish_Move &, const Finish_Move & ) { return true; }
+  inline bool operator<( const Finish_Move &, const Finish_Move & ) { return false; }
   bool operator==( const Move_Sequence &s1, const Move_Sequence &s2 );
   bool operator<( const Move_Sequence &s1, const Move_Sequence &s2 );
 
@@ -571,7 +581,7 @@ namespace relax
     int get_winner_index() { return winner_player_index; } // returns -1 if no player won
     void reset_game();		// doesn't reset players
     void reset_game( const Ruleset & );	// doesn't reset players
-    std::multimap<int/*score*/,Player*> get_scores();
+    std::multimap<int/*score*/,const Player*> get_scores() const;
 
     // **************
     // init functions
@@ -595,8 +605,8 @@ namespace relax
     std::list<Move_Sequence> get_possible_moves(); // get possible moves in situation
     std::list<std::pair<Move_Sequence,int/*player index*/> > get_played_moves();   
 				// get moves played since start
-    int get_max_score(Player *player=0,std::vector<std::map<int/*num*/, 
-		      unsigned /*stones*/> > *stones_available = 0);
+    int get_max_score(const Player *player=0,std::vector<std::map<int/*num*/, 
+		      unsigned /*stones*/> > *stones_available = 0) const;
     
     std::vector<Player>::iterator get_next_player( std::vector<Player>::iterator player );
     std::vector<Player>::iterator get_prev_player( std::vector<Player>::iterator player );
@@ -695,7 +705,7 @@ namespace relax
   class Standard_Win_Condition : public Win_Condition
   {
   public:
-    virtual bool did_player_win( Game &, Player & ) const { return false; /*!!! todo !!!*/ }
+    virtual bool did_player_win( Game &, Player & ) const { return false; /*Relax does not really use win condition*/ }
     virtual Win_Condition *clone() { return new Standard_Win_Condition(); }
 
     Standard_Win_Condition();

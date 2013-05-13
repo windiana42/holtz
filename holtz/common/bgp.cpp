@@ -24,6 +24,10 @@
 #  undef VERSION_DVONN
 #  include "util.hpp"
 #  define VERSION_DVONN
+#elif defined(VERSION_BLOKS)
+#  undef VERSION_BLOKS
+#  include "util.hpp"
+#  define VERSION_BLOKS
 #elif defined(VERSION_RELAX)
 #  undef VERSION_RELAX
 #  include "util.hpp"
@@ -41,6 +45,8 @@
 namespace zertz
 #elif defined(VERSION_DVONN)
 namespace dvonn
+#elif defined(VERSION_BLOKS)
+namespace bloks
 #elif defined(VERSION_RELAX)
 namespace relax
 #endif
@@ -132,7 +138,9 @@ namespace relax
 #ifdef VERSION_DVONN
       Board::Game_State dvonn_board_state; 
 #endif
+#if !defined(VERSION_BLOKS)
       int num_empty_fields=0;
+#endif
       int board_state;
       int columns, rows;
       eis >> board_state >> rows >> columns;
@@ -154,6 +162,13 @@ namespace relax
 	default: return false;	// invalid board state
       }
       std::vector< std::vector< std::deque<Field_State_Type> > > fields;
+#elif defined(VERSION_BLOKS)
+      switch(Board_State_Type(board_state))
+      {
+	case board_state_default: break;
+	default: return false;	// invalid board state
+      }
+      std::vector< std::vector< Field_State_Type > > fields;
 #elif defined(VERSION_RELAX)
       switch(Board_State_Type(board_state))
       {
@@ -218,6 +233,26 @@ namespace relax
 #endif
 	    return false;		// if field type is invalid
 	  }
+#elif defined(VERSION_BLOKS)
+	  int field_type;
+	  eis >> field_type;
+	  switch( Field_Type(field_type) )
+	  {
+	    case field_empty:
+	    case field_removed:
+	    case field_player1:
+	    case field_player2:
+	    case field_player3:
+	    case field_player4:
+	    {
+	      fields[row][col] = Field_State_Type(field_type);
+	      continue;		// field type ok => continue loop
+	    }
+	  }
+#ifndef __WXMSW__
+	  std::cerr << "error: received invalid field" << std::endl;
+#endif
+	  return false;		// if field type is invalid
 #elif defined(VERSION_RELAX)
 	  int field_type;
 	  eis >> field_type;
@@ -240,6 +275,8 @@ namespace relax
       board = Board(fields);
 #elif defined(VERSION_DVONN)
       board = Board(dvonn_board_state,num_empty_fields,fields);
+#elif defined(VERSION_BLOKS)
+      board = Board(fields,get_standard_stone_types());
 #elif defined(VERSION_RELAX)
       board = Board(fields);
 #endif
@@ -257,6 +294,8 @@ namespace relax
 	case Board::set_moves:  board_state = board_state_set_moves; break;
 	case Board::jump_moves: board_state = board_state_jump_moves; break;
       }
+#elif defined(VERSION_BLOKS)
+      board_state = board_state_default;
 #elif defined(VERSION_RELAX)
       board_state = board_state_default;
 #endif
@@ -277,6 +316,8 @@ namespace relax
 	  {
 	    eos << *it;
 	  }
+#elif defined(VERSION_BLOKS)
+	  eos << board.field[row][col];
 #elif defined(VERSION_RELAX)
 	  eos << board.field[row][col];
 #endif
@@ -364,6 +405,29 @@ namespace relax
 	{
 	  return read_board( eis, start_board );
 	}
+#elif defined(VERSION_BLOKS)
+	case board_standard:
+	{
+	  start_board = Board( (const int*) standard_board, 
+			       sizeof(standard_board[0]) / sizeof(standard_board[0][0]),
+			       sizeof(standard_board)    / sizeof(standard_board[0]),
+			       get_standard_stone_types(),
+			       Board::standard );
+	  return true;
+	}
+	case board_small_board:
+	{
+	  start_board = Board( (const int*) small_board_board, 
+			       sizeof(small_board_board[0]) / sizeof(small_board_board[0][0]),
+			       sizeof(small_board_board)    / sizeof(small_board_board[0]),
+			       get_standard_stone_types(),
+			       Board::small_board );
+	  return true;
+	}
+	case board_custom:
+	{
+	  return read_board( eis, start_board );
+	}
 #elif defined(VERSION_RELAX)
 	case board_standard:
 	{
@@ -439,7 +503,23 @@ namespace relax
 	  common_stones = Custom_Common_Stones( red_stones, white_stones, black_stones );
 	  return true;
 	}
+#elif defined(VERSION_BLOKS)
+	case stones_custom:
+	case stones_standard:
+	{
+	  common_stones = Standard_Common_Stones();
+	  return true;
+	}
+	// TODO:
+	// case stones_custom:
+	// {
+	//   int red_stones, white_stones, black_stones;
+	//   eis >> red_stones >> white_stones >> black_stones;
+	//   common_stones = Custom_Common_Stones( red_stones, white_stones, black_stones );
+	//   return true;
+	// }
 #elif defined(VERSION_RELAX)
+	case stones_custom:
 	case stones_standard:
 	{
 	  common_stones = Standard_Common_Stones();
@@ -472,6 +552,8 @@ namespace relax
 	eos << common_stones.stone_count[Stones::red_stone];
 	eos << common_stones.stone_count[Stones::white_stone];
 	eos << common_stones.stone_count[Stones::black_stone];
+#elif defined(VERSION_BLOKS)
+	// there are no common stones in bloks
 #elif defined(VERSION_RELAX)
 	//!!! todo
 #endif
@@ -521,6 +603,12 @@ namespace relax
 	  win_condition = new Standard_Win_Condition();
 	  return true;
 	}
+#elif defined(VERSION_BLOKS)
+	case win_standard:
+	{
+	  win_condition = new Standard_Win_Condition();
+	  return true;
+	}
 #elif defined(VERSION_RELAX)
 	case win_standard:
 	{
@@ -549,6 +637,7 @@ namespace relax
 	}
       }
 #elif defined(VERSION_DVONN)
+#elif defined(VERSION_BLOKS)
 #elif defined(VERSION_RELAX)
 #endif
     }
@@ -591,6 +680,17 @@ namespace relax
 	case ruleset_standard:
 	{
 	  ruleset = Standard_Ruleset();
+	  return true;
+	}
+#elif defined(VERSION_BLOKS)
+	case ruleset_standard:
+	{
+	  ruleset = Standard_Ruleset();
+	  return true;
+	}
+	case ruleset_small_board:
+	{
+	  ruleset = Small_Board_Ruleset();
 	  return true;
 	}
 #elif defined(VERSION_RELAX)
@@ -678,7 +778,7 @@ namespace relax
 	// input ok:
 	Player player(player_name, player_id);
 #if defined(VERSION_ZERTZ)
-	int white_stones, grey_stones, black_stones;
+	int white_stones=-1, grey_stones=-1, black_stones=-1;
 	eis >> white_stones >> grey_stones >> black_stones;
 	// check input
 	if( (white_stones < 0) || (grey_stones < 0) || (black_stones < 0) )
@@ -687,6 +787,18 @@ namespace relax
 	player.stones.stone_count[Stones::grey_stone ] = grey_stones;
 	player.stones.stone_count[Stones::black_stone] = black_stones;
 #elif defined(VERSION_DVONN)
+#elif defined(VERSION_BLOKS)
+	int num_stone_counts = 0;
+	player.stones.remove_stones();
+	eis >> num_stone_counts;
+	for( int j=0; j<num_stone_counts; ++j )
+	{
+	  int stone_ID = -1;
+	  int count = -1;
+	  eis >> stone_ID >> count;
+	  if( count < 0 || stone_ID < 0 ) return false;
+	  player.stones.set_stone_count(stone_ID,count);
+	}
 #elif defined(VERSION_RELAX)
 #endif
 	players.push_back( player );
@@ -707,6 +819,16 @@ namespace relax
 	eos << i->stones.stone_count.find(Stones::grey_stone)->second;
 	eos << i->stones.stone_count.find(Stones::black_stone)->second;
 #elif defined(VERSION_DVONN)
+#elif defined(VERSION_BLOKS)
+	const std::map<int/*stone_ID*/, int/*count*/> &stone_counts = i->stones.get_stone_counts();
+	eos << stone_counts.size();
+	std::map<int/*stone_ID*/, int/*count*/>::const_iterator it2;
+	for( it2=stone_counts.begin(); it2!=stone_counts.end(); ++it2 )
+	{
+	  int stone_ID = it2->first;
+	  int count = it2->second;
+	  eos << stone_ID << count;
+	}
 #elif defined(VERSION_RELAX)
 #endif
       }

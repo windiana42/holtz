@@ -2,1120 +2,1376 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Holtz\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2009-07-20 07:43+0100\n"
-"PO-Revision-Date: 2009-07-20 07:43+0100\n"
+"POT-Creation-Date: 2013-05-13 23:16+0100\n"
+"PO-Revision-Date: 2013-05-13 23:18+0100\n"
 "Last-Translator: Martin Trautmann <windiana@users.sf.net>\n"
 "Language-Team: Florian Fischer, Martin Trautmann <martintrautmann@gmx.de>\n"
+"Language: de\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"X-Poedit-Language: German\n"
 "X-Poedit-Basepath: .\n"
-"X-Poedit-SearchPath-0: /home/martin/Programmieren/sourceforge/holtz\n"
+"X-Poedit-SearchPath-0: /home/martin/Programmieren/sourceforge/holtz/branches/"
+"new_game_bloks/holtz\n"
 
-#: /home/martin/Programmieren/sourceforge/holtz/wxmain.cpp:152
+#: /home/martin/Programmieren/sourceforge/holtz/branches/new_game_bloks/holtz/wxmain.cpp:173
 msgid "No help file found."
 msgstr "Die Hilfedatei wurde nicht gefunden."
 
-#: /home/martin/Programmieren/sourceforge/holtz/wxmain.cpp:157
+#: /home/martin/Programmieren/sourceforge/holtz/branches/new_game_bloks/holtz/wxmain.cpp:178
 msgid "Holtz"
 msgstr "Holtz"
 
-#: /home/martin/Programmieren/sourceforge/holtz/wxmain.cpp:339
+#: /home/martin/Programmieren/sourceforge/holtz/branches/new_game_bloks/holtz/wxmain.cpp:387
 msgid "You are about to switch to Zertz and close your current game. Proceed?"
-msgstr "Du bist gerade dabei nach Zèrtz zu wechseln und das aktuelle Spiel zu schließen. Weiter?"
+msgstr ""
+"Du bist gerade dabei nach Zèrtz zu wechseln und das aktuelle Spiel zu "
+"schließen. Weiter?"
 
-#: /home/martin/Programmieren/sourceforge/holtz/wxmain.cpp:340
-#: /home/martin/Programmieren/sourceforge/holtz/wxmain.cpp:372
-#: /home/martin/Programmieren/sourceforge/holtz/wxmain.cpp:404
+#: /home/martin/Programmieren/sourceforge/holtz/branches/new_game_bloks/holtz/wxmain.cpp:388
+#: /home/martin/Programmieren/sourceforge/holtz/branches/new_game_bloks/holtz/wxmain.cpp:423
+#: /home/martin/Programmieren/sourceforge/holtz/branches/new_game_bloks/holtz/wxmain.cpp:458
+#: /home/martin/Programmieren/sourceforge/holtz/branches/new_game_bloks/holtz/wxmain.cpp:493
 msgid "Closing Game"
 msgstr "Spiel beenden"
 
-#: /home/martin/Programmieren/sourceforge/holtz/wxmain.cpp:371
+#: /home/martin/Programmieren/sourceforge/holtz/branches/new_game_bloks/holtz/wxmain.cpp:422
 msgid "You are about to switch to Dvonn and close your current game. Proceed?"
-msgstr "Du bist gerade dabei nach Dvonn zu wechseln und das aktuelle Spiel zu schließen. Weiter?"
+msgstr ""
+"Du bist gerade dabei nach Dvonn zu wechseln und das aktuelle Spiel zu "
+"schließen. Weiter?"
 
-#: /home/martin/Programmieren/sourceforge/holtz/wxmain.cpp:403
+#: /home/martin/Programmieren/sourceforge/holtz/branches/new_game_bloks/holtz/wxmain.cpp:457
+msgid "You are about to switch to Bloks and close your current game. Proceed?"
+msgstr ""
+"Du bist gerade dabei nach Bloks zu wechseln und das aktuelle Spiel zu "
+"schließen. Weiter?"
+
+#: /home/martin/Programmieren/sourceforge/holtz/branches/new_game_bloks/holtz/wxmain.cpp:492
 msgid "You are about to switch to Relax and close your current game. Proceed?"
-msgstr "Du bist gerade dabei nach Relax zu wechseln und das aktuelle Spiel zu schließen. Weiter?"
+msgstr ""
+"Du bist gerade dabei nach Relax zu wechseln und das aktuelle Spiel zu "
+"schließen. Weiter?"
 
-#: /home/martin/Programmieren/sourceforge/holtz/wxmain.cpp:762
+#: /home/martin/Programmieren/sourceforge/holtz/branches/new_game_bloks/holtz/wxmain.cpp:897
 msgid "Welcome to Holtz!"
 msgstr "Willkommen bei Holtz!"
 
-#: /home/martin/Programmieren/sourceforge/holtz/wxmain.cpp:776
+#: /home/martin/Programmieren/sourceforge/holtz/branches/new_game_bloks/holtz/wxmain.cpp:911
 msgid "New &Zertz Game...\tCtrl-Z"
 msgstr "Neues &Zèrtz Spiel...\tStrg-Z"
 
-#: /home/martin/Programmieren/sourceforge/holtz/wxmain.cpp:777
+#: /home/martin/Programmieren/sourceforge/holtz/branches/new_game_bloks/holtz/wxmain.cpp:912
 msgid "Start a new Zertz game"
 msgstr "Starte ein neues Zèrtz Spiel"
 
-#: /home/martin/Programmieren/sourceforge/holtz/wxmain.cpp:778
+#: /home/martin/Programmieren/sourceforge/holtz/branches/new_game_bloks/holtz/wxmain.cpp:913
 msgid "New &Dvonn Game...\tCtrl-D"
 msgstr "Neues &Dvonn Spiel...\tStrg-D"
 
-#: /home/martin/Programmieren/sourceforge/holtz/wxmain.cpp:779
+#: /home/martin/Programmieren/sourceforge/holtz/branches/new_game_bloks/holtz/wxmain.cpp:914
 msgid "Start a new Dvonn game"
 msgstr "Starte ein neues Dvonn Spiel"
 
-#: /home/martin/Programmieren/sourceforge/holtz/wxmain.cpp:780
+#: /home/martin/Programmieren/sourceforge/holtz/branches/new_game_bloks/holtz/wxmain.cpp:915
+msgid "New &Bloks Game...\tCtrl-B"
+msgstr "Neues &Bloks Spiel...\tStrg-B"
+
+#: /home/martin/Programmieren/sourceforge/holtz/branches/new_game_bloks/holtz/wxmain.cpp:916
+msgid "Start a new Bloks game"
+msgstr "Starte ein neues Bloks Spiel"
+
+#: /home/martin/Programmieren/sourceforge/holtz/branches/new_game_bloks/holtz/wxmain.cpp:917
 msgid "New &Relax Game...\tCtrl-R"
 msgstr "Neues &Relax Spiel...\tStrg-R"
 
-#: /home/martin/Programmieren/sourceforge/holtz/wxmain.cpp:781
+#: /home/martin/Programmieren/sourceforge/holtz/branches/new_game_bloks/holtz/wxmain.cpp:918
 msgid "Start a new Relax game"
 msgstr "Starte ein neues Relax Spiel"
 
-#: /home/martin/Programmieren/sourceforge/holtz/wxmain.cpp:783
+#: /home/martin/Programmieren/sourceforge/holtz/branches/new_game_bloks/holtz/wxmain.cpp:920
 msgid "E&xit\tAlt-X"
 msgstr "Beenden\tAlt-X"
 
-#: /home/martin/Programmieren/sourceforge/holtz/wxmain.cpp:783
+#: /home/martin/Programmieren/sourceforge/holtz/branches/new_game_bloks/holtz/wxmain.cpp:920
 msgid "Quit Holtz"
 msgstr "Holtz beenden"
 
-#: /home/martin/Programmieren/sourceforge/holtz/wxmain.cpp:787
+#: /home/martin/Programmieren/sourceforge/holtz/branches/new_game_bloks/holtz/wxmain.cpp:924
 msgid "Display s&ettings...\tCtrl-E"
 msgstr "Anzeige &Einstellungen...\tStrg-E"
 
-#: /home/martin/Programmieren/sourceforge/holtz/wxmain.cpp:788
+#: /home/martin/Programmieren/sourceforge/holtz/branches/new_game_bloks/holtz/wxmain.cpp:925
 msgid "Change display settings"
 msgstr "Einstellungen ändern"
 
-#: /home/martin/Programmieren/sourceforge/holtz/wxmain.cpp:792
+#: /home/martin/Programmieren/sourceforge/holtz/branches/new_game_bloks/holtz/wxmain.cpp:929
 msgid "&Undo move\tCtrl-U"
 msgstr "Z&ug zurücknehmen\tStrg-U"
 
-#: /home/martin/Programmieren/sourceforge/holtz/wxmain.cpp:792
+#: /home/martin/Programmieren/sourceforge/holtz/branches/new_game_bloks/holtz/wxmain.cpp:929
 msgid "Try to undo move"
 msgstr "Versuche Zug zurückzunehmen"
 
-#: /home/martin/Programmieren/sourceforge/holtz/wxmain.cpp:793
+#: /home/martin/Programmieren/sourceforge/holtz/branches/new_game_bloks/holtz/wxmain.cpp:930
 msgid "Show &Variants\tCtrl-V"
 msgstr "Zeige &Variantenbaum\tStrg-V"
 
-#: /home/martin/Programmieren/sourceforge/holtz/wxmain.cpp:794
+#: /home/martin/Programmieren/sourceforge/holtz/branches/new_game_bloks/holtz/wxmain.cpp:931
 msgid "Show window with variant tree"
 msgstr "Zeige Fenster mit Variantenbaum"
 
-#: /home/martin/Programmieren/sourceforge/holtz/wxmain.cpp:798
+#: /home/martin/Programmieren/sourceforge/holtz/branches/new_game_bloks/holtz/wxmain.cpp:935
 msgid "Contents\tF1"
 msgstr "Inhalt\tF1"
 
-#: /home/martin/Programmieren/sourceforge/holtz/wxmain.cpp:798
+#: /home/martin/Programmieren/sourceforge/holtz/branches/new_game_bloks/holtz/wxmain.cpp:935
 msgid "Show help file"
 msgstr "Hilfedatei anzeigen"
 
-#: /home/martin/Programmieren/sourceforge/holtz/wxmain.cpp:799
+#: /home/martin/Programmieren/sourceforge/holtz/branches/new_game_bloks/holtz/wxmain.cpp:936
 msgid "License"
 msgstr "Lizenz"
 
-#: /home/martin/Programmieren/sourceforge/holtz/wxmain.cpp:799
+#: /home/martin/Programmieren/sourceforge/holtz/branches/new_game_bloks/holtz/wxmain.cpp:936
 msgid "Information about the Holtz license"
 msgstr "Informationen über die Lizenz von Holtz"
 
-#: /home/martin/Programmieren/sourceforge/holtz/wxmain.cpp:800
+#: /home/martin/Programmieren/sourceforge/holtz/branches/new_game_bloks/holtz/wxmain.cpp:937
 msgid "About"
 msgstr "Über"
 
-#: /home/martin/Programmieren/sourceforge/holtz/wxmain.cpp:800
+#: /home/martin/Programmieren/sourceforge/holtz/branches/new_game_bloks/holtz/wxmain.cpp:937
 msgid "Show about dialog"
 msgstr "Zeige about Dialog"
 
-#: /home/martin/Programmieren/sourceforge/holtz/wxmain.cpp:804
+#: /home/martin/Programmieren/sourceforge/holtz/branches/new_game_bloks/holtz/wxmain.cpp:941
 msgid "&File"
 msgstr "&Datei"
 
-#: /home/martin/Programmieren/sourceforge/holtz/wxmain.cpp:805
+#: /home/martin/Programmieren/sourceforge/holtz/branches/new_game_bloks/holtz/wxmain.cpp:942
 msgid "&Settings"
 msgstr "&Einstellungen"
 
-#: /home/martin/Programmieren/sourceforge/holtz/wxmain.cpp:806
+#: /home/martin/Programmieren/sourceforge/holtz/branches/new_game_bloks/holtz/wxmain.cpp:943
 msgid "&Game"
 msgstr "&Spiel"
 
-#: /home/martin/Programmieren/sourceforge/holtz/wxmain.cpp:807
+#: /home/martin/Programmieren/sourceforge/holtz/branches/new_game_bloks/holtz/wxmain.cpp:944
 msgid "&Help"
 msgstr "&Hilfe"
 
-#: /home/martin/Programmieren/sourceforge/holtz/wxmain.cpp:898
+#: /home/martin/Programmieren/sourceforge/holtz/branches/new_game_bloks/holtz/wxmain.cpp:1040
 msgid "Holtz is an implementation of the Gipf Project Games\n"
 msgstr "Holtz ist eine Implementierung der Gipf Project Spiele\n"
 
-#: /home/martin/Programmieren/sourceforge/holtz/wxmain.cpp:899
-msgid "Zertz and Dvonn (www.gipf.com).\n"
-msgstr "Zertz und Dvonn (www.gipf.com).\n"
+#: /home/martin/Programmieren/sourceforge/holtz/branches/new_game_bloks/holtz/wxmain.cpp:1041
+msgid ""
+"Zertz and Dvonn (www.gipf.com). Additionally it supports Bloks and Relax.\n"
+msgstr ""
+"Zertz und Dvonn (www.gipf.com). Zusätzlich werden Bloks und Relax "
+"unterstützt.\n"
 
-#: /home/martin/Programmieren/sourceforge/holtz/wxmain.cpp:900
+#: /home/martin/Programmieren/sourceforge/holtz/branches/new_game_bloks/holtz/wxmain.cpp:1042
 msgid "GPLed by Martin Trautmann (2007)\n"
 msgstr "GPLt von Martin Trautmann (2007)\n"
 
-#: /home/martin/Programmieren/sourceforge/holtz/wxmain.cpp:902
+#: /home/martin/Programmieren/sourceforge/holtz/branches/new_game_bloks/holtz/wxmain.cpp:1044
 msgid "About Holtz"
 msgstr "Über Holtz"
 
-#: /home/martin/Programmieren/sourceforge/holtz/zertz/wxzertz.cpp:562
-#: /home/martin/Programmieren/sourceforge/holtz/zertz/wxzertz.cpp:890
-#: /home/martin/Programmieren/sourceforge/holtz/zertz/wxzertz.cpp:1038
+#: /home/martin/Programmieren/sourceforge/holtz/branches/new_game_bloks/holtz/dvonn/wxdvonn.cpp:627
+#: /home/martin/Programmieren/sourceforge/holtz/branches/new_game_bloks/holtz/bloks/wxbloks.cpp:287
+#: /home/martin/Programmieren/sourceforge/holtz/branches/new_game_bloks/holtz/zertz/wxzertz.cpp:566
+#: /home/martin/Programmieren/sourceforge/holtz/branches/new_game_bloks/holtz/zertz/wxzertz.cpp:894
+#: /home/martin/Programmieren/sourceforge/holtz/branches/new_game_bloks/holtz/zertz/wxzertz.cpp:1042
+#: /home/martin/Programmieren/sourceforge/holtz/branches/new_game_bloks/holtz/relax/wxrelax.cpp:567
 msgid "Fatal Error!"
 msgstr "Fataler Fehler!"
 
-#: /home/martin/Programmieren/sourceforge/holtz/zertz/wxzertz.cpp:563
-#: /home/martin/Programmieren/sourceforge/holtz/zertz/wxzertz.cpp:891
-#: /home/martin/Programmieren/sourceforge/holtz/zertz/wxzertz.cpp:1039
+#: /home/martin/Programmieren/sourceforge/holtz/branches/new_game_bloks/holtz/dvonn/wxdvonn.cpp:628
+#: /home/martin/Programmieren/sourceforge/holtz/branches/new_game_bloks/holtz/bloks/wxbloks.cpp:288
+#: /home/martin/Programmieren/sourceforge/holtz/branches/new_game_bloks/holtz/zertz/wxzertz.cpp:567
+#: /home/martin/Programmieren/sourceforge/holtz/branches/new_game_bloks/holtz/zertz/wxzertz.cpp:895
+#: /home/martin/Programmieren/sourceforge/holtz/branches/new_game_bloks/holtz/zertz/wxzertz.cpp:1043
+#: /home/martin/Programmieren/sourceforge/holtz/branches/new_game_bloks/holtz/relax/wxrelax.cpp:568
 msgid "Click Error"
 msgstr "Klick Fehler"
 
-#: /home/martin/Programmieren/sourceforge/holtz/zertz/wxzertz.cpp:566
-#: /home/martin/Programmieren/sourceforge/holtz/zertz/wxzertz.cpp:894
-#: /home/martin/Programmieren/sourceforge/holtz/zertz/wxzertz.cpp:1042
-msgid "You must do the knock out move!"
-msgstr "Du musst einen Schlagzug ausführen!"
+#: /home/martin/Programmieren/sourceforge/holtz/branches/new_game_bloks/holtz/dvonn/wxdvonn.cpp:631
+msgid "You have to move a stack!"
+msgstr "Du musst einen Stapel bewegen!"
 
-#: /home/martin/Programmieren/sourceforge/holtz/zertz/wxzertz.cpp:569
-#: /home/martin/Programmieren/sourceforge/holtz/zertz/wxzertz.cpp:897
-#: /home/martin/Programmieren/sourceforge/holtz/zertz/wxzertz.cpp:1045
+#: /home/martin/Programmieren/sourceforge/holtz/branches/new_game_bloks/holtz/dvonn/wxdvonn.cpp:634
+#: /home/martin/Programmieren/sourceforge/holtz/branches/new_game_bloks/holtz/zertz/wxzertz.cpp:573
+#: /home/martin/Programmieren/sourceforge/holtz/branches/new_game_bloks/holtz/zertz/wxzertz.cpp:901
+#: /home/martin/Programmieren/sourceforge/holtz/branches/new_game_bloks/holtz/zertz/wxzertz.cpp:1049
+#: /home/martin/Programmieren/sourceforge/holtz/branches/new_game_bloks/holtz/relax/wxrelax.cpp:571
 msgid "You have to set a stone!"
 msgstr "Du musst einen Stein setzen!"
 
-#: /home/martin/Programmieren/sourceforge/holtz/zertz/wxzertz.cpp:572
-#: /home/martin/Programmieren/sourceforge/holtz/zertz/wxzertz.cpp:900
-#: /home/martin/Programmieren/sourceforge/holtz/zertz/wxzertz.cpp:1048
-msgid "You have to remove an empty border field!"
-msgstr "Du musst ein leeres Randfeld entfernen!"
+#: /home/martin/Programmieren/sourceforge/holtz/branches/new_game_bloks/holtz/dvonn/wxdvonn.cpp:637
+msgid "You can't move the stack to that field!"
+msgstr "Du darfst den Stapel nicht auf dieses Feld ziehen!"
 
-#: /home/martin/Programmieren/sourceforge/holtz/zertz/wxzertz.cpp:575
-#: /home/martin/Programmieren/sourceforge/holtz/zertz/wxzertz.cpp:903
-#: /home/martin/Programmieren/sourceforge/holtz/zertz/wxzertz.cpp:1051
-msgid "Field can't be removed without moving another stone!"
-msgstr "Feld kann nicht entfernt werden, ohne einen Stein zu verschieben!"
+#: /home/martin/Programmieren/sourceforge/holtz/branches/new_game_bloks/holtz/dvonn/wxdvonn.cpp:640
+msgid "Stack is controled by other player!"
+msgstr "Stapel wird vom gegnerischen Spieler kontrolliert!"
 
-#: /home/martin/Programmieren/sourceforge/holtz/zertz/wxzertz.cpp:578
-#: /home/martin/Programmieren/sourceforge/holtz/zertz/wxzertz.cpp:906
-#: /home/martin/Programmieren/sourceforge/holtz/zertz/wxzertz.cpp:1054
-msgid "You can't move to that field!"
-msgstr "Du darfst nicht auf das Feld ziehen!"
-
-#: /home/martin/Programmieren/sourceforge/holtz/zertz/wxzertz.cpp:581
-#: /home/martin/Programmieren/sourceforge/holtz/zertz/wxzertz.cpp:909
-#: /home/martin/Programmieren/sourceforge/holtz/zertz/wxzertz.cpp:1057
-msgid "Please set the stone on an empty field!"
-msgstr "Setze den Stein bitte auf ein leeres Feld!"
-
-#: /home/martin/Programmieren/sourceforge/holtz/zertz/wxzertz.cpp:584
-#: /home/martin/Programmieren/sourceforge/holtz/zertz/wxzertz.cpp:912
-#: /home/martin/Programmieren/sourceforge/holtz/zertz/wxzertz.cpp:1060
-msgid "You must pick a common stone!"
-msgstr "Du musst einen Stein aus dem allgemeinen Vorrat nehmen!"
-
-#: /home/martin/Programmieren/sourceforge/holtz/zertz/wxzertz.cpp:587
-#: /home/martin/Programmieren/sourceforge/holtz/zertz/wxzertz.cpp:915
-#: /home/martin/Programmieren/sourceforge/holtz/zertz/wxzertz.cpp:1063
-msgid "Its not the turn of that player!"
-msgstr "Dieser Spieler ist nicht am Zug!"
-
-#: /home/martin/Programmieren/sourceforge/holtz/zertz/wxzertz.cpp:590
-#: /home/martin/Programmieren/sourceforge/holtz/zertz/wxzertz.cpp:918
-#: /home/martin/Programmieren/sourceforge/holtz/zertz/wxzertz.cpp:1066
+#: /home/martin/Programmieren/sourceforge/holtz/branches/new_game_bloks/holtz/dvonn/wxdvonn.cpp:643
+#: /home/martin/Programmieren/sourceforge/holtz/branches/new_game_bloks/holtz/bloks/wxbloks.cpp:300
+#: /home/martin/Programmieren/sourceforge/holtz/branches/new_game_bloks/holtz/zertz/wxzertz.cpp:594
+#: /home/martin/Programmieren/sourceforge/holtz/branches/new_game_bloks/holtz/zertz/wxzertz.cpp:922
+#: /home/martin/Programmieren/sourceforge/holtz/branches/new_game_bloks/holtz/zertz/wxzertz.cpp:1070
+#: /home/martin/Programmieren/sourceforge/holtz/branches/new_game_bloks/holtz/relax/wxrelax.cpp:580
 msgid "You can't do that at the moment!"
 msgstr "Du darfst das gerade nicht tun!"
 
-#: /home/martin/Programmieren/sourceforge/holtz/zertz/wxzertz.cpp:593
-#: /home/martin/Programmieren/sourceforge/holtz/zertz/wxzertz.cpp:921
-#: /home/martin/Programmieren/sourceforge/holtz/zertz/wxzertz.cpp:1069
-msgid "You must knock out once more with the same stone!"
-msgstr "Du musst nocheinmal mit dem selben Stein weiterschlagen!"
-
-#: /home/martin/Programmieren/sourceforge/holtz/zertz/wxzertz.cpp:1095
-#: /home/martin/Programmieren/sourceforge/holtz/zertz/wxzertz.cpp:1131
+#: /home/martin/Programmieren/sourceforge/holtz/branches/new_game_bloks/holtz/dvonn/wxdvonn.cpp:1011
+#: /home/martin/Programmieren/sourceforge/holtz/branches/new_game_bloks/holtz/bloks/wxbloks.cpp:1072
+#: /home/martin/Programmieren/sourceforge/holtz/branches/new_game_bloks/holtz/bloks/wxbloks.cpp:1108
+#: /home/martin/Programmieren/sourceforge/holtz/branches/new_game_bloks/holtz/zertz/wxzertz.cpp:1099
+#: /home/martin/Programmieren/sourceforge/holtz/branches/new_game_bloks/holtz/zertz/wxzertz.cpp:1135
+#: /home/martin/Programmieren/sourceforge/holtz/branches/new_game_bloks/holtz/relax/wxrelax.cpp:1053
+#: /home/martin/Programmieren/sourceforge/holtz/branches/new_game_bloks/holtz/relax/wxrelax.cpp:1089
 msgid "[AI] "
 msgstr "[KI]"
 
-#: /home/martin/Programmieren/sourceforge/holtz/zertz/wxzertz.cpp:1520
+#: /home/martin/Programmieren/sourceforge/holtz/branches/new_game_bloks/holtz/dvonn/wxdvonn.cpp:1443
+#: /home/martin/Programmieren/sourceforge/holtz/branches/new_game_bloks/holtz/bloks/wxbloks.cpp:1493
+#: /home/martin/Programmieren/sourceforge/holtz/branches/new_game_bloks/holtz/zertz/wxzertz.cpp:1546
+#: /home/martin/Programmieren/sourceforge/holtz/branches/new_game_bloks/holtz/relax/wxrelax.cpp:1543
 #, c-format
 msgid "%3d points: %s\n"
 msgstr "%3d Punkte: %s\n"
 
-#: /home/martin/Programmieren/sourceforge/holtz/zertz/wxzertz.cpp:1523
+#: /home/martin/Programmieren/sourceforge/holtz/branches/new_game_bloks/holtz/dvonn/wxdvonn.cpp:1446
+#: /home/martin/Programmieren/sourceforge/holtz/branches/new_game_bloks/holtz/bloks/wxbloks.cpp:1496
+#: /home/martin/Programmieren/sourceforge/holtz/branches/new_game_bloks/holtz/zertz/wxzertz.cpp:1549
+#: /home/martin/Programmieren/sourceforge/holtz/branches/new_game_bloks/holtz/relax/wxrelax.cpp:1546
 msgid "Scores"
 msgstr "Punktestand"
 
-#: /home/martin/Programmieren/sourceforge/holtz/zertz/wxzertz.cpp:1531
+#: /home/martin/Programmieren/sourceforge/holtz/branches/new_game_bloks/holtz/dvonn/wxdvonn.cpp:1454
+#: /home/martin/Programmieren/sourceforge/holtz/branches/new_game_bloks/holtz/bloks/wxbloks.cpp:1504
+#: /home/martin/Programmieren/sourceforge/holtz/branches/new_game_bloks/holtz/zertz/wxzertz.cpp:1557
+#: /home/martin/Programmieren/sourceforge/holtz/branches/new_game_bloks/holtz/relax/wxrelax.cpp:1554
 #, c-format
 msgid "And the winner is: %s"
 msgstr "%s hat gewonnen!"
 
-#: /home/martin/Programmieren/sourceforge/holtz/zertz/wxzertz.cpp:1532
+#: /home/martin/Programmieren/sourceforge/holtz/branches/new_game_bloks/holtz/dvonn/wxdvonn.cpp:1455
+#: /home/martin/Programmieren/sourceforge/holtz/branches/new_game_bloks/holtz/bloks/wxbloks.cpp:1505
+#: /home/martin/Programmieren/sourceforge/holtz/branches/new_game_bloks/holtz/zertz/wxzertz.cpp:1558
+#: /home/martin/Programmieren/sourceforge/holtz/branches/new_game_bloks/holtz/relax/wxrelax.cpp:1555
 msgid "Winner"
 msgstr "Gewinner"
 
-#: /home/martin/Programmieren/sourceforge/holtz/zertz/wxzertz.cpp:1536
+#: /home/martin/Programmieren/sourceforge/holtz/branches/new_game_bloks/holtz/dvonn/wxdvonn.cpp:1459
+#: /home/martin/Programmieren/sourceforge/holtz/branches/new_game_bloks/holtz/bloks/wxbloks.cpp:1509
+#: /home/martin/Programmieren/sourceforge/holtz/branches/new_game_bloks/holtz/zertz/wxzertz.cpp:1562
+#: /home/martin/Programmieren/sourceforge/holtz/branches/new_game_bloks/holtz/relax/wxrelax.cpp:1559
 msgid "Nobody could win the game - This is a Tie!"
 msgstr "Das Spiel ging unentschieden aus!"
 
-#: /home/martin/Programmieren/sourceforge/holtz/zertz/wxzertz.cpp:1536
+#: /home/martin/Programmieren/sourceforge/holtz/branches/new_game_bloks/holtz/dvonn/wxdvonn.cpp:1459
+#: /home/martin/Programmieren/sourceforge/holtz/branches/new_game_bloks/holtz/bloks/wxbloks.cpp:1509
+#: /home/martin/Programmieren/sourceforge/holtz/branches/new_game_bloks/holtz/zertz/wxzertz.cpp:1562
+#: /home/martin/Programmieren/sourceforge/holtz/branches/new_game_bloks/holtz/relax/wxrelax.cpp:1559
 msgid "No Winner"
 msgstr "Kein Gewinner"
 
-#: /home/martin/Programmieren/sourceforge/holtz/zertz/wxzertz.cpp:1668
-msgid "Please do a knock out move"
-msgstr "Bitte mache einen Schlagzug"
-
-#: /home/martin/Programmieren/sourceforge/holtz/zertz/wxzertz.cpp:1671
-msgid "You should set a stone"
-msgstr "Du solltest einen Stein setzten"
-
-#: /home/martin/Programmieren/sourceforge/holtz/zertz/wxzertz.cpp:1674
-msgid "Just remove a field"
-msgstr "Entferne einfach noch ein Randfeld"
-
-#: /home/martin/Programmieren/sourceforge/holtz/zertz/wxzertz.cpp:1878
-msgid "Choose a skin File"
-msgstr "Wähle eine Skin-Datei"
-
-#: /home/martin/Programmieren/sourceforge/holtz/zertz/wxzertz.cpp:1879
-msgid "Skin Files (*.zip)|*.zip"
-msgstr "Skin-Datei (*.zip)|*.zip"
-
-#: /home/martin/Programmieren/sourceforge/holtz/zertz/wxzertz.cpp:1960
-msgid "Choose a sound file as move reminder"
-msgstr "Wähle eine Klang Datei als Zugaufforderung"
-
-#: /home/martin/Programmieren/sourceforge/holtz/zertz/wxzertz.cpp:1961
-msgid "Sound Files (*.wav)|*.wav"
-msgstr "Audio Dateien (*.wav)|*.wav"
-
-#: /home/martin/Programmieren/sourceforge/holtz/dvonn/wxdvonn.cpp:627
-msgid "You have to move a stack!"
-msgstr "Du musst einen Stapel bewegen!"
-
-#: /home/martin/Programmieren/sourceforge/holtz/dvonn/wxdvonn.cpp:633
-msgid "You can't move the stack to that field!"
-msgstr "Du darfst den Stapel nicht auf dieses Feld ziehen!"
-
-#: /home/martin/Programmieren/sourceforge/holtz/dvonn/wxdvonn.cpp:636
-msgid "Stack is controled by other player!"
-msgstr "Stapel wird vom gegnerischen Spieler kontrolliert!"
-
-#: /home/martin/Programmieren/sourceforge/holtz/dvonn/wxdvonn.cpp:1524
+#: /home/martin/Programmieren/sourceforge/holtz/branches/new_game_bloks/holtz/dvonn/wxdvonn.cpp:1550
 msgid "Please do jump move"
 msgstr "Bitte mache einen Hüpfzug"
 
-#: /home/martin/Programmieren/sourceforge/holtz/cross_compile/holtz-test/wxmain.cpp:154
-msgid "Holtz-"
-msgstr "Holtz-"
+#: /home/martin/Programmieren/sourceforge/holtz/branches/new_game_bloks/holtz/dvonn/wxdvonn.cpp:1553
+#: /home/martin/Programmieren/sourceforge/holtz/branches/new_game_bloks/holtz/zertz/wxzertz.cpp:1697
+#: /home/martin/Programmieren/sourceforge/holtz/branches/new_game_bloks/holtz/relax/wxrelax.cpp:1629
+msgid "You should set a stone"
+msgstr "Du solltest einen Stein setzten"
 
-#: /home/martin/Programmieren/sourceforge/holtz/cross_compile/holtz-test/common/dialogs.cpp:63
+#: /home/martin/Programmieren/sourceforge/holtz/branches/new_game_bloks/holtz/dvonn/wxdvonn.cpp:1757
+#: /home/martin/Programmieren/sourceforge/holtz/branches/new_game_bloks/holtz/bloks/wxbloks.cpp:1892
+#: /home/martin/Programmieren/sourceforge/holtz/branches/new_game_bloks/holtz/zertz/wxzertz.cpp:1904
+#: /home/martin/Programmieren/sourceforge/holtz/branches/new_game_bloks/holtz/relax/wxrelax.cpp:1833
+msgid "Choose a skin File"
+msgstr "Wähle eine Skin-Datei"
+
+#: /home/martin/Programmieren/sourceforge/holtz/branches/new_game_bloks/holtz/dvonn/wxdvonn.cpp:1758
+#: /home/martin/Programmieren/sourceforge/holtz/branches/new_game_bloks/holtz/bloks/wxbloks.cpp:1893
+#: /home/martin/Programmieren/sourceforge/holtz/branches/new_game_bloks/holtz/zertz/wxzertz.cpp:1905
+#: /home/martin/Programmieren/sourceforge/holtz/branches/new_game_bloks/holtz/relax/wxrelax.cpp:1834
+msgid "Skin Files (*.zip)|*.zip"
+msgstr "Skin-Datei (*.zip)|*.zip"
+
+#: /home/martin/Programmieren/sourceforge/holtz/branches/new_game_bloks/holtz/dvonn/wxdvonn.cpp:1839
+#: /home/martin/Programmieren/sourceforge/holtz/branches/new_game_bloks/holtz/bloks/wxbloks.cpp:1975
+#: /home/martin/Programmieren/sourceforge/holtz/branches/new_game_bloks/holtz/zertz/wxzertz.cpp:1986
+#: /home/martin/Programmieren/sourceforge/holtz/branches/new_game_bloks/holtz/relax/wxrelax.cpp:1915
+msgid "Choose a sound file as move reminder"
+msgstr "Wähle eine Klang Datei als Zugaufforderung"
+
+#: /home/martin/Programmieren/sourceforge/holtz/branches/new_game_bloks/holtz/dvonn/wxdvonn.cpp:1840
+#: /home/martin/Programmieren/sourceforge/holtz/branches/new_game_bloks/holtz/bloks/wxbloks.cpp:1976
+#: /home/martin/Programmieren/sourceforge/holtz/branches/new_game_bloks/holtz/zertz/wxzertz.cpp:1987
+#: /home/martin/Programmieren/sourceforge/holtz/branches/new_game_bloks/holtz/relax/wxrelax.cpp:1916
+msgid "Sound Files (*.wav)|*.wav"
+msgstr "Audio Dateien (*.wav)|*.wav"
+
+#: /home/martin/Programmieren/sourceforge/holtz/branches/new_game_bloks/holtz/bloks/wxbloks.cpp:221
+#: /home/martin/Programmieren/sourceforge/holtz/branches/new_game_bloks/holtz/bloks/wxbloks.cpp:275
+#: /home/martin/Programmieren/sourceforge/holtz/branches/new_game_bloks/holtz/bloks/wxbloks.cpp:1587
+msgid ""
+"Oops, internal error occurred! Unable to determine player panel that holds a "
+"piece."
+msgstr ""
+"Oops, interner Fehler! Das Player Darstellungsfeld (player panel) des "
+"Spielers der den Spielstein hält konnte nicht gefunden werden."
+
+#: /home/martin/Programmieren/sourceforge/holtz/branches/new_game_bloks/holtz/bloks/wxbloks.cpp:222
+#: /home/martin/Programmieren/sourceforge/holtz/branches/new_game_bloks/holtz/bloks/wxbloks.cpp:276
+#: /home/martin/Programmieren/sourceforge/holtz/branches/new_game_bloks/holtz/bloks/wxbloks.cpp:1588
+msgid "Fatal Error"
+msgstr "Fataler Fehler!"
+
+#: /home/martin/Programmieren/sourceforge/holtz/branches/new_game_bloks/holtz/bloks/wxbloks.cpp:291
+msgid "You have to set a piece!"
+msgstr "Du musst einen Spielstein setzen!"
+
+#: /home/martin/Programmieren/sourceforge/holtz/branches/new_game_bloks/holtz/bloks/wxbloks.cpp:294
+msgid "Please set the piece on an empty field!"
+msgstr "Setze den Spielstein bitte auf ein leeres Feld!"
+
+#: /home/martin/Programmieren/sourceforge/holtz/branches/new_game_bloks/holtz/bloks/wxbloks.cpp:297
+#: /home/martin/Programmieren/sourceforge/holtz/branches/new_game_bloks/holtz/zertz/wxzertz.cpp:591
+#: /home/martin/Programmieren/sourceforge/holtz/branches/new_game_bloks/holtz/zertz/wxzertz.cpp:919
+#: /home/martin/Programmieren/sourceforge/holtz/branches/new_game_bloks/holtz/zertz/wxzertz.cpp:1067
+#: /home/martin/Programmieren/sourceforge/holtz/branches/new_game_bloks/holtz/relax/wxrelax.cpp:577
+msgid "Its not the turn of that player!"
+msgstr "Dieser Spieler ist nicht am Zug!"
+
+#: /home/martin/Programmieren/sourceforge/holtz/branches/new_game_bloks/holtz/bloks/wxbloks.cpp:303
+msgid ""
+"The two click points on the board must match the marked points on the piece "
+"for any valid orientation!"
+msgstr ""
+"Die zwei angewählten Punkte auf dem Spielfeld müssen den auf dem Spielsstein "
+"markierten Felder für eine mögliche Plazierungsrichtung entsprechen."
+
+#: /home/martin/Programmieren/sourceforge/holtz/branches/new_game_bloks/holtz/bloks/wxbloks.cpp:309
+msgid ""
+"You can't place the piece here: Oops, I am confused whether setting to this "
+"position is an error or not! Please inform windiana@sf.net."
+msgstr ""
+"Oops, ich bin etwas durcheinander ob die Position nun ein Fehler ist oder "
+"nicht! Bitte informiere windiana@sf.net."
+
+#: /home/martin/Programmieren/sourceforge/holtz/branches/new_game_bloks/holtz/bloks/wxbloks.cpp:312
+msgid ""
+"You can't place the piece here: Player does not have any more pieces of that "
+"kind!"
+msgstr ""
+"Du kannst den Spielstein hier nicht plazieren: Der Spieler hat gar keine "
+"Steine dieser Sorte mehr!"
+
+#: /home/martin/Programmieren/sourceforge/holtz/branches/new_game_bloks/holtz/bloks/wxbloks.cpp:315
+msgid ""
+"You can't place the piece here: Some fields of the piece would go outside of "
+"the board!"
+msgstr ""
+"Du kannst den Spielstein hier nicht plazieren: Einige Felder des "
+"Spielssteins würden das Spielfeld verlassen!"
+
+#: /home/martin/Programmieren/sourceforge/holtz/branches/new_game_bloks/holtz/bloks/wxbloks.cpp:318
+msgid ""
+"You can't place the piece here: Some fields would overlap with other pieces "
+"on the board!"
+msgstr ""
+"Du kannst den Spielstein hier nicht plazieren: Einige Felder des "
+"Spielssteins würden mit anderen Spielssteinen auf dem Spielbrett überlappen!"
+
+#: /home/martin/Programmieren/sourceforge/holtz/branches/new_game_bloks/holtz/bloks/wxbloks.cpp:321
+msgid ""
+"You can't place the piece here: First piece must be placed on one of the "
+"four corner fields!"
+msgstr ""
+"Du kannst den Spielstein hier nicht plazieren: Der erste Spielsstein muss "
+"auf eines der vier Eckfelders des Spielbretts plaziert werden!"
+
+#: /home/martin/Programmieren/sourceforge/holtz/branches/new_game_bloks/holtz/bloks/wxbloks.cpp:324
+msgid ""
+"You can't place the piece here: The piece must not lie adjacent to another "
+"piece of the same color!"
+msgstr ""
+"Du kannst den Spielstein hier nicht plazieren: Der Spielsstein darf nicht "
+"direkt angrenzend an einen Spielsstein der gleichen Farbe platziert werden!"
+
+#: /home/martin/Programmieren/sourceforge/holtz/branches/new_game_bloks/holtz/bloks/wxbloks.cpp:327
+msgid ""
+"You can't place the piece here: The piece must be diagonally adjacent to "
+"another piece of the same color!"
+msgstr ""
+"Du kannst den Spielstein hier nicht plazieren: Der Spielsstein muss diagonal "
+"angrenzend an einen anderen Spielstein der selben Farbe platziert werden!"
+
+#: /home/martin/Programmieren/sourceforge/holtz/branches/new_game_bloks/holtz/bloks/wxbloks.cpp:1672
+msgid "You should set a piece"
+msgstr "Du solltest einen Spielstein setzten"
+
+#: /home/martin/Programmieren/sourceforge/holtz/branches/new_game_bloks/holtz/zertz/wxzertz.cpp:570
+#: /home/martin/Programmieren/sourceforge/holtz/branches/new_game_bloks/holtz/zertz/wxzertz.cpp:898
+#: /home/martin/Programmieren/sourceforge/holtz/branches/new_game_bloks/holtz/zertz/wxzertz.cpp:1046
+msgid "You must do the knock out move!"
+msgstr "Du musst einen Schlagzug ausführen!"
+
+#: /home/martin/Programmieren/sourceforge/holtz/branches/new_game_bloks/holtz/zertz/wxzertz.cpp:576
+#: /home/martin/Programmieren/sourceforge/holtz/branches/new_game_bloks/holtz/zertz/wxzertz.cpp:904
+#: /home/martin/Programmieren/sourceforge/holtz/branches/new_game_bloks/holtz/zertz/wxzertz.cpp:1052
+msgid "You have to remove an empty border field!"
+msgstr "Du musst ein leeres Randfeld entfernen!"
+
+#: /home/martin/Programmieren/sourceforge/holtz/branches/new_game_bloks/holtz/zertz/wxzertz.cpp:579
+#: /home/martin/Programmieren/sourceforge/holtz/branches/new_game_bloks/holtz/zertz/wxzertz.cpp:907
+#: /home/martin/Programmieren/sourceforge/holtz/branches/new_game_bloks/holtz/zertz/wxzertz.cpp:1055
+msgid "Field can't be removed without moving another stone!"
+msgstr "Feld kann nicht entfernt werden, ohne einen Stein zu verschieben!"
+
+#: /home/martin/Programmieren/sourceforge/holtz/branches/new_game_bloks/holtz/zertz/wxzertz.cpp:582
+#: /home/martin/Programmieren/sourceforge/holtz/branches/new_game_bloks/holtz/zertz/wxzertz.cpp:910
+#: /home/martin/Programmieren/sourceforge/holtz/branches/new_game_bloks/holtz/zertz/wxzertz.cpp:1058
+msgid "You can't move to that field!"
+msgstr "Du darfst nicht auf das Feld ziehen!"
+
+#: /home/martin/Programmieren/sourceforge/holtz/branches/new_game_bloks/holtz/zertz/wxzertz.cpp:585
+#: /home/martin/Programmieren/sourceforge/holtz/branches/new_game_bloks/holtz/zertz/wxzertz.cpp:913
+#: /home/martin/Programmieren/sourceforge/holtz/branches/new_game_bloks/holtz/zertz/wxzertz.cpp:1061
+#: /home/martin/Programmieren/sourceforge/holtz/branches/new_game_bloks/holtz/relax/wxrelax.cpp:574
+msgid "Please set the stone on an empty field!"
+msgstr "Setze den Stein bitte auf ein leeres Feld!"
+
+#: /home/martin/Programmieren/sourceforge/holtz/branches/new_game_bloks/holtz/zertz/wxzertz.cpp:588
+#: /home/martin/Programmieren/sourceforge/holtz/branches/new_game_bloks/holtz/zertz/wxzertz.cpp:916
+#: /home/martin/Programmieren/sourceforge/holtz/branches/new_game_bloks/holtz/zertz/wxzertz.cpp:1064
+msgid "You must pick a common stone!"
+msgstr "Du musst einen Stein aus dem allgemeinen Vorrat nehmen!"
+
+#: /home/martin/Programmieren/sourceforge/holtz/branches/new_game_bloks/holtz/zertz/wxzertz.cpp:597
+#: /home/martin/Programmieren/sourceforge/holtz/branches/new_game_bloks/holtz/zertz/wxzertz.cpp:925
+#: /home/martin/Programmieren/sourceforge/holtz/branches/new_game_bloks/holtz/zertz/wxzertz.cpp:1073
+msgid "You must knock out once more with the same stone!"
+msgstr "Du musst nocheinmal mit dem selben Stein weiterschlagen!"
+
+#: /home/martin/Programmieren/sourceforge/holtz/branches/new_game_bloks/holtz/zertz/wxzertz.cpp:1694
+msgid "Please do a knock out move"
+msgstr "Bitte mache einen Schlagzug"
+
+#: /home/martin/Programmieren/sourceforge/holtz/branches/new_game_bloks/holtz/zertz/wxzertz.cpp:1700
+msgid "Just remove a field"
+msgstr "Entferne einfach noch ein Randfeld"
+
+#: /home/martin/Programmieren/sourceforge/holtz/branches/new_game_bloks/holtz/common/manager.cpp:97
+msgid "Exception caught!"
+msgstr "Ausnahme gefangen!"
+
+#: /home/martin/Programmieren/sourceforge/holtz/branches/new_game_bloks/holtz/common/manager.cpp:97
+msgid "Exception!"
+msgstr "Ausnahme!"
+
+#: /home/martin/Programmieren/sourceforge/holtz/branches/new_game_bloks/holtz/common/manager.cpp:159
+msgid "Already new game requested"
+msgstr "Neues Spiel wurde bereits angefordert"
+
+#: /home/martin/Programmieren/sourceforge/holtz/branches/new_game_bloks/holtz/common/manager.cpp:159
+msgid "New game"
+msgstr "Neues Spiel"
+
+#: /home/martin/Programmieren/sourceforge/holtz/branches/new_game_bloks/holtz/common/manager.cpp:175
+#: /home/martin/Programmieren/sourceforge/holtz/branches/new_game_bloks/holtz/common/manager.cpp:296
+msgid "Asking other Users..."
+msgstr "Frage Mitspieler..."
+
+#: /home/martin/Programmieren/sourceforge/holtz/branches/new_game_bloks/holtz/common/manager.cpp:207
+msgid "Unrequested new_game accepted?!?"
+msgstr "Unangefordertes Neues Spiel akzeptiert?!?"
+
+#: /home/martin/Programmieren/sourceforge/holtz/branches/new_game_bloks/holtz/common/manager.cpp:207
+#: /home/martin/Programmieren/sourceforge/holtz/branches/new_game_bloks/holtz/common/manager.cpp:226
+msgid "Why new_game"
+msgstr "Warum neues Spiel"
+
+#: /home/martin/Programmieren/sourceforge/holtz/branches/new_game_bloks/holtz/common/manager.cpp:226
+msgid "Unrequested new game denied?!?"
+msgstr "Unangefordertes neues Spiel wurde abgelehnt?!?"
+
+#: /home/martin/Programmieren/sourceforge/holtz/branches/new_game_bloks/holtz/common/manager.cpp:231
+msgid ""
+"The idea of starting a new game was rejected. Do you want to start a new "
+"game on your own?"
+msgstr ""
+"Neues Spiel wurde abgelehnt. Möchtest Du unabhängig von Deinen Mitspielern "
+"ein neues Spiel starten?"
+
+#: /home/martin/Programmieren/sourceforge/holtz/branches/new_game_bloks/holtz/common/manager.cpp:232
+#: /home/martin/Programmieren/sourceforge/holtz/branches/new_game_bloks/holtz/common/dialogs.cpp:2274
+msgid "New game?"
+msgstr "Neues Spiel?"
+
+#: /home/martin/Programmieren/sourceforge/holtz/branches/new_game_bloks/holtz/common/manager.cpp:249
+msgid "Already undo requested"
+msgstr "Rückgängigmachen wurde bereits angefordert"
+
+#: /home/martin/Programmieren/sourceforge/holtz/branches/new_game_bloks/holtz/common/manager.cpp:249
+#: /home/martin/Programmieren/sourceforge/holtz/branches/new_game_bloks/holtz/common/manager.cpp:261
+#: /home/martin/Programmieren/sourceforge/holtz/branches/new_game_bloks/holtz/common/manager.cpp:416
+msgid "Undo failed"
+msgstr "Rückgängig ist fehlgeschlagen"
+
+#: /home/martin/Programmieren/sourceforge/holtz/branches/new_game_bloks/holtz/common/manager.cpp:261
+msgid "Can't undo move since game is stopped."
+msgstr "Kann keinen Zug zurücknehmen da das Spiel angehalten ist."
+
+#: /home/martin/Programmieren/sourceforge/holtz/branches/new_game_bloks/holtz/common/manager.cpp:364
+msgid "Unrequested undo accepted?!?"
+msgstr "Unangefordertes Zurücknehmen wurde angenommen?!?"
+
+#: /home/martin/Programmieren/sourceforge/holtz/branches/new_game_bloks/holtz/common/manager.cpp:364
+#: /home/martin/Programmieren/sourceforge/holtz/branches/new_game_bloks/holtz/common/manager.cpp:382
+msgid "Why undo"
+msgstr "Warum Rückgängig?"
+
+#: /home/martin/Programmieren/sourceforge/holtz/branches/new_game_bloks/holtz/common/manager.cpp:382
+msgid "Unrequested undo denied?!?"
+msgstr "Unangefordertes Zurücknehmen wurde abgelehnt?!?"
+
+#: /home/martin/Programmieren/sourceforge/holtz/branches/new_game_bloks/holtz/common/manager.cpp:388
+msgid "Requested undo was denied"
+msgstr "Rückgängig machen wurde abgelehnt"
+
+#: /home/martin/Programmieren/sourceforge/holtz/branches/new_game_bloks/holtz/common/manager.cpp:388
+msgid "Undo denied"
+msgstr "Rückgängig abgelehnt"
+
+#: /home/martin/Programmieren/sourceforge/holtz/branches/new_game_bloks/holtz/common/manager.cpp:416
+msgid "Undo move failed"
+msgstr "Rückgängig machen fehlgeschlagen"
+
+#: /home/martin/Programmieren/sourceforge/holtz/branches/new_game_bloks/holtz/common/dialogs.cpp:71
 msgid "Play alone"
 msgstr "Alleine spielen"
 
-#: /home/martin/Programmieren/sourceforge/holtz/cross_compile/holtz-test/common/dialogs.cpp:64
+#: /home/martin/Programmieren/sourceforge/holtz/branches/new_game_bloks/holtz/common/dialogs.cpp:72
 msgid "Setup network server"
 msgstr "Server starten"
 
-#: /home/martin/Programmieren/sourceforge/holtz/cross_compile/holtz-test/common/dialogs.cpp:65
-#: /home/martin/Programmieren/sourceforge/holtz/cross_compile/holtz-test/common/dialogs.cpp:2946
+#: /home/martin/Programmieren/sourceforge/holtz/branches/new_game_bloks/holtz/common/dialogs.cpp:73
+#: /home/martin/Programmieren/sourceforge/holtz/branches/new_game_bloks/holtz/common/dialogs.cpp:3040
 msgid "Connect to server"
 msgstr "Zu Server verbinden"
 
-#: /home/martin/Programmieren/sourceforge/holtz/cross_compile/holtz-test/common/dialogs.cpp:66
+#: /home/martin/Programmieren/sourceforge/holtz/branches/new_game_bloks/holtz/common/dialogs.cpp:74
 msgid "Keep last game connection"
 msgstr "Spieler oder Netzwerkverbindung beibehalten"
 
-#: /home/martin/Programmieren/sourceforge/holtz/cross_compile/holtz-test/common/dialogs.cpp:86
+#: /home/martin/Programmieren/sourceforge/holtz/branches/new_game_bloks/holtz/common/dialogs.cpp:94
 msgid "Connect"
 msgstr "Verbinden"
 
-#: /home/martin/Programmieren/sourceforge/holtz/cross_compile/holtz-test/common/dialogs.cpp:96
-#: /home/martin/Programmieren/sourceforge/holtz/cross_compile/holtz-test/common/dialogs.cpp:106
+#: /home/martin/Programmieren/sourceforge/holtz/branches/new_game_bloks/holtz/common/dialogs.cpp:104
+#: /home/martin/Programmieren/sourceforge/holtz/branches/new_game_bloks/holtz/common/dialogs.cpp:114
 msgid "Port"
 msgstr "Port"
 
-#: /home/martin/Programmieren/sourceforge/holtz/cross_compile/holtz-test/common/dialogs.cpp:101
+#: /home/martin/Programmieren/sourceforge/holtz/branches/new_game_bloks/holtz/common/dialogs.cpp:109
 msgid "Hostname"
 msgstr "Hostname"
 
-#: /home/martin/Programmieren/sourceforge/holtz/cross_compile/holtz-test/common/dialogs.cpp:185
+#: /home/martin/Programmieren/sourceforge/holtz/branches/new_game_bloks/holtz/common/dialogs.cpp:193
 msgid "Please wait until connection attempt succeeds or fails and try again"
-msgstr "Bitte warte bis der aktuelle Netzwerkverbindungsversuch gelingt oder fehl schlägt und versuche es erneut"
+msgstr ""
+"Bitte warte bis der aktuelle Netzwerkverbindungsversuch gelingt oder fehl "
+"schlägt und versuche es erneut"
 
-#: /home/martin/Programmieren/sourceforge/holtz/cross_compile/holtz-test/common/dialogs.cpp:186
+#: /home/martin/Programmieren/sourceforge/holtz/branches/new_game_bloks/holtz/common/dialogs.cpp:194
 msgid "Wait"
 msgstr "Bitte warten"
 
-#: /home/martin/Programmieren/sourceforge/holtz/cross_compile/holtz-test/common/dialogs.cpp:245
+#: /home/martin/Programmieren/sourceforge/holtz/branches/new_game_bloks/holtz/common/dialogs.cpp:253
 msgid "Can't listen port"
 msgstr "Kann diesen Port nicht übernehmen"
 
-#: /home/martin/Programmieren/sourceforge/holtz/cross_compile/holtz-test/common/dialogs.cpp:245
-#: /home/martin/Programmieren/sourceforge/holtz/cross_compile/holtz-test/common/dialogs.cpp:274
+#: /home/martin/Programmieren/sourceforge/holtz/branches/new_game_bloks/holtz/common/dialogs.cpp:253
+#: /home/martin/Programmieren/sourceforge/holtz/branches/new_game_bloks/holtz/common/dialogs.cpp:282
 msgid "Network Message"
 msgstr "Netzwerk Nachricht"
 
-#: /home/martin/Programmieren/sourceforge/holtz/cross_compile/holtz-test/common/dialogs.cpp:267
+#: /home/martin/Programmieren/sourceforge/holtz/branches/new_game_bloks/holtz/common/dialogs.cpp:275
 msgid "Connecting..."
 msgstr "Verbinde..."
 
-#: /home/martin/Programmieren/sourceforge/holtz/cross_compile/holtz-test/common/dialogs.cpp:274
+#: /home/martin/Programmieren/sourceforge/holtz/branches/new_game_bloks/holtz/common/dialogs.cpp:282
 msgid "Connection to Server failed"
 msgstr "Verbindung zu Server fehlgeschlagen"
 
-#: /home/martin/Programmieren/sourceforge/holtz/cross_compile/holtz-test/common/dialogs.cpp:299
-#: /home/martin/Programmieren/sourceforge/holtz/cross_compile/holtz-test/common/dialogs.cpp:581
-#: /home/martin/Programmieren/sourceforge/holtz/cross_compile/holtz-test/common/dialogs.cpp:1034
-#: /home/martin/Programmieren/sourceforge/holtz/cross_compile/holtz-test/common/dialogs.cpp:1157
-#: /home/martin/Programmieren/sourceforge/holtz/cross_compile/holtz-test/common/dialogs.cpp:1391
+#: /home/martin/Programmieren/sourceforge/holtz/branches/new_game_bloks/holtz/common/dialogs.cpp:307
+#: /home/martin/Programmieren/sourceforge/holtz/branches/new_game_bloks/holtz/common/dialogs.cpp:611
+#: /home/martin/Programmieren/sourceforge/holtz/branches/new_game_bloks/holtz/common/dialogs.cpp:1072
+#: /home/martin/Programmieren/sourceforge/holtz/branches/new_game_bloks/holtz/common/dialogs.cpp:1197
+#: /home/martin/Programmieren/sourceforge/holtz/branches/new_game_bloks/holtz/common/dialogs.cpp:1433
 msgid "Please wait for connection to allow player setup"
-msgstr "Bitte warte bis die Netzwerkverbindung es erlaubt zur Spielerauswahl überzugehen"
+msgstr ""
+"Bitte warte bis die Netzwerkverbindung es erlaubt zur Spielerauswahl "
+"überzugehen"
 
-#: /home/martin/Programmieren/sourceforge/holtz/cross_compile/holtz-test/common/dialogs.cpp:300
-#: /home/martin/Programmieren/sourceforge/holtz/cross_compile/holtz-test/common/dialogs.cpp:582
-#: /home/martin/Programmieren/sourceforge/holtz/cross_compile/holtz-test/common/dialogs.cpp:1035
-#: /home/martin/Programmieren/sourceforge/holtz/cross_compile/holtz-test/common/dialogs.cpp:1158
-#: /home/martin/Programmieren/sourceforge/holtz/cross_compile/holtz-test/common/dialogs.cpp:1392
+#: /home/martin/Programmieren/sourceforge/holtz/branches/new_game_bloks/holtz/common/dialogs.cpp:308
+#: /home/martin/Programmieren/sourceforge/holtz/branches/new_game_bloks/holtz/common/dialogs.cpp:612
+#: /home/martin/Programmieren/sourceforge/holtz/branches/new_game_bloks/holtz/common/dialogs.cpp:1073
+#: /home/martin/Programmieren/sourceforge/holtz/branches/new_game_bloks/holtz/common/dialogs.cpp:1198
+#: /home/martin/Programmieren/sourceforge/holtz/branches/new_game_bloks/holtz/common/dialogs.cpp:1434
 msgid "Connecting"
 msgstr "Verbindungsabbau"
 
-#: /home/martin/Programmieren/sourceforge/holtz/cross_compile/holtz-test/common/dialogs.cpp:359
+#: /home/martin/Programmieren/sourceforge/holtz/branches/new_game_bloks/holtz/common/dialogs.cpp:367
 msgid "Connected"
 msgstr "Verbunden"
 
-#: /home/martin/Programmieren/sourceforge/holtz/cross_compile/holtz-test/common/dialogs.cpp:386
+#: /home/martin/Programmieren/sourceforge/holtz/branches/new_game_bloks/holtz/common/dialogs.cpp:394
 msgid "Connection Lost"
 msgstr "Verbindung fehlgeschlagen"
 
-#: /home/martin/Programmieren/sourceforge/holtz/cross_compile/holtz-test/common/dialogs.cpp:410
+#: /home/martin/Programmieren/sourceforge/holtz/branches/new_game_bloks/holtz/common/dialogs.cpp:418
 msgid "Start new game"
 msgstr "Starte ein neues Spiel"
 
-#: /home/martin/Programmieren/sourceforge/holtz/cross_compile/holtz-test/common/dialogs.cpp:411
+#: /home/martin/Programmieren/sourceforge/holtz/branches/new_game_bloks/holtz/common/dialogs.cpp:419
 msgid "Continue game"
 msgstr "Spiel fortsetzen"
 
-#: /home/martin/Programmieren/sourceforge/holtz/cross_compile/holtz-test/common/dialogs.cpp:412
+#: /home/martin/Programmieren/sourceforge/holtz/branches/new_game_bloks/holtz/common/dialogs.cpp:420
 msgid "Don't care which game to play"
 msgstr "Egal welches Spiel"
 
-#: /home/martin/Programmieren/sourceforge/holtz/cross_compile/holtz-test/common/dialogs.cpp:416
+#: /home/martin/Programmieren/sourceforge/holtz/branches/new_game_bloks/holtz/common/dialogs.cpp:424
 msgid "Basic Rules"
 msgstr "Beginner Regeln"
 
-#: /home/martin/Programmieren/sourceforge/holtz/cross_compile/holtz-test/common/dialogs.cpp:417
-#: /home/martin/Programmieren/sourceforge/holtz/cross_compile/holtz-test/common/dialogs.cpp:426
-#: /home/martin/Programmieren/sourceforge/holtz/cross_compile/holtz-test/common/dialogs.cpp:434
+#: /home/martin/Programmieren/sourceforge/holtz/branches/new_game_bloks/holtz/common/dialogs.cpp:425
+#: /home/martin/Programmieren/sourceforge/holtz/branches/new_game_bloks/holtz/common/dialogs.cpp:434
+#: /home/martin/Programmieren/sourceforge/holtz/branches/new_game_bloks/holtz/common/dialogs.cpp:450
 msgid "Standard Rules"
 msgstr "Standard Regeln"
 
-#: /home/martin/Programmieren/sourceforge/holtz/cross_compile/holtz-test/common/dialogs.cpp:418
+#: /home/martin/Programmieren/sourceforge/holtz/branches/new_game_bloks/holtz/common/dialogs.cpp:426
 msgid "Tournament Rules"
 msgstr "Turnier Regeln"
 
-#: /home/martin/Programmieren/sourceforge/holtz/cross_compile/holtz-test/common/dialogs.cpp:419
-#: /home/martin/Programmieren/sourceforge/holtz/cross_compile/holtz-test/common/dialogs.cpp:709
-#: /home/martin/Programmieren/sourceforge/holtz/cross_compile/holtz-test/common/dialogs.cpp:735
+#: /home/martin/Programmieren/sourceforge/holtz/branches/new_game_bloks/holtz/common/dialogs.cpp:427
+#: /home/martin/Programmieren/sourceforge/holtz/branches/new_game_bloks/holtz/common/dialogs.cpp:747
+#: /home/martin/Programmieren/sourceforge/holtz/branches/new_game_bloks/holtz/common/dialogs.cpp:773
 msgid "Custom"
 msgstr "Selbst definiert"
 
-#: /home/martin/Programmieren/sourceforge/holtz/cross_compile/holtz-test/common/dialogs.cpp:420
-#: /home/martin/Programmieren/sourceforge/holtz/cross_compile/holtz-test/common/dialogs.cpp:428
-#: /home/martin/Programmieren/sourceforge/holtz/cross_compile/holtz-test/common/dialogs.cpp:436
+#: /home/martin/Programmieren/sourceforge/holtz/branches/new_game_bloks/holtz/common/dialogs.cpp:428
+#: /home/martin/Programmieren/sourceforge/holtz/branches/new_game_bloks/holtz/common/dialogs.cpp:436
+#: /home/martin/Programmieren/sourceforge/holtz/branches/new_game_bloks/holtz/common/dialogs.cpp:444
+#: /home/martin/Programmieren/sourceforge/holtz/branches/new_game_bloks/holtz/common/dialogs.cpp:452
 msgid "Rules of last game"
 msgstr "Regeln wie im letzten Spiel"
 
-#: /home/martin/Programmieren/sourceforge/holtz/cross_compile/holtz-test/common/dialogs.cpp:422
-#: /home/martin/Programmieren/sourceforge/holtz/cross_compile/holtz-test/common/dialogs.cpp:430
-#: /home/martin/Programmieren/sourceforge/holtz/cross_compile/holtz-test/common/dialogs.cpp:438
+#: /home/martin/Programmieren/sourceforge/holtz/branches/new_game_bloks/holtz/common/dialogs.cpp:430
+#: /home/martin/Programmieren/sourceforge/holtz/branches/new_game_bloks/holtz/common/dialogs.cpp:438
+#: /home/martin/Programmieren/sourceforge/holtz/branches/new_game_bloks/holtz/common/dialogs.cpp:446
+#: /home/martin/Programmieren/sourceforge/holtz/branches/new_game_bloks/holtz/common/dialogs.cpp:454
 msgid "Rules for new game"
 msgstr "Wählen Sie die Regeln für das neue Spiel."
 
-#: /home/martin/Programmieren/sourceforge/holtz/cross_compile/holtz-test/common/dialogs.cpp:427
+#: /home/martin/Programmieren/sourceforge/holtz/branches/new_game_bloks/holtz/common/dialogs.cpp:435
 msgid "Random Start Board"
 msgstr "Zufällige Anfangsposition"
 
-#: /home/martin/Programmieren/sourceforge/holtz/cross_compile/holtz-test/common/dialogs.cpp:435
+#: /home/martin/Programmieren/sourceforge/holtz/branches/new_game_bloks/holtz/common/dialogs.cpp:442
+msgid "Standard Rules (4 colors)"
+msgstr "Standard Regeln (4 Farben)"
+
+#: /home/martin/Programmieren/sourceforge/holtz/branches/new_game_bloks/holtz/common/dialogs.cpp:443
+msgid "Small Board Rules (2 colors)"
+msgstr "Regeln mit kleinem Spielbrett (2 Farben)"
+
+#: /home/martin/Programmieren/sourceforge/holtz/branches/new_game_bloks/holtz/common/dialogs.cpp:451
 msgid "Extended Rules"
 msgstr "Erweiterete Regeln"
 
-#: /home/martin/Programmieren/sourceforge/holtz/cross_compile/holtz-test/common/dialogs.cpp:443
+#: /home/martin/Programmieren/sourceforge/holtz/branches/new_game_bloks/holtz/common/dialogs.cpp:459
 msgid "Continue last game"
 msgstr "Letztes Spiel fortsetzen"
 
-#: /home/martin/Programmieren/sourceforge/holtz/cross_compile/holtz-test/common/dialogs.cpp:444
+#: /home/martin/Programmieren/sourceforge/holtz/branches/new_game_bloks/holtz/common/dialogs.cpp:462
 msgid "Load PBM game"
 msgstr "PBM Spiel laden"
 
-#: /home/martin/Programmieren/sourceforge/holtz/cross_compile/holtz-test/common/dialogs.cpp:447
+#: /home/martin/Programmieren/sourceforge/holtz/branches/new_game_bloks/holtz/common/dialogs.cpp:466
 msgid "Load Little Golem game"
 msgstr "Little Golem Spiel laden"
 
-#: /home/martin/Programmieren/sourceforge/holtz/cross_compile/holtz-test/common/dialogs.cpp:451
+#: /home/martin/Programmieren/sourceforge/holtz/branches/new_game_bloks/holtz/common/dialogs.cpp:470
 msgid "Which game to continue"
 msgstr "Welches Spiel fortsetzen"
 
-#: /home/martin/Programmieren/sourceforge/holtz/cross_compile/holtz-test/common/dialogs.cpp:694
+#: /home/martin/Programmieren/sourceforge/holtz/branches/new_game_bloks/holtz/common/dialogs.cpp:732
 msgid "37 Rings (default)"
 msgstr "37 Ringe (Standard)"
 
-#: /home/martin/Programmieren/sourceforge/holtz/cross_compile/holtz-test/common/dialogs.cpp:695
+#: /home/martin/Programmieren/sourceforge/holtz/branches/new_game_bloks/holtz/common/dialogs.cpp:733
 msgid "40 Rings"
 msgstr "40 Ringe"
 
-#: /home/martin/Programmieren/sourceforge/holtz/cross_compile/holtz-test/common/dialogs.cpp:696
+#: /home/martin/Programmieren/sourceforge/holtz/branches/new_game_bloks/holtz/common/dialogs.cpp:734
 msgid "44 Rings"
 msgstr "44 Ringe"
 
-#: /home/martin/Programmieren/sourceforge/holtz/cross_compile/holtz-test/common/dialogs.cpp:697
+#: /home/martin/Programmieren/sourceforge/holtz/branches/new_game_bloks/holtz/common/dialogs.cpp:735
 msgid "48 Rings"
 msgstr "48 Ringe"
 
-#: /home/martin/Programmieren/sourceforge/holtz/cross_compile/holtz-test/common/dialogs.cpp:698
+#: /home/martin/Programmieren/sourceforge/holtz/branches/new_game_bloks/holtz/common/dialogs.cpp:736
 msgid "61 Rings"
 msgstr "61 Ringe"
 
-#: /home/martin/Programmieren/sourceforge/holtz/cross_compile/holtz-test/common/dialogs.cpp:700
+#: /home/martin/Programmieren/sourceforge/holtz/branches/new_game_bloks/holtz/common/dialogs.cpp:738
 msgid "Choose Board"
 msgstr "Feld auswählen"
 
-#: /home/martin/Programmieren/sourceforge/holtz/cross_compile/holtz-test/common/dialogs.cpp:707
-#: /home/martin/Programmieren/sourceforge/holtz/cross_compile/holtz-test/common/dialogs.cpp:733
+#: /home/martin/Programmieren/sourceforge/holtz/branches/new_game_bloks/holtz/common/dialogs.cpp:745
+#: /home/martin/Programmieren/sourceforge/holtz/branches/new_game_bloks/holtz/common/dialogs.cpp:771
 msgid "Basic"
 msgstr "Beginner"
 
-#: /home/martin/Programmieren/sourceforge/holtz/cross_compile/holtz-test/common/dialogs.cpp:708
-#: /home/martin/Programmieren/sourceforge/holtz/cross_compile/holtz-test/common/dialogs.cpp:734
+#: /home/martin/Programmieren/sourceforge/holtz/branches/new_game_bloks/holtz/common/dialogs.cpp:746
+#: /home/martin/Programmieren/sourceforge/holtz/branches/new_game_bloks/holtz/common/dialogs.cpp:772
 msgid "Standard"
 msgstr "Standard"
 
-#: /home/martin/Programmieren/sourceforge/holtz/cross_compile/holtz-test/common/dialogs.cpp:710
+#: /home/martin/Programmieren/sourceforge/holtz/branches/new_game_bloks/holtz/common/dialogs.cpp:748
 msgid "Win condition"
 msgstr "Gewinnbedingung"
 
-#: /home/martin/Programmieren/sourceforge/holtz/cross_compile/holtz-test/common/dialogs.cpp:716
-#: /home/martin/Programmieren/sourceforge/holtz/cross_compile/holtz-test/common/dialogs.cpp:742
+#: /home/martin/Programmieren/sourceforge/holtz/branches/new_game_bloks/holtz/common/dialogs.cpp:754
+#: /home/martin/Programmieren/sourceforge/holtz/branches/new_game_bloks/holtz/common/dialogs.cpp:780
 msgid "White marbles"
 msgstr "Weiße Steine"
 
-#: /home/martin/Programmieren/sourceforge/holtz/cross_compile/holtz-test/common/dialogs.cpp:719
-#: /home/martin/Programmieren/sourceforge/holtz/cross_compile/holtz-test/common/dialogs.cpp:745
+#: /home/martin/Programmieren/sourceforge/holtz/branches/new_game_bloks/holtz/common/dialogs.cpp:757
+#: /home/martin/Programmieren/sourceforge/holtz/branches/new_game_bloks/holtz/common/dialogs.cpp:783
 msgid "Grey marbles"
 msgstr "Graue Steine"
 
-#: /home/martin/Programmieren/sourceforge/holtz/cross_compile/holtz-test/common/dialogs.cpp:722
-#: /home/martin/Programmieren/sourceforge/holtz/cross_compile/holtz-test/common/dialogs.cpp:748
+#: /home/martin/Programmieren/sourceforge/holtz/branches/new_game_bloks/holtz/common/dialogs.cpp:760
+#: /home/martin/Programmieren/sourceforge/holtz/branches/new_game_bloks/holtz/common/dialogs.cpp:786
 msgid "Black marbles"
 msgstr "Schwarze Steine"
 
-#: /home/martin/Programmieren/sourceforge/holtz/cross_compile/holtz-test/common/dialogs.cpp:725
+#: /home/martin/Programmieren/sourceforge/holtz/branches/new_game_bloks/holtz/common/dialogs.cpp:763
 msgid "Each colour"
 msgstr "Von jeder Farbe"
 
-#: /home/martin/Programmieren/sourceforge/holtz/cross_compile/holtz-test/common/dialogs.cpp:736
+#: /home/martin/Programmieren/sourceforge/holtz/branches/new_game_bloks/holtz/common/dialogs.cpp:774
 msgid "Common marbles"
 msgstr "Allgemeine Steine"
 
-#: /home/martin/Programmieren/sourceforge/holtz/cross_compile/holtz-test/common/dialogs.cpp:999
+#: /home/martin/Programmieren/sourceforge/holtz/branches/new_game_bloks/holtz/common/dialogs.cpp:1037
 msgid "Ruleset"
 msgstr "Regeln"
 
-#: /home/martin/Programmieren/sourceforge/holtz/cross_compile/holtz-test/common/dialogs.cpp:1067
+#: /home/martin/Programmieren/sourceforge/holtz/branches/new_game_bloks/holtz/common/dialogs.cpp:1105
 msgid "PBM Directory"
 msgstr "PBM Verzeichnis"
 
-#: /home/martin/Programmieren/sourceforge/holtz/cross_compile/holtz-test/common/dialogs.cpp:1072
-#: /home/martin/Programmieren/sourceforge/holtz/cross_compile/holtz-test/common/dialogs.cpp:1318
-#: /home/martin/Programmieren/sourceforge/holtz/cross_compile/holtz-test/common/dialogs.cpp:2475
-#: /home/martin/Programmieren/sourceforge/holtz/cross_compile/holtz-test/common/dialogs.cpp:2481
-#: /home/martin/Programmieren/sourceforge/holtz/cross_compile/holtz-test/common/dialogs.cpp:2496
-#: /home/martin/Programmieren/sourceforge/holtz/cross_compile/holtz-test/common/dialogs.cpp:2504
-#: /home/martin/Programmieren/sourceforge/holtz/cross_compile/holtz-test/common/dialogs.cpp:2512
+#: /home/martin/Programmieren/sourceforge/holtz/branches/new_game_bloks/holtz/common/dialogs.cpp:1110
+#: /home/martin/Programmieren/sourceforge/holtz/branches/new_game_bloks/holtz/common/dialogs.cpp:1360
+#: /home/martin/Programmieren/sourceforge/holtz/branches/new_game_bloks/holtz/common/dialogs.cpp:2561
+#: /home/martin/Programmieren/sourceforge/holtz/branches/new_game_bloks/holtz/common/dialogs.cpp:2567
+#: /home/martin/Programmieren/sourceforge/holtz/branches/new_game_bloks/holtz/common/dialogs.cpp:2582
+#: /home/martin/Programmieren/sourceforge/holtz/branches/new_game_bloks/holtz/common/dialogs.cpp:2590
+#: /home/martin/Programmieren/sourceforge/holtz/branches/new_game_bloks/holtz/common/dialogs.cpp:2598
 msgid "Choose..."
 msgstr "Durchsuchen..."
 
-#: /home/martin/Programmieren/sourceforge/holtz/cross_compile/holtz-test/common/dialogs.cpp:1243
-#: /home/martin/Programmieren/sourceforge/holtz/cross_compile/holtz-test/common/dialogs.cpp:1245
+#: /home/martin/Programmieren/sourceforge/holtz/branches/new_game_bloks/holtz/common/dialogs.cpp:1283
+#: /home/martin/Programmieren/sourceforge/holtz/branches/new_game_bloks/holtz/common/dialogs.cpp:1285
 msgid "Board"
 msgstr "Spiel"
 
-#: /home/martin/Programmieren/sourceforge/holtz/cross_compile/holtz-test/common/dialogs.cpp:1249
+#: /home/martin/Programmieren/sourceforge/holtz/branches/new_game_bloks/holtz/common/dialogs.cpp:1289
 msgid "Zertz"
 msgstr "Zertz"
 
-#: /home/martin/Programmieren/sourceforge/holtz/cross_compile/holtz-test/common/dialogs.cpp:1250
+#: /home/martin/Programmieren/sourceforge/holtz/branches/new_game_bloks/holtz/common/dialogs.cpp:1290
 msgid "Zertz+11"
 msgstr "Zertz+11"
 
-#: /home/martin/Programmieren/sourceforge/holtz/cross_compile/holtz-test/common/dialogs.cpp:1256
-#: /home/martin/Programmieren/sourceforge/holtz/cross_compile/holtz-test/common/dialogs.cpp:1450
+#: /home/martin/Programmieren/sourceforge/holtz/branches/new_game_bloks/holtz/common/dialogs.cpp:1296
+#: /home/martin/Programmieren/sourceforge/holtz/branches/new_game_bloks/holtz/common/dialogs.cpp:1492
 msgid "moves"
 msgstr "Züge"
 
-#: /home/martin/Programmieren/sourceforge/holtz/cross_compile/holtz-test/common/dialogs.cpp:1271
-#: /home/martin/Programmieren/sourceforge/holtz/cross_compile/holtz-test/common/dialogs.cpp:1273
-#: /home/martin/Programmieren/sourceforge/holtz/cross_compile/holtz-test/common/dialogs.cpp:1469
-#: /home/martin/Programmieren/sourceforge/holtz/cross_compile/holtz-test/common/dialogs.cpp:1471
+#: /home/martin/Programmieren/sourceforge/holtz/branches/new_game_bloks/holtz/common/dialogs.cpp:1313
+#: /home/martin/Programmieren/sourceforge/holtz/branches/new_game_bloks/holtz/common/dialogs.cpp:1315
+#: /home/martin/Programmieren/sourceforge/holtz/branches/new_game_bloks/holtz/common/dialogs.cpp:1511
+#: /home/martin/Programmieren/sourceforge/holtz/branches/new_game_bloks/holtz/common/dialogs.cpp:1513
 msgid "Choose a directory"
 msgstr "Wähle ein Verzeichnis"
 
-#: /home/martin/Programmieren/sourceforge/holtz/cross_compile/holtz-test/common/dialogs.cpp:1313
+#: /home/martin/Programmieren/sourceforge/holtz/branches/new_game_bloks/holtz/common/dialogs.cpp:1355
 msgid "Little Golem Directory"
 msgstr "Little Golem Verzeichnis"
 
-#: /home/martin/Programmieren/sourceforge/holtz/cross_compile/holtz-test/common/dialogs.cpp:1509
+#: /home/martin/Programmieren/sourceforge/holtz/branches/new_game_bloks/holtz/common/dialogs.cpp:1551
 msgid "Player 1"
 msgstr "Spieler 1"
 
-#: /home/martin/Programmieren/sourceforge/holtz/cross_compile/holtz-test/common/dialogs.cpp:1511
+#: /home/martin/Programmieren/sourceforge/holtz/branches/new_game_bloks/holtz/common/dialogs.cpp:1553
 msgid "AI"
 msgstr "KI"
 
-#: /home/martin/Programmieren/sourceforge/holtz/cross_compile/holtz-test/common/dialogs.cpp:1516
+#: /home/martin/Programmieren/sourceforge/holtz/branches/new_game_bloks/holtz/common/dialogs.cpp:1558
 msgid "No help"
 msgstr "Keine Hilfe"
 
-#: /home/martin/Programmieren/sourceforge/holtz/cross_compile/holtz-test/common/dialogs.cpp:1517
+#: /home/martin/Programmieren/sourceforge/holtz/branches/new_game_bloks/holtz/common/dialogs.cpp:1559
 msgid "Show possible moves"
 msgstr "Zeige mögliche Züge"
 
-#: /home/martin/Programmieren/sourceforge/holtz/cross_compile/holtz-test/common/dialogs.cpp:1518
+#: /home/martin/Programmieren/sourceforge/holtz/branches/new_game_bloks/holtz/common/dialogs.cpp:1560
 msgid "Show Hint"
 msgstr "Empfehle einen Zug"
 
-#: /home/martin/Programmieren/sourceforge/holtz/cross_compile/holtz-test/common/dialogs.cpp:1519
+#: /home/martin/Programmieren/sourceforge/holtz/branches/new_game_bloks/holtz/common/dialogs.cpp:1561
 msgid "Help mode"
 msgstr "Hilfe Modus"
 
-#: /home/martin/Programmieren/sourceforge/holtz/cross_compile/holtz-test/common/dialogs.cpp:1528
-#: /home/martin/Programmieren/sourceforge/holtz/cross_compile/holtz-test/common/dialogs.cpp:1628
+#: /home/martin/Programmieren/sourceforge/holtz/branches/new_game_bloks/holtz/common/dialogs.cpp:1570
+#: /home/martin/Programmieren/sourceforge/holtz/branches/new_game_bloks/holtz/common/dialogs.cpp:1670
 msgid "Add player"
 msgstr "Spieler hinzufügen"
 
-#: /home/martin/Programmieren/sourceforge/holtz/cross_compile/holtz-test/common/dialogs.cpp:1539
+#: /home/martin/Programmieren/sourceforge/holtz/branches/new_game_bloks/holtz/common/dialogs.cpp:1581
 msgid "Up"
 msgstr "Hoch"
 
-#: /home/martin/Programmieren/sourceforge/holtz/cross_compile/holtz-test/common/dialogs.cpp:1540
+#: /home/martin/Programmieren/sourceforge/holtz/branches/new_game_bloks/holtz/common/dialogs.cpp:1582
 msgid "Down"
 msgstr "Runter"
 
-#: /home/martin/Programmieren/sourceforge/holtz/cross_compile/holtz-test/common/dialogs.cpp:1541
+#: /home/martin/Programmieren/sourceforge/holtz/branches/new_game_bloks/holtz/common/dialogs.cpp:1583
 msgid "Remove"
 msgstr "Entfernen"
 
-#: /home/martin/Programmieren/sourceforge/holtz/cross_compile/holtz-test/common/dialogs.cpp:1547
+#: /home/martin/Programmieren/sourceforge/holtz/branches/new_game_bloks/holtz/common/dialogs.cpp:1589
 msgid "Ready"
 msgstr "Fertig"
 
-#: /home/martin/Programmieren/sourceforge/holtz/cross_compile/holtz-test/common/dialogs.cpp:1559
+#: /home/martin/Programmieren/sourceforge/holtz/branches/new_game_bloks/holtz/common/dialogs.cpp:1601
 msgid "Type the new player's name here."
 msgstr "Geben Sie den Namen des neuen Spielers hier ein."
 
-#: /home/martin/Programmieren/sourceforge/holtz/cross_compile/holtz-test/common/dialogs.cpp:1560
+#: /home/martin/Programmieren/sourceforge/holtz/branches/new_game_bloks/holtz/common/dialogs.cpp:1602
 msgid "Shows all players which will be part of the new game."
 msgstr "Zeigt alle Spieler an, die am neuen Spiel teilnehmen werden."
 
-#: /home/martin/Programmieren/sourceforge/holtz/cross_compile/holtz-test/common/dialogs.cpp:1561
+#: /home/martin/Programmieren/sourceforge/holtz/branches/new_game_bloks/holtz/common/dialogs.cpp:1603
 msgid "Select what kind of help you want for the new player."
-msgstr "Wählen Sie hier aus, welche Art Hilfe für den neuen Spieler angezeigt werden soll."
+msgstr ""
+"Wählen Sie hier aus, welche Art Hilfe für den neuen Spieler angezeigt werden "
+"soll."
 
-#: /home/martin/Programmieren/sourceforge/holtz/cross_compile/holtz-test/common/dialogs.cpp:1562
+#: /home/martin/Programmieren/sourceforge/holtz/branches/new_game_bloks/holtz/common/dialogs.cpp:1604
 msgid "Add the new player to the game."
 msgstr "Fügen Sie den neuen Spieler zum Spiel hinzu."
 
-#: /home/martin/Programmieren/sourceforge/holtz/cross_compile/holtz-test/common/dialogs.cpp:1563
-msgid "Check this box if the new player should be computer-controlled, uncheck if it is a human player."
-msgstr "Wählen Sie hier aus, ob der neue Spieler vom Computer (\"KI\") gesteuert werden soll, oder nicht (d.h. es ist ein menschlicher Spieler)."
+#: /home/martin/Programmieren/sourceforge/holtz/branches/new_game_bloks/holtz/common/dialogs.cpp:1605
+msgid ""
+"Check this box if the new player should be computer-controlled, uncheck if "
+"it is a human player."
+msgstr ""
+"Wählen Sie hier aus, ob der neue Spieler vom Computer (\"KI\") gesteuert "
+"werden soll, oder nicht (d.h. es ist ein menschlicher Spieler)."
 
-#: /home/martin/Programmieren/sourceforge/holtz/cross_compile/holtz-test/common/dialogs.cpp:1564
-msgid "Move the currently selected player upwards. (The upmost player begins the game.)"
-msgstr "Bewegt den derzeit ausgewählten Spieler nach oben. (Der erste Spieler in der Liste beginnt das Spiel.)"
+#: /home/martin/Programmieren/sourceforge/holtz/branches/new_game_bloks/holtz/common/dialogs.cpp:1606
+msgid ""
+"Move the currently selected player upwards. (The upmost player begins the "
+"game.)"
+msgstr ""
+"Bewegt den derzeit ausgewählten Spieler nach oben. (Der erste Spieler in der "
+"Liste beginnt das Spiel.)"
 
-#: /home/martin/Programmieren/sourceforge/holtz/cross_compile/holtz-test/common/dialogs.cpp:1565
-msgid "Move the currently selected player downwards. (The upmost player begins the game.)"
-msgstr "Bewegt den derzeit ausgewählten Spieler nach unten. (Der erste Spieler in der Liste beginnt das Spiel.)"
+#: /home/martin/Programmieren/sourceforge/holtz/branches/new_game_bloks/holtz/common/dialogs.cpp:1607
+msgid ""
+"Move the currently selected player downwards. (The upmost player begins the "
+"game.)"
+msgstr ""
+"Bewegt den derzeit ausgewählten Spieler nach unten. (Der erste Spieler in "
+"der Liste beginnt das Spiel.)"
 
-#: /home/martin/Programmieren/sourceforge/holtz/cross_compile/holtz-test/common/dialogs.cpp:1566
+#: /home/martin/Programmieren/sourceforge/holtz/branches/new_game_bloks/holtz/common/dialogs.cpp:1608
 msgid "Remove the currently selected player from the new game."
 msgstr "Entfernt den derzeit ausgewählten Spieler aus dem Spiel."
 
-#: /home/martin/Programmieren/sourceforge/holtz/cross_compile/holtz-test/common/dialogs.cpp:1567
+#: /home/martin/Programmieren/sourceforge/holtz/branches/new_game_bloks/holtz/common/dialogs.cpp:1609
 msgid ""
 "Click this button as soon as you are happy with the settings. \n"
 "Network games start when all players have clicked 'Ready'."
 msgstr ""
-"Klicken Sie hierauf, wenn Sie mit den Einstellungen zufrieden sind und das Spiel beginnen soll. \n"
+"Klicken Sie hierauf, wenn Sie mit den Einstellungen zufrieden sind und das "
+"Spiel beginnen soll. \n"
 "Netzwerkspiele starten erst, wenn alle Mitspieler 'Fertig' sind."
 
-#: /home/martin/Programmieren/sourceforge/holtz/cross_compile/holtz-test/common/dialogs.cpp:1628
+#: /home/martin/Programmieren/sourceforge/holtz/branches/new_game_bloks/holtz/common/dialogs.cpp:1670
 msgid "Could not add player"
 msgstr "Konnte Spieler nicht hinzufügen"
 
-#: /home/martin/Programmieren/sourceforge/holtz/cross_compile/holtz-test/common/dialogs.cpp:1649
+#: /home/martin/Programmieren/sourceforge/holtz/branches/new_game_bloks/holtz/common/dialogs.cpp:1691
 msgid "Could not remove player!"
 msgstr "Konnte Spieler nicht entfernen!"
 
-#: /home/martin/Programmieren/sourceforge/holtz/cross_compile/holtz-test/common/dialogs.cpp:1650
+#: /home/martin/Programmieren/sourceforge/holtz/branches/new_game_bloks/holtz/common/dialogs.cpp:1692
 msgid "Remove player"
 msgstr "Spieler entfernen"
 
-#: /home/martin/Programmieren/sourceforge/holtz/cross_compile/holtz-test/common/dialogs.cpp:1670
-#: /home/martin/Programmieren/sourceforge/holtz/cross_compile/holtz-test/common/dialogs.cpp:1687
+#: /home/martin/Programmieren/sourceforge/holtz/branches/new_game_bloks/holtz/common/dialogs.cpp:1712
+#: /home/martin/Programmieren/sourceforge/holtz/branches/new_game_bloks/holtz/common/dialogs.cpp:1729
 msgid "Could not move player!"
 msgstr "Kann Spieler nicht verschieben!"
 
-#: /home/martin/Programmieren/sourceforge/holtz/cross_compile/holtz-test/common/dialogs.cpp:1670
-#: /home/martin/Programmieren/sourceforge/holtz/cross_compile/holtz-test/common/dialogs.cpp:1687
+#: /home/martin/Programmieren/sourceforge/holtz/branches/new_game_bloks/holtz/common/dialogs.cpp:1712
+#: /home/martin/Programmieren/sourceforge/holtz/branches/new_game_bloks/holtz/common/dialogs.cpp:1729
 msgid "Move player"
 msgstr "Verschiebe Spieler"
 
-#: /home/martin/Programmieren/sourceforge/holtz/cross_compile/holtz-test/common/dialogs.cpp:1803
+#: /home/martin/Programmieren/sourceforge/holtz/branches/new_game_bloks/holtz/common/dialogs.cpp:1845
 msgid "Change for this player denied!"
 msgstr "Änderung an diesem Spieler wurde zurückgewiesen!"
 
-#: /home/martin/Programmieren/sourceforge/holtz/cross_compile/holtz-test/common/dialogs.cpp:1803
+#: /home/martin/Programmieren/sourceforge/holtz/branches/new_game_bloks/holtz/common/dialogs.cpp:1845
 msgid "Denied"
 msgstr "Abgelehnt"
 
-#: /home/martin/Programmieren/sourceforge/holtz/cross_compile/holtz-test/common/dialogs.cpp:1899
+#: /home/martin/Programmieren/sourceforge/holtz/branches/new_game_bloks/holtz/common/dialogs.cpp:1941
 msgid "Please add more players"
 msgstr "Bitte mehr Spieler hinzufügen"
 
-#: /home/martin/Programmieren/sourceforge/holtz/cross_compile/holtz-test/common/dialogs.cpp:1903
+#: /home/martin/Programmieren/sourceforge/holtz/branches/new_game_bloks/holtz/common/dialogs.cpp:1945
 msgid "Please remove some players"
 msgstr "Bitte Spieler entfernen"
 
-#: /home/martin/Programmieren/sourceforge/holtz/cross_compile/holtz-test/common/dialogs.cpp:1909
+#: /home/martin/Programmieren/sourceforge/holtz/branches/new_game_bloks/holtz/common/dialogs.cpp:1951
 msgid "Wait for others to become ready"
 msgstr "Bitte warte bis alle Spieler fertig sind"
 
-#: /home/martin/Programmieren/sourceforge/holtz/cross_compile/holtz-test/common/dialogs.cpp:1914
+#: /home/martin/Programmieren/sourceforge/holtz/branches/new_game_bloks/holtz/common/dialogs.cpp:1956
 msgid "Click on ready when ready"
 msgstr "Klicke auf Fertig wenn Du bereit bist"
 
-#: /home/martin/Programmieren/sourceforge/holtz/cross_compile/holtz-test/common/dialogs.cpp:1919
+#: /home/martin/Programmieren/sourceforge/holtz/branches/new_game_bloks/holtz/common/dialogs.cpp:1961
 msgid "Please continue"
 msgstr "Du kannst jetzt fertigstellen"
 
-#: /home/martin/Programmieren/sourceforge/holtz/cross_compile/holtz-test/common/dialogs.cpp:1938
+#: /home/martin/Programmieren/sourceforge/holtz/branches/new_game_bloks/holtz/common/dialogs.cpp:1980
 #, c-format
 msgid "Player %d"
 msgstr "Spieler %d"
 
-#: /home/martin/Programmieren/sourceforge/holtz/cross_compile/holtz-test/common/dialogs.cpp:1971
+#: /home/martin/Programmieren/sourceforge/holtz/branches/new_game_bloks/holtz/common/dialogs.cpp:2013
 msgid "Player setup"
 msgstr "Spielerauswahl"
 
-#: /home/martin/Programmieren/sourceforge/holtz/cross_compile/holtz-test/common/dialogs.cpp:2001
+#: /home/martin/Programmieren/sourceforge/holtz/branches/new_game_bloks/holtz/common/dialogs.cpp:2043
 msgid "Some more players are needed!"
 msgstr "Weitere Spieler benötigt!"
 
-#: /home/martin/Programmieren/sourceforge/holtz/cross_compile/holtz-test/common/dialogs.cpp:2001
-#: /home/martin/Programmieren/sourceforge/holtz/cross_compile/holtz-test/common/dialogs.cpp:2005
-#: /home/martin/Programmieren/sourceforge/holtz/cross_compile/holtz-test/common/dialogs.cpp:2009
+#: /home/martin/Programmieren/sourceforge/holtz/branches/new_game_bloks/holtz/common/dialogs.cpp:2043
+#: /home/martin/Programmieren/sourceforge/holtz/branches/new_game_bloks/holtz/common/dialogs.cpp:2047
+#: /home/martin/Programmieren/sourceforge/holtz/branches/new_game_bloks/holtz/common/dialogs.cpp:2051
 msgid "Can't start"
 msgstr "Kann nicht starten"
 
-#: /home/martin/Programmieren/sourceforge/holtz/cross_compile/holtz-test/common/dialogs.cpp:2005
+#: /home/martin/Programmieren/sourceforge/holtz/branches/new_game_bloks/holtz/common/dialogs.cpp:2047
 msgid "Too many players!"
 msgstr "Zu viele Spieler!"
 
-#: /home/martin/Programmieren/sourceforge/holtz/cross_compile/holtz-test/common/dialogs.cpp:2009
+#: /home/martin/Programmieren/sourceforge/holtz/branches/new_game_bloks/holtz/common/dialogs.cpp:2051
 msgid "Please wait until everyone is ready"
 msgstr "Bitte warte bis alle Spieler fertig sind"
 
-#: /home/martin/Programmieren/sourceforge/holtz/cross_compile/holtz-test/common/dialogs.cpp:2060
+#: /home/martin/Programmieren/sourceforge/holtz/branches/new_game_bloks/holtz/common/dialogs.cpp:2102
 msgid "Setup game"
 msgstr "Spiel vorbereiten"
 
-#: /home/martin/Programmieren/sourceforge/holtz/cross_compile/holtz-test/common/dialogs.cpp:2142
+#: /home/martin/Programmieren/sourceforge/holtz/branches/new_game_bloks/holtz/common/dialogs.cpp:2184
 msgid " asks to use another board. Accept?"
 msgstr " fragt ob andere Spielaufstellung gespielt werden soll. Annehmen?"
 
-#: /home/martin/Programmieren/sourceforge/holtz/cross_compile/holtz-test/common/dialogs.cpp:2143
+#: /home/martin/Programmieren/sourceforge/holtz/branches/new_game_bloks/holtz/common/dialogs.cpp:2185
 msgid "Accept board?"
 msgstr "Spielaufstellung annehmen?"
 
-#: /home/martin/Programmieren/sourceforge/holtz/cross_compile/holtz-test/common/dialogs.cpp:2156
+#: /home/martin/Programmieren/sourceforge/holtz/branches/new_game_bloks/holtz/common/dialogs.cpp:2198
 msgid "Board changed. Do you want to view the new settings?"
-msgstr "Spielaufstellung hat sich geändert. Soll diese im Dialog übernommen werden?"
+msgstr ""
+"Spielaufstellung hat sich geändert. Soll diese im Dialog übernommen werden?"
 
-#: /home/martin/Programmieren/sourceforge/holtz/cross_compile/holtz-test/common/dialogs.cpp:2157
+#: /home/martin/Programmieren/sourceforge/holtz/branches/new_game_bloks/holtz/common/dialogs.cpp:2199
 msgid "View board?"
 msgstr "Spielaufstellung ansehen?"
 
-#: /home/martin/Programmieren/sourceforge/holtz/cross_compile/holtz-test/common/dialogs.cpp:2170
+#: /home/martin/Programmieren/sourceforge/holtz/branches/new_game_bloks/holtz/common/dialogs.cpp:2212
 msgid "Board change denied!"
 msgstr "Änderung der Spielaufstellung wurde zurückgewießen!"
 
-#: /home/martin/Programmieren/sourceforge/holtz/cross_compile/holtz-test/common/dialogs.cpp:2171
+#: /home/martin/Programmieren/sourceforge/holtz/branches/new_game_bloks/holtz/common/dialogs.cpp:2213
 msgid "Change denied!"
 msgstr "Änderung abgelehnt!"
 
-#: /home/martin/Programmieren/sourceforge/holtz/cross_compile/holtz-test/common/dialogs.cpp:2216
-msgid "Connection was closed! This may be caused intentinally by your fellow players or be a result of technical problems of the connection."
-msgstr "Netzwerkverbindung ist abgebrochen! Dies kann absichtlich von einem Mitspieler oder durch technische Probleme verursacht worden sein."
+#: /home/martin/Programmieren/sourceforge/holtz/branches/new_game_bloks/holtz/common/dialogs.cpp:2258
+msgid ""
+"Connection was closed! This may be caused intentinally by your fellow "
+"players or be a result of technical problems of the connection."
+msgstr ""
+"Netzwerkverbindung ist abgebrochen! Dies kann absichtlich von einem "
+"Mitspieler oder durch technische Probleme verursacht worden sein."
 
-#: /home/martin/Programmieren/sourceforge/holtz/cross_compile/holtz-test/common/dialogs.cpp:2216
+#: /home/martin/Programmieren/sourceforge/holtz/branches/new_game_bloks/holtz/common/dialogs.cpp:2258
 msgid "disconnect"
 msgstr "Verbindung getrennt"
 
-#: /home/martin/Programmieren/sourceforge/holtz/cross_compile/holtz-test/common/dialogs.cpp:2231
+#: /home/martin/Programmieren/sourceforge/holtz/branches/new_game_bloks/holtz/common/dialogs.cpp:2273
 msgid " asks to play new game. Accept?"
 msgstr " will ein neues Spiel beginnen. Annehmen?"
 
-#: /home/martin/Programmieren/sourceforge/holtz/cross_compile/holtz-test/common/dialogs.cpp:2232
-#: /home/martin/Programmieren/sourceforge/holtz/cross_compile/holtz-test/common/manager.cpp:231
-msgid "New game?"
-msgstr "Neues Spiel?"
-
-#: /home/martin/Programmieren/sourceforge/holtz/cross_compile/holtz-test/common/dialogs.cpp:2243
+#: /home/martin/Programmieren/sourceforge/holtz/branches/new_game_bloks/holtz/common/dialogs.cpp:2285
 #, c-format
 msgid "%s asks undo one half move. Accept?"
 msgstr "%s will einen Halbzug rückgängig machen. Annehmen?"
 
-#: /home/martin/Programmieren/sourceforge/holtz/cross_compile/holtz-test/common/dialogs.cpp:2245
+#: /home/martin/Programmieren/sourceforge/holtz/branches/new_game_bloks/holtz/common/dialogs.cpp:2287
 #, c-format
 msgid "%s asks undo %d half moves. Accept?"
 msgstr "%s will %d Halbzüge rückgängig machen. Annehmen?"
 
-#: /home/martin/Programmieren/sourceforge/holtz/cross_compile/holtz-test/common/dialogs.cpp:2247
+#: /home/martin/Programmieren/sourceforge/holtz/branches/new_game_bloks/holtz/common/dialogs.cpp:2289
 msgid "Allow undo?"
 msgstr "Rückgängig machen lassen?"
 
-#: /home/martin/Programmieren/sourceforge/holtz/cross_compile/holtz-test/common/dialogs.cpp:2277
-msgid "Closing the player setup now would leave the game in a bad state. Please go back to make changes to the game setup or finish the current setup. You can also start another game from the File menu."
-msgstr "Den Spielerdialog zu schließen würde die Netzwerkverbindung in einen ungünstigen Zustand versetzen. Bitte schließe die eine Einstellungen ab oder gehe zurück um falsche Einstellungen zu ändern.  Du kannst auch ein anderes Spiel im Datei Menü öffnen."
+#: /home/martin/Programmieren/sourceforge/holtz/branches/new_game_bloks/holtz/common/dialogs.cpp:2319
+msgid ""
+"Closing the player setup now would leave the game in a bad state. Please go "
+"back to make changes to the game setup or finish the current setup. You can "
+"also start another game from the File menu."
+msgstr ""
+"Den Spielerdialog zu schließen würde die Netzwerkverbindung in einen "
+"ungünstigen Zustand versetzen. Bitte schließe die eine Einstellungen ab oder "
+"gehe zurück um falsche Einstellungen zu ändern.  Du kannst auch ein anderes "
+"Spiel im Datei Menü öffnen."
 
-#: /home/martin/Programmieren/sourceforge/holtz/cross_compile/holtz-test/common/dialogs.cpp:2278
+#: /home/martin/Programmieren/sourceforge/holtz/branches/new_game_bloks/holtz/common/dialogs.cpp:2320
 msgid "Please don't close"
 msgstr "Bitte nicht schließen"
 
-#: /home/martin/Programmieren/sourceforge/holtz/cross_compile/holtz-test/common/dialogs.cpp:2319
+#: /home/martin/Programmieren/sourceforge/holtz/branches/new_game_bloks/holtz/common/dialogs.cpp:2361
+#: /home/martin/Programmieren/sourceforge/holtz/branches/new_game_bloks/holtz/common/dialogs.cpp:2379
 msgid "Horizontal"
 msgstr "Horizontal"
 
-#: /home/martin/Programmieren/sourceforge/holtz/cross_compile/holtz-test/common/dialogs.cpp:2320
+#: /home/martin/Programmieren/sourceforge/holtz/branches/new_game_bloks/holtz/common/dialogs.cpp:2362
+#: /home/martin/Programmieren/sourceforge/holtz/branches/new_game_bloks/holtz/common/dialogs.cpp:2380
 msgid "Vertical"
 msgstr "Vertikal"
 
-#: /home/martin/Programmieren/sourceforge/holtz/cross_compile/holtz-test/common/dialogs.cpp:2321
+#: /home/martin/Programmieren/sourceforge/holtz/branches/new_game_bloks/holtz/common/dialogs.cpp:2363
+#: /home/martin/Programmieren/sourceforge/holtz/branches/new_game_bloks/holtz/common/dialogs.cpp:2381
 msgid "Board orientation"
 msgstr "Spielfeldausrichtung"
 
-#: /home/martin/Programmieren/sourceforge/holtz/cross_compile/holtz-test/common/dialogs.cpp:2327
+#: /home/martin/Programmieren/sourceforge/holtz/branches/new_game_bloks/holtz/common/dialogs.cpp:2369
 msgid "Board and common stones left"
 msgstr "Spielbrett und allgemeine Steine links"
 
-#: /home/martin/Programmieren/sourceforge/holtz/cross_compile/holtz-test/common/dialogs.cpp:2328
+#: /home/martin/Programmieren/sourceforge/holtz/branches/new_game_bloks/holtz/common/dialogs.cpp:2370
 msgid "Board left all stones right"
 msgstr "Spielbrett links und alle Steine rechts"
 
-#: /home/martin/Programmieren/sourceforge/holtz/cross_compile/holtz-test/common/dialogs.cpp:2329
+#: /home/martin/Programmieren/sourceforge/holtz/branches/new_game_bloks/holtz/common/dialogs.cpp:2371
+#: /home/martin/Programmieren/sourceforge/holtz/branches/new_game_bloks/holtz/common/dialogs.cpp:2389
 msgid "Panels arrangement"
 msgstr "Darstellungsanordnung"
 
-#: /home/martin/Programmieren/sourceforge/holtz/cross_compile/holtz-test/common/dialogs.cpp:2335
+#: /home/martin/Programmieren/sourceforge/holtz/branches/new_game_bloks/holtz/common/dialogs.cpp:2376
+#: /home/martin/Programmieren/sourceforge/holtz/branches/new_game_bloks/holtz/common/dialogs.cpp:2394
+msgid "Select the orientation in which the board is displayed on screen."
+msgstr "Wählen Sie hier die Ausrichtung des Spielbretts."
+
+#: /home/martin/Programmieren/sourceforge/holtz/branches/new_game_bloks/holtz/common/dialogs.cpp:2387
+msgid "Board top stones below"
+msgstr "Spielbrett oben, Spielssteine darunter"
+
+#: /home/martin/Programmieren/sourceforge/holtz/branches/new_game_bloks/holtz/common/dialogs.cpp:2388
+msgid "Board left stones right"
+msgstr "Spielbrett links, Spielssteine rechts davon"
+
+#: /home/martin/Programmieren/sourceforge/holtz/branches/new_game_bloks/holtz/common/dialogs.cpp:2397
 msgid "Show field coordinates"
 msgstr "Feldbezeichnungen anzeigen"
 
-#: /home/martin/Programmieren/sourceforge/holtz/cross_compile/holtz-test/common/dialogs.cpp:2339
+#: /home/martin/Programmieren/sourceforge/holtz/branches/new_game_bloks/holtz/common/dialogs.cpp:2401
 msgid "Display all common stones individually"
 msgstr "Zeige alle allgemeinen Steine einzeln"
 
-#: /home/martin/Programmieren/sourceforge/holtz/cross_compile/holtz-test/common/dialogs.cpp:2342
+#: /home/martin/Programmieren/sourceforge/holtz/branches/new_game_bloks/holtz/common/dialogs.cpp:2404
+#: /home/martin/Programmieren/sourceforge/holtz/branches/new_game_bloks/holtz/common/dialogs.cpp:2408
 msgid "Display all player stones individually"
 msgstr "Zeige alle Spielersteine einzeln"
 
-#: /home/martin/Programmieren/sourceforge/holtz/cross_compile/holtz-test/common/dialogs.cpp:2346
-msgid "Select the orientation in which the board is displayed on-screen."
-msgstr "Wählen Sie hier die Ausrichtung des Feldes."
+#: /home/martin/Programmieren/sourceforge/holtz/branches/new_game_bloks/holtz/common/dialogs.cpp:2413
+msgid ""
+"If checked, the field coordinates (a1...g4) will be displayed next to the "
+"board. This can be useful for discussing the game."
+msgstr ""
+"Wenn markiert, werden die Feldbezeichnungen (a1...g4) angezeigt. Diese sind "
+"nützlich, um über den Spielverlauf zu diskutieren."
 
-#: /home/martin/Programmieren/sourceforge/holtz/cross_compile/holtz-test/common/dialogs.cpp:2350
-msgid "If checked, the field coordinates (a1...g4) will be displayed next to the board. This can be useful for discussing the game."
-msgstr "Wenn markiert, werden die Feldbezeichnungen (a1...g4) angezeigt. Diese sind nützlich, um über den Spielverlauf zu diskutieren."
-
-#: /home/martin/Programmieren/sourceforge/holtz/cross_compile/holtz-test/common/dialogs.cpp:2371
+#: /home/martin/Programmieren/sourceforge/holtz/branches/new_game_bloks/holtz/common/dialogs.cpp:2434
 msgid "default family"
 msgstr "Standard Schriftart"
 
-#: /home/martin/Programmieren/sourceforge/holtz/cross_compile/holtz-test/common/dialogs.cpp:2372
+#: /home/martin/Programmieren/sourceforge/holtz/branches/new_game_bloks/holtz/common/dialogs.cpp:2435
 msgid "decorative family"
 msgstr "Dekorative Schriftart"
 
-#: /home/martin/Programmieren/sourceforge/holtz/cross_compile/holtz-test/common/dialogs.cpp:2373
+#: /home/martin/Programmieren/sourceforge/holtz/branches/new_game_bloks/holtz/common/dialogs.cpp:2436
 msgid "roman family"
 msgstr "Serifen Schriftart"
 
-#: /home/martin/Programmieren/sourceforge/holtz/cross_compile/holtz-test/common/dialogs.cpp:2374
+#: /home/martin/Programmieren/sourceforge/holtz/branches/new_game_bloks/holtz/common/dialogs.cpp:2437
 msgid "script family"
 msgstr "Schreibschrift"
 
-#: /home/martin/Programmieren/sourceforge/holtz/cross_compile/holtz-test/common/dialogs.cpp:2375
+#: /home/martin/Programmieren/sourceforge/holtz/branches/new_game_bloks/holtz/common/dialogs.cpp:2438
 msgid "swiss family"
 msgstr "Serifenlose Schriftart"
 
-#: /home/martin/Programmieren/sourceforge/holtz/cross_compile/holtz-test/common/dialogs.cpp:2376
+#: /home/martin/Programmieren/sourceforge/holtz/branches/new_game_bloks/holtz/common/dialogs.cpp:2439
 msgid "modern family"
 msgstr "Moderne Schriftart"
 
-#: /home/martin/Programmieren/sourceforge/holtz/cross_compile/holtz-test/common/dialogs.cpp:2377
+#: /home/martin/Programmieren/sourceforge/holtz/branches/new_game_bloks/holtz/common/dialogs.cpp:2440
 msgid "teletype family"
 msgstr "Teletype Schriftart"
 
-#: /home/martin/Programmieren/sourceforge/holtz/cross_compile/holtz-test/common/dialogs.cpp:2378
+#: /home/martin/Programmieren/sourceforge/holtz/branches/new_game_bloks/holtz/common/dialogs.cpp:2441
 msgid "<unknown font>"
 msgstr "<unbekannte Schriftart>"
 
-#: /home/martin/Programmieren/sourceforge/holtz/cross_compile/holtz-test/common/dialogs.cpp:2385
+#: /home/martin/Programmieren/sourceforge/holtz/branches/new_game_bloks/holtz/common/dialogs.cpp:2448
 msgid "slant"
 msgstr "schräg"
 
-#: /home/martin/Programmieren/sourceforge/holtz/cross_compile/holtz-test/common/dialogs.cpp:2386
+#: /home/martin/Programmieren/sourceforge/holtz/branches/new_game_bloks/holtz/common/dialogs.cpp:2449
 msgid "italic"
 msgstr "kursiv"
 
-#: /home/martin/Programmieren/sourceforge/holtz/cross_compile/holtz-test/common/dialogs.cpp:2396
+#: /home/martin/Programmieren/sourceforge/holtz/branches/new_game_bloks/holtz/common/dialogs.cpp:2459
 msgid "light"
 msgstr "dünn"
 
-#: /home/martin/Programmieren/sourceforge/holtz/cross_compile/holtz-test/common/dialogs.cpp:2404
+#: /home/martin/Programmieren/sourceforge/holtz/branches/new_game_bloks/holtz/common/dialogs.cpp:2467
 msgid "bold"
 msgstr "fett"
 
-#: /home/martin/Programmieren/sourceforge/holtz/cross_compile/holtz-test/common/dialogs.cpp:2471
+#: /home/martin/Programmieren/sourceforge/holtz/branches/new_game_bloks/holtz/common/dialogs.cpp:2557
 msgid "Skin file"
 msgstr "Skin Datei"
 
-#: /home/martin/Programmieren/sourceforge/holtz/cross_compile/holtz-test/common/dialogs.cpp:2477
+#: /home/martin/Programmieren/sourceforge/holtz/branches/new_game_bloks/holtz/common/dialogs.cpp:2563
 msgid "Beep file"
 msgstr "Klang Datei"
 
-#: /home/martin/Programmieren/sourceforge/holtz/cross_compile/holtz-test/common/dialogs.cpp:2486
+#: /home/martin/Programmieren/sourceforge/holtz/branches/new_game_bloks/holtz/common/dialogs.cpp:2572
 msgid "Play sounds"
 msgstr "Klang abspielen"
 
-#: /home/martin/Programmieren/sourceforge/holtz/cross_compile/holtz-test/common/dialogs.cpp:2492
+#: /home/martin/Programmieren/sourceforge/holtz/branches/new_game_bloks/holtz/common/dialogs.cpp:2578
 msgid "Font for player names"
 msgstr "Schriftart für Spielernamen"
 
-#: /home/martin/Programmieren/sourceforge/holtz/cross_compile/holtz-test/common/dialogs.cpp:2500
+#: /home/martin/Programmieren/sourceforge/holtz/branches/new_game_bloks/holtz/common/dialogs.cpp:2586
 msgid "Font for coordinates"
 msgstr "Schriftart für Koordinaten"
 
-#: /home/martin/Programmieren/sourceforge/holtz/cross_compile/holtz-test/common/dialogs.cpp:2508
+#: /home/martin/Programmieren/sourceforge/holtz/branches/new_game_bloks/holtz/common/dialogs.cpp:2594
 msgid "Font for text on stones"
 msgstr "Schriftart für Text auf Steinen"
 
-#: /home/martin/Programmieren/sourceforge/holtz/cross_compile/holtz-test/common/dialogs.cpp:2615
+#: /home/martin/Programmieren/sourceforge/holtz/branches/new_game_bloks/holtz/common/dialogs.cpp:2701
 msgid "Choose a skin file"
 msgstr "Wähle eine Skin Datei"
 
-#: /home/martin/Programmieren/sourceforge/holtz/cross_compile/holtz-test/common/dialogs.cpp:2616
+#: /home/martin/Programmieren/sourceforge/holtz/branches/new_game_bloks/holtz/common/dialogs.cpp:2702
 msgid "Skin files (*.zip)|*.zip"
 msgstr "Skin-Datei (*.zip)|*.zip"
 
-#: /home/martin/Programmieren/sourceforge/holtz/cross_compile/holtz-test/common/dialogs.cpp:2636
+#: /home/martin/Programmieren/sourceforge/holtz/branches/new_game_bloks/holtz/common/dialogs.cpp:2726
 msgid "Choose a beep file"
 msgstr "Wähle einen Klang"
 
-#: /home/martin/Programmieren/sourceforge/holtz/cross_compile/holtz-test/common/dialogs.cpp:2637
+#: /home/martin/Programmieren/sourceforge/holtz/branches/new_game_bloks/holtz/common/dialogs.cpp:2727
 msgid "Beep sounds (*.wav)|*.wav"
 msgstr "Audio Datei (*.wav)|*.wav"
 
-#: /home/martin/Programmieren/sourceforge/holtz/cross_compile/holtz-test/common/dialogs.cpp:2726
+#: /home/martin/Programmieren/sourceforge/holtz/branches/new_game_bloks/holtz/common/dialogs.cpp:2820
 msgid "Settings"
 msgstr "Optionen"
 
-#: /home/martin/Programmieren/sourceforge/holtz/cross_compile/holtz-test/common/dialogs.cpp:2736
+#: /home/martin/Programmieren/sourceforge/holtz/branches/new_game_bloks/holtz/common/dialogs.cpp:2830
 msgid "Arrangement"
 msgstr "Anordnung"
 
-#: /home/martin/Programmieren/sourceforge/holtz/cross_compile/holtz-test/common/dialogs.cpp:2737
+#: /home/martin/Programmieren/sourceforge/holtz/branches/new_game_bloks/holtz/common/dialogs.cpp:2831
 msgid "Look && Feel"
 msgstr "Aussehen"
 
-#: /home/martin/Programmieren/sourceforge/holtz/cross_compile/holtz-test/common/dialogs.cpp:2742
-#: /home/martin/Programmieren/sourceforge/holtz/cross_compile/holtz-test/common/dialogs.cpp:2959
+#: /home/martin/Programmieren/sourceforge/holtz/branches/new_game_bloks/holtz/common/dialogs.cpp:2836
+#: /home/martin/Programmieren/sourceforge/holtz/branches/new_game_bloks/holtz/common/dialogs.cpp:3053
 msgid "OK"
 msgstr "OK"
 
-#: /home/martin/Programmieren/sourceforge/holtz/cross_compile/holtz-test/common/dialogs.cpp:2744
+#: /home/martin/Programmieren/sourceforge/holtz/branches/new_game_bloks/holtz/common/dialogs.cpp:2838
 msgid "Apply"
 msgstr "Ü&bernehmen"
 
-#: /home/martin/Programmieren/sourceforge/holtz/cross_compile/holtz-test/common/dialogs.cpp:2745
+#: /home/martin/Programmieren/sourceforge/holtz/branches/new_game_bloks/holtz/common/dialogs.cpp:2839
 msgid "Restore"
 msgstr "&Zurücksetzen"
 
-#: /home/martin/Programmieren/sourceforge/holtz/cross_compile/holtz-test/common/dialogs.cpp:2746
-#: /home/martin/Programmieren/sourceforge/holtz/cross_compile/holtz-test/common/dialogs.cpp:2963
+#: /home/martin/Programmieren/sourceforge/holtz/branches/new_game_bloks/holtz/common/dialogs.cpp:2840
+#: /home/martin/Programmieren/sourceforge/holtz/branches/new_game_bloks/holtz/common/dialogs.cpp:3057
 msgid "Cancel"
 msgstr "Abbrechen"
 
-#: /home/martin/Programmieren/sourceforge/holtz/cross_compile/holtz-test/common/dialogs.cpp:2752
+#: /home/martin/Programmieren/sourceforge/holtz/branches/new_game_bloks/holtz/common/dialogs.cpp:2846
 msgid "Accepts the changes made in this dialog and returns to the game."
-msgstr "Übernimmt die im Dialog vorgenommenen Änderungen und kehrt zum Spiel zurück."
+msgstr ""
+"Übernimmt die im Dialog vorgenommenen Änderungen und kehrt zum Spiel zurück."
 
-#: /home/martin/Programmieren/sourceforge/holtz/cross_compile/holtz-test/common/dialogs.cpp:2753
+#: /home/martin/Programmieren/sourceforge/holtz/branches/new_game_bloks/holtz/common/dialogs.cpp:2847
 msgid "Accepts the changes made in this dialog and leaves the dialog opened."
-msgstr "Übernimmt die im Dialog vorgenommenen Änderungen und lässt den Dialog geöffnet."
+msgstr ""
+"Übernimmt die im Dialog vorgenommenen Änderungen und lässt den Dialog "
+"geöffnet."
 
-#: /home/martin/Programmieren/sourceforge/holtz/cross_compile/holtz-test/common/dialogs.cpp:2754
-msgid "Reverts the changes made in this dialog (since the last 'Apply') and leaves it opened."
-msgstr "Setzt die seit dem letzten 'Übernehmen' vorgenommenen Änderungen wieder zurück. "
+#: /home/martin/Programmieren/sourceforge/holtz/branches/new_game_bloks/holtz/common/dialogs.cpp:2848
+msgid ""
+"Reverts the changes made in this dialog (since the last 'Apply') and leaves "
+"it opened."
+msgstr ""
+"Setzt die seit dem letzten 'Übernehmen' vorgenommenen Änderungen wieder "
+"zurück. "
 
-#: /home/martin/Programmieren/sourceforge/holtz/cross_compile/holtz-test/common/dialogs.cpp:2755
+#: /home/martin/Programmieren/sourceforge/holtz/branches/new_game_bloks/holtz/common/dialogs.cpp:2849
 msgid "Closes the dialog without accepting the changes."
 msgstr "Schließt den Dialog und verwirft die vorgenommenen Änderungen."
 
-#: /home/martin/Programmieren/sourceforge/holtz/cross_compile/holtz-test/common/dialogs.cpp:2813
+#: /home/martin/Programmieren/sourceforge/holtz/branches/new_game_bloks/holtz/common/dialogs.cpp:2907
 msgid "Network clients"
 msgstr "Netzwerk Clients"
 
-#: /home/martin/Programmieren/sourceforge/holtz/cross_compile/holtz-test/common/dialogs.cpp:2818
+#: /home/martin/Programmieren/sourceforge/holtz/branches/new_game_bloks/holtz/common/dialogs.cpp:2912
 msgid "allow new connections"
 msgstr "erlaube neue Verbindungen"
 
-#: /home/martin/Programmieren/sourceforge/holtz/cross_compile/holtz-test/common/dialogs.cpp:2830
+#: /home/martin/Programmieren/sourceforge/holtz/branches/new_game_bloks/holtz/common/dialogs.cpp:2924
 msgid "Disconnect All"
 msgstr "Alle Verbindungen trennen"
 
-#: /home/martin/Programmieren/sourceforge/holtz/cross_compile/holtz-test/common/dialogs.cpp:2836
-msgid "Lists all connected client computers. Double-click one of the clients to throw him out of the game."
-msgstr "Zeigt alle verbundenen Client-Rechner. Doppelklicken Sie auf einen der Rechner, um ihn aus dem Spiel zu werfen."
+#: /home/martin/Programmieren/sourceforge/holtz/branches/new_game_bloks/holtz/common/dialogs.cpp:2930
+msgid ""
+"Lists all connected client computers. Double-click one of the clients to "
+"throw him out of the game."
+msgstr ""
+"Zeigt alle verbundenen Client-Rechner. Doppelklicken Sie auf einen der "
+"Rechner, um ihn aus dem Spiel zu werfen."
 
-#: /home/martin/Programmieren/sourceforge/holtz/cross_compile/holtz-test/common/dialogs.cpp:2837
+#: /home/martin/Programmieren/sourceforge/holtz/branches/new_game_bloks/holtz/common/dialogs.cpp:2931
 msgid "Disconnect all client computers from the game."
 msgstr "Entfernt alle verbundenen Client-Rechner aus diesem Spiel."
 
-#: /home/martin/Programmieren/sourceforge/holtz/cross_compile/holtz-test/common/dialogs.cpp:2898
+#: /home/martin/Programmieren/sourceforge/holtz/branches/new_game_bloks/holtz/common/dialogs.cpp:2992
 #, c-format
 msgid "Do you really want to disconnect %s?"
 msgstr "Willst Du wirklich die Verbidnung zu %s trennen?"
 
-#: /home/martin/Programmieren/sourceforge/holtz/cross_compile/holtz-test/common/dialogs.cpp:2899
+#: /home/martin/Programmieren/sourceforge/holtz/branches/new_game_bloks/holtz/common/dialogs.cpp:2993
 msgid "Disconnect?"
 msgstr "Verbindung trennen?"
 
-#: /home/martin/Programmieren/sourceforge/holtz/cross_compile/holtz-test/common/dialogs.cpp:2908
+#: /home/martin/Programmieren/sourceforge/holtz/branches/new_game_bloks/holtz/common/dialogs.cpp:3002
 #, c-format
 msgid "Can't disconnect host %s yet!"
 msgstr "Kann Verbindung zu %s nicht trennen!"
 
-#: /home/martin/Programmieren/sourceforge/holtz/cross_compile/holtz-test/common/dialogs.cpp:2909
+#: /home/martin/Programmieren/sourceforge/holtz/branches/new_game_bloks/holtz/common/dialogs.cpp:3003
 msgid "Can't disconnect!"
 msgstr "Kann Verbindung nicht trennen!"
 
-#: /home/martin/Programmieren/sourceforge/holtz/cross_compile/holtz-test/common/dialogs.cpp:2942
+#: /home/martin/Programmieren/sourceforge/holtz/branches/new_game_bloks/holtz/common/dialogs.cpp:3036
 msgid "Network Game"
 msgstr "Netzwerkspiel"
 
-#: /home/martin/Programmieren/sourceforge/holtz/cross_compile/holtz-test/common/dialogs.cpp:2945
+#: /home/martin/Programmieren/sourceforge/holtz/branches/new_game_bloks/holtz/common/dialogs.cpp:3039
 msgid "Setup server"
 msgstr "Server starten"
 
-#: /home/martin/Programmieren/sourceforge/holtz/cross_compile/holtz-test/common/dialogs.cpp:2971
-msgid "Select this option to setup a new server, so that other players on the network can join your game."
-msgstr "Wählen Sie diese Option, um einen neuen 'Server' zu starten, so dass andere Spieler im Netzwerk an Ihrem Spiel teilnehmen können."
+#: /home/martin/Programmieren/sourceforge/holtz/branches/new_game_bloks/holtz/common/dialogs.cpp:3065
+msgid ""
+"Select this option to setup a new server, so that other players on the "
+"network can join your game."
+msgstr ""
+"Wählen Sie diese Option, um einen neuen 'Server' zu starten, so dass andere "
+"Spieler im Netzwerk an Ihrem Spiel teilnehmen können."
 
-#: /home/martin/Programmieren/sourceforge/holtz/cross_compile/holtz-test/common/dialogs.cpp:2972
-msgid "Select this option to connect to someone else's server and join his game."
-msgstr "Wählen Sie diese Option, um zu einem 'Server' auf einem anderen Rechner im Netzwerk zu verbinden und an dessen Spiel teilzunehmen."
+#: /home/martin/Programmieren/sourceforge/holtz/branches/new_game_bloks/holtz/common/dialogs.cpp:3066
+msgid ""
+"Select this option to connect to someone else's server and join his game."
+msgstr ""
+"Wählen Sie diese Option, um zu einem 'Server' auf einem anderen Rechner im "
+"Netzwerk zu verbinden und an dessen Spiel teilzunehmen."
 
-#: /home/martin/Programmieren/sourceforge/holtz/cross_compile/holtz-test/common/dialogs.cpp:2973
-msgid "Enter the IP address or hostname of the computer you want to connect to. (If you are setting up a server, this field has no meaning.)"
-msgstr "Geben Sie hier die IP-Adresse oder den Rechnernamen des Computers ein, zu dem Sie verbinden wollen. (Wenn Sie einen 'Server' starten, ist das Feld bedeutungslos.)"
+#: /home/martin/Programmieren/sourceforge/holtz/branches/new_game_bloks/holtz/common/dialogs.cpp:3067
+msgid ""
+"Enter the IP address or hostname of the computer you want to connect to. (If "
+"you are setting up a server, this field has no meaning.)"
+msgstr ""
+"Geben Sie hier die IP-Adresse oder den Rechnernamen des Computers ein, zu "
+"dem Sie verbinden wollen. (Wenn Sie einen 'Server' starten, ist das Feld "
+"bedeutungslos.)"
 
-#: /home/martin/Programmieren/sourceforge/holtz/cross_compile/holtz-test/common/dialogs.cpp:2974
-msgid "Enter the port number of your (or the other person's) server. You can usually leave this unchanged."
-msgstr "Geben Sie die Port-Nummer Ihres (oder des zu verbindenden) Servers ein. Dieser Wert muss normalerweise nicht geändert werden."
+#: /home/martin/Programmieren/sourceforge/holtz/branches/new_game_bloks/holtz/common/dialogs.cpp:3068
+msgid ""
+"Enter the port number of your (or the other person's) server. You can "
+"usually leave this unchanged."
+msgstr ""
+"Geben Sie die Port-Nummer Ihres (oder des zu verbindenden) Servers ein. "
+"Dieser Wert muss normalerweise nicht geändert werden."
 
-#: /home/martin/Programmieren/sourceforge/holtz/cross_compile/holtz-test/common/dialogs.cpp:2975
+#: /home/martin/Programmieren/sourceforge/holtz/branches/new_game_bloks/holtz/common/dialogs.cpp:3069
 msgid "Start up the network connection using the given options."
 msgstr "Startet die Netzwerkverbindung mit den angegebenen Einstellungen."
 
-#: /home/martin/Programmieren/sourceforge/holtz/cross_compile/holtz-test/common/dialogs.cpp:3098
+#: /home/martin/Programmieren/sourceforge/holtz/branches/new_game_bloks/holtz/common/dialogs.cpp:3192
 msgid "start"
 msgstr "start"
 
-#: /home/martin/Programmieren/sourceforge/holtz/cross_compile/holtz-test/common/dialogs.cpp:3174
+#: /home/martin/Programmieren/sourceforge/holtz/branches/new_game_bloks/holtz/common/dialogs.cpp:3268
 msgid "Variants"
 msgstr "Variantenbaum"
 
-#: /home/martin/Programmieren/sourceforge/holtz/cross_compile/holtz-test/common/manager.cpp:96
-msgid "Exception caught!"
-msgstr "Ausnahme gefangen!"
-
-#: /home/martin/Programmieren/sourceforge/holtz/cross_compile/holtz-test/common/manager.cpp:96
-msgid "Exception!"
-msgstr "Ausnahme!"
-
-#: /home/martin/Programmieren/sourceforge/holtz/cross_compile/holtz-test/common/manager.cpp:158
-msgid "Already new game requested"
-msgstr "Neues Spiel wurde bereits angefordert"
-
-#: /home/martin/Programmieren/sourceforge/holtz/cross_compile/holtz-test/common/manager.cpp:158
-msgid "New game"
-msgstr "Neues Spiel"
-
-#: /home/martin/Programmieren/sourceforge/holtz/cross_compile/holtz-test/common/manager.cpp:174
-#: /home/martin/Programmieren/sourceforge/holtz/cross_compile/holtz-test/common/manager.cpp:295
-msgid "Asking other Users..."
-msgstr "Frage Mitspieler..."
-
-#: /home/martin/Programmieren/sourceforge/holtz/cross_compile/holtz-test/common/manager.cpp:206
-msgid "Unrequested new_game accepted?!?"
-msgstr "Unangefordertes Neues Spiel akzeptiert?!?"
-
-#: /home/martin/Programmieren/sourceforge/holtz/cross_compile/holtz-test/common/manager.cpp:206
-#: /home/martin/Programmieren/sourceforge/holtz/cross_compile/holtz-test/common/manager.cpp:225
-msgid "Why new_game"
-msgstr "Warum neues Spiel"
-
-#: /home/martin/Programmieren/sourceforge/holtz/cross_compile/holtz-test/common/manager.cpp:225
-msgid "Unrequested new game denied?!?"
-msgstr "Unangefordertes neues Spiel wurde abgelehnt?!?"
-
-#: /home/martin/Programmieren/sourceforge/holtz/cross_compile/holtz-test/common/manager.cpp:230
-msgid "The idea of starting a new game was rejected. Do you want to start a new game on your own?"
-msgstr "Neues Spiel wurde abgelehnt. Möchtest Du unabhängig von Deinen Mitspielern ein neues Spiel starten?"
-
-#: /home/martin/Programmieren/sourceforge/holtz/cross_compile/holtz-test/common/manager.cpp:248
-msgid "Already undo requested"
-msgstr "Rückgängigmachen wurde bereits angefordert"
-
-#: /home/martin/Programmieren/sourceforge/holtz/cross_compile/holtz-test/common/manager.cpp:248
-#: /home/martin/Programmieren/sourceforge/holtz/cross_compile/holtz-test/common/manager.cpp:260
-#: /home/martin/Programmieren/sourceforge/holtz/cross_compile/holtz-test/common/manager.cpp:415
-msgid "Undo failed"
-msgstr "Rückgängig ist fehlgeschlagen"
-
-#: /home/martin/Programmieren/sourceforge/holtz/cross_compile/holtz-test/common/manager.cpp:260
-msgid "Can't undo move since game is stopped."
-msgstr "Kann keinen Zug zurücknehmen da das Spiel angehalten ist."
-
-#: /home/martin/Programmieren/sourceforge/holtz/cross_compile/holtz-test/common/manager.cpp:363
-msgid "Unrequested undo accepted?!?"
-msgstr "Unangefordertes Zurücknehmen wurde angenommen?!?"
-
-#: /home/martin/Programmieren/sourceforge/holtz/cross_compile/holtz-test/common/manager.cpp:363
-#: /home/martin/Programmieren/sourceforge/holtz/cross_compile/holtz-test/common/manager.cpp:381
-msgid "Why undo"
-msgstr "Warum Rückgängig?"
-
-#: /home/martin/Programmieren/sourceforge/holtz/cross_compile/holtz-test/common/manager.cpp:381
-msgid "Unrequested undo denied?!?"
-msgstr "Unangefordertes Zurücknehmen wurde abgelehnt?!?"
-
-#: /home/martin/Programmieren/sourceforge/holtz/cross_compile/holtz-test/common/manager.cpp:387
-msgid "Requested undo was denied"
-msgstr "Rückgängig machen wurde abgelehnt"
-
-#: /home/martin/Programmieren/sourceforge/holtz/cross_compile/holtz-test/common/manager.cpp:387
-msgid "Undo denied"
-msgstr "Rückgängig abgelehnt"
-
-#: /home/martin/Programmieren/sourceforge/holtz/cross_compile/holtz-test/common/manager.cpp:415
-msgid "Undo move failed"
-msgstr "Rückgängig machen fehlgeschlagen"
-
+#~ msgid "Holtz-"
+#~ msgstr "Holtz-"

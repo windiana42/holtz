@@ -136,8 +136,8 @@ namespace dvonn
 
     double rate_player( Game &, Player &, Distance_Map & );
     double rate_position( Game &, Position & );
-    double depth_search( Game &, Position &, unsigned depth, double max, int min_max_vz,
-			 bool jump_only );
+    double depth_search( Game &, Position &, unsigned depth, double max_val, int min_max_vz,
+			 bool jump_only, bool debug_disable_min_max );
   protected:
     virtual bool need_stop_watch() { return true; }
     virtual bool should_stop( bool depth_finished );	// determines whether AI should stop now
@@ -148,13 +148,12 @@ namespace dvonn
     wxStopWatch stop_watch;
     long max_time, average_time, real_average_time;
     int num_measures;
-    unsigned max_positions_expanded, max_depth;
+    unsigned max_positions_expanded, max_depth, alloc_max_depth;
 
-    std::vector<Player>::iterator current_player;
+    std::vector<Player>::iterator ai_player; // the player for whoom a move is to be calculated
     unsigned cur_depth;
 
-    std::vector<double> max_ratings; // for min-max strategy
-
+    std::vector<std::vector<double> >  max_ratings; // for min-max strategy, [0][depth]:min_max_vz=-1,[1][depth]:min_max_vz=1
     unsigned positions_checked;
     unsigned expanded_calls;
 
@@ -174,8 +173,9 @@ namespace dvonn
 
     //storage of recursion parameters:
     Position *position;
-    unsigned depth; double max;
-    int min_max_vz; bool jump_only;
+    unsigned depth; double max_val;
+    int min_max_vz; bool jump_only/*unused*/;
+    bool debug_disable_min_max;
   };
 
   class AI_Thread : public wxThread, public AI
@@ -195,9 +195,15 @@ namespace dvonn
   };
 
   BEGIN_DECLARE_EVENT_TYPES()
+#if defined(MY_WX_MAKING_DLL) && defined(__WIN32__)
+    DECLARE_EXPORTED_EVENT_TYPE(__declspec(dllexport),EVT_AI_REPORT_MOVE, wxEVT_USER_FIRST + 1) //**/
+    DECLARE_EXPORTED_EVENT_TYPE(__declspec(dllexport),EVT_AI_REPORT_HINT, wxEVT_USER_FIRST + 2) //**/
+    DECLARE_EXPORTED_EVENT_TYPE(__declspec(dllexport),EVT_AI_FINISHED,    wxEVT_USER_FIRST + 3) //**/
+#else
     DECLARE_EVENT_TYPE(EVT_AI_REPORT_MOVE, wxEVT_USER_FIRST + 1) //**/
     DECLARE_EVENT_TYPE(EVT_AI_REPORT_HINT, wxEVT_USER_FIRST + 2) //**/
     DECLARE_EVENT_TYPE(EVT_AI_FINISHED,    wxEVT_USER_FIRST + 3) //**/
+#endif
   END_DECLARE_EVENT_TYPES() //**/
   
   class AI_Event : public wxEvent
