@@ -6,7 +6,7 @@ i="cross";
 VERSION=1.4.0
 
 #update EXE files
-cp build-mingw32/holtz.exe exe/holtz-cross32.exe
+#cp build-mingw32/holtz.exe exe/holtz-cross32.exe
 
 FILES="";
 echo Building zip-package for $i;
