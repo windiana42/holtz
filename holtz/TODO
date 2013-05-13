@@ -2,7 +2,6 @@
 
 - client name/ip not valid for server in linux
 - asking queries should be deferred during game setup dialog
-- DVONN AI considers some positions falsely as win or does intentionally bad moves (min/max mistake)
 - fix memory leak in ai.cpp -> AI_Input::destroy_ai
 
 * Features:
@@ -32,3 +31,5 @@
  bgp 1.00a client which is facilitated by just dealing with boards - please
  contact: windiana@users.sourceforge.net)
 
+-- current branch TODOs:
+- improve bloks-AI: rate convex player area starting from start corner: fields occupied, corners available for placing stones, corners available for placing stones that can not be blocked by a single move of each opponent (opposite team/paranoid assumption)

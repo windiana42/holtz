@@ -1,5 +1,5 @@
 /* XPM */
-static char * stone_black_xpm[] = {
+static const char * stone_black_xpm[] = {
 "1 1 1 1",
 " 	c None",
 " "};

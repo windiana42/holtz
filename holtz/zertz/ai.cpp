@@ -875,10 +875,13 @@ namespace zertz
     else
     {
       AI_Event event( get_move(game), EVT_AI_REPORT_MOVE, this ); 
+      if( TestDestroy() ) return 0;
       handler->AddPendingEvent( event );
     }
 
     Sleep(200);			// assure that report move event is received earlier
+
+    if( TestDestroy() ) return 0;
 
     AI_Event event( EVT_AI_FINISHED, this ); 
     handler->AddPendingEvent( event );
@@ -909,7 +912,7 @@ namespace zertz
   void AI_Thread::report_current_hint( AI_Result hint )
   {
     AI_Event event( hint, EVT_AI_REPORT_HINT, this ); 
-
+    if( TestDestroy() ) return;
     handler->AddPendingEvent( event );
   }
 
@@ -1072,7 +1075,7 @@ namespace zertz
     }
   }
 
-  void AI_Input::on_animation_done( wxTimerEvent &event )
+  void AI_Input::on_animation_done( wxTimerEvent & )
   {
     move_done = true;
     game_manager.continue_game();

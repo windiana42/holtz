@@ -22,6 +22,16 @@
 #include <list>
 #include <utility>
 
+// declare custom event type wx_EVT_HOLTZ_NOTIFY
+BEGIN_DECLARE_EVENT_TYPES()
+#if defined(MY_WX_MAKING_DLL) && defined(__WIN32__)
+DECLARE_EXPORTED_EVENT_TYPE(__declspec(dllexport),wxEVT_HOLTZ_NOTIFY, 0)
+#else
+DECLARE_EVENT_TYPE(wxEVT_HOLTZ_NOTIFY, 0)
+#endif
+END_DECLARE_EVENT_TYPES()
+
+
 namespace holtz {
 
   struct Dimensions
@@ -33,7 +43,7 @@ namespace holtz {
     bool rotation_symmetric, rotate_background;
 
     Dimensions();
-    Dimensions( char **field_xpm );
+    Dimensions( const char **field_xpm );
     Dimensions( wxConfigBase &config, wxBitmap &bitmap ); // load from configuration
   };
 
@@ -54,8 +64,8 @@ namespace holtz {
     { return (_x>=x)&&(_y>=y)&&(_x<x+width)&&(_y<y+height); }
 
     virtual void calc_dimensions() = 0;
-    virtual void draw( wxDC &dc ) const {}
-    virtual void draw_text( wxDC &dc ) const {}
+    virtual void draw( wxDC & ) const {}
+    virtual void draw_text( wxDC & ) const {}
     virtual void on_click( int /*x*/, int /*y*/ ) const {}
     virtual void on_right_click( int /*x*/, int /*y*/ ) const {}
   protected:

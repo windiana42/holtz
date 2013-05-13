@@ -79,6 +79,13 @@ namespace dvonn
 //    { -1,3-1,3-2,3-3,3-4,3-5,3-6,3-7,3-8,3-9,3-10},
 //    {   -1,4-1,4-2,4-3,4-4,4-5,4-6,4-7,4-8,4-9, -1 } };
 
+  const int micro_board[][5] =
+    { {   -1,  0,  0,  0, -1 },
+      { -1,  0,  0,  0,  0 },
+      {    0,  0,  0,  0,  0 },
+      { -1,  0,  0,  0,  0 },
+      {   -1,  0,  0,  0, -1 } };
+
 }
 
 namespace dvonn
@@ -131,6 +138,12 @@ namespace dvonn
   {
   public:
     Standard_Common_Stones();
+  };
+
+  class Micro_Common_Stones : public Common_Stones
+  {
+  public:
+    Micro_Common_Stones();
   };
 
   class Custom_Common_Stones : public Common_Stones
@@ -259,7 +272,7 @@ namespace dvonn
     enum Game_State{ set_moves=0, jump_moves };
 
     Board( const int *field_array, int width, int height, Board_Type type = custom );
-    // field must be rectangular array!
+				// field_array must be rectangular array!
     Board( Game_State game_state, int num_empty_fields,
 	   const std::vector< std::vector< std::deque<Field_State_Type> > > fields, 
 	   Board_Type type = custom );
@@ -462,8 +475,8 @@ namespace dvonn
   bool operator<( const Jump_Move &m1, const Jump_Move &m2 );
   bool operator==( const Set_Move &m1, const Set_Move &m2 );
   bool operator<( const Set_Move &m1, const Set_Move &m2 );
-  inline bool operator==( const Finish_Move &m1, const Finish_Move &m2 ) { return true; }
-  inline bool operator<( const Finish_Move &m1, const Finish_Move &m2 ) { return false; }
+  inline bool operator==( const Finish_Move &, const Finish_Move & ) { return true; }
+  inline bool operator<( const Finish_Move &, const Finish_Move & ) { return false; }
   bool operator==( const Move_Sequence &s1, const Move_Sequence &s2 );
   bool operator<( const Move_Sequence &s1, const Move_Sequence &s2 );
 
@@ -613,7 +626,7 @@ namespace dvonn
     int get_winner_index() { return winner_player_index; } // returns -1 if no player won
     void reset_game();		// doesn't reset players
     void reset_game( const Ruleset & );	// doesn't reset players
-    std::multimap<int/*score*/,Player*> get_scores() { return std::multimap<int/*score*/,Player*>(); }
+    std::multimap<int/*score*/,const Player*> get_scores() const { return std::multimap<int/*score*/,const Player*>(); }
 
     // **************
     // init functions
@@ -756,6 +769,12 @@ namespace dvonn
     virtual Ruleset *clone() const;  // cloned ruleset has a new random board
   private:
     void fill_board( Board &board );
+  };
+
+  class Micro_Ruleset : public Ruleset
+  {
+  public:
+    Micro_Ruleset();
   };
 
   class No_Output : public Player_Output

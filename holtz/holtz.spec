@@ -11,7 +11,7 @@
 %define UNICODE "--enable-unicode"  
 
 Name: holtz
-Version: 1.3.1
+Version: 1.4.0
 Release: %rel
 
 Summary: Holtz is an implementation of the abstract board games Zertz and Dvonn
@@ -26,6 +26,35 @@ Source: %name-%version.tar.gz
 Prefix: %_prefix
 BuildRoot: %_tmppath/%name-%version-root
 
+## distribution specific settings
+
+## SUSE
+%if 0%{?suse_version}
+%if 0%{?suse_version} >= 1140
+%if %{semistatic}
+#I am not sure about precise requirements of wxGTK-static
+Requires:      gtk+ >= 1.2.7 gettext
+BuildRequires: wxWidgets >= 2.8.4 wxWidgets-devel gcc-c++ boost-devel
+#wxGTK-static has to be manually compiled
+%else
+Requires:      wxWidgets >= 2.8.4
+BuildRequires: wxWidgets-devel >= 2.8.4 gcc-c++ boost-devel
+%endif
+%else
+%if %{semistatic}
+#I am not sure about precise requirements of wxGTK-static
+Requires:      gtk+ >= 1.2.7 gettext
+BuildRequires: wxGTK >= 2.8.4 wxGTK-devel gcc-c++ boost-devel
+#wxGTK-static has to be manually compiled
+%else
+Requires:      wxGTK >= 2.8.4
+BuildRequires: wxGTK-devel >= 2.8.4 gcc-c++ boost-devel
+%endif
+%endif
+
+## Fedora
+%else
+%if 0%{?fedora}
 %if %{semistatic}
 #I am not sure about precise requirements of wxGTK-static
 Requires:      gtk+ >= 1.2.7 gettext
@@ -36,20 +65,63 @@ Requires:      wxGTK >= 2.8.4
 BuildRequires: wxGTK-devel >= 2.8.4 gcc-c++ boost-devel
 %endif
 
-# discribution specific settings
-# Mandriva 2009:
-%if 0%{?mandriva_version}
-%define UNICODE "--disable-unicode"  
+## Mandriva
+%else
+%if 0%{?mdkversion}
+#%if 0%{?mdkversion} < 201100
+%define UNICODE "--disable-unicode"
+#%endif  
+%if %{semistatic}
+#I am not sure about precise requirements of wxGTK-static
+Requires:      gtk+ >= 1.2.7 gettext
+BuildRequires: wxGTK >= 2.8.4 wxGTK-devel gcc-c++ boost-devel
+#wxGTK-static has to be manually compiled
+%else
+Requires:      wxGTK >= 2.8.4
+BuildRequires: wxGTK-devel >= 2.8.4 gcc-c++ boost-devel
+%endif
+
+## Redhat / Centos
+%else
+%if 0%{?rhel_version} || 0%{?centos_version}
+%if %{semistatic}
+#I am not sure about precise requirements of wxGTK-static
+Requires:      gtk+ >= 1.2.7 gettext
+BuildRequires: wxGTK >= 2.8.4 wxGTK-devel gcc-c++ boost-devel
+#wxGTK-static has to be manually compiled
+%else
+Requires:      wxGTK >= 2.8.4
+BuildRequires: wxGTK-devel >= 2.8.4 gcc-c++ boost-devel
+%endif
+
+## any other (just speculation what might be most common)
+%else
+%if %{semistatic}
+#I am not sure about precise requirements of wxGTK-static
+Requires:      gtk+ >= 1.2.7 gettext
+BuildRequires: wxGTK >= 2.8.4 wxGTK-devel gcc-c++ boost-devel
+#wxGTK-static has to be manually compiled
+%else
+Requires:      wxGTK >= 2.8.4
+BuildRequires: wxGTK-devel >= 2.8.4 gcc-c++ boost-devel
+%endif
+# if Redhat else any other
+%endif 
+# if Mandriva else Redhat+
+%endif
+# if Fedora else Mandriva+
+%endif
+# if Suse else Fedora+
 %endif
 
 Provides: holtz-%version
 
 %description
-Holtz is an implementation of the two player abstract board games Zertz and Dvonn from the gipf probject (www.gipf.com).
-Zertz is about placing and collecting stones, making sacrifices, and a continuously shriking board. 
-Dvonn is about controlling stacks of stones which can jump on other stacks to capture them and keeping 
+Holtz is an implementation of the two player abstract board games Zertz and Dvonn from the gipf probject (www.gipf.com). Additionally it has two more games called Relax and Bloks.
+Zertz is about placing and collecting stones, making sacrifices, and a continuously shriking board.
+Dvonn is about controlling stacks of stones which can jump on other stacks to capture them and keeping
 contact to the three dvonn stones. Version 1.3.0 added a third game called Relax which resembles the game
-"Take it Easy"
+"Take it Easy". Version 1.4.0 added a forth game called Bloks which is about placing oddly shaped pieces on an increasingly crowded board. 
 
 %prep
 %setup -q
@@ -93,4 +165,8 @@ rm -rf $RPM_BUILD_ROOT
 
 #%changelog
 #* first version
-#- sdaf
+#- added support for OpenSuSE >= 11.4
+#- added support for Fedora 14/15
+#- added support for Mandriva
+#- CentOS 5, RHEL 5 and possibly RHEL 6 have no wxGTK 2.8 packages (I didn't find any)
+#- CentOS 6 is not available in build service, yet

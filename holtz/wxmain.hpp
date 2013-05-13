@@ -24,12 +24,15 @@ namespace holtz
 
 #include "zertz/manager.hpp"
 #include "dvonn/manager.hpp"
+#include "bloks/manager.hpp"
 #include "relax/manager.hpp"
 #include "zertz/dialogs.hpp"
 #include "dvonn/dialogs.hpp"
+#include "bloks/dialogs.hpp"
 #include "relax/dialogs.hpp"
 #include "zertz/wxzertz.hpp"
 #include "dvonn/wxdvonn.hpp"
+#include "bloks/wxbloks.hpp"
 #include "relax/wxrelax.hpp"
 
 #include <wx/wx.h>
@@ -86,7 +89,7 @@ namespace holtz
   class Game_Window : public wxScrolledWindow
   {
   public:
-    enum Game_Type { NO_GAME, ZERTZ, DVONN, RELAX };
+    enum Game_Type { NO_GAME, ZERTZ, DVONN, RELAX, BLOKS };
 
     Game_Window( wxFrame *parent_frame );
     ~Game_Window();
@@ -97,10 +100,12 @@ namespace holtz
     void close_game();
     void init_zertz();
     void init_dvonn();
+    void init_bloks();
     void init_relax();
 
     void new_zertz_game();
     void new_dvonn_game();
+    void new_bloks_game();
     void new_relax_game();
     void undo_move();
     void variants();
@@ -125,6 +130,8 @@ namespace holtz
     { assert(active_game==ZERTZ); return *zertz_gui_manager; }
     inline dvonn::WX_GUI_Manager &get_dvonn_gui_manager() 
     { assert(active_game==DVONN); return *dvonn_gui_manager; }
+    inline bloks::WX_GUI_Manager &get_bloks_gui_manager() 
+    { assert(active_game==BLOKS); return *bloks_gui_manager; }
     inline relax::WX_GUI_Manager &get_relax_gui_manager() 
     { assert(active_game==RELAX); return *relax_gui_manager; }
   private:
@@ -141,6 +148,11 @@ namespace holtz
     dvonn::Game_Variants_Frame	*dvonn_variants_frame;
     dvonn::WX_GUI_Manager	*dvonn_gui_manager;
     dvonn::Game_Dialog		*dvonn_game_dialog;
+
+    bloks::Game_Manager		*bloks_game_manager;
+    bloks::Game_Variants_Frame	*bloks_variants_frame;
+    bloks::WX_GUI_Manager	*bloks_gui_manager;
+    bloks::Game_Dialog		*bloks_game_dialog;
 
     relax::Game_Manager		*relax_game_manager;
     relax::Game_Variants_Frame	*relax_variants_frame;
@@ -168,6 +180,7 @@ namespace holtz
     // event handlers (these functions should _not_ be virtual)
     void on_new_zertz_game(wxCommandEvent& event);
     void on_new_dvonn_game(wxCommandEvent& event);
+    void on_new_bloks_game(wxCommandEvent& event);
     void on_new_relax_game(wxCommandEvent& event);
     void on_undo_move(wxCommandEvent& event);
     void on_variants(wxCommandEvent& event);
@@ -201,6 +214,7 @@ namespace holtz
     HOLTZ_NEW_GAME = 100,
     HOLTZ_NEW_ZERTZ_GAME,
     HOLTZ_NEW_DVONN_GAME,
+    HOLTZ_NEW_BLOKS_GAME,
     HOLTZ_NEW_RELAX_GAME,
     HOLTZ_SETTINGS,
     HOLTZ_UNDO,

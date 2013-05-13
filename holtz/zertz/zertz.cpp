@@ -2106,7 +2106,7 @@ namespace zertz
 
     return false;
   }
-  bool Knock_Out_Move::may_be_first_move( Game &game ) const
+  bool Knock_Out_Move::may_be_first_move( Game & ) const
   {
     return true;
   }
@@ -2507,7 +2507,7 @@ namespace zertz
     }
   }
   // true: move ok
-  bool Finish_Move::check_move( Game &game ) const 
+  bool Finish_Move::check_move( Game & ) const 
   {
     return true;
   }
@@ -2533,7 +2533,7 @@ namespace zertz
     eos << get_type();
     return eos;
   }
-  bool Finish_Move::input( std::escape_istream &is )
+  bool Finish_Move::input( std::escape_istream & )
   {
     return true;
   }

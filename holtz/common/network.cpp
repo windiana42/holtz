@@ -28,6 +28,12 @@
 #  include "util.hpp"
 #  define VERSION_DVONN
 #  define GAME_NAME GAME_NAME_DVONN
+#elif defined(VERSION_BLOKS)
+#  undef VERSION_BLOKS
+#  include "wxmain.hpp"
+#  include "util.hpp"
+#  define VERSION_BLOKS
+#  define GAME_NAME GAME_NAME_BLOKS
 #elif defined(VERSION_RELAX)
 #  undef VERSION_RELAX
 #  include "wxmain.hpp"
@@ -45,6 +51,8 @@
 namespace zertz
 #elif defined(VERSION_DVONN)
 namespace dvonn
+#elif defined(VERSION_BLOKS)
+namespace bloks
 #elif defined(VERSION_RELAX)
 namespace relax
 #endif
@@ -984,7 +992,7 @@ namespace relax
     }
   }
   // is called when connection is established (for Message_Network_Client only)
-  void Network_Manager_BGP100a_Server::on_connect( Message_Network<BGP::Message> *connection )
+  void Network_Manager_BGP100a_Server::on_connect( Message_Network<BGP::Message>* /*connection*/ )
   {
     assert(false);		// shouldn't happen for server
   }
@@ -2182,7 +2190,7 @@ namespace relax
   //-------------------------------------------
   // board commands
   //-------------------------------------------
-  Game_Setup_Manager::Answer_Type Network_Manager_BGP100a_Client::ask_change_board(const Game &game)
+  Game_Setup_Manager::Answer_Type Network_Manager_BGP100a_Client::ask_change_board(const Game& /*game*/)
   {
     return deny;		// this protocoll only allows the server to choose the board setup
   }
@@ -3441,7 +3449,7 @@ namespace relax
   //----------------
   //----------------
     
-  void Network_Manager_BGP100a_Client::on_timer(wxTimerEvent& event)
+  void Network_Manager_BGP100a_Client::on_timer(wxTimerEvent&)
   {
     if( delayed_move_visualization )
     {

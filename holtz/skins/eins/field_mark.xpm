@@ -1,5 +1,5 @@
 /* XPM */
-static char * field_mark_xpm[] = {
+static const char * field_mark_xpm[] = {
 "1 1 1 1", 	 
 " 	c None",
 " "};

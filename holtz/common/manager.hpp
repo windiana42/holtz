@@ -17,15 +17,25 @@
 #if (defined(VERSION_ZERTZ) && defined(VERSION_DVONN))
 #  error "something went wrong in include sequence: VERSION_ZERTZ and VERSION_DVONN defined"
 #endif
+#if (defined(VERSION_ZERTZ) && defined(VERSION_BLOKS))
+#  error "something went wrong in include sequence: VERSION_ZERTZ and VERSION_BLOKS defined"
+#endif
 #if (defined(VERSION_ZERTZ) && defined(VERSION_RELAX))
 #  error "something went wrong in include sequence: VERSION_ZERTZ and VERSION_RELAX defined"
 #endif
 #if (defined(VERSION_RELAX) && defined(VERSION_DVONN))
 #  error "something went wrong in include sequence: VERSION_RELAX and VERSION_DVONN defined"
 #endif
+#if (defined(VERSION_RELAX) && defined(VERSION_BLOKS))
+#  error "something went wrong in include sequence: VERSION_RELAX and VERSION_BLOKS defined"
+#endif
+#if (defined(VERSION_DVONN) && defined(VERSION_BLOKS))
+#  error "something went wrong in include sequence: VERSION_DVONN and VERSION_BLOKS defined"
+#endif
 
 #if (defined(VERSION_ZERTZ) && !defined(__ZERTZ_MANAGER__)) || \
   (defined(VERSION_DVONN) && !defined(__DVONN_MANAGER__)) || \
+  (defined(VERSION_BLOKS) && !defined(__BLOKS_MANAGER__)) || \
   (defined(VERSION_RELAX) && !defined(__RELAX_MANAGER__))
 
 #if defined(VERSION_ZERTZ)
@@ -34,17 +44,22 @@
 #elif defined(VERSION_DVONN)
 #  define __DVONN_MANAGER__
 //#  warning "using dvonn..."
+#elif defined(VERSION_BLOKS)
+#  define __BLOKS_MANAGER__
+//#  warning "using bloks..."
 #elif defined(VERSION_RELAX)
 #  define __RELAX_MANAGER__
 //#  warning "using relax..."
 #else
-#  error "Please define either VERSION_ZERTZ or VERSION_DVONN or VERSION_RELAX"
+#  error "Please define either VERSION_ZERTZ or VERSION_DVONN or VERSION_BLOKS or VERSION_RELAX"
 #endif
 
 #if defined(VERSION_ZERTZ)
 namespace zertz
 #elif defined(VERSION_DVONN)
 namespace dvonn
+#elif defined(VERSION_BLOKS)
+namespace bloks
 #elif defined(VERSION_RELAX)
 namespace relax
 #endif
@@ -65,6 +80,11 @@ namespace relax
 #  include "dvonn/ai.hpp"
 #  include "dvonn/dvonn.hpp"
 #  define VERSION_DVONN
+#elif defined(VERSION_BLOKS)
+#  undef VERSION_BLOKS
+#  include "bloks/ai.hpp"
+#  include "bloks/bloks.hpp"
+#  define VERSION_BLOKS
 #elif defined(VERSION_RELAX)
 #  undef VERSION_RELAX
 #  include "relax/ai.hpp"
@@ -78,6 +98,8 @@ namespace relax
 namespace zertz
 #elif defined(VERSION_DVONN)
 namespace dvonn
+#elif defined(VERSION_BLOKS)
+namespace bloks
 #elif defined(VERSION_RELAX)
 namespace relax
 #endif
@@ -236,7 +258,7 @@ namespace relax
     virtual void setup_game_display() = 0; // setup all windows to display game
     virtual void set_board( const Game &game ) = 0;
     virtual void update_board( const Game &game ) = 0;
-    virtual void report_scores( std::multimap<int/*score*/,Player*> scores ) = 0;
+    virtual void report_scores( std::multimap<int/*score*/,const Player*> scores ) = 0;
     virtual void report_winner( Player *player ) = 0;
     virtual void report_error( wxString msg, wxString caption ) = 0;
     virtual void report_information( wxString msg, wxString caption ) = 0;

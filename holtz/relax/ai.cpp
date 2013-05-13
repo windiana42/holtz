@@ -122,7 +122,7 @@ namespace relax
   // Position
   // ----------------------------------------------------------------------------
 
-  Position::Position( Game &game )
+  Position::Position( Game & /*game*/ )
     : expanded(0), rating(0), handler(0)
   {
   }
@@ -141,7 +141,7 @@ namespace relax
   }
 
   bool Position::add_set_moves( Game &game, Field_Iterator to, Stones::Stone_Type type,
-				Field_Permutation &field_permutation, bool expand_first )
+				Field_Permutation & /*field_permutation*/, bool /*expand_first*/ )
   {
     bool ret = true;
     Move_Sequence sequence;
@@ -350,7 +350,7 @@ namespace relax
 	assert(scores.size()==num_try_variants);
 	assert(num_try_variants > choose_variant);
 	std::multiset<int>::iterator score_it = scores.begin();
-	for( int j=0; j < choose_variant && score_it != scores.end(); ++j )
+	for( unsigned j=0; j < choose_variant && score_it != scores.end(); ++j )
 	  ++score_it;
 	int score = *score_it;  // choose a low quantile of all scores
 
@@ -481,11 +481,13 @@ namespace relax
       AI_Result result = get_move(game);
       Sleep(50);      // workaround for timing problem
       AI_Event event( result, EVT_AI_REPORT_MOVE, this ); 
+      if( TestDestroy() ) return 0;
       handler->AddPendingEvent( event );
       Sleep(50);			// assure that report move event is received earlier than finished event
     }
 
     AI_Event event( EVT_AI_FINISHED, this ); 
+    if( TestDestroy() ) return 0;
     handler->AddPendingEvent( event );
 
     // wait for external delete
@@ -511,6 +513,7 @@ namespace relax
   void AI_Thread::report_current_hint( AI_Result hint )
   {
     AI_Event event( hint, EVT_AI_REPORT_HINT, this ); 
+    if( TestDestroy() ) return;
     handler->AddPendingEvent( event );
   }
 
@@ -685,7 +688,7 @@ namespace relax
     }
   }
 
-  void AI_Input::on_animation_done( wxTimerEvent &event )
+  void AI_Input::on_animation_done( wxTimerEvent & /*event*/ )
   {
     move_done = true;
     game_manager.continue_game();

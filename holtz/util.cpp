@@ -16,6 +16,7 @@
 
 #include "util.hpp"
 
+#include <iostream>
 #ifndef __OLD_GCC__
   #include <sstream>
 #else
@@ -28,7 +29,9 @@ namespace holtz
 {
   void randomize()
   {
-    srand( time( 0 ) );
+    unsigned int seed = (unsigned int)time(0);
+    std::cout << "Initial random seed is: " << seed << std::endl;
+    srand(seed);
   }
 
   unsigned next_prime( unsigned start )

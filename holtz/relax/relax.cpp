@@ -133,14 +133,14 @@ namespace relax
   // Field_Iterator
   // ----------------------------------------------------------------------------
 
-  Field_Iterator::Field_Iterator( Board *board )
+  Field_Iterator::Field_Iterator( const Board *board )
     : board(board)
   {
     current_pos.x = 0;
     current_pos.y = 0;
   }
 
-  Field_Iterator::Field_Iterator( Field_Pos pos, Board *board )
+  Field_Iterator::Field_Iterator( Field_Pos pos, const Board *board )
     : current_pos(pos), board(board)
   {
   }
@@ -429,7 +429,7 @@ namespace relax
   }
 
   //! tells whether field is in range
-  bool Field_Iterator::is_valid_field()
+  bool Field_Iterator::is_valid_field() const
   {
     if( board == 0 ) return false;
     if( current_pos.x < 0 ) return false;
@@ -440,11 +440,18 @@ namespace relax
     return true;
   }
 
-  Field_State_Type &Field_Iterator::operator*()
+  Field_State_Type Field_Iterator::operator*() const
   {
     assert( is_valid_field() );
 
     return board->field[ current_pos.x ][ current_pos.y ];
+  }
+
+  Field_State_Type &Mutable_Field_Iterator::operator*()
+  {
+    assert( is_valid_field() );
+
+    return mutable_board->field[ current_pos.x ][ current_pos.y ];
   }
 
   // ----------------------------------------------------------------------------
@@ -918,21 +925,21 @@ namespace relax
 	(players.size() > ruleset->max_players) ) 
       return wrong_number_of_players;
 
-    // check win condition
+    // check win condition (not active for relax)
     if( prev_player != players.end() )
     {
       if( win_condition->did_player_win(*this,*prev_player) )
       {
 	winner_player_index = prev_player_index;
 	current_player->is_active = false;
-	return finished;
+	return finished_scores;
       }
     }
 
     if( !current_player->is_active ) // if no player is able to move
     {
       winner_player_index=-1;
-      return finished;
+      return finished_scores;
     }
 
     if( current_player->board.get_empty_fields().empty() )
@@ -1060,13 +1067,13 @@ namespace relax
     reset_game();
   }
 
-  std::multimap<int/*score*/,Player*> Game::get_scores()
+  std::multimap<int/*score*/,const Player*> Game::get_scores() const
   {
-    std::multimap<int/*score*/,Player*> ret;
-    std::vector<Player>::iterator it;
+    std::multimap<int/*score*/,const Player*> ret;
+    std::vector<Player>::const_iterator it;
     for( it = players.begin(); it != players.end(); ++it )
     {
-      Player *player = &*it;
+      const Player *player = &*it;
       int score = get_max_score(player);
       ret.insert(std::make_pair(score,player));
     }
@@ -1481,10 +1488,10 @@ namespace relax
     unsigned assigned_index;
   };
 
-  int Game::get_max_score(Player *player, std::vector<std::map<int/*num*/, 
-			  unsigned /*stones*/> > *stones_available)
+  int Game::get_max_score(const Player *player, std::vector<std::map<int/*num*/, 
+			  unsigned /*stones*/> > *stones_available) const
   {
-    Board &board = player?player->board:current_player->board;
+    const Board &board = player?player->board:current_player->board;
     std::map<unsigned/*dir*/,std::map<int/*num*/,std::list<Speculative_Score> > > 
       speculative_scores;
     std::map<unsigned/*dir*/,std::list<Speculative_Score> > 
@@ -1924,11 +1931,11 @@ namespace relax
   {
     return move == 0;
   }
-  bool Set_Move::may_be_first_move( Game &game ) const
+  bool Set_Move::may_be_first_move( Game & /*game*/ ) const
   {
     return true;
   }
-  bool Set_Move::may_be_last_move( Game &game ) const
+  bool Set_Move::may_be_last_move( Game & /*game*/ ) const
   {
     return true;
   }
@@ -2003,11 +2010,11 @@ namespace relax
   {
     return move == 0;
   }
-  bool Select_Move::may_be_first_move( Game &game ) const
+  bool Select_Move::may_be_first_move( Game & /*game*/ ) const
   {
     return true;
   }
-  bool Select_Move::may_be_last_move( Game &game ) const
+  bool Select_Move::may_be_last_move( Game & /*game*/ ) const
   {
     return true;
   }
@@ -2051,15 +2058,15 @@ namespace relax
     return finish_move;
   }
 
-  void Finish_Move::do_move( Game &game )
+  void Finish_Move::do_move( Game & /*game*/ )
   {
   }
-  void Finish_Move::undo_move( Game &game )
+  void Finish_Move::undo_move( Game & /*game*/ )
   {
   }
 
   // true: move ok
-  bool Finish_Move::check_move( Game &game ) const 
+  bool Finish_Move::check_move( Game & /*game*/ ) const 
   {
     return true;
   }
@@ -2085,7 +2092,7 @@ namespace relax
     eos << get_type();
     return eos;
   }
-  bool Finish_Move::input( std::escape_istream &is )
+  bool Finish_Move::input( std::escape_istream & /*is*/ )
   {
     return true;
   }

@@ -14,8 +14,12 @@
  * 
  */
 
+
 #if (defined(VERSION_ZERTZ) && defined(VERSION_DVONN))
 #  error "something went wrong in include sequence: VERSION_ZERTZ and VERSION_DVONN defined"
+#endif
+#if (defined(VERSION_ZERTZ) && defined(VERSION_BLOKS))
+#  error "something went wrong in include sequence: VERSION_ZERTZ and VERSION_BLOKS defined"
 #endif
 #if (defined(VERSION_ZERTZ) && defined(VERSION_RELAX))
 #  error "something went wrong in include sequence: VERSION_ZERTZ and VERSION_RELAX defined"
@@ -23,22 +27,32 @@
 #if (defined(VERSION_RELAX) && defined(VERSION_DVONN))
 #  error "something went wrong in include sequence: VERSION_RELAX and VERSION_DVONN defined"
 #endif
+#if (defined(VERSION_RELAX) && defined(VERSION_BLOKS))
+#  error "something went wrong in include sequence: VERSION_RELAX and VERSION_BLOKS defined"
+#endif
+#if (defined(VERSION_DVONN) && defined(VERSION_BLOKS))
+#  error "something went wrong in include sequence: VERSION_DVONN and VERSION_BLOKS defined"
+#endif
 
-#if (defined(VERSION_ZERTZ) && !defined(__ZERTZ_BGP_PROTOCOL__)) || \
-  (defined(VERSION_DVONN) && !defined(__DVONN_BGP_PROTOCOL__)) || \
-  (defined(VERSION_RELAX) && !defined(__RELAX_BGP_PROTOCOL__))
+#if (defined(VERSION_ZERTZ) && !defined(__ZERTZ_BGP__)) || \
+  (defined(VERSION_DVONN) && !defined(__DVONN_BGP__)) || \
+  (defined(VERSION_BLOKS) && !defined(__BLOKS_BGP__)) || \
+  (defined(VERSION_RELAX) && !defined(__RELAX_BGP__))
 
 #if defined(VERSION_ZERTZ)
-#  define __ZERTZ_BGP_PROTOCOL__
+#  define __ZERTZ_BGP__
 //#  warning "using zertz..."
 #elif defined(VERSION_DVONN)
-#  define __DVONN_BGP_PROTOCOL__
+#  define __DVONN_BGP__
 //#  warning "using dvonn..."
+#elif defined(VERSION_BLOKS)
+#  define __BLOKS_BGP__
+//#  warning "using bloks..."
 #elif defined(VERSION_RELAX)
-#  define __RELAX_BGP_PROTOCOL__
+#  define __RELAX_BGP__
 //#  warning "using relax..."
 #else
-#  error "Please define either VERSION_ZERTZ or VERSION_DVONN or VERSION_RELAX"
+#  error "Please define either VERSION_ZERTZ or VERSION_DVONN or VERSION_BLOKS or VERSION_RELAX"
 #endif
 
 #if defined(VERSION_ZERTZ)
@@ -51,6 +65,11 @@
 #  include "msg_net.hpp"
 #  include "dvonn/dvonn.hpp"
 #  define VERSION_DVONN
+#elif defined(VERSION_BLOKS)
+#  undef VERSION_BLOKS
+#  include "msg_net.hpp"
+#  include "bloks/bloks.hpp"
+#  define VERSION_BLOKS
 #elif defined(VERSION_RELAX)
 #  undef VERSION_RELAX
 #  include "msg_net.hpp"
@@ -64,6 +83,8 @@
 namespace zertz
 #elif defined(VERSION_DVONN)
 namespace dvonn
+#elif defined(VERSION_BLOKS)
+namespace bloks
 #elif defined(VERSION_RELAX)
 namespace relax
 #endif
@@ -262,6 +283,7 @@ namespace relax
     // ----------------------------------------------------------------------------
     //   "/GIPFPROJECT/ZERTZ"
     //   "/GIPFPROJECT/DVONN" 
+    //   "/GIPFPROJECT/BLOKS" 
     //     ...
 
     // ----------------------------------------------------------------------------
@@ -289,6 +311,9 @@ namespace relax
       ruleset_basic=0,		// = basic rules
       ruleset_standard,		// = standard rules
       ruleset_tournament,	// = tournament rules
+#elif defined(VERSION_BLOKS)
+      ruleset_standard=0,	// = standard rules
+      ruleset_small_board,	// = small board rules
 #else
       ruleset_standard=0,	// = standard rules
 #endif
@@ -317,6 +342,13 @@ namespace relax
 				// = 49 ring board (standard)
       board_custom=99		// board_custom <board>
     };
+#elif defined(VERSION_BLOKS)
+    enum Start_Board_Type
+    {
+      board_standard=0,		// board_standard
+      board_small_board,	// board_small_board
+      board_custom=99		// board_custom <board>
+    };
 #elif defined(VERSION_RELAX)
     enum Start_Board_Type
     {
@@ -339,6 +371,11 @@ namespace relax
     {
       board_state_set_moves=0,
       board_state_jump_moves,
+    };
+#elif defined(VERSION_BLOKS)
+    enum Board_State_Type
+    {
+      board_state_default=0,
     };
 #elif defined(VERSION_RELAX)
     enum Board_State_Type
@@ -391,6 +428,16 @@ namespace relax
       field_red=1, 		// = field is occupied with a red stone
       field_white=2,		// = field is occupied with a white stone
       field_black=3 		// = field is occupied with a black stone
+    };
+#elif defined(VERSION_BLOKS)
+    enum Field_Type
+    { 
+      field_no_field=-1,	// = no field or removed field at this position
+      field_empty=0,		// = empty field
+      field_player1=1, 		// = field is occupied with a stone of player1
+      field_player2=2, 		// = field is occupied with a stone of player2
+      field_player3=3, 		// = field is occupied with a stone of player3
+      field_player4=4, 		// = field is occupied with a stone of player4
     };
 #endif
     

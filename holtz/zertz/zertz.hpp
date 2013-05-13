@@ -501,8 +501,8 @@ namespace zertz
   bool operator<( const Set_Move &m1, const Set_Move &m2 );
   bool operator==( const Remove &m1, const Remove &m2 );
   bool operator<( const Remove &m1, const Remove &m2 );
-  inline bool operator==( const Finish_Move &m1, const Finish_Move &m2 ) { return true; }
-  inline bool operator<( const Finish_Move &m1, const Finish_Move &m2 ) { return false; }
+  inline bool operator==( const Finish_Move &, const Finish_Move & ) { return true; }
+  inline bool operator<( const Finish_Move &, const Finish_Move & ) { return false; }
   bool operator==( const Move_Sequence &s1, const Move_Sequence &s2 );
   bool operator<( const Move_Sequence &s1, const Move_Sequence &s2 );
 
@@ -652,7 +652,7 @@ namespace zertz
     int get_winner_index() { return winner_player_index; } // returns -1 if no player won
     void reset_game();		// doesn't reset players
     void reset_game( const Ruleset & );	// doesn't reset players
-    std::multimap<int/*score*/,Player*> get_scores() { return std::multimap<int/*score*/,Player*>(); }
+    std::multimap<int/*score*/,const Player*> get_scores() const { return std::multimap<int/*score*/,const Player*>(); }
 
     // **************
     // init functions

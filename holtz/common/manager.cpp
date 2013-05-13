@@ -22,6 +22,8 @@
 namespace zertz
 #elif defined(VERSION_DVONN)
 namespace dvonn
+#elif defined(VERSION_BLOKS)
+namespace bloks
 #elif defined(VERSION_RELAX)
 namespace relax
 #endif
@@ -69,7 +71,6 @@ namespace relax
     if( ui_manager )
     {
       ui_manager->set_board( game );
-      ui_manager->setup_game_display();
     }
     valid_game = true;
     continue_game();
@@ -337,11 +338,11 @@ namespace relax
       }
     }
 
-    void on_done( wxTimerEvent &event ) // current animation done
+    void on_done( wxTimerEvent & ) // current animation done
     {
       step();
     }    
-    void on_aborted( wxTimerEvent &event ) // current animation aborted
+    void on_aborted( wxTimerEvent & ) // current animation aborted
     {
       finish();
     }    

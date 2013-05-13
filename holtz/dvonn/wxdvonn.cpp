@@ -48,6 +48,7 @@
 // headers
 // ----------------------------------------------------------------------------
 
+#define MY_WX_MAKING_DLL // for WX MSW using mingw cross-compile
 #include "wxdvonn.hpp"
 #include "dvonn.hpp"
 #include "dialogs.hpp"
@@ -76,6 +77,9 @@
 #if !wxUSE_HTML
 #error "wxHTML is required for the wxWindows HTML help system."
 #endif
+
+// define custom event type wx_EVT_DVONN_NOTIFY
+DEFINE_EVENT_TYPE(wxEVT_DVONN_NOTIFY)
 
 namespace dvonn
 {
@@ -881,7 +885,7 @@ namespace dvonn
     }
   }
   
-  void Stone_Panel::on_click( int click_x, int click_y ) const
+  void Stone_Panel::on_click( int /*click_x*/, int /*click_y*/ ) const
   {
   }
 
@@ -946,7 +950,7 @@ namespace dvonn
     add( &header_panel );
   }
 
-  void Player_Panel::on_click( int cl_x, int cl_y ) const
+  void Player_Panel::on_click( int /*cl_x*/, int /*cl_y*/ ) const
   {
   }
 
@@ -1098,13 +1102,13 @@ namespace dvonn
     return used_time;
   }
 
-  void Mouse_Handler::on_animation_done( wxTimerEvent& )
+  void Mouse_Handler::on_animation_done( wxCommandEvent& )
   {
     game_manager.continue_game();
   }
 
   BEGIN_EVENT_TABLE(Mouse_Handler, wxEvtHandler)				
-    EVT_TIMER(-1, Mouse_Handler::on_animation_done)	//**/
+    EVT_COMMAND(-1, wxEVT_DVONN_NOTIFY, Mouse_Handler::on_animation_done)	//**/
   END_EVENT_TABLE()					//**/
 
   // ----------------------------------------------------------------------------
@@ -1395,25 +1399,47 @@ namespace dvonn
     update_board( new_game );
   }
 
+  static bool check_player_references_changed(const Game &g1, const Game &g2)
+  {
+    if( g1.players.size() != g2.players.size() ) return true;
+    std::vector<Player>::const_iterator it1,it2;
+    for(it1=g1.players.begin(), it2=g2.players.begin(); 
+	it1!=g1.players.end() && it2!=g2.players.end(); ++it1, ++it2)
+    {
+      const Player &player1 = *it1;
+      const Player &player2 = *it2;
+      if( &player1 != &player2 ) return true;
+    }
+    if( it1!=g1.players.end() ) return true;
+    if( it2!=g2.players.end() ) return true;
+    
+    return false;
+  }
+
   void WX_GUI_Manager::update_board( const Game &new_game )
   {
     std::list<unsigned> variant_id_path;
     if( target_variant )
       variant_id_path = display_game.variant_tree.get_variant_id_path(target_variant);
-    display_game = new_game;
+    bool player_references_changed = check_player_references_changed(display_game,new_game);
+    display_game = new_game; // attention: make sure that setup_game_display is called whenever players change
     if( target_variant )
       target_variant = display_game.variant_tree.get_variant(variant_id_path);
-    refresh();
+
+    if( player_references_changed )
+      setup_game_display();
+    else
+      refresh();
   }
 
-  void WX_GUI_Manager::report_scores( std::multimap<int/*score*/,Player*> scores )
+  void WX_GUI_Manager::report_scores( std::multimap<int/*score*/,const Player*> scores )
   {
     wxString msg, line;
-    std::multimap<int/*score*/,Player*>::iterator it;
+    std::multimap<int/*score*/,const Player*>::iterator it;
     for( it=scores.begin(); it!=scores.end(); ++it )
       {
 	int score = it->first;
-	Player *player = it->second;
+	const Player *player = it->second;
 	line.Printf( _("%3d points: %s\n"), score, str_to_wxstr(player->name).c_str() );
 	msg += line;
       }
@@ -1628,7 +1654,7 @@ namespace dvonn
 
     if( !ret && done_handler )
     {
-      wxTimerEvent event( event_id );
+      wxCommandEvent event( wxEVT_DVONN_NOTIFY, event_id );
       done_handler->ProcessEvent( event );
     }
   }
@@ -1650,7 +1676,7 @@ namespace dvonn
 
     if( !ret && done_handler )
     {
-      wxTimerEvent event( event_id );
+      wxCommandEvent event( wxEVT_DVONN_NOTIFY, event_id );
       done_handler->ProcessEvent( event );
     }
   }
