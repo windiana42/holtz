@@ -34,10 +34,18 @@ numbers are drawn at random and have to be placed on the board in a
 way that leads to the <a href="relax.php">highest possible score</a>. You can be sure, that things don't 
 always work out as you wish...
 
+<h2>Bloks:: The Game</h2>
+
+Bloks is a strategic board game for two or four players. Every player
+has twenty-one differently shaped stones. Alternatingly, they place
+one of them on the board <a href="bloks.php">according to some simple rules</a>
+until no space is left. 
+
+
 <h2>Holtz:: The Software</h2>
 
 The <a href="helpprog.php">program Holtz</a> supports 
-playing Z&egrave;rtz, Dvonn and Relax offline against human or computer players, 
+playing Z&egrave;rtz, Dvonn, Relax and Bloks offline against human or computer players, 
 or on any network (e.g. the Internet).<br>
 There are various hints and help texts for beginners.<br>
 
