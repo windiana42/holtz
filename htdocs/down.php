@@ -47,6 +47,11 @@ windiana@users.sf.net</a>.</p>
 
 <h2>Changes:</h2>
 
+<h3>1.4.0:</h3>
+<ul>
+<li>New Game supported: Bloks</li>
+</ul>
+
 <h3>1.3.1:</h3>
 <ul>
 <li>Fixed bug in dvonn AI which made it loose intentionally on the final moves sometimes</li>

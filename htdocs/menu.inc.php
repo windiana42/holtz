@@ -19,6 +19,7 @@ function PrintMenu($activepage) {
   PrintMenuItem("Z&egrave;rtz", "zertz.php", $activepage);
   PrintMenuItem("Dvonn", "dvonn.php", $activepage);
   PrintMenuItem("Relax", "relax.php", $activepage);
+  PrintMenuItem("Bloks", "bloks.php", $activepage);
   PrintMenuItem("Screenshots", "helpprog.php", $activepage);
   PrintMenuItem("Download", "down.php", $activepage);
   PrintMenuItem("Links", "links.php", $activepage, 1);
@@ -69,7 +70,7 @@ function StartPage($title, $menuname, $showSidebar = 1) {
 <html>
 <head>
   <meta name="author" content="Martin Trautmann, Florian Fischer">
-  <meta name="keywords" content="Zertz, Dvonn, Holtz, Linux, Windows, program, Programm,
+  <meta name="keywords" content="Zertz, Dvonn, Holtz, Bloks, Linux, Windows, program, Programm,
 	abstract strategy game, strategy game, abstract game, Denkspiel, Brettspiel, board game">
   <meta http-equiv="content-type" content="text/html; charset=ISO-8859-1">
   <title><?php print $title; ?></title>
