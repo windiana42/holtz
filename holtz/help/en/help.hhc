@@ -36,6 +36,11 @@
 			<param name="Local" value="helpxsum.htm">
 			<param name="URL" value="helpxsum.htm">
 			</OBJECT>
+		<LI> <OBJECT type="text/sitemap">
+			<param name="Name" value="Bloks">
+			<param name="Local" value="helpbsum.htm">
+			<param name="URL" value="helpbsum.htm">
+			</OBJECT>
 	</UL>
 	<LI> <OBJECT type="text/sitemap">
 		<param name="Name" value="Procedures">
