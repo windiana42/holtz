@@ -97,8 +97,8 @@ namespace dvonn
   private:
     bool step();	// do step (returns false if timer couldn't be set up)
     bool step_undo();	// do step in undo-animation (returns false if timer couldn't be set up)
-    void on_done( wxTimerEvent &event ); // current sub-animation done
-    void on_aborted( wxTimerEvent &event ); // current sub-animation aborted
+    void on_done( wxCommandEvent &event ); // current sub-animation done
+    void on_aborted( wxCommandEvent &event ); // current sub-animation aborted
     void finish();
 
     WX_GUI_Manager &gui_manager;

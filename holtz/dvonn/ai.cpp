@@ -1236,8 +1236,8 @@ namespace dvonn
 	     (wxObjectEventFunction) (wxEventFunction) (AI_Event_Function) 
 	     &AI_Input::on_finished );
 
-    Connect( -1, wxEVT_TIMER, 
-	     (wxObjectEventFunction) (wxEventFunction) (wxTimerEventFunction) 
+    Connect( -1, wxEVT_DVONN_NOTIFY, 
+	     (wxObjectEventFunction) (wxEventFunction) (wxCommandEventFunction) 
 	     &AI_Input::on_animation_done );
   }
 
@@ -1346,7 +1346,7 @@ namespace dvonn
     }
   }
 
-  void AI_Input::on_animation_done( wxTimerEvent & /*event*/ )
+  void AI_Input::on_animation_done( wxCommandEvent & /*event*/ )
   {
     move_done = true;
     game_manager.continue_game();

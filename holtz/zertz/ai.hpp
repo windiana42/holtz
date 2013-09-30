@@ -229,7 +229,7 @@ namespace zertz
     void on_report_move( AI_Event & );
     void on_report_hint( AI_Event & );
     void on_finished( AI_Event & );
-    void on_animation_done( wxTimerEvent &event );
+    void on_animation_done( wxCommandEvent & );
   protected:
     Game_Manager    &game_manager;
     Game_UI_Manager *ui_manager;

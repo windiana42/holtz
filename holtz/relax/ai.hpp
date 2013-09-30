@@ -212,7 +212,7 @@ namespace relax
     void on_report_move( AI_Event & );
     void on_report_hint( AI_Event & );
     void on_finished( AI_Event & );
-    void on_animation_done( wxTimerEvent &event );
+    void on_animation_done( wxCommandEvent & );
 
     static int next_ID() { return ++unique_ID_counter; }
   protected:
