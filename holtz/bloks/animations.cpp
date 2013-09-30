@@ -115,7 +115,7 @@ namespace bloks
     
       if( done_handler )
       {
-	wxTimerEvent event( abort_id );
+	wxCommandEvent event( wxEVT_BLOKS_NOTIFY, abort_id );
 	done_handler->ProcessEvent( event );
       }
     }
@@ -227,7 +227,7 @@ namespace bloks
     
     if( done_handler )
     {
-      wxTimerEvent event( event_id );
+      wxCommandEvent event( wxEVT_BLOKS_NOTIFY, event_id );
       done_handler->ProcessEvent( event );
     }
   }
@@ -246,11 +246,11 @@ namespace bloks
       done_handler(0), state(finished)
   {
     // connect event functions
-    Connect( ANIMATION_DONE, wxEVT_TIMER, 
-	     (wxObjectEventFunction) (wxEventFunction) (wxTimerEventFunction) 
+    Connect( ANIMATION_DONE, wxEVT_BLOKS_NOTIFY, 
+	     (wxObjectEventFunction) (wxEventFunction) (wxCommandEventFunction) 
 	     &Move_Sequence_Animation::on_done );
-    Connect( ANIMATION_ABORTED, wxEVT_TIMER, 
-	     (wxObjectEventFunction) (wxEventFunction) (wxTimerEventFunction) 
+    Connect( ANIMATION_ABORTED, wxEVT_BLOKS_NOTIFY, 
+	     (wxObjectEventFunction) (wxEventFunction) (wxCommandEventFunction) 
 	     &Move_Sequence_Animation::on_aborted );
   }
 
@@ -535,7 +535,7 @@ namespace bloks
   }
 
   // current sub-animation done
-  void Move_Sequence_Animation::on_done( wxTimerEvent &WXUNUSED(event) )
+  void Move_Sequence_Animation::on_done( wxCommandEvent & )
   {
     if( !undo )
       step();
@@ -544,13 +544,13 @@ namespace bloks
   }
 
   // current sub-animation aborted
-  void Move_Sequence_Animation::on_aborted( wxTimerEvent &WXUNUSED(event) )
+  void Move_Sequence_Animation::on_aborted( wxCommandEvent & )
   {
     state = finished;
     
     if( done_handler )
     {
-      wxTimerEvent event( abort_id );
+      wxCommandEvent event( wxEVT_BLOKS_NOTIFY, abort_id );
       done_handler->ProcessEvent( event );
     }
   }
@@ -561,7 +561,7 @@ namespace bloks
     
     if( done_handler )
     {
-      wxTimerEvent event( event_id );
+      wxCommandEvent event( wxEVT_BLOKS_NOTIFY, event_id );
       done_handler->ProcessEvent( event );
     }
   }

@@ -483,7 +483,7 @@ namespace relax
       AI_Event event( result, EVT_AI_REPORT_MOVE, this ); 
       if( TestDestroy() ) return 0;
       handler->AddPendingEvent( event );
-      Sleep(50);			// assure that report move event is received earlier than finished event
+      Sleep(200);			// assure that report move event is received earlier than finished event
     }
 
     AI_Event event( EVT_AI_FINISHED, this ); 
@@ -569,8 +569,8 @@ namespace relax
 	     (wxObjectEventFunction) (wxEventFunction) (AI_Event_Function) 
 	     &AI_Input::on_finished );
 
-    Connect( -1, wxEVT_TIMER, 
-	     (wxObjectEventFunction) (wxEventFunction) (wxTimerEventFunction) 
+    Connect( -1, wxEVT_RELAX_NOTIFY, 
+	     (wxObjectEventFunction) (wxEventFunction) (wxCommandEventFunction) 
 	     &AI_Input::on_animation_done );
   }
 
@@ -688,7 +688,7 @@ namespace relax
     }
   }
 
-  void AI_Input::on_animation_done( wxTimerEvent & /*event*/ )
+  void AI_Input::on_animation_done( wxCommandEvent & )
   {
     move_done = true;
     game_manager.continue_game();

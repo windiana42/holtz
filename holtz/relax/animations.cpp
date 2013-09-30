@@ -115,7 +115,7 @@ namespace relax
     
       if( done_handler )
       {
-	wxTimerEvent event( abort_id );
+	wxCommandEvent event( wxEVT_RELAX_NOTIFY, abort_id );
 	done_handler->ProcessEvent( event );
       }
     }
@@ -227,7 +227,7 @@ namespace relax
     
     if( done_handler )
     {
-      wxTimerEvent event( event_id );
+      wxCommandEvent event( wxEVT_RELAX_NOTIFY, event_id );
       done_handler->ProcessEvent( event );
     }
   }
@@ -246,11 +246,11 @@ namespace relax
       done_handler(0), state(finished)
   {
     // connect event functions
-    Connect( ANIMATION_DONE, wxEVT_TIMER, 
-	     (wxObjectEventFunction) (wxEventFunction) (wxTimerEventFunction) 
+    Connect( ANIMATION_DONE, wxEVT_RELAX_NOTIFY, 
+	     (wxObjectEventFunction) (wxEventFunction) (wxCommandEventFunction) 
 	     &Move_Sequence_Animation::on_done );
-    Connect( ANIMATION_ABORTED, wxEVT_TIMER, 
-	     (wxObjectEventFunction) (wxEventFunction) (wxTimerEventFunction) 
+    Connect( ANIMATION_ABORTED, wxEVT_RELAX_NOTIFY, 
+	     (wxObjectEventFunction) (wxEventFunction) (wxCommandEventFunction) 
 	     &Move_Sequence_Animation::on_aborted );
   }
 
@@ -675,8 +675,9 @@ namespace relax
   }
 
   // current sub-animation done
-  void Move_Sequence_Animation::on_done( wxTimerEvent &WXUNUSED(event) )
+  void Move_Sequence_Animation::on_done( wxCommandEvent & )
   {
+    std::cout << "animation step: done " << std::endl;
     if( !undo )
       step();
     else
@@ -684,24 +685,26 @@ namespace relax
   }
 
   // current sub-animation aborted
-  void Move_Sequence_Animation::on_aborted( wxTimerEvent &WXUNUSED(event) )
+  void Move_Sequence_Animation::on_aborted( wxCommandEvent & )
   {
+    std::cout << "animation: aborted " << std::endl;
     state = finished;
     
     if( done_handler )
     {
-      wxTimerEvent event( abort_id );
+      wxCommandEvent event( wxEVT_RELAX_NOTIFY, abort_id );
       done_handler->ProcessEvent( event );
     }
   }
 
   void Move_Sequence_Animation::finish()
   {
+    std::cout << "animation: finished " << std::endl;
     state = finished;
     
     if( done_handler )
     {
-      wxTimerEvent event( event_id );
+      wxCommandEvent event( wxEVT_RELAX_NOTIFY, event_id );
       done_handler->ProcessEvent( event );
     }
   }

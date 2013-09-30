@@ -965,8 +965,8 @@ namespace zertz
 	     (wxObjectEventFunction) (wxEventFunction) (AI_Event_Function) 
 	     &AI_Input::on_finished );
 
-    Connect( -1, wxEVT_TIMER, 
-	     (wxObjectEventFunction) (wxEventFunction) (wxTimerEventFunction) 
+    Connect( -1, wxEVT_ZERTZ_NOTIFY, 
+	     (wxObjectEventFunction) (wxEventFunction) (wxCommandEventFunction) 
 	     &AI_Input::on_animation_done );
   }
 
@@ -1075,7 +1075,7 @@ namespace zertz
     }
   }
 
-  void AI_Input::on_animation_done( wxTimerEvent & )
+  void AI_Input::on_animation_done( wxCommandEvent & )
   {
     move_done = true;
     game_manager.continue_game();
