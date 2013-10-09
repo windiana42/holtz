@@ -24,6 +24,16 @@
       <a href="http://www.littlegolem.net/" target="_blank">
 	http://www.littlegolem.net/</a>
     </li>
+    <li>
+      For positive feedback, please use the 
+      <a href="https://sourceforge.net/projects/holtz/reviews" target="_blank">
+	review page</a>
+    </li>
+    <li>
+      For negative feedback, please 
+      <a href="mailto:windiana@users.sf.net">
+	email me</a>
+    </li>
 <!--
     <li>
       A Z&egrave;rtz newsgroup: 
