@@ -14,6 +14,7 @@
  * 
  */
 
+#define MY_WX_MAKING_DLL // for WX MSW using mingw cross-compile
 #include "animations.hpp"
 
 #include "wxmain.hpp"

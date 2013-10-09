@@ -14,6 +14,7 @@
  * 
  */
 
+#define MY_WX_MAKING_DLL
 #include "animations.hpp"
 
 #include "wxmain.hpp"

@@ -13,6 +13,8 @@
  * WARRANTY OF DESIGN, MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  * 
  */
+
+#define MY_WX_MAKING_DLL
 #include "network.hpp" // workaround for cygwin 
 
 #include "ai.hpp"
