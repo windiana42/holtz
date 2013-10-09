@@ -31,7 +31,7 @@ using one of these packages since they are not intensively tested. However, sinc
 I am confident, that all SuSE, Fedora, and Mandriva packages should indeed work. 
 </p>
 
-<p> If you like the game please leave a positive review on the <a href="https://sourceforge.net/projects/holtz/reviews">sourceforge page</a>.</p>
+<p> If you like the game, please leave a positive review on the <a href="https://sourceforge.net/projects/holtz/reviews">sourceforge page</a>.</p>
 <p> I am still looking for someone who can help me compile holtz for Debian and Ubuntu. Please email <a href="mailto:windiana@users.sf.net">
 windiana@users.sf.net</a> </p>
 
