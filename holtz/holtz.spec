@@ -15,10 +15,9 @@ Version: 1.4.0
 Release: %rel
 
 Summary: Holtz is an implementation of the abstract board games Zertz and Dvonn
-License: GPL
-Group: Recreation/
+License: GPLv2
+Group: Amusements/Games/Board/Other
 Vendor: Martin Trautmann <martintrautmann@gmx.de>
-Packager: Martin Trautmann <martintrautmann@gmx.de>
 Url: http://holtz.sourceforge.net/
 
 Source: %name-%version.tar.gz
@@ -164,6 +163,9 @@ rm -rf $RPM_BUILD_ROOT
 %prefix/share/holtz/
 
 #%changelog
+#* 1.4.0
+#- added new game bloks
+#- fixed rc file compilation for crosscompile to linux
 #* first version
 #- added support for OpenSuSE >= 11.4
 #- added support for Fedora 14/15
