@@ -1,30 +1,39 @@
 AC_INIT(wxmain.cpp)
-AM_INIT_AUTOMAKE(holtz, 1.4.0)
 AC_PROG_CC
 AC_PROG_CXX
 AC_PROG_INSTALL
 AC_PROG_RANLIB
 
-#AC_CANONICAL_HOST
+AC_CANONICAL_SYSTEM
+AM_INIT_AUTOMAKE(holtz, 1.4.0)
 
 WXLIBS=
 #I thought this would be right, but it actually doesn't work:
 #WXLIBS=adv # this adds additional libs (ex: for sound in the advanced package of wxWidgets)
 
-case $OSTYPE in #$OSTYPE replaces former $host_os
+echo "target=$target";
+echo "target_os=$target_os";
+echo "target_vendor=$target_vendor";
+
+case $target_os in
 *cygwin* )
-	echo "Build System = Cygwin:";
+	echo "Target System = Cygwin:";
 	WXLIBS=; # adv doesn't seem to do good for cygwin version
+        AC_CHECK_TOOL(WINDRES, windres) 
+	WINDRES_FLAGS="$wxconfig_EXEC $GTKVER $STATIC $UNICODE --cflags"
+	AC_SUBST(WINDRES_FLAGS)
 	AM_CONDITIONAL([INCLUDE_RC_FILE],[test 1 -eq 1]);;
 #	export CXXFLAGS="$CXXFLAGS -mno-cygwin -D__CYGWIN__"; # set true
 #	export LIBS="$LIBS -lwinmm";
 #	AC_CHECK_LIB(winmm, PlaySound);;
 *mingw*  ) 
-	echo "Build System = MinGW"; 
+	echo "Target System = MinGW"; 
+        AC_CHECK_TOOL(WINDRES, windres) 
 	AM_CONDITIONAL([INCLUDE_RC_FILE],[test 1 -eq 1]);;    # set true
 #	export LIBS="$LIBS -lwinmm";
 #	AC_CHECK_LIB(winmm, PlaySound);;	   
 * ) 
+	echo "Target System is not Windows target: $target_os"; 
 	AM_CONDITIONAL([INCLUDE_RC_FILE],[test 0 -eq 1]);;    # set false
 #	AC_CHECK_HEADER( unistd.h, export CXXFLAGS="$CXXFLAGS -D__UNIX__" );;
 esac
@@ -78,6 +87,9 @@ fi
 echo "$wxconfig_EXEC $GTKVER $STATIC $UNICODE --libs $WXLIBS";
 export LIBS="$LIBS `$wxconfig_EXEC $GTKVER $STATIC $UNICODE --libs $WXLIBS`";
 export CXXFLAGS="$CXXFLAGS $BACKCOMPATIBILITY `$wxconfig_EXEC $GTKVER $STATIC $UNICODE --cxxflags $WXLIBS`";
+
+WINDRES_FLAGS="`$wxconfig_EXEC $GTKVER $STATIC $UNICODE --cflags | sed 's/-m[[^ ]]*//g'`"
+AC_SUBST(WINDRES_FLAGS)
 
 AC_OUTPUT(
 	Makefile

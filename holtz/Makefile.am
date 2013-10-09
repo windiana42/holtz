@@ -23,7 +23,7 @@ EXTRA_DIST=	\
 
 .rc.o:
 if INCLUDE_RC_FILE
-	windres -I$(srcdir) `wx-config --cflags` -o $@ $<	
+	$(WINDRES) -I$(srcdir) $(WINDRES_FLAGS) -o $@ $<	
 else
 	echo "No windows evironment, so ignore resource file $<"
 endif

@@ -13,12 +13,14 @@
  * WARRANTY OF DESIGN, MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  * 
  */
+
+#define MY_WX_MAKING_DLL // for WX MSW using mingw cross-compile
 #include "network.hpp" // workaround for cygwin 
 
 #include "ai.hpp"
 
-#include "util.hpp"
 #include "wxbloks.hpp"
+#include "util.hpp"
 #include "animations.hpp"
 
 #include <assert.h>
