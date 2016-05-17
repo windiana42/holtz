@@ -145,7 +145,7 @@ namespace bloks
   public:
     enum Direction{ invalid_direction=-1, 
 		    right=0, top=1, left=2, bottom=3, 
-		    right2=4, top2=5, left2=6, bottom2=7 };
+		    right_flipped=4, top_flipped=5, left_flipped=6, bottom_flipped=7 }; // in case a stone is placed in this direction, it is flipped upside down 
 
     // counting numbers turns in math. positive direction
 
@@ -198,21 +198,22 @@ namespace bloks
     std::list<std::pair<unsigned/*x*/,unsigned/*y*/> > get_sub_fields(Field_Iterator::Direction dir) const;
     std::list<std::pair<int/*x*/,int/*y*/> > get_corners(Field_Iterator::Direction dir) const;
     std::pair<unsigned/*x*/,unsigned/*y*/> query_sub_field
-    (Query_Type type, Field_Iterator::Direction dir = Field_Iterator::right) const
+    (Query_Type type, Field_Iterator::Direction dir) const
     { return rotate(sub_field_queries.find(type)->second,dir); }
     std::pair<int/*dx*/,int/*dy*/> query_sub_field_diff
-    (Query_Type type1, Query_Type type2, Field_Iterator::Direction dir = Field_Iterator::right) const;
+    (Query_Type type1, Query_Type type2, Field_Iterator::Direction dir) const;
     unsigned get_max_x() const { return max_x; }
     unsigned get_max_y() const { return max_y; }
     unsigned get_max_x(Field_Iterator::Direction dir) const;
     unsigned get_max_y(Field_Iterator::Direction dir) const;
     std::pair<Field_Iterator::Direction, Field_Pos/*origin*/> 
-    get_orientation(Field_Pos top_left, Field_Pos bottom_right) const;
+    get_orientation(Field_Pos top_left, Field_Pos bottom_right, bool is_flipped) const;
     std::pair<Field_Pos /*top_left*/, Field_Pos /*bottom_right*/>
     get_click_points(Field_Iterator::Direction dir, Field_Pos origin) const;
     std::pair<unsigned/*x*/,unsigned/*y*/> rotate
     (std::pair<unsigned/*x*/,unsigned/*y*/>, Field_Iterator::Direction dir) const;
     bool get_rotation_symmetric() const { return rotation_symmetric; }
+    bool get_flip_symmetric() const { return flip_symmetric; }
   private:
     int ID; // must be unique and start with 1,2,... (requirement of wxbloks.cpp)
     std::list<std::pair<unsigned/*x*/,unsigned/*y*/> > sub_fields; // sub fields which belog to stone (relative to 0/0)
@@ -221,6 +222,7 @@ namespace bloks
     unsigned max_x;
     unsigned max_y;
     bool rotation_symmetric;
+    bool flip_symmetric;
   };
 
   std::list<Stone_Type> get_standard_stone_types();
@@ -717,7 +719,9 @@ namespace bloks
     bool is_any_move_possible(); // is any move possible by anyone
     bool is_any_move_possible( const Player &player ) const; // is any move possible
     std::list<Set_Move> get_possible_moves
-    ( const Player &player, bool just_one=false, bool just_one_per_stone=false, int just_stone_ID=-1,
+    ( const Player &player,
+      bool only_one_flip_direction=false, bool is_flipped=false,  // is_flipped is only used for only_one_flip_direction==true
+      bool just_one=false, bool just_one_per_stone=false, int just_stone_ID=-1,
       bool just_one_rotation_symmetric=true, bool random_order=false ) const;
     int get_num_possible_moves(); // number of possible moves in current situation
     //std::list<Move_Sequence> get_possible_moves(); // get possible moves in situation
@@ -899,15 +903,15 @@ namespace bloks
 
     Sequence_Generator( Game & );
     // synthesize move sequence from clicks
-    Sequence_State add_click( Field_Pos pos ); 
+    Sequence_State add_click( Field_Pos pos, bool is_flipped ); 
     Sequence_State add_click_player_stone
-    ( int player_id, int stone_type_ID, int stone_index );
+    ( int player_id, int stone_type_ID, int stone_index, bool is_flipped );
     Sequence_State undo_click(); // undo click 
     
     Sequence_State get_sequence_state(); // only interprete hold1/hold2/other(another_click)
     Move::Move_Type get_required_move_type();
-    std::list<Field_Pos> get_possible_clicks(); // call if get_sequence_state() == hold1 || hold2
-    std::list<std::pair<int/*playerID*/,int/*stoneID*/> > get_possible_stone_clicks(); 
+    std::list<Field_Pos> get_possible_clicks(bool is_flipped); // call if get_sequence_state() == hold1 || hold2
+    std::list<std::pair<int/*playerID*/,int/*stoneID*/> > get_possible_stone_clicks(bool is_flipped); 
 				// call if get_sequence_state() == another_click
 
     void reset();

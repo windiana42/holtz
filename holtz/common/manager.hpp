@@ -181,7 +181,7 @@ namespace relax
   class Game_Manager
   {
   public:
-    Game_Manager( Game_UI_Manager *ui_manager = 0 );
+    Game_Manager( int game_event_id, Game_UI_Manager *ui_manager=0 );
     ~Game_Manager();
     void set_ui_manager( Game_UI_Manager * );
     Game_UI_Manager *get_ui_manager() { return ui_manager; }
@@ -223,6 +223,8 @@ namespace relax
 
     bool undo_requested, new_game_requested;
     int num_undo_moves;
+  // game specific event ID
+    int game_event_id;
   };
 
   class Variants_Display_Notifiee

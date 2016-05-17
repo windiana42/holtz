@@ -1239,8 +1239,8 @@ namespace relax
   {
     if( sequence_generator )
     {
-      Sequence_Generator::Sequence_State state;
-      state = sequence_generator->undo_click();
+      //Sequence_Generator::Sequence_State state;
+      /*state =*/ sequence_generator->undo_click();
       /*	
       switch( state )
       {

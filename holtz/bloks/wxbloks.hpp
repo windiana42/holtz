@@ -146,11 +146,13 @@ namespace bloks
     void draw( wxDC &dc ) const;
     void draw_text( wxDC &dc ) const;
     void on_click( int x, int y ) const;
+    void on_right_click( int x, int y ) const;
 
     std::pair<int,int> get_field_pos( int stone_index, int/*stone_type_ID*/, Field_Pos_Type ) const;
     std::pair<int,int> get_field_pos( std::pair<int/*stone_type_ID*/,int/*stone_index*/>, 
 				      Field_Pos_Type ) const;
     std::pair<int/*stone_type_ID*/,int> get_stone( int x, int y ) const;
+    inline bool get_is_flipped() const { return is_flipped; }
   private:
     Settings &settings;
 
@@ -161,6 +163,7 @@ namespace bloks
 
     Bitmap_Handler &bitmap_handler;
     Sequence_Generator* &sequence_generator;
+    mutable bool is_flipped; // whether all stones are flipped upside down (attention: mutable because on_right_click is const => maybe remove const)
   };
 
   class Player_Panel : public Vertical_Sizer
@@ -182,6 +185,7 @@ namespace bloks
 
     inline const Stone_Panel &get_stone_panel() const { return stone_panel; }
     inline int get_id() const { return player.id; }
+    inline bool get_is_flipped() const { return stone_panel.get_is_flipped(); }
   private:
     Settings &settings;
 
