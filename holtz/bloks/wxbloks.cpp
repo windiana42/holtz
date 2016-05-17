@@ -251,7 +251,9 @@ namespace bloks
 	    assert(does_include(game.board.id_stone_types,picked_stone_type_ID));
 	    const Stone_Type &stone_type = game.board.id_stone_types[picked_stone_type_ID];
 	    std::list<std::pair<int/*dx*/,int/*dy*/> >::const_iterator it;
-	    for( int d=Field_Iterator::right; d<= Field_Iterator::bottom; ++d )
+	    bool is_flipped = stone_panel.get_is_flipped();
+	    for( int d=(is_flipped?Field_Iterator::right_flipped : Field_Iterator::right); 
+		 d<=(is_flipped?Field_Iterator::bottom_flipped : Field_Iterator::bottom); ++d )
 	    {
 	      Field_Iterator::Direction dir = Field_Iterator::Direction(d);
 	      std::pair<int/*dx*/,int/*dy*/> diff 
@@ -601,8 +603,24 @@ namespace bloks
       Field_Pos pos = get_field( click_x, click_y );
       if( pos.x >= 0 )		// valid position
       {
+	// determine whether stones are flipped for player
+	bool is_flipped=false; // set preliminary
+
+	const Player_Panel* player_panel
+	  = gui_manager.get_game_panel().get_player_panel(sequence_generator->get_picked_player_ID());
+	if(player_panel!=0)
+	{
+	  is_flipped = player_panel->get_is_flipped();
+	} 
+	else 
+	{
+	  wxString msg;
+	  msg.Printf( wxT("%s"), _("Oops, internal error occurred! Unable to determine player panel that holds a piece.") );
+	  gui_manager.report_error( msg, _("Fatal Error") );
+	}
+
 	Sequence_Generator::Sequence_State state;
-	state = sequence_generator->add_click( pos );
+	state = sequence_generator->add_click( pos, is_flipped );
 	display_sequence_generator_state(sequence_generator, state, gui_manager, game_manager);
       }
     }
@@ -731,15 +749,16 @@ namespace bloks
     : settings(settings), player_field(player_field), stones(stones),
       game_manager(game_manager), gui_manager(gui_manager), 
       bitmap_handler(gui_manager.get_bitmap_handler()), 
-      sequence_generator(sg)
+      sequence_generator(sg),
+      is_flipped(false)
   {
   }
 
   void Stone_Panel::calc_dimensions()
   {
-    Field_Iterator::Direction dir = Field_Iterator::right;
+    Field_Iterator::Direction dir = is_flipped?Field_Iterator::right_flipped : Field_Iterator::right;
     if( settings.rotate_stones ) 
-      dir = Field_Iterator::bottom;
+      dir = is_flipped?Field_Iterator::bottom_flipped : Field_Iterator::bottom;
     Game &game = gui_manager.get_display_game();
     // calculate max_height and max width based on common_stones
     int max_x=0;
@@ -776,9 +795,9 @@ namespace bloks
   
   void Stone_Panel::draw( wxDC &dc ) const
   {
-    Field_Iterator::Direction dir = Field_Iterator::right;
+    Field_Iterator::Direction dir = is_flipped?Field_Iterator::right_flipped : Field_Iterator::right;
     if( settings.rotate_stones ) 
-      dir = Field_Iterator::bottom;
+      dir = is_flipped?Field_Iterator::bottom_flipped : Field_Iterator::bottom;
     unsigned cur_x = 0;
     unsigned cur_y = 0;
     Game &game = gui_manager.get_display_game();
@@ -870,14 +889,20 @@ namespace bloks
     // there is no common stone panel for bloks (see player_panel)
   }
 
+  void Stone_Panel::on_right_click( int /*cl_x*/, int /*cl_y*/ ) const
+  {
+    is_flipped = !is_flipped; // toggle is_flipped
+    gui_manager.show_user_information( true, true ); // refresh
+  }
+
   // stone_index: index within all stones of type stone_type_ID
   // returns <x,y>: <-1,-1>: error
   std::pair<int,int> Stone_Panel::get_field_pos
   ( int stone_index, int stone_type_ID, Field_Pos_Type type ) const
   {
-    Field_Iterator::Direction dir = Field_Iterator::right;
+    Field_Iterator::Direction dir = is_flipped?Field_Iterator::right_flipped : Field_Iterator::right;
     if( settings.rotate_stones ) 
-      dir = Field_Iterator::bottom;
+      dir = is_flipped?Field_Iterator::bottom_flipped : Field_Iterator::bottom;
     unsigned cur_x = 0;
     unsigned cur_y = 0;
     Game &game = gui_manager.get_display_game();
@@ -966,9 +991,9 @@ namespace bloks
     if( !is_in(cl_x,cl_y) )
       return std::pair<int/*stone_type_ID*/,int>(-1,-1);
 
-    Field_Iterator::Direction dir = Field_Iterator::right;
+    Field_Iterator::Direction dir = is_flipped?Field_Iterator::right_flipped : Field_Iterator::right;
     if( settings.rotate_stones ) 
-      dir = Field_Iterator::bottom;
+      dir = is_flipped?Field_Iterator::bottom_flipped : Field_Iterator::bottom;
     unsigned cur_x = 0;
     //unsigned cur_y = 0;
     Game &game = gui_manager.get_display_game();
@@ -1049,8 +1074,11 @@ namespace bloks
 
 	if( clicked_stone.second < player.stones.get_stone_count(stone_type_ID) )
 	{
+	  // determine whether stones are flipped for player
+	  bool is_flipped=get_is_flipped();
+
 	  Sequence_Generator::Sequence_State state;
-	  state = sequence_generator->add_click_player_stone( player.id, stone_type_ID, stone_index );
+	  state = sequence_generator->add_click_player_stone( player.id, stone_type_ID, stone_index, is_flipped );
 	  display_sequence_generator_state(sequence_generator, state, gui_manager, game_manager);
 	}
       }
@@ -1252,13 +1280,18 @@ namespace bloks
     Horizontal_Sizer::calc_dimensions();
   }
 
-  void Game_Panel::on_right_click( int, int ) const
+  void Game_Panel::on_right_click( int cl_x, int cl_y ) const
   {
     if( sequence_generator )
     {
-      Sequence_Generator::Sequence_State state;
-      state = sequence_generator->undo_click();
-      display_sequence_generator_state(sequence_generator, state, gui_manager, game_manager);
+      if( sequence_generator->get_sequence_state() != Sequence_Generator::another_click )
+      {
+	Sequence_Generator::Sequence_State state;
+	state = sequence_generator->undo_click();
+	display_sequence_generator_state(sequence_generator, state, gui_manager, game_manager);
+      } else {
+	Horizontal_Sizer::on_right_click(cl_x,cl_y);
+      }
     }
   }
 
@@ -1535,6 +1568,22 @@ namespace bloks
     field_mark_positions.clear();
     if( visible && game.players.size() )
     {
+      // determine whether stones are flipped for player
+      bool is_flipped=false; // set preliminary
+
+      const Player_Panel* player_panel
+	= get_game_panel().get_player_panel(game.current_player->id);
+      if(player_panel!=0)
+      {
+	is_flipped = player_panel->get_is_flipped();
+      } 
+      else 
+      {
+	wxString msg;
+	msg.Printf( wxT("%s"), _("Oops, internal error occurred! Unable to determine player panel that holds a piece.") );
+	report_error( msg, _("Fatal Error") );
+      }
+
       switch( game.current_player->help_mode )
       {
 	case Player::no_help: break;
@@ -1551,7 +1600,7 @@ namespace bloks
 		case Sequence_Generator::hold1:
 		case Sequence_Generator::hold2:
 		{
-		  std::list<Field_Pos> clicks = sequence_generator->get_possible_clicks();
+		  std::list<Field_Pos> clicks = sequence_generator->get_possible_clicks(is_flipped);
 		  std::list<Field_Pos>::iterator click;
 		  for( click = clicks.begin(); click != clicks.end(); ++click )
 		  {
@@ -1563,7 +1612,7 @@ namespace bloks
 		default:
 		{
 		  std::list<std::pair<int/*playerID*/,int/*stoneID*/> > 
-		    stone_clicks = sequence_generator->get_possible_stone_clicks(); 
+		    stone_clicks = sequence_generator->get_possible_stone_clicks(is_flipped); 
 		  std::list<std::pair<int/*playerID*/,int/*stoneID*/> >::const_iterator it;
 		  for( it=stone_clicks.begin(); it!=stone_clicks.end(); ++it )
 		  {

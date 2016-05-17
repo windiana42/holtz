@@ -32,7 +32,7 @@ namespace bloks
   // -----------------------------------------------------------
 
   Stone_Type::Stone_Type(int ID, const int *sub_fields_array, unsigned width, unsigned height)
-    : ID(ID), max_x(0), max_y(0), rotation_symmetric(false)
+    : ID(ID), max_x(0), max_y(0), rotation_symmetric(false), flip_symmetric(false)
   {
     // initialize corners array
     std::vector<std::vector<bool> > corners_array;//[y+1][x+1]
@@ -117,7 +117,7 @@ namespace bloks
       }
       //std::cout << std::endl;
     }
-    // determine rotation symmetric
+    // determine rotation symmetric 
     if( max_x == max_y ) 
     {
       rotation_symmetric = true; // starting assumption
@@ -125,7 +125,7 @@ namespace bloks
       {
 	for(unsigned x=0;x<=max_x;++x) 
 	{
-	  if( sub_fields_array[x+y*width] != sub_fields_array[y+x*width] )
+	  if( sub_fields_array[x+y*width] != sub_fields_array[(max_y-y)+x*width] )
 	  {
 	    rotation_symmetric = false;
 	    break;
@@ -133,10 +133,40 @@ namespace bloks
 	}
 	if(!rotation_symmetric) break;
       }
-    } 
+    }
     else
     {
       rotation_symmetric = false;
+    }
+    // determine flip symmetric
+    flip_symmetric = false; //starting assumption
+    for( int dir_int = Field_Iterator::right_flipped;
+	 dir_int <= Field_Iterator::bottom_flipped; ++dir_int )
+    {
+      Field_Iterator::Direction dir = Field_Iterator::Direction(dir_int);
+
+      if( (dir != Field_Iterator::top_flipped && dir != Field_Iterator::bottom_flipped) || (max_x == max_y) )
+      {
+	bool flip_symmetric_rotation_x = true; // starting assumption
+	for(unsigned y=0;y<=max_y;++y) 
+	{
+	  for(unsigned x=0;x<=max_x;++x) 
+	  {
+	    std::pair<unsigned/*x*/,unsigned/*y*/> rot_pos = rotate(std::pair<unsigned/*x*/,unsigned/*y*/>(x,y), dir);
+	    if( sub_fields_array[x+y*width] != sub_fields_array[rot_pos.first+rot_pos.second*width] )
+	    {
+	      flip_symmetric_rotation_x = false;
+	      break;
+	    }
+	  }
+	  if(!flip_symmetric_rotation_x) break;
+	}
+	if( flip_symmetric_rotation_x ) 
+	{
+	  flip_symmetric = true;
+	  break;
+	}
+      }
     }
     // precalculate query positions
     int center_utility = 10000000;
@@ -200,23 +230,39 @@ namespace bloks
       switch(dir) 
       {
       case Field_Iterator::right:		
-      case Field_Iterator::right2:		
 	x = raw_x; 
 	y = raw_y;
 	break;
+      case Field_Iterator::right_flipped:		
+	// invert y-axis of original coordinates
+	x = raw_x; 
+	y = get_max_y()-raw_y;
+	break;
       case Field_Iterator::top:			
-      case Field_Iterator::top2:		
 	x = raw_y; 
 	y = get_max_x()-raw_x;
 	break;
+      case Field_Iterator::top_flipped:		
+	// invert y-axis of original coordinates
+	x = get_max_y()-raw_y; 
+	y = get_max_x()-raw_x;
+	break;
       case Field_Iterator::left:		
-      case Field_Iterator::left2:		
 	x = get_max_x()-raw_x;
 	y = get_max_y()-raw_y;
 	break;
+      case Field_Iterator::left_flipped:		
+	// invert y-axis of original coordinates
+	x = get_max_x()-raw_x;
+	y = raw_y;
+	break;
       case Field_Iterator::bottom:		
-      case Field_Iterator::bottom2:
 	x = get_max_y()-raw_y;
+	y = raw_x;
+	break;
+      case Field_Iterator::bottom_flipped:
+	// invert y-axis of original coordinates
+	x = raw_y;
 	y = raw_x;
 	break;
       case Field_Iterator::invalid_direction:    assert( false );
@@ -244,23 +290,39 @@ namespace bloks
       switch(dir) 
       {
       case Field_Iterator::right:		
-      case Field_Iterator::right2:		
 	x = raw_x; 
 	y = raw_y;
 	break;
+      case Field_Iterator::right_flipped:		
+	// invert y-axis of original coordinates
+	x = raw_x; 
+	y = int(get_max_y())-raw_y;
+	break;
       case Field_Iterator::top:			
-      case Field_Iterator::top2:		
 	x = raw_y; 
 	y = int(get_max_x())-raw_x;
 	break;
+      case Field_Iterator::top_flipped:		
+	// invert y-axis of original coordinates
+	x = int(get_max_y())-raw_y; 
+	y = int(get_max_x())-raw_x;
+	break;
       case Field_Iterator::left:		
-      case Field_Iterator::left2:		
 	x = int(get_max_x())-raw_x;
 	y = int(get_max_y())-raw_y;
 	break;
+      case Field_Iterator::left_flipped:		
+	// invert y-axis of original coordinates
+	x = int(get_max_x())-raw_x;
+	y = raw_y;
+	break;
       case Field_Iterator::bottom:		
-      case Field_Iterator::bottom2:
 	x = int(get_max_y())-raw_y;
+	y = raw_x;
+	break;
+      case Field_Iterator::bottom_flipped:
+	// invert y-axis of original coordinates
+	x = raw_y;
 	y = raw_x;
 	break;
       case Field_Iterator::invalid_direction:    assert( false );
@@ -283,14 +345,14 @@ namespace bloks
     switch(dir)
     {
       case Field_Iterator::top:			
-      case Field_Iterator::top2:		
+      case Field_Iterator::top_flipped:		
       case Field_Iterator::bottom:		
-      case Field_Iterator::bottom2:
+      case Field_Iterator::bottom_flipped:
 	return max_y;
       case Field_Iterator::right:		
-      case Field_Iterator::right2:		
+      case Field_Iterator::right_flipped:		
       case Field_Iterator::left:		
-      case Field_Iterator::left2:		
+      case Field_Iterator::left_flipped:		
       case Field_Iterator::invalid_direction:
 	break;
     }
@@ -301,14 +363,14 @@ namespace bloks
     switch(dir)
     {
       case Field_Iterator::top:			
-      case Field_Iterator::top2:		
+      case Field_Iterator::top_flipped:		
       case Field_Iterator::bottom:		
-      case Field_Iterator::bottom2:
+      case Field_Iterator::bottom_flipped:
 	return max_x;
       case Field_Iterator::right:		
-      case Field_Iterator::right2:		
+      case Field_Iterator::right_flipped:		
       case Field_Iterator::left:		
-      case Field_Iterator::left2:		
+      case Field_Iterator::left_flipped:		
       case Field_Iterator::invalid_direction:
 	break;
     }
@@ -316,12 +378,12 @@ namespace bloks
   }
 
   std::pair<Field_Iterator::Direction, Field_Pos/*origin*/> 
-  Stone_Type::get_orientation(Field_Pos top_left, Field_Pos bottom_right) const
+  Stone_Type::get_orientation(Field_Pos top_left, Field_Pos bottom_right, bool is_flipped) const
   {
     std::pair<Field_Iterator::Direction, Field_Pos/*origin*/> ret(Field_Iterator::invalid_direction, Field_Pos());
     // check possibility of top_left/bottom_right match
-    std::pair<unsigned/*x*/,unsigned/*y*/> sub_top_left = query_sub_field(TOP_LEFT);
-    std::pair<unsigned/*x*/,unsigned/*y*/> sub_bottom_right = query_sub_field(BOTTOM_RIGHT);
+    std::pair<unsigned/*x*/,unsigned/*y*/> sub_top_left = query_sub_field(TOP_LEFT, is_flipped?Field_Iterator::right_flipped : Field_Iterator::right);
+    std::pair<unsigned/*x*/,unsigned/*y*/> sub_bottom_right = query_sub_field(BOTTOM_RIGHT, is_flipped?Field_Iterator::right_flipped : Field_Iterator::right);
     int dx = sub_bottom_right.first - int(sub_top_left.first);
     int dy = sub_bottom_right.second - int(sub_top_left.second);
     int match_dx = bottom_right.x - int(top_left.x);
@@ -339,22 +401,22 @@ namespace bloks
     if( dx == match_dx && dy == match_dy )
     {
       Field_Pos origin(top_left.x-sub_top_left.first,top_left.y-sub_top_left.second);
-      return std::make_pair(Field_Iterator::right,origin);
+      return std::make_pair(is_flipped?Field_Iterator::right_flipped : Field_Iterator::right,origin);
     }
     if( dx == -match_dy && dy == match_dx )
     {
       Field_Pos origin(top_left.x-sub_top_left.second,top_left.y-(max_x-sub_top_left.first));
-      return std::make_pair(Field_Iterator::top,origin);
+      return std::make_pair(is_flipped?Field_Iterator::top_flipped : Field_Iterator::top,origin);
     }
     if( dx == -match_dx && dy == -match_dy )
     {
       Field_Pos origin(top_left.x-(max_x-sub_top_left.first),top_left.y-(max_y-sub_top_left.second));
-      return std::make_pair(Field_Iterator::left,origin);
+      return std::make_pair(is_flipped?Field_Iterator::left_flipped : Field_Iterator::left,origin);
     }
     if( dx == match_dy && dy == -match_dx )
     {
       Field_Pos origin(top_left.x-(max_y-sub_top_left.second),top_left.y-sub_top_left.first);
-      return std::make_pair(Field_Iterator::bottom,origin);
+      return std::make_pair(is_flipped?Field_Iterator::bottom_flipped : Field_Iterator::bottom,origin);
     }
     std::cout << "no orientation match found" << std::endl;
     return ret;
@@ -365,64 +427,47 @@ namespace bloks
   Stone_Type::get_click_points(Field_Iterator::Direction dir, Field_Pos origin) const
   {
     std::pair<Field_Pos /*top_left*/, Field_Pos /*bottom_right*/> ret;
+
+    if( dir == Field_Iterator::invalid_direction )
+    {
+      std::cout << "no orientation match found" << std::endl;
+      return ret;
+    }
+
     // resolve top_left/bottom_right match
-    std::pair<unsigned/*x*/,unsigned/*y*/> sub_top_left = query_sub_field(TOP_LEFT);
-    std::pair<unsigned/*x*/,unsigned/*y*/> sub_bottom_right = query_sub_field(BOTTOM_RIGHT);
-    switch(dir)
-      {
-      case Field_Iterator::right:
-      case Field_Iterator::right2:
-	{
-	  Field_Pos top_left(origin.x+sub_top_left.first,origin.y+sub_top_left.second);
-	  Field_Pos bottom_right(origin.x+sub_bottom_right.first,origin.y+sub_bottom_right.second);
-	  return std::make_pair(top_left,bottom_right);
-	}
-      case Field_Iterator::top:
-      case Field_Iterator::top2:
-	{
-	  Field_Pos top_left(origin.x+sub_top_left.second,origin.y+(max_x-sub_top_left.first));
-	  Field_Pos bottom_right(origin.x+sub_bottom_right.second,origin.y+(max_x-sub_bottom_right.first));
-	  return std::make_pair(top_left,bottom_right);
-	}
-      case Field_Iterator::left:
-      case Field_Iterator::left2:
-	{
-	  Field_Pos top_left(origin.x+(max_x-sub_top_left.first),origin.y+(max_y-sub_top_left.second));
-	  Field_Pos bottom_right(origin.x+(max_x-sub_bottom_right.first),origin.y+(max_y-sub_bottom_right.second));
-	  return std::make_pair(top_left,bottom_right);
-	}
-      case Field_Iterator::bottom:
-      case Field_Iterator::bottom2:
-	{
-	  Field_Pos top_left(origin.x+(max_y-sub_top_left.second),origin.y+sub_top_left.first);
-	  Field_Pos bottom_right(origin.x+(max_y-sub_bottom_right.second),origin.y+sub_bottom_right.first);
-	  return std::make_pair(top_left,bottom_right);
-	}
-      case Field_Iterator::invalid_direction:
-	break;
-      }
-    std::cout << "no orientation match found" << std::endl;
-    return ret;
+    std::pair<unsigned/*x*/,unsigned/*y*/> sub_top_left = query_sub_field(TOP_LEFT, dir);
+    std::pair<unsigned/*x*/,unsigned/*y*/> sub_bottom_right = query_sub_field(BOTTOM_RIGHT, dir);
+    Field_Pos top_left(origin.x+sub_top_left.first,origin.y+sub_top_left.second);
+    Field_Pos bottom_right(origin.x+sub_bottom_right.first,origin.y+sub_bottom_right.second);
+    return std::make_pair(top_left,bottom_right);
   }
 
   std::pair<unsigned/*x*/,unsigned/*y*/> Stone_Type::rotate
-  (std::pair<unsigned/*x*/,unsigned/*y*/> rel_pos, Field_Iterator::Direction dir) const
+  (std::pair<unsigned/*x*/,unsigned/*y*/> rel_pos, Field_Iterator::Direction dir) const // rotate or flip-rotate based on dir
   {
     switch(dir)
     {
     case Field_Iterator::invalid_direction:
     case Field_Iterator::right:
-    case Field_Iterator::right2:
       return rel_pos;
+    case Field_Iterator::right_flipped:
+      // invert y-axis of original coordinates
+      return std::make_pair(rel_pos.first,max_y-rel_pos.second);
     case Field_Iterator::top:
-    case Field_Iterator::top2:
       return std::make_pair(rel_pos.second,max_x-rel_pos.first);
+    case Field_Iterator::top_flipped:
+      // invert y-axis of original coordinates
+      return std::make_pair(max_y-rel_pos.second,max_x-rel_pos.first);
     case Field_Iterator::left:
-    case Field_Iterator::left2:
       return std::make_pair(max_x-rel_pos.first,max_y-rel_pos.second);
+    case Field_Iterator::left_flipped:
+      // invert y-axis of original coordinates
+      return std::make_pair(max_x-rel_pos.first,rel_pos.second);
     case Field_Iterator::bottom:
-    case Field_Iterator::bottom2:
       return std::make_pair(max_y-rel_pos.second,rel_pos.first);
+    case Field_Iterator::bottom_flipped:
+      // invert y-axis of original coordinates
+      return std::make_pair(rel_pos.second,rel_pos.first);
     }
     return rel_pos;
   }
@@ -949,11 +994,11 @@ namespace bloks
       case top:			return Next_Top(); break;
       case left:		return Next_Left(); break;
       case bottom:		return Next_Bottom(); break;
-      case right2:		return Next_Right(); break;
-      case top2:		return Next_Top(); break;
-      case left2:		return Next_Left(); break;
-      case bottom2:		return Next_Bottom(); break;
-      case invalid_direction:    assert( false );
+      case right_flipped:	return Next_Right(); break;	// flipped iterator movements make no sense but are supported...
+      case top_flipped:		return Next_Top(); break;	// flipped iterator movements make no sense but are supported...
+      case left_flipped:	return Next_Left(); break;	// flipped iterator movements make no sense but are supported...
+      case bottom_flipped:	return Next_Bottom(); break;	// flipped iterator movements make no sense but are supported...
+      case invalid_direction:   assert( false );
     }
     assert( false );
     return *this;
@@ -987,10 +1032,10 @@ namespace bloks
       case top:			return Top(); break;
       case left:		return Left(); break;
       case bottom:		return Bottom(); break;
-      case right2:		return Right(); break;
-      case top2:		return Top(); break;
-      case left2:		return Left(); break;
-      case bottom2:		return Bottom(); break;
+      case right_flipped:		return Right(); break;
+      case top_flipped:		return Top(); break;
+      case left_flipped:		return Left(); break;
+      case bottom_flipped:		return Bottom(); break;
       case invalid_direction:    assert( false );
     }
     assert( false );
@@ -1975,13 +2020,15 @@ namespace bloks
 
   bool Game::is_any_move_possible( const Player &player ) const
   {
-    return get_possible_moves(player,/*just_one=*/true).size() > 0;
+    return get_possible_moves(player, /*only_one_flip_direction=*/false, /*is_flipped=*/false,
+			      /*just_one=*/true).size() > 0; // Attention: currently mouse player cannot enter set moves for flipped stones
   }
 
   // **********************
   // get_possible_moves
 
-  std::list<Set_Move> Game::get_possible_moves( const Player &player, bool just_one, 
+  std::list<Set_Move> Game::get_possible_moves( const Player &player,
+						bool only_one_flip_direction, bool is_flipped, bool just_one, 
 						bool just_one_per_stone, int just_stone_ID,
 						bool just_one_rotation_symmetric, bool random_order ) const
   {
@@ -2006,58 +2053,66 @@ namespace bloks
 	const Stone_Type &stone_type = board.get_stone_type(stone_ID);
 	bool found_move_for_stone=false;
 	// try to place each sub field of the stone on the corner field in any direction of the stone
-	for( int d=Field_Iterator::right; d<=Field_Iterator::bottom; ++d )
+	for( int flip=0; flip<=1; ++flip )
 	{
-	  Field_Iterator::Direction dir = Field_Iterator::Direction(d);
-	  const std::list<std::pair<unsigned/*x*/,unsigned/*y*/> > &sub_fields
-	    = stone_type.get_sub_fields(dir);
-	  std::list<std::pair<unsigned/*x*/,unsigned/*y*/> >::const_iterator it2,it3;
-	  // try to place each sub field of the stone on the corner field
-	  for( it2=sub_fields.begin(); it2!=sub_fields.end(); ++it2 )
+	  if( only_one_flip_direction && (bool(flip) != is_flipped)) continue;
+
+	  for( int d=(flip?Field_Iterator::right_flipped : Field_Iterator::right); 
+	       d<=(flip?Field_Iterator::bottom_flipped : Field_Iterator::bottom); ++d )
 	  {
-	    unsigned sub_x = it2->first;
-	    unsigned sub_y = it2->second;
-	    Field_Pos origin(corner.x-int(sub_x),corner.y-int(sub_y));
-	    //std::cout << "  sub: " << dir << " " << sub_x << " " << sub_y << std::endl;
-	    bool valid = true;
-	    // check that all sub fields are empty
-	    for( it3=sub_fields.begin(); it3!=sub_fields.end(); ++it3 )
+	    Field_Iterator::Direction dir = Field_Iterator::Direction(d);
+	    const std::list<std::pair<unsigned/*x*/,unsigned/*y*/> > &sub_fields
+	      = stone_type.get_sub_fields(dir);
+	    std::list<std::pair<unsigned/*x*/,unsigned/*y*/> >::const_iterator it2,it3;
+	    // try to place each sub field of the stone on the corner field
+	    for( it2=sub_fields.begin(); it2!=sub_fields.end(); ++it2 )
 	    {
-	      Field_Pos pos(origin.x+it3->first,origin.y+it3->second);
-	      Field_Iterator p(pos,&board);
-	      if( !p.is_valid_field() ) { valid=false; break; } // not valid
-	      if( *p != field_empty ) { valid=false; break; } // not valid
-	    }
-	    if( valid )
-	    {
-	      // check that all sub fields are not directly adjacent to fields of this player
+	      unsigned sub_x = it2->first;
+	      unsigned sub_y = it2->second;
+	      Field_Pos origin(corner.x-int(sub_x),corner.y-int(sub_y));
+	      //std::cout << "  sub: " << dir << " " << sub_x << " " << sub_y << std::endl;
+	      bool valid = true;
+	      // check that all sub fields are empty
 	      for( it3=sub_fields.begin(); it3!=sub_fields.end(); ++it3 )
 	      {
-		for(int i=-1; i<=1; i+=2) 
+		Field_Pos pos(origin.x+it3->first,origin.y+it3->second);
+		Field_Iterator p(pos,&board);
+		if( !p.is_valid_field() ) { valid=false; break; } // not valid
+		if( *p != field_empty ) { valid=false; break; } // not valid
+	      }
+	      if( valid )
+	      {
+		// check that all sub fields are not directly adjacent to fields of this player
+		for( it3=sub_fields.begin(); it3!=sub_fields.end(); ++it3 )
 		{
-		  for(int j=-1; j<=1; j+=2) 
+		  for(int i=-1; i<=1; i+=2) 
 		  {
-		    Field_Pos pos(origin.x+it3->first,origin.y+it3->second);
-		    if( j<0 ) pos.x += i;
-		    else pos.y += i;
-		    Field_Iterator p(pos,&board);
-		    if( p.is_valid_field() )
-		      if( *p == player.field_type ) { valid=false; break; } // not valid
+		    for(int j=-1; j<=1; j+=2) 
+		    {
+		      Field_Pos pos(origin.x+it3->first,origin.y+it3->second);
+		      if( j<0 ) pos.x += i;
+		      else pos.y += i;
+		      Field_Iterator p(pos,&board);
+		      if( p.is_valid_field() )
+			if( *p == player.field_type ) { valid=false; break; } // not valid
+		    }
 		  }
 		}
+		if(valid)
+		{
+		  ret.push_back(Set_Move(origin,stone_ID,dir));
+		  if( just_one ) return ret;
+		  found_move_for_stone = true;
+		  stones_found.insert(stone_ID);
+		  if(just_one_per_stone) break;
+		}
 	      }
-	      if(valid)
-	      {
-		ret.push_back(Set_Move(origin,stone_ID,dir));
-		if( just_one ) return ret;
-		found_move_for_stone = true;
-		stones_found.insert(stone_ID);
-		if(just_one_per_stone) break;
-	      }
+	      if(found_move_for_stone && just_one_per_stone) break;
 	    }
-	    if(found_move_for_stone && just_one_per_stone) break;
+	    if( just_one_rotation_symmetric && stone_type.get_rotation_symmetric() ) break;
+	    if( found_move_for_stone && just_one_per_stone ) break;
 	  }
-	  if( just_one_rotation_symmetric && stone_type.get_rotation_symmetric() ) break;
+	  if( just_one_rotation_symmetric && stone_type.get_flip_symmetric() ) break;
 	  if( found_move_for_stone && just_one_per_stone ) break;
 	}
       }
@@ -2117,53 +2172,58 @@ namespace bloks
 	if( count < 1 ) continue;
 	const Stone_Type &stone_type = board.get_stone_type(stone_ID);
 	// try to place each sub field of the stone on the corner field in any direction of the stone
-	for( int d=Field_Iterator::right; d<=Field_Iterator::bottom; ++d )
+	for( int flip=0; flip<=1; ++flip )
 	{
-	  Field_Iterator::Direction dir = Field_Iterator::Direction(d);
-	  const std::list<std::pair<unsigned/*x*/,unsigned/*y*/> > &sub_fields
-	    = stone_type.get_sub_fields(dir);
-	  std::list<std::pair<unsigned/*x*/,unsigned/*y*/> >::const_iterator it2,it3;
-	  // try to place each sub field of the stone on the corner field
-	  for( it2=sub_fields.begin(); it2!=sub_fields.end(); ++it2 )
+	  for( int d=(flip?Field_Iterator::right_flipped : Field_Iterator::right); 
+	       d<=(flip?Field_Iterator::bottom_flipped : Field_Iterator::bottom); ++d )
 	  {
-	    unsigned sub_x = it2->first;
-	    unsigned sub_y = it2->second;
-	    Field_Pos origin(corner.x-int(sub_x),corner.y-int(sub_y));
-	    //std::cout << "  sub: " << dir << " " << sub_x << " " << sub_y << std::endl;
-	    bool valid = true;
-	    // check that all sub fields are empty
-	    for( it3=sub_fields.begin(); it3!=sub_fields.end(); ++it3 )
+	    Field_Iterator::Direction dir = Field_Iterator::Direction(d);
+	    const std::list<std::pair<unsigned/*x*/,unsigned/*y*/> > &sub_fields
+	      = stone_type.get_sub_fields(dir);
+	    std::list<std::pair<unsigned/*x*/,unsigned/*y*/> >::const_iterator it2,it3;
+	    // try to place each sub field of the stone on the corner field
+	    for( it2=sub_fields.begin(); it2!=sub_fields.end(); ++it2 )
 	    {
-	      Field_Pos pos(origin.x+it3->first,origin.y+it3->second);
-	      Field_Iterator p(pos,&board);
-	      if( !p.is_valid_field() ) { valid=false; break; } // not valid
-	      if( *p != field_empty ) { valid=false; break; } // not valid
-	    }
-	    if( valid )
-	    {
-	      // check that all sub fields are not directly adjacent to fields of this player
+	      unsigned sub_x = it2->first;
+	      unsigned sub_y = it2->second;
+	      Field_Pos origin(corner.x-int(sub_x),corner.y-int(sub_y));
+	      //std::cout << "  sub: " << dir << " " << sub_x << " " << sub_y << std::endl;
+	      bool valid = true;
+	      // check that all sub fields are empty
 	      for( it3=sub_fields.begin(); it3!=sub_fields.end(); ++it3 )
 	      {
-		for(int i=-1; i<=1; i+=2) 
+		Field_Pos pos(origin.x+it3->first,origin.y+it3->second);
+		Field_Iterator p(pos,&board);
+		if( !p.is_valid_field() ) { valid=false; break; } // not valid
+		if( *p != field_empty ) { valid=false; break; } // not valid
+	      }
+	      if( valid )
+	      {
+		// check that all sub fields are not directly adjacent to fields of this player
+		for( it3=sub_fields.begin(); it3!=sub_fields.end(); ++it3 )
 		{
-		  for(int j=-1; j<=1; j+=2) 
+		  for(int i=-1; i<=1; i+=2) 
 		  {
-		    Field_Pos pos(origin.x+it3->first,origin.y+it3->second);
-		    if( j<0 ) pos.x += i;
-		    else pos.y += i;
-		    Field_Iterator p(pos,&board);
-		    if( p.is_valid_field() )
-		      if( *p == player.field_type ) { valid=false; break; } // not valid
+		    for(int j=-1; j<=1; j+=2) 
+		    {
+		      Field_Pos pos(origin.x+it3->first,origin.y+it3->second);
+		      if( j<0 ) pos.x += i;
+		      else pos.y += i;
+		      Field_Iterator p(pos,&board);
+		      if( p.is_valid_field() )
+			if( *p == player.field_type ) { valid=false; break; } // not valid
+		    }
 		  }
 		}
-	      }
-	      if(valid)
-	      {
-		++ret;
+		if(valid)
+		{
+		  ++ret;
+		}
 	      }
 	    }
+	    if( true/*just_one_rotation_symmetric*/ && stone_type.get_rotation_symmetric() ) break;
 	  }
-	  if( true/*just_one_rotation_symmetric*/ && stone_type.get_rotation_symmetric() ) break;
+	  if( true/*just_one_rotation_symmetric*/ && stone_type.get_flip_symmetric() ) break;
 	}
       }
     }
@@ -2389,13 +2449,13 @@ namespace bloks
     {
     case Field_Iterator::invalid_direction: 
     case Field_Iterator::right:
-    case Field_Iterator::right2:
+    case Field_Iterator::right_flipped:
     case Field_Iterator::top:
-    case Field_Iterator::top2:
+    case Field_Iterator::top_flipped:
     case Field_Iterator::left:
-    case Field_Iterator::left2:
+    case Field_Iterator::left_flipped:
     case Field_Iterator::bottom:
-    case Field_Iterator::bottom2:
+    case Field_Iterator::bottom_flipped:
       dir = Field_Iterator::Direction(dir_int);
     }
     
@@ -2873,19 +2933,23 @@ namespace bloks
 	  switch(det_move->dir)
 	  {
 	  case Field_Iterator::invalid_direction: 
-	    ret += 'i'; break;
+	    ret += "i "; break;
 	  case Field_Iterator::right:
-	  case Field_Iterator::right2:
-	    ret += 'r'; break;
+	    ret += "r "; break;
+	  case Field_Iterator::right_flipped:
+	    ret += "rf "; break;
 	  case Field_Iterator::top:
-	  case Field_Iterator::top2:
-	    ret += 't'; break;
+	    ret += "t "; break;
+	  case Field_Iterator::top_flipped:
+	    ret += "tf "; break;
 	  case Field_Iterator::left:
-	  case Field_Iterator::left2:
-	    ret += 'l'; break;
+	    ret += "l "; break;
+	  case Field_Iterator::left_flipped:
+	    ret += "lf "; break;
 	  case Field_Iterator::bottom:
-	  case Field_Iterator::bottom2:
-	    ret += 'b'; break;
+	    ret += "b "; break;
+	  case Field_Iterator::bottom_flipped:
+	    ret += "bf "; break;
 	  }
 	  ret += coordinate_translator->get_field_name(det_move->pos);
 	}
@@ -2901,10 +2965,10 @@ namespace bloks
     Move_Sequence sequence;
 
     int stone_type_ID;
-    char dir_char;
+    std::string dir_str;
     std::string word;
     is >> stone_type_ID;
-    is >> dir_char;
+    is >> dir_str;
     is >> word;
 
     // EOF, pass and resign may be ignored
@@ -2913,13 +2977,14 @@ namespace bloks
     if( word == "resign" ) return sequence;
 
     Field_Iterator::Direction dir = Field_Iterator::invalid_direction;
-    switch(dir_char)
-    {
-    case 'r': dir = Field_Iterator::right; break;
-    case 't': dir = Field_Iterator::top; break;
-    case 'l': dir = Field_Iterator::left; break;
-    case 'b': dir = Field_Iterator::bottom; break;
-    }
+    if( dir_str == "r" ) dir = Field_Iterator::right;
+    else if( dir_str == "t") dir = Field_Iterator::top;
+    else if( dir_str == "l") dir = Field_Iterator::left;
+    else if( dir_str == "b") dir = Field_Iterator::bottom;
+    else if( dir_str == "rf") dir = Field_Iterator::right_flipped;
+    else if( dir_str == "tf") dir = Field_Iterator::top_flipped;
+    else if( dir_str == "lf") dir = Field_Iterator::left_flipped;
+    else if( dir_str == "bf") dir = Field_Iterator::bottom_flipped;
 
     if( word.size() >= 2 )
     {
@@ -3139,7 +3204,7 @@ namespace bloks
 
   // synthesize move sequence from clicks
   Sequence_Generator::Sequence_State Sequence_Generator::add_click
-  ( Field_Pos pos )
+  ( Field_Pos pos, bool is_flipped )
   {
     move_done = 0;
     Field_Iterator p1( pos, &game.board );
@@ -3155,8 +3220,8 @@ namespace bloks
 	  state = stone_pinpointed;
 	  // check whether there is only one way of rotating the piece (1x1)
 	  const Stone_Type &stone_type = game.board.get_stone_type(picked_stone_type_ID);
-	  if( stone_type.query_sub_field(Stone_Type::TOP_LEFT) 
-	      != stone_type.query_sub_field(Stone_Type::BOTTOM_RIGHT) )
+	  if( stone_type.query_sub_field(Stone_Type::TOP_LEFT, Field_Iterator::right) 
+	      != stone_type.query_sub_field(Stone_Type::BOTTOM_RIGHT, Field_Iterator::right) )
 	    return hold2; // there are two points to be placed
 	  // fall through since field has no freedom in orientation (1x1)
 	}
@@ -3169,7 +3234,7 @@ namespace bloks
 	  const Stone_Type &stone_type = game.board.get_stone_type(picked_stone_type_ID);
 	  Field_Pos set_pos2 = pos;
 	  std::pair<Field_Iterator::Direction,Field_Pos/*origin*/> res 
-	    = stone_type.get_orientation(set_pos,set_pos2);
+	    = stone_type.get_orientation(set_pos,set_pos2,is_flipped);
 	  if( res.first == Field_Iterator::invalid_direction ) 
 	  {
 	    return error_invalid_orientation;
@@ -3205,7 +3270,7 @@ namespace bloks
   }
 
   Sequence_Generator::Sequence_State Sequence_Generator::add_click_player_stone
-  ( int player_id, int stone_type_ID, int stone_index )
+  ( int player_id, int stone_type_ID, int stone_index, bool /*is_flipped*/ )
   {
     move_done = 0;
     if( state != begin )
@@ -3269,7 +3334,7 @@ namespace bloks
   }
 
   // call if get_sequence_state() == hold1 || hold2
-  std::list<Field_Pos> Sequence_Generator::get_possible_clicks()
+  std::list<Field_Pos> Sequence_Generator::get_possible_clicks(bool is_flipped)
   {
     std::list<Field_Pos> ret;
     std::set<Field_Pos> fields;
@@ -3280,9 +3345,11 @@ namespace bloks
 	{
 	  // consider using get_picked_player_ID() instead of current_player
 	  int stone_ID = get_picked_stone_type_ID();
-	  std::list<Set_Move> moves = game.get_possible_moves(*game.current_player, /*just_one=*/false,
+	  std::list<Set_Move> moves = game.get_possible_moves(*game.current_player,
+							      /*only_one_flip_direction=*/true,is_flipped, 
+							      /*just_one=*/false,
 							      /*just_one_per_stone=*/false, stone_ID,
-							      /*just_one_rotation_symmetric=*/true);
+							      /*just_one_rotation_symmetric=*/true,/*random_order=*/false);
 	  std::list<Set_Move>::const_iterator it;
 	  for( it=moves.begin(); it!=moves.end(); ++it )
 	  {
@@ -3300,9 +3367,11 @@ namespace bloks
 	  // consider using get_picked_player_ID() instead of current_player
 	  int stone_ID = get_picked_stone_type_ID();
 	  Field_Pos set_pos = get_set_pos();
-	  std::list<Set_Move> moves = game.get_possible_moves(*game.current_player, /*just_one=*/false,
+	  std::list<Set_Move> moves = game.get_possible_moves(*game.current_player,
+							      /*only_one_flip_direction=*/true,is_flipped, 
+							      /*just_one=*/false,
 							      /*just_one_per_stone=*/false, stone_ID,
-							      /*just_one_rotation_symmetric=*/false);
+							      /*just_one_rotation_symmetric=*/false,/*random_order=*/false);
 	  std::list<Set_Move>::const_iterator it;
 	  for( it=moves.begin(); it!=moves.end(); ++it )
 	  {
@@ -3335,7 +3404,7 @@ namespace bloks
 
   // call if get_sequence_state() == another_click
   std::list<std::pair<int/*playerID*/,int/*stoneID*/> > 
-  Sequence_Generator::get_possible_stone_clicks()
+  Sequence_Generator::get_possible_stone_clicks(bool is_flipped)
   {
     std::list<std::pair<int/*playerID*/,int/*stoneID*/> > ret;
 
@@ -3347,8 +3416,9 @@ namespace bloks
 	return ret;
       default:
 	{
-	  std::list<Set_Move> moves = game.get_possible_moves(*game.current_player,/*just_one=*/false,
-							      /*just_one_per_stone=*/true);
+	  std::list<Set_Move> moves = game.get_possible_moves(*game.current_player,
+							      /*only_one_flip_direction=*/true,is_flipped,
+							      /*just_one=*/false, /*just_one_per_stone=*/true);
 	  std::list<Set_Move>::const_iterator it;
 	  for( it=moves.begin(); it!=moves.end(); ++it )
 	  {

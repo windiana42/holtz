@@ -175,7 +175,8 @@ namespace bloks
     sorted_positions.clear();
 
     std::list<Set_Move> possible_moves 
-      = game.get_possible_moves( *game.current_player, /*just_one=*/false, /*just_one_per_stone=*/false, 
+      = game.get_possible_moves( *game.current_player, /*only_one_flip_direction=*/false, /*is_flipped=*/false, 
+				 /*just_one=*/false, /*just_one_per_stone=*/false, 
 				 /*just_stone_ID=*/-1, /*just_one_rotation_symmetric=*/true,
 				 /*random_order=*/true );
     std::list<Set_Move>::iterator it;

@@ -48,10 +48,11 @@ namespace relax
   // Game_Manager
   // ----------------------------------------------------------------------------
 
-  Game_Manager::Game_Manager( Game_UI_Manager *ui_manager )
+  Game_Manager::Game_Manager( int game_event_id, Game_UI_Manager *ui_manager )
     : game_setup_manager(0), game_setup_display_handler(0), ui_manager(ui_manager), 
       game(Standard_Ruleset()), valid_game(false), game_stopped(true), 
-      ai(new AI_Input(*this, ui_manager)), undo_requested(false), new_game_requested(false)
+      ai(new AI_Input(*this, ui_manager)), undo_requested(false), new_game_requested(false),
+      game_event_id(game_event_id)
   {
   }
   Game_Manager::~Game_Manager()
@@ -305,14 +306,14 @@ namespace relax
   class Undo_Animation : wxEvtHandler
   {
   public:
-    Undo_Animation( Game_Manager &game_manager, int n )
+    Undo_Animation( Game_Manager &game_manager, int n, int game_event_id )
       : game_manager(game_manager), n(n)
     {
       // connect event functions
-      Connect( ANIMATION_DONE, wxEVT_TIMER, 
+      Connect( ANIMATION_DONE, game_event_id, 
 	       (wxObjectEventFunction) (wxEventFunction) (wxTimerEventFunction) 
 	       &Undo_Animation::on_done );
-      Connect( ANIMATION_ABORTED, wxEVT_TIMER, 
+      Connect( ANIMATION_ABORTED, game_event_id, 
 	       (wxObjectEventFunction) (wxEventFunction) (wxTimerEventFunction) 
 	       &Undo_Animation::on_aborted );
     }
@@ -414,7 +415,7 @@ namespace relax
     {
       if( error )
 	ui_manager->report_error(_("Undo move failed"),_("Undo failed"));
-      (new Undo_Animation(*this, n))->step();  // will call continue_game
+      (new Undo_Animation(*this, n, game_event_id))->step();  // will call continue_game
     }
     else
       continue_game();

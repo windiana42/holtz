@@ -328,7 +328,7 @@ namespace holtz
   void Game_Window::init_zertz() 
   {
     close_game();
-    zertz_game_manager   = new zertz::Game_Manager();
+    zertz_game_manager   = new zertz::Game_Manager(wxEVT_ZERTZ_NOTIFY);
     zertz_variants_frame = new zertz::Game_Variants_Frame( this );
     zertz_gui_manager    = new zertz::WX_GUI_Manager( *zertz_game_manager, *this, 
 						      *zertz_variants_frame->get_game_variants() );
@@ -341,7 +341,7 @@ namespace holtz
   void Game_Window::init_dvonn() 
   {
     close_game();
-    dvonn_game_manager   = new dvonn::Game_Manager();
+    dvonn_game_manager   = new dvonn::Game_Manager(wxEVT_DVONN_NOTIFY);
     dvonn_variants_frame = new dvonn::Game_Variants_Frame( this );
     dvonn_gui_manager    = new dvonn::WX_GUI_Manager( *dvonn_game_manager, *this, 
 						      *dvonn_variants_frame->get_game_variants() );
@@ -354,7 +354,7 @@ namespace holtz
   void Game_Window::init_bloks() 
   {
     close_game();
-    bloks_game_manager   = new bloks::Game_Manager();
+    bloks_game_manager   = new bloks::Game_Manager(wxEVT_BLOKS_NOTIFY);
     bloks_variants_frame = new bloks::Game_Variants_Frame( this );
     bloks_gui_manager    = new bloks::WX_GUI_Manager( *bloks_game_manager, *this, 
 						      *bloks_variants_frame->get_game_variants() );
@@ -367,7 +367,7 @@ namespace holtz
   void Game_Window::init_relax() 
   {
     close_game();
-    relax_game_manager   = new relax::Game_Manager();
+    relax_game_manager   = new relax::Game_Manager(wxEVT_RELAX_NOTIFY);
     relax_variants_frame = new relax::Game_Variants_Frame( this );
     relax_gui_manager    = new relax::WX_GUI_Manager( *relax_game_manager, *this, 
 						      *relax_variants_frame->get_game_variants() );
