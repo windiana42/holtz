@@ -51,8 +51,12 @@ namespace relax
 
 // declare custom event type wx_EVT_RELAX_NOTIFY
 BEGIN_DECLARE_EVENT_TYPES()
-#if defined(MY_WX_MAKING_DLL) && defined(__WIN32__)
-DECLARE_EXPORTED_EVENT_TYPE(__declspec(dllexport),wxEVT_RELAX_NOTIFY, 0)
+#if defined(__WIN32__)
+#  if defined(MY_WX_MAKING_DLL)
+DECLARE_LOCAL_EVENT_TYPE(wxEVT_RELAX_NOTIFY, 0)
+#  else
+DECLARE_LOCAL_EVENT_TYPE(wxEVT_RELAX_NOTIFY, 0)
+#  endif
 #else
 DECLARE_EVENT_TYPE(wxEVT_RELAX_NOTIFY, 0)
 #endif
