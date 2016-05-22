@@ -82,15 +82,15 @@ BuildRequires: wxGTK-devel >= 2.8.4 gcc-c++ boost-devel
 
 ## Redhat / Centos
 %else
-%if 0%{?rhel_version} || 0%{?centos_version}
+%if 0%{?rhel_version} || 0%{?centos_version} || 0%{?scientificlinux_version}
 %if %{semistatic}
 #I am not sure about precise requirements of wxGTK-static
 Requires:      gtk+ >= 1.2.7 gettext
-BuildRequires: wxGTK >= 2.8.4 wxGTK-devel gcc-c++ boost-devel
+BuildRequires: wxWidgets >= 2.8.4 wxWidgets-devel gcc-c++ boost-devel
 #wxGTK-static has to be manually compiled
 %else
-Requires:      wxGTK >= 2.8.4
-BuildRequires: wxGTK-devel >= 2.8.4 gcc-c++ boost-devel
+Requires:      wxWidgets >= 2.8.4
+BuildRequires: wxWidgets-devel >= 2.8.4 gcc-c++ boost-devel
 %endif
 
 ## any other (just speculation what might be most common)
