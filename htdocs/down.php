@@ -6,16 +6,16 @@
 
 <h3>Binary Packages:</h3>
 <ul>
-<li>Windows binary (<a href="https://sourceforge.net/projects/holtz/files/holtz/1.4.0/holtz-1.4.0-win32.zip/download">holtz-1.4.0-win32.zip</a>) - just extract and run - (MD5: 2438fc6c9e0d93078b4b5ff1c44a959a)</li>
-<li>Linux RPM, OpenSuSE 12.2 (x86 - 64 bit)
-    (<a href="https://sourceforge.net/projects/holtz/files/holtz/1.4.0/holtz-1.4.0-1.x86_64.rpm/download">holtz-1.4.0-1.x86_64.rpm</a>) - (MD5: 5f00f664cc96aa3d48a926e47cda9386)</li>
+<li>Windows binary (<a href="https://sourceforge.net/projects/holtz/files/holtz/1.4.1/holtz-1.4.1-win32.zip/download">holtz-1.4.1-win32.zip</a>) - just extract and run - (MD5: 833e5fe07d49e67009cb5ea6d60e7512)</li>
+<li>Linux RPM, OpenSuSE 13.1 (x86 - 64 bit)
+    (<a href="https://sourceforge.net/projects/holtz/files/holtz/1.4.1/holtz-1.4.1-1.x86_64.rpm/download">holtz-1.4.0-1.x86_64.rpm</a>) - (MD5: 4d995c7f2fe8c88a929e648c472e7ea9)</li>
 <li>For other Linux distributions, see below</li>
 </ul>
 
 <h3>Sourcecode:</h3>
 <ul>
-    <li>Source (<a href="https://sourceforge.net/projects/holtz/files/holtz/1.4.0/holtz-1.4.0.tar.gz/download">holtz-1.4.0.tar.gz</a>) - source prepared with autotools, requires: wxWidgets 2.8 or later - (MD5: 06d8c5d3f3b816e9a583b72db0b3b824)</li>
-   <li>RPM source package (<a href="https://sourceforge.net/projects/holtz/files/holtz/1.4.0/holtz-1.4.0-1.src.rpm/download">holtz-1.4.0-1.src.rpm</a>) - to compile a package for your RPM distribution, requires: wxWidgets 2.8 or later - (MD5: 321750174307032646961799aef8581c)</li>
+    <li>Source (<a href="https://sourceforge.net/projects/holtz/files/holtz/1.4.1/holtz-1.4.1.tar.gz/download">holtz-1.4.1.tar.gz</a>) - source prepared with autotools, requires: wxWidgets 2.8.4 or later - (MD5: 1ae9a54747a6c502ff821bd6bbda5299)</li>
+   <li>RPM source package (<a href="https://sourceforge.net/projects/holtz/files/holtz/1.4.1/holtz-1.4.1-1.src.rpm/download">holtz-1.4.1-1.src.rpm</a>) - to compile a package for your RPM distribution, requires: wxWidgets 2.8 or later - (MD5: 4ad13e1cba56118fdd353a41a3e8a10e)</li>
 </ul>
 <p>Note: For compiling the sourcecode you either need to install a development package 
 of wxWidgets (e.g. wxGTK-devel, wxWidgets-devel, libwxgtk2.6-dev, or libwxgtk2.8-dev) or download source directly 
@@ -47,6 +47,11 @@ and Ubuntu packaging. Please email <a href="mailto:windiana@users.sf.net">
 windiana@users.sf.net</a>.</p>
 
 <h2>Changes:</h2>
+
+<h3>1.4.1:</h3>
+<ul>
+<li>Bloks allows flipping pieces upside down </li>
+</ul>
 
 <h3>1.4.0:</h3>
 <ul>
