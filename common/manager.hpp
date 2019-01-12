@@ -260,7 +260,8 @@ namespace relax
     virtual void setup_game_display() = 0; // setup all windows to display game
     virtual void set_board( const Game &game ) = 0;
     virtual void update_board( const Game &game ) = 0;
-    virtual void report_scores( std::multimap<int/*score*/,const Player*> scores ) = 0;
+    virtual void report_scores( const Game* game, 
+				std::multimap<int/*score*/,const Player*> scores ) = 0;
     virtual void report_winner( Player *player ) = 0;
     virtual void report_error( wxString msg, wxString caption ) = 0;
     virtual void report_information( wxString msg, wxString caption ) = 0;

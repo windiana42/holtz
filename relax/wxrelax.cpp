@@ -55,6 +55,7 @@
 #include "ai.hpp"
 #include "util.hpp"
 #include "wxmain.hpp"
+#include "wxutil.hpp"
 
 #include <wx/zipstrm.h>
 #include <wx/image.h>
@@ -64,6 +65,7 @@
 #include <wx/fs_zip.h>
 #include <wx/html/helpctrl.h>
 #include <wx/cshelp.h>
+#include <wx/numdlg.h>
 /*
 #ifndef __OLD_GCC__
   #include <sstream>
@@ -1532,14 +1534,58 @@ namespace relax
       refresh();
   }
 
-  void WX_GUI_Manager::report_scores( std::multimap<int/*score*/,const Player*> scores )
+  void WX_GUI_Manager::report_scores( const Game* game, 
+				      std::multimap<int/*score*/,const Player*> scores )
   {
+    bool activate_math_exercise = true;  // this is a special hack for my friend Samuel
+    int math_exercise_max_cnt = 3; // maximum number of questions asked
     wxString msg, line;
     std::multimap<int/*score*/,const Player*>::iterator it;
     for( it=scores.begin(); it!=scores.end(); ++it )
       {
 	int score = it->first;
 	const Player *player = it->second;
+	// math_excercise: ask for help to compute total scores (learn multiplication) 
+	if( activate_math_exercise && player->type == Player::user ) 
+	{
+	  std::list<std::pair<int/*count*/,int/*num*/> > scores 
+	    = game->get_max_score_detail(player).second;
+	  int cnt = 0;
+	  for( std::list<std::pair<int/*count*/,int/*num*/> >::iterator it = scores.begin();
+	       it != scores.end(); ++it )
+	    {
+	      if( ++cnt > math_exercise_max_cnt ) break;
+	      int count = it->first;
+	      int num = it->second;
+	      wxString hint = wxT("");
+	      long result;
+	      do{
+		wxString base_question = _("%s: Please help me calculate %d * %d%s");
+		wxString title = _("Calculate Scores");
+		wxString question;
+		question.Printf( base_question,
+				 str_to_wxstr(player->name).c_str(), count, num, 
+				 hint.c_str() );
+		result = wxGetNumberFromUser( question, /*prompt=*/_("= "), 
+					      title,
+					      /*value=*/-1, /*min=*/0, /*max=*/1000, 
+					      /*parent=*/&game_window );
+		if( result != count*num ) 
+		  {
+		    if( result < count*num ) 
+		      {
+			hint.Printf( _(" (Hint: the actual result is higher than %d)"), 
+				       result);
+		      }
+		    else
+		      {
+			hint.Printf( _(" (Hint: the actual result is lower than %d)"), 
+				       result);
+		      }
+		  }
+	      }while(result != count*num);
+	    }
+	}
 	line.Printf( _("%3d points: %s\n"), score, str_to_wxstr(player->name).c_str() );
 	msg += line;
       }
@@ -1832,7 +1878,7 @@ namespace relax
     {
       buf = wxFileSelector( _("Choose a skin File"), wxT(""), 
 			    wxT(""), wxT(""), _("Skin Files (*.zip)|*.zip"),
-			    wxOPEN );
+			    wxFD_OPEN );
       if( wxFileExists(buf) )
       {
 	if( load_skin( buf ) )
@@ -1914,7 +1960,7 @@ namespace relax
     {
       buf = wxFileSelector( _("Choose a sound file as move reminder"), wxT(""),
 			    wxT(""), wxT(""), _("Sound Files (*.wav)|*.wav"),
-			    wxOPEN );
+			    wxFD_OPEN );
       if( wxFileExists(buf) )
       {
 	if( load_beep(buf) )
@@ -1962,15 +2008,15 @@ namespace relax
     show_user_information(false,false);
 
     Standard_Ruleset ruleset;	// to lookup numbers
-    wxZipInputStream *input;
+    wxInputStream *input;
     wxImage image;
 
-    input = new wxZipInputStream( filename, wxT("field_removed.png") );
+    input = get_zip_input_stream( filename, wxT("field_removed.png") );
     if( input->Eof() ) { delete input; return false; }
     image.LoadFile( *input, wxBITMAP_TYPE_PNG );
     bitmap_handler.normal.field_bitmaps[field_removed] = wxBitmap(image);
     delete input;
-    input = new wxZipInputStream( filename, wxT("field_empty.png") );
+    input = get_zip_input_stream( filename, wxT("field_empty.png") );
     if( input->Eof() ) { delete input; return false; }
     image.LoadFile( *input, wxBITMAP_TYPE_PNG );
     bitmap_handler.normal.field_bitmaps[field_empty] = wxBitmap(image);
@@ -1983,41 +2029,41 @@ namespace relax
 	    int num = *it;
 	    std::string stone_file = "stone_" + long_to_string(dir) + "_" + 
 	      long_to_string(num) + ".png";
-	    input = new wxZipInputStream( filename, str_to_wxstr(stone_file) );
+	    input = get_zip_input_stream( filename, str_to_wxstr(stone_file) );
 	    if( input->Eof() ) { delete input; return false; }
 	    image.LoadFile( *input, wxBITMAP_TYPE_PNG );
 	    bitmap_handler.normal.num_bitmaps[dir][num] = wxBitmap(image);
 	    delete input;
 	  }
       }
-    input = new wxZipInputStream( filename, wxT("stone_base.png") );
+    input = get_zip_input_stream( filename, wxT("stone_base.png") );
     if( input->Eof() ) { delete input; return false; }
     image.LoadFile( *input, wxBITMAP_TYPE_PNG );
     bitmap_handler.normal.stone_base = wxBitmap(image);
     delete input;
-    input = new wxZipInputStream( filename, wxT("click_mark.png") );
+    input = get_zip_input_stream( filename, wxT("click_mark.png") );
     if( input->Eof() ) { delete input; return false; }
     image.LoadFile( *input, wxBITMAP_TYPE_PNG );
     bitmap_handler.normal.click_mark = wxBitmap(image);
     delete input;
-    input = new wxZipInputStream( filename, wxT("field_mark.png") );
+    input = get_zip_input_stream( filename, wxT("field_mark.png") );
     if( input->Eof() ) { delete input; return false; }
     image.LoadFile( *input, wxBITMAP_TYPE_PNG );
     bitmap_handler.normal.field_mark = wxBitmap(image);
     delete input;
-    input = new wxZipInputStream( filename, wxT("stone_mark.png") );
+    input = get_zip_input_stream( filename, wxT("stone_mark.png") );
     if( input->Eof() ) { delete input; return false; }
     image.LoadFile( *input, wxBITMAP_TYPE_PNG );
     bitmap_handler.normal.stone_mark = wxBitmap(image);
     delete input;
 
-    input = new wxZipInputStream( filename, wxT("background.png") );
+    input = get_zip_input_stream( filename, wxT("background.png") );
     if( input->Eof() ) { delete input; return false; }
     image.LoadFile( *input, wxBITMAP_TYPE_PNG );
     bitmap_handler.normal.background = wxBitmap(image);
     delete input;
 
-    input = new wxZipInputStream( filename, wxT("skin.ini") );
+    input = get_zip_input_stream( filename, wxT("skin.ini") );
     //if( input->Eof() ) { delete input; return false; } // ini file might be empty
     wxFileConfig config( *input );
     bitmap_handler.dimensions 

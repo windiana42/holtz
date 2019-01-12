@@ -110,7 +110,7 @@ namespace relax
 
 	  if( ui_manager )
 	  {
-	    ui_manager->report_scores( game.get_scores() );
+	    ui_manager->report_scores( &game, game.get_scores() );
 	  }
 
 	  go_on = false;

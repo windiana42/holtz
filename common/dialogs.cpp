@@ -2700,7 +2700,7 @@ p			  str_to_wxstr(master_content.player1).c_str(), str_to_wxstr(master_content.
   {
     wxString filename = wxFileSelector( _("Choose a skin file"), wxPathOnly(valid_skin_file), 
 					wxT(""), wxT(""), _("Skin files (*.zip)|*.zip"),
-					wxOPEN | wxFILE_MUST_EXIST );
+					wxFD_OPEN | wxFD_FILE_MUST_EXIST );
     if( wxFileExists(filename) )
     {
       valid_skin_file = filename;
@@ -2725,7 +2725,7 @@ p			  str_to_wxstr(master_content.player1).c_str(), str_to_wxstr(master_content.
   {
     wxString filename = wxFileSelector( _("Choose a beep file"), wxPathOnly(valid_beep_file), 
 					wxT(""), wxT(""), _("Beep sounds (*.wav)|*.wav"),
-					wxOPEN | wxFILE_MUST_EXIST );
+					wxFD_OPEN | wxFD_FILE_MUST_EXIST );
     if( wxFileExists(filename) )
     {
       valid_beep_file = filename;
