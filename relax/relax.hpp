@@ -605,6 +605,10 @@ namespace relax
     std::list<Move_Sequence> get_possible_moves(); // get possible moves in situation
     std::list<std::pair<Move_Sequence,int/*player index*/> > get_played_moves();   
 				// get moves played since start
+
+    std::pair<int, std::list<std::pair<int/*count*/,int/*num*/> > > 
+    get_max_score_detail(const Player *player=0,std::vector<std::map<int/*num*/, 
+			 unsigned /*stones*/> > *stones_available = 0) const;
     int get_max_score(const Player *player=0,std::vector<std::map<int/*num*/, 
 		      unsigned /*stones*/> > *stones_available = 0) const;
     

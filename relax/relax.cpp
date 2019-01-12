@@ -1488,9 +1488,11 @@ namespace relax
     unsigned assigned_index;
   };
 
-  int Game::get_max_score(const Player *player, std::vector<std::map<int/*num*/, 
-			  unsigned /*stones*/> > *stones_available) const
+  std::pair<int, std::list<std::pair<int/*count*/,int/*num*/> > > 
+  Game::get_max_score_detail(const Player *player, std::vector<std::map<int/*num*/, 
+			     unsigned /*stones*/> > *stones_available) const
   {
+    std::list<std::pair<int/*count*/,int/*num*/> > scores;
     const Board &board = player?player->board:current_player->board;
     std::map<unsigned/*dir*/,std::map<int/*num*/,std::list<Speculative_Score> > > 
       speculative_scores;
@@ -1498,12 +1500,12 @@ namespace relax
       any_num_speculative_scores;
     int score = 0;
     Field_Iterator main_it(Field_Pos(0,0),&board);
-    if( !main_it.is_valid_field() ) return 0;
+    if( !main_it.is_valid_field() ) return std::make_pair(0,scores);
     // find top-left-corner
     while( *main_it == field_removed )
       {
 	main_it.Right();
-	if( !main_it.is_valid_field() ) return 0;
+	if( !main_it.is_valid_field() ) return std::make_pair(0,scores);
       }
     Field_Iterator corner = main_it;
     Field_Iterator it1(&board),it2(&board);
@@ -1552,6 +1554,7 @@ namespace relax
 	if( valid && cur_num_set )
 	  {
 	    int add_score=0;
+	    scores.push_back(std::make_pair(int(count),cur_num));
 	    if( stones_available )
 	      {
 		if( (*stones_available)[right_dir][cur_num] >= missing )
@@ -1616,6 +1619,7 @@ namespace relax
 	if( valid && cur_num_set )
 	  {
 	    int add_score=0;
+	    scores.push_back(std::make_pair(int(count),cur_num));
 	    if( stones_available )
 	      {
 		if( (*stones_available)[bottom_left_dir][cur_num] >= missing )
@@ -1698,6 +1702,7 @@ namespace relax
 	if( valid && cur_num_set )
 	  {
 	    int add_score=0;
+	    scores.push_back(std::make_pair(int(count),cur_num));
 	    if( stones_available )
 	      {
 		if( (*stones_available)[bottom_right_dir][cur_num] >= missing )
@@ -1848,6 +1853,14 @@ namespace relax
 // 	      }
 // 	  }
       }
+
+    return std::make_pair(score, scores);
+  }
+
+  int Game::get_max_score(const Player *player, std::vector<std::map<int/*num*/, 
+			  unsigned /*stones*/> > *stones_available) const
+  {
+    int score = get_max_score_detail(player, stones_available).first;
     //std::cout << "score=" << score << std::endl;
     return score;
   }

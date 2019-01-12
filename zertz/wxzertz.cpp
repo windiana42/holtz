@@ -55,6 +55,7 @@
 #include "ai.hpp"
 #include "util.hpp"
 #include "wxmain.hpp"
+#include "wxutil.hpp"
 
 #include <wx/zipstrm.h>
 #include <wx/image.h>
@@ -1535,7 +1536,8 @@ namespace zertz
       refresh();
   }
 
-  void WX_GUI_Manager::report_scores( std::multimap<int/*score*/,const Player*> scores )
+  void WX_GUI_Manager::report_scores( const Game*, 
+				      std::multimap<int/*score*/,const Player*> scores )
   {
     wxString msg, line;
     std::multimap<int/*score*/,const Player*>::iterator it;
@@ -1903,7 +1905,7 @@ namespace zertz
     {
       buf = wxFileSelector( _("Choose a skin File"), wxT(""), 
 			    wxT(""), wxT(""), _("Skin Files (*.zip)|*.zip"),
-			    wxOPEN );
+			    wxFD_OPEN );
       if( wxFileExists(buf) )
       {
 	if( load_skin( buf ) )
@@ -1985,7 +1987,7 @@ namespace zertz
     {
       buf = wxFileSelector( _("Choose a sound file as move reminder"), wxT(""),
 			    wxT(""), wxT(""), _("Sound Files (*.wav)|*.wav"),
-			    wxOPEN );
+			    wxFD_OPEN );
       if( wxFileExists(buf) )
       {
 	if( load_beep(buf) )
@@ -2032,58 +2034,58 @@ namespace zertz
   {
     show_user_information(false,false);
 
-    wxZipInputStream *input;
+    wxInputStream *input;
     wxImage image;
 
-    input = new wxZipInputStream( filename, wxT("field_removed.png") );
+    input = get_zip_input_stream( filename, wxT("field_removed.png") );
     if( input->Eof() ) { delete input; return false; }
     image.LoadFile( *input, wxBITMAP_TYPE_PNG );
     bitmap_handler.normal.field_bitmaps[field_removed] = wxBitmap(image);
     delete input;
-    input = new wxZipInputStream( filename, wxT("field_empty.png") );
+    input = get_zip_input_stream( filename, wxT("field_empty.png") );
     if( input->Eof() ) { delete input; return false; }
     image.LoadFile( *input, wxBITMAP_TYPE_PNG );
     bitmap_handler.normal.field_bitmaps[field_empty] = wxBitmap(image);
     delete input;
-    input = new wxZipInputStream( filename, wxT("stone_white.png") );
+    input = get_zip_input_stream( filename, wxT("stone_white.png") );
     if( input->Eof() ) { delete input; return false; }
     image.LoadFile( *input, wxBITMAP_TYPE_PNG );
     bitmap_handler.normal.stone_bitmaps[Stones::white_stone] = wxBitmap(image);
     delete input;
-    input = new wxZipInputStream( filename, wxT("stone_grey.png") );
+    input = get_zip_input_stream( filename, wxT("stone_grey.png") );
     if( input->Eof() ) { delete input; return false; }
     image.LoadFile( *input, wxBITMAP_TYPE_PNG );
     bitmap_handler.normal.stone_bitmaps[Stones::grey_stone] = wxBitmap(image);
     delete input;
-    input = new wxZipInputStream( filename, wxT("stone_black.png") );
+    input = get_zip_input_stream( filename, wxT("stone_black.png") );
     if( input->Eof() ) { delete input; return false; }
     image.LoadFile( *input, wxBITMAP_TYPE_PNG );
     bitmap_handler.normal.stone_bitmaps[Stones::black_stone] = wxBitmap(image);
     delete input;
 
-    input = new wxZipInputStream( filename, wxT("click_mark.png") );
+    input = get_zip_input_stream( filename, wxT("click_mark.png") );
     if( input->Eof() ) { delete input; return false; }
     image.LoadFile( *input, wxBITMAP_TYPE_PNG );
     bitmap_handler.normal.click_mark = wxBitmap(image);
     delete input;
-    input = new wxZipInputStream( filename, wxT("field_mark.png") );
+    input = get_zip_input_stream( filename, wxT("field_mark.png") );
     if( input->Eof() ) { delete input; return false; }
     image.LoadFile( *input, wxBITMAP_TYPE_PNG );
     bitmap_handler.normal.field_mark = wxBitmap(image);
     delete input;
-    input = new wxZipInputStream( filename, wxT("stone_mark.png") );
+    input = get_zip_input_stream( filename, wxT("stone_mark.png") );
     if( input->Eof() ) { delete input; return false; }
     image.LoadFile( *input, wxBITMAP_TYPE_PNG );
     bitmap_handler.normal.stone_mark = wxBitmap(image);
     delete input;
 
-    input = new wxZipInputStream( filename, wxT("background.png") );
+    input = get_zip_input_stream( filename, wxT("background.png") );
     if( input->Eof() ) { delete input; return false; }
     image.LoadFile( *input, wxBITMAP_TYPE_PNG );
     bitmap_handler.normal.background = wxBitmap(image);
     delete input;
 
-    input = new wxZipInputStream( filename, wxT("skin.ini") );
+    input = get_zip_input_stream( filename, wxT("skin.ini") );
     //if( input->Eof() ) { delete input; return false; } // ini file might be empty
     wxFileConfig config( *input );
     bitmap_handler.dimensions 

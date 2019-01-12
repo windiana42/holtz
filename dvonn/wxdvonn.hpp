@@ -307,7 +307,8 @@ namespace dvonn
     virtual void setup_game_display(); // setup all windows to display game
     virtual void set_board( const Game &game );
     virtual void update_board( const Game &game );
-    virtual void report_scores( std::multimap<int/*score*/,const Player*> scores );
+    virtual void report_scores( const Game* game, 
+				std::multimap<int/*score*/,const Player*> scores );
     virtual void report_winner( Player *player );
     virtual void report_error( wxString msg, wxString caption );
     virtual void report_information( wxString msg, wxString caption );
