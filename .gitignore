@@ -9,4 +9,7 @@ configure
 holtz.ncb
 holtz.opt
 holtz
-build
+build*
+login_sourceforge_ssh.sh
+install-sh
+missing

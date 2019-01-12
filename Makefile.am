@@ -4,6 +4,7 @@ bin_PROGRAMS=		holtz
 
 holtz_SOURCES= \
 	util.cpp util.hpp \
+	wxutil.cpp wxutil.hpp \
 	wxmain.cpp wxmain.hpp \
 	wxholtz.cpp wxholtz.hpp \
 	line_net.cpp line_net.hpp \
