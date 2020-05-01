@@ -16,9 +16,11 @@ made the decision to use a hacky way of templating that needed the smallest code
 
 ## Install
 
-I guess the easiest way (at least for Windows users) is to download an executable from [here] (https://holtz.sourceforge.io/down.php) 
-Since a decade changes became rare, but I somehow got installing wxwidgets, and automake to work every time I got a new PC.
+I guess the easiest way (at least for Windows users) is to download an executable from [here](https://holtz.sourceforge.io/down.php). 
+Changes became rare since a decade, but I somehow got installing wxwidgets, and automake to work every time I got a new PC.
 So, for Linux, I am confident that installing wxwidgets, g++ and automake and running `make` should work fine.
-The RPM build spec works fine for recent OpenSuSE versions: https://build.opensuse.org/package/show/home:trautm/holtz-1.5.0
+The RPM build spec works fine for recent OpenSuSE versions as well: https://build.opensuse.org/package/show/home:trautm/holtz-1.5.0
 
 I even get cross-compilation to work to build Windows executables within Linux whenever I try hard enough...
+
+Feel free to reach out to me whenever you experience problems or file an issue.
