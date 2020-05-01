@@ -9,6 +9,7 @@ config.guess
 config.sub
 configure
 depcomp
+compile
 exe
 holtz.ncb
 holtz.opt
