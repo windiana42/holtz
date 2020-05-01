@@ -1,8 +1,10 @@
 # Holtz - an implementation of the abstract strategy games Zertz, Dvonn, Blokus, and Take it Easy
 
+Holtz was initially developed on sourceforge. You can view the project page here: https://holtz.sourceforge.io/
+
 ## Motivation
 
-I implemented Holtz because I loved the games at end of High School time and had no suitable opponent close by.
+I implemented Holtz because I loved the games at end of High School and had no suitable opponent close by.
 Thus Holtz was used on the one hand to support my online games on pbmserv and LittleGolem. On the other hand, 
 it was fun implementing an AI for each game and a client-server mode where you can use holtz to play online without 
 any online plattform needed.
