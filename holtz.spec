@@ -9,13 +9,15 @@
 # default settings:  
 %define BACKWARDCOMPATIBILITY ""  
 %define UNICODE "--enable-unicode"  
+%define debug_package %{nil}
+
 
 Name: holtz
-Version: 1.4.1
+Version: 1.5.0
 Release: %rel
 
 Summary: Holtz is an implementation of the abstract board games Zertz and Dvonn
-License: GPLv2
+License: GPL-2.0-only 
 Group: Amusements/Games/Board/Other
 Vendor: Martin Trautmann <martintrautmann@gmx.de>
 Url: http://holtz.sourceforge.net/
@@ -57,14 +59,27 @@ BuildRequires: wxGTK-devel >= 3.0.0 gcc-c++ boost-devel
 %if %{semistatic}
 #I am not sure about precise requirements of wxGTK-static
 Requires:      gtk+ >= 1.2.7 gettext
-BuildRequires: wxGTK >= 3.0.0 wxGTK-devel gcc-c++ boost-devel
+BuildRequires: wxGTK3 >= 3.0.0 wxGTK3-devel gcc-c++ boost-devel
 #wxGTK-static has to be manually compiled
 %else
-Requires:      wxGTK >= 3.0.0
-BuildRequires: wxGTK-devel >= 3.0.0 gcc-c++ boost-devel
+Requires:      wxGTK3 >= 3.0.0
+BuildRequires: wxGTK3-devel >= 3.0.0 gcc-c++ boost-devel
 %endif
 
-## Mandriva
+## Mageia
+%else
+%if 0%{?mageia}
+%if %{semistatic}
+#I am not sure about precise requirements of wxGTK-static
+Requires:      gtk+ >= 1.2.7 gettext 
+BuildRequires: wxgtk3.0 >= 3.0.0 lib64wxgtku3.0-devel gcc-c++ boost-devel notification-daemon
+#wxGTK-static has to be manually compiled
+%else
+Requires:      wxgtk3.0 >= 3.0.0 
+BuildRequires: lib64wxgtku3.0-devel >= 3.0.0 gcc-c++ boost-devel notification-daemon
+%endif
+
+### Mandriva
 %else
 %if 0%{?mdkversion}
 #%if 0%{?mdkversion} < 201100
@@ -73,11 +88,11 @@ BuildRequires: wxGTK-devel >= 3.0.0 gcc-c++ boost-devel
 %if %{semistatic}
 #I am not sure about precise requirements of wxGTK-static
 Requires:      gtk+ >= 1.2.7 gettext
-BuildRequires: wxGTK >= 3.0.0 wxGTK-devel gcc-c++ boost-devel
+BuildRequires: wxgtk3.0 >= 3.0.0 lib64wxgtku3.0-devel gcc-c++ boost-devel
 #wxGTK-static has to be manually compiled
 %else
-Requires:      wxGTK >= 3.0.0
-BuildRequires: wxGTK-devel >= 3.0.0 gcc-c++ boost-devel
+Requires:      wxgtk3.0 >= 3.0.0
+BuildRequires: lib64wxgtku3.0-devel >= 3.0.0 gcc-c++ boost-devel
 %endif
 
 ## Redhat / Centos
@@ -86,11 +101,11 @@ BuildRequires: wxGTK-devel >= 3.0.0 gcc-c++ boost-devel
 %if %{semistatic}
 #I am not sure about precise requirements of wxGTK-static
 Requires:      gtk+ >= 1.2.7 gettext
-BuildRequires: wxWidgets >= 3.0.0 wxWidgets-devel gcc-c++ boost-devel
+BuildRequires: wxGTK3 >= 3.0.0 wxGTK3-devel gcc-c++ boost-devel
 #wxGTK-static has to be manually compiled
 %else
-Requires:      wxWidgets >= 3.0.0
-BuildRequires: wxWidgets-devel >= 3.0.0 gcc-c++ boost-devel
+Requires:      wxGTK3 >= 3.0.0
+BuildRequires: wxGTK3-devel >= 3.0.0 gcc-c++ boost-devel
 %endif
 
 ## any other (just speculation what might be most common)
@@ -98,11 +113,11 @@ BuildRequires: wxWidgets-devel >= 3.0.0 gcc-c++ boost-devel
 %if %{semistatic}
 #I am not sure about precise requirements of wxGTK-static
 Requires:      gtk+ >= 1.2.7 gettext
-BuildRequires: wxGTK >= 3.0.0 wxGTK-devel gcc-c++ boost-devel
+BuildRequires: wxGTK3 >= 3.0.0 wxGTK3-devel gcc-c++ boost-devel
 #wxGTK-static has to be manually compiled
 %else
-Requires:      wxGTK >= 3.0.0
-BuildRequires: wxGTK-devel >= 3.0.0 gcc-c++ boost-devel
+Requires:      wxGTK3 >= 3.0.0
+BuildRequires: wxGTK3-devel >= 3.0.0 gcc-c++ boost-devel
 %endif
 # if Redhat else any other
 %endif 
