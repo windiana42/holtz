@@ -5,7 +5,7 @@ AC_PROG_INSTALL
 AC_PROG_RANLIB
 
 AC_CANONICAL_SYSTEM
-AM_INIT_AUTOMAKE(holtz, 1.4.1)
+AM_INIT_AUTOMAKE(holtz, 1.5.0)
 
 WXLIBS=
 #I thought this would be right, but it actually doesn't work:
