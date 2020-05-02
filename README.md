@@ -29,7 +29,7 @@ Feel free to reach out to me whenever you experience problems or file an issue.
 
 Zèrtz screen:
 
-![](htdocs/scr_shot_zertz_01.jpg")
+![](htdocs/scr_shot_zertz_01.jpg)
 
 Dvonn screen:
 
