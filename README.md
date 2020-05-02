@@ -24,3 +24,40 @@ The RPM build spec works fine for recent OpenSuSE versions as well: https://buil
 I even get cross-compilation to work to build Windows executables within Linux whenever I try hard enough...
 
 Feel free to reach out to me whenever you experience problems or file an issue.
+
+## Screenshots
+
+Zèrtz screen:
+
+![](htdocs/scr_shot_zertz_01.jpg")
+
+Dvonn screen:
+
+![](htdocs/scr_shot_dvonn_01.jpg)
+
+Stacking phase with help mode "show possible moves" activated:
+
+![](htdocs/scr_shot_dvonn_02.jpg)
+  
+The graphics of Holtz can be modified using skin files. The green and red dots 
+mark a hint move given by the AI.
+
+![](htdocs/scr_shot_zertz_02.jpg)
+
+The Zèrtz game is highly configurable:
+
+![](htdocs/scr_shot_game_setup_04.jpg)
+
+Play Zèrtz or Dvonn over the network:
+
+![](htdocs/scr_shot_network.jpg)
+
+For Zèrtz the layout of board and marbles is configurable:
+
+![](htdocs/scr_shot_settings_01.jpg)
+
+Zèrtz and Dvonn offer the choice of skins, move reminder sounds, and fonts:
+
+![](htdocs/scr_shot_settings_02.jpg)
+
+
