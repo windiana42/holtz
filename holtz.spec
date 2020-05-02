@@ -123,7 +123,9 @@ BuildRequires: wxGTK3-devel >= 3.0.0 gcc-c++ boost-devel
 %endif 
 # if Mandriva else Redhat+
 %endif
-# if Fedora else Mandriva+
+# if Fedora else Mageia+
+%endif
+# if Mageia else Mandriva+
 %endif
 # if Suse else Fedora+
 %endif
